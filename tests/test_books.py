@@ -17,11 +17,20 @@ def setup_book(*answers, confirm=True):
 
 # ---------- allocation ----------
 
-def test_pages_per_day_rounds_half_up():
-    assert books.pages_per_day(280) == 20
-    assert books.pages_per_day(21) == 2       # 1.5 -> 2, not banker's 2
-    assert books.pages_per_day(35) == 3       # 2.5 -> 3 (round() would give 2)
-    assert books.pages_per_day(300) == 21     # 21.43 -> 21
+def test_pages_for_day_follows_chapters_per_day():
+    """L: 3 chapters / 60 pages is ~20 pages a day, not 60 / 14 = 4."""
+    book, _ = setup_book("書", "作者", "3", "60", "第1章：A\n第2章：B\n第3章：C")
+    assert [books.pages_for_day(book, d) for d in (1, 2, 3, 4)] == [20, 20, 20, 0]
+    books.move_first_from_next(book["plan"], 1)                  # day 1 now has 2 chapters
+    assert [books.pages_for_day(book, d) for d in (1, 2, 3)] == [40, 0, 20]
+    table = books.plan_table(book)
+    assert "| 第1天 | 第1–2章：A；B | 約 40 頁 |" in table
+
+
+def test_pages_round_half_up():
+    book, _ = setup_book("書", "作者", "2", "5", "第1章：A\n第2章：B")
+    assert books.pages_for_day(book, 1) == 3                     # 2.5 -> 3 (round() gives 2)
+    assert books.pages_per_chapter(book) == 3
 
 
 def test_allocate_fewer_chapters_than_days():
@@ -45,7 +54,7 @@ def test_allocate_more_chapters_spreads_remainder_to_first_days():
 def test_plan_table_lists_titles_and_early_finish():
     book, _ = setup_book("原子習慣", "James Clear", "3", "280", "第1章：A\n第2章：B\n第3章：C")
     table = books.plan_table(book)
-    assert "| 第1天 | 第1章：A | 約 20 頁 |" in table
+    assert "| 第1天 | 第1章：A | 約 93 頁 |" in table     # 280 pages / 3 chapters
     assert f"| 第4天 | {books.EARLY_FINISH_NOTE} | — |" in table
     assert table.count("\n") == 15
 
@@ -157,6 +166,25 @@ def test_toc_count_mismatch_names_the_missing_chapters():
     assert len(book["chapters"]) == 20 and book["status"] == "planning"
 
 
+def test_missing_chapters_can_be_added_one_at_a_time():
+    """G: 18 of 20 numbered chapters pasted; 「第19章：標題」 adds it in place."""
+    toc = "\n".join(f"第{i}章：T{i}" for i in range(1, 21) if i not in (5, 19))
+    book, _ = setup_book("書", "作者", "20", "450", toc, confirm=False)
+    reply = books.answer_setup(book, "第19章：T19")
+    assert reply.startswith("補上第19章了") and "少了 1 章" in reply and "第5章" in reply
+    reply = books.answer_setup(book, "第五章：T5")
+    assert "整理出 20 章" in reply and "不一樣" not in reply
+    books.answer_setup(book, "對")
+    assert book["chapters"] == [f"T{i}" for i in range(1, 21)]
+
+
+def test_unnumbered_list_can_be_extended_with_the_next_chapter():
+    book, _ = setup_book("書", "作者", "4", "90", "A、B、C", confirm=False)
+    assert books.answer_setup(book, "第4章：D").startswith("補上第4章了")
+    books.answer_setup(book, "對")
+    assert book["chapters"] == ["A", "B", "C", "D"]
+
+
 def test_toc_unnumbered_mismatch_and_accepting_the_list():
     book, replies = setup_book("書", "作者", "4", "90", "A、B、C", confirm=False)
     assert "少了 1 章" in replies[-1] and "以這 3 章為準" in replies[-1]
@@ -168,7 +196,7 @@ def test_toc_confirmation_edit_one_title_and_correct_count():
     book, _ = setup_book("書", "作者", "3", "90", "第1章：A\n第2章：錯字\n第3章：C", confirm=False)
     reply = books.answer_setup(book, "第2章：B")
     assert reply.startswith("改好了") and book["pending_toc"] == ["A", "B", "C"]
-    assert "沒有第9章" in books.answer_setup(book, "第9章：X")
+    assert "還不能補第9章" in books.answer_setup(book, "第9章：X")
     reply = books.answer_setup(book, "4")
     assert "少了 1 章" in reply
     books.answer_setup(book, "對")

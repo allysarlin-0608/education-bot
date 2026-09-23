@@ -42,16 +42,17 @@ st.caption("✅ 完成　○ 有上課、還沒打勾　· 沒有紀錄")
 # PER-TOPIC PROGRESS
 # ============================================================
 st.markdown("#### 各主題進度")
+st.caption("等級看的是上課次數：同一主題上第 1–3 次是入門、第 4–7 次中階、第 8 次以後進階，有沒有打勾都算一次。")
 for key, label in core.TOPICS.items():
     p = core.topic_progress(log, key)
     if p["sessions"] == 0:
         st.markdown(f"**{label}**　還沒開始")
         continue
     st.markdown(
-        f"**{label}**　第 {p['sessions']} 次・目前 {p['level']}・完成 {p['completed']} 次"
+        f"**{label}**　上課 {p['sessions']} 次（其中打勾 {p['completed']} 次）・目前 {p['level']}"
     )
     if p["next_level"]:
-        st.progress(p["fraction"], text=f"再 {p['remaining']} 次進入{p['next_level']}")
+        st.progress(p["fraction"], text=f"再上 {p['remaining']} 次課進入{p['next_level']}")
     else:
         st.progress(1.0, text="已經到進階")
 

@@ -145,7 +145,9 @@ with st.sidebar:
     st.session_state.coach_date = today
 
     st.divider()
-    streak = core.current_streak(log, today)
+    # Same base date as the 學習紀錄 page (the real today), whatever date
+    # is picked above.
+    streak = core.current_streak(log, ui.today())
     col_a, col_b = st.columns(2)
     col_a.metric("連續完成", f"{streak} 天")
     col_b.metric("累計完成", f"{len(core.completed_dates(log))} 天")
@@ -180,8 +182,8 @@ if topic == "reading":
 
 session_number = core.topic_session_number(log, topic, today)
 st.caption(
-    f"這是你第 {session_number} 次接觸「{core.TOPICS[topic]}」，"
-    f"難度：{core.level_for_session(session_number)}"
+    f"這是你第 {session_number} 次上「{core.TOPICS[topic]}」的課，"
+    f"難度：{core.level_for_session(session_number)}（難度看上課次數，有沒有打勾都算）"
 )
 
 entry = core.find_entry(log, today, topic)
@@ -219,7 +221,7 @@ if entry is not None:
         ui.save_entry(log, entry)
         st.rerun()
     if entry.get("completed"):
-        st.caption(f"已打勾。目前連續完成 {core.current_streak(log, today)} 天。")
+        st.caption(f"已打勾。目前連續完成 {core.current_streak(log, ui.today())} 天。")
     else:
         st.caption("做了一部分也算數，打勾就好。")
 

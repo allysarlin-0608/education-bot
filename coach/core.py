@@ -323,7 +323,7 @@ def build_history_context(log: dict, topic: str, today: date) -> str:
     past = [e for e in log["entries"]
             if e["topic"] == topic and e["date"] < today.isoformat()]
     if past:
-        lines.append("- 這個主題過去學過的內容（避免重複，除非是刻意複習深化）：")
+        lines.append("- 這個主題學過的內容（避免重複）：")
         for e in past[-5:]:
             status = "已完成" if e.get("completed") else "未打勾"
             lines.append(f"  - {e['date']}：{_clip(e.get('title') or '（無標題）', 50)}（{status}）")
@@ -341,7 +341,7 @@ def build_history_context(log: dict, topic: str, today: date) -> str:
         )
         lines.append(f"- 過去七天各主題互動次數：{summary}")
 
-    lines.append("- App 已經自動記錄學習軌跡，不需要再詢問她是否要開始記錄。")
+    lines.append("- App 已自動記錄學習軌跡，不用再問她要不要記錄。")
     return "\n".join(lines)
 
 

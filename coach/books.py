@@ -175,9 +175,25 @@ def is_yes(text: str) -> bool:
 # 14-day allocation
 # ------------------------------------------------------------
 
-def pages_per_day(total_pages: int) -> int:
-    """總頁數 ÷ 14, rounded half up (Python's round() is half-to-even)."""
-    return (total_pages * 2 + DAYS) // (DAYS * 2)
+def _round_half_up(numerator: int, denominator: int) -> int:
+    """numerator / denominator rounded half up (Python's round() is
+    half-to-even)."""
+    return (numerator * 2 + denominator) // (denominator * 2)
+
+
+def pages_per_chapter(book: dict) -> int:
+    if not book["chapter_count"]:
+        return 0
+    return _round_half_up(book["total_pages"], book["chapter_count"])
+
+
+def pages_for_day(book: dict, day: int) -> int:
+    """總頁數 ÷ 總章數 × 當天章數, so a 2-chapter day shows twice a
+    1-chapter day and it follows manual adjustments."""
+    chapters = len(book["plan"][day - 1])
+    if not chapters or not book["chapter_count"]:
+        return 0
+    return _round_half_up(book["total_pages"] * chapters, book["chapter_count"])
 
 
 def allocate(chapter_count: int) -> list:
@@ -238,11 +254,10 @@ def day_description(book: dict, day: int) -> str:
 
 
 def plan_table(book: dict) -> str:
-    pages = pages_per_day(book["total_pages"])
     rows = ["| 天 | 章節範圍與標題 | 約略頁數 |", "| --- | --- | --- |"]
     for day in range(1, DAYS + 1):
         mark = " ✅" if str(day) in book["checks"] else ""
-        page_hint = f"約 {pages} 頁" if book["plan"][day - 1] else "—"
+        page_hint = f"約 {pages_for_day(book, day)} 頁" if book["plan"][day - 1] else "—"
         rows.append(f"| 第{day}天{mark} | {day_description(book, day)} | {page_hint} |")
     return "\n".join(rows)
 
@@ -302,7 +317,7 @@ def question_for(book: dict) -> str:
 
 
 TOC_HELP = (
-    "沒問題的話回答「對」；想改某一章就打「第3章：新的標題」；"
+    "沒問題的話回答「對」；想改或補某一章就打「第3章：標題」；"
     "也可以整份重新貼一次，或直接告訴我正確的章數。"
 )
 
@@ -352,7 +367,7 @@ def _finish_setup(book: dict) -> str:
     book["pending_raw"] = ""
     return (
         f"《{book['title']}》共 {book['chapter_count']} 章、{book['total_pages']} 頁，"
-        f"分成 14 天，每天大約 {pages_per_day(book['total_pages'])} 頁。"
+        f"分成 14 天，平均每章大約 {pages_per_chapter(book)} 頁，每天的頁數寫在表格裡。"
         f"下面是完整的 14 天預覽，按「確認進度表」之後才會正式開始：\n\n"
         f"{plan_table(book)}\n\n{PLAN_QUESTION}"
     )
@@ -430,6 +445,39 @@ def parse_title_edit(text: str):
     return (number, match.group(2).strip()) if number else None
 
 
+def _edit_or_add_chapter(book: dict, number: int, title: str) -> str:
+    """「第N章：標題」 while confirming the list: change chapter N, or add it
+    when it's missing (so a short list can be completed without pasting
+    the whole table of contents again)."""
+    titles, numbers = book["pending_toc"], book.get("pending_numbers") or []
+    limit = max(book["chapter_count"], len(titles) + 1)
+    if number > limit and number not in numbers:
+        return (
+            f"幫你確認一下：你說這本書有 {book['chapter_count']} 章，清單現在有 {len(titles)} 章，"
+            f"所以還不能補第{number}章。如果章數不對，直接告訴我正確的章數就好。"
+        )
+    if numbers:
+        # A numbered list: chapter N is the entry labelled N, and a missing
+        # N is slotted in by number.
+        if number in numbers:
+            titles[numbers.index(number)] = title
+            return f"改好了。\n\n{toc_preview(book)}"
+        at = len([n for n in numbers if n < number])
+        numbers.insert(at, number)
+        titles.insert(at, title)
+        return f"補上第{number}章了。\n\n{toc_preview(book)}"
+    if 1 <= number <= len(titles):
+        titles[number - 1] = title
+        return f"改好了。\n\n{toc_preview(book)}"
+    if number == len(titles) + 1:
+        titles.append(title)
+        return f"補上第{number}章了。\n\n{toc_preview(book)}"
+    return (
+        f"目前清單有 {len(titles)} 章，要補的話請從第{len(titles) + 1}章開始補，"
+        f"例如「第{len(titles) + 1}章：標題」。{TOC_HELP}"
+    )
+
+
 def _answer_confirm_toc(book: dict, text: str) -> str:
     titles = book["pending_toc"]
     if is_yes(text):
@@ -445,10 +493,7 @@ def _answer_confirm_toc(book: dict, text: str) -> str:
     edit = parse_title_edit(text)
     if edit:
         number, title = edit
-        if not 1 <= number <= len(titles):
-            return f"目前清單只有 {len(titles)} 章，沒有第{number}章。{TOC_HELP}"
-        titles[number - 1] = title
-        return f"改好了。\n\n{toc_preview(book)}"
+        return _edit_or_add_chapter(book, number, title)
     if re.fullmatch(r"\d+\s*章?", text) or re.fullmatch(r"[零〇一二兩三四五六七八九十百]+\s*章", text):
         book["chapter_count"] = parse_number(text)
         return toc_preview(book)
@@ -492,7 +537,7 @@ def book_header(book: dict) -> str:
     return (
         f"{BOOK_MODE_NOTE}\n"
         f"書名：《{book['title']}》　作者：{book['author']}　"
-        f"共 {book['chapter_count']} 章、{book['total_pages']} 頁，每天約 {pages_per_day(book['total_pages'])} 頁"
+        f"共 {book['chapter_count']} 章、{book['total_pages']} 頁，平均每章約 {pages_per_chapter(book)} 頁"
     )
 
 
@@ -598,7 +643,7 @@ def resume_message(book: dict, today: date) -> str:
     if book["status"] == "planning":
         return f"《{book['title']}》的 14 天進度表：\n\n{plan_table(book)}\n\n{PLAN_QUESTION}"
     day = next_day(book)
-    pages = pages_per_day(book["total_pages"])
+    pages = pages_for_day(book, day)
     if days_away(book, today) > 1:
         return (
             f"我們從第{day}天繼續。《{book['title']}》第{day}天的範圍是{day_description(book, day)}，"
