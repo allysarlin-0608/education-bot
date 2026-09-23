@@ -134,7 +134,7 @@ if not st.session_state.coach_messages:
             entry["lesson"] = lesson
             entry["title"] = core.extract_section(lesson, "今日主題")
             entry["followup_question"] = core.extract_section(lesson, "延伸提問")
-            ui.persist(log)
+            ui.save_entry(log, entry)
             st.rerun()
         else:
             st.session_state.coach_messages.pop()
@@ -157,7 +157,7 @@ if entry is not None:
     )
     if done != entry.get("completed", False):
         entry["completed"] = done
-        ui.persist(log)
+        ui.save_entry(log, entry)
         st.rerun()
     if entry.get("completed"):
         st.caption(f"已打勾。目前連續完成 {core.current_streak(log, today)} 天。")
@@ -173,8 +173,10 @@ if entry is not None:
         )
         if st.button("儲存想法"):
             entry["reflection"] = reflection.strip()
-            ui.persist(log)
-            st.success("存好了。")
+            if ui.save_entry(log, entry):
+                st.success("存好了。")
+            else:
+                ui.show_pending_error()
 
 prompt = st.chat_input("想追問、回報進度，或聊聊今天的內容……")
 if prompt is not None and prompt.strip():

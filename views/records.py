@@ -83,7 +83,7 @@ for e in entries:
         )
         if done != e.get("completed", False):
             e["completed"] = done
-            ui.persist(log)
+            ui.save_entry(log, e)
             st.rerun()
         if e.get("followup_question"):
             st.markdown(f"**延伸提問**：{e['followup_question']}")
@@ -95,7 +95,7 @@ for e in entries:
         )
         if st.button("儲存想法", key=f"rec_save_{key}"):
             e["reflection"] = reflection.strip()
-            ui.persist(log)
+            ui.save_entry(log, e)
             st.rerun()
         if e.get("lesson") and st.toggle("顯示當天的課程", key=f"rec_lesson_{key}"):
             with st.container(border=True):
@@ -106,7 +106,10 @@ for e in entries:
 # ============================================================
 st.divider()
 st.markdown("#### 備份")
-st.caption("Streamlit Cloud 重新啟動時紀錄可能會被清掉，偶爾下載一份備份比較安心。")
+if ui.using_cloud():
+    st.caption("紀錄存在 Supabase 雲端資料庫，app 重新啟動也不會不見。想留一份在自己手邊的話可以下載備份。")
+else:
+    st.caption("紀錄目前存在 app 的伺服器上，Streamlit Cloud 重新啟動時可能會被清掉，偶爾下載一份備份比較安心。")
 st.download_button(
     "下載學習紀錄備份",
     data=json.dumps(log, ensure_ascii=False, indent=2),
@@ -120,7 +123,7 @@ if uploaded is not None and st.button("用這份紀錄取代目前紀錄"):
     except (ValueError, json.JSONDecodeError) as err:
         st.error(f"匯入失敗：{err}")
     else:
-        st.session_state.coach_log = new_log
-        ui.persist(new_log)
-        ui.reset_chat()
-        st.rerun()
+        if ui.replace_log(new_log):
+            st.session_state.coach_log = new_log
+            ui.reset_chat()
+            st.rerun()

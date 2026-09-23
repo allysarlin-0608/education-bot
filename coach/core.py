@@ -84,15 +84,46 @@ def load_log(path: Path = DEFAULT_LOG_PATH) -> dict:
     return parse_log(data)
 
 
+ENTRY_FIELDS = (
+    "date", "topic", "session_number", "level", "completed",
+    "title", "followup_question", "reflection", "lesson",
+)
+TEXT_FIELDS = ("title", "followup_question", "reflection", "lesson")
+
+
 def parse_log(data) -> dict:
-    """Validate a log loaded from disk or uploaded by the user."""
+    """Validate a log loaded from disk, the database, or a user upload, and
+    fill in any missing fields so every entry has the full shape."""
     if not isinstance(data, dict) or not isinstance(data.get("entries"), list):
         raise ValueError("學習紀錄格式不正確")
-    entries = [
-        e for e in data["entries"]
-        if isinstance(e, dict) and "date" in e and e.get("topic") in TOPICS
-    ]
-    return {"version": 1, "entries": entries}
+    entries = {}
+    for e in data["entries"]:
+        if not isinstance(e, dict) or e.get("topic") not in TOPICS:
+            continue
+        try:
+            day = date.fromisoformat(str(e.get("date")))
+        except ValueError:
+            continue
+        entry = {
+            "date": day.isoformat(),
+            "topic": e["topic"],
+            "session_number": e.get("session_number") or 0,
+            "level": e.get("level") if e.get("level") in LEVELS else "",
+            "completed": bool(e.get("completed")),
+        }
+        for field in TEXT_FIELDS:
+            entry[field] = e.get(field) or ""
+        # One entry per (date, topic); a later duplicate wins.
+        entries[(entry["date"], entry["topic"])] = entry
+    ordered = sorted(entries.values(), key=lambda e: (e["date"], e["topic"]))
+    counts = {}
+    for entry in ordered:
+        counts[entry["topic"]] = counts.get(entry["topic"], 0) + 1
+        if not entry["session_number"]:
+            entry["session_number"] = counts[entry["topic"]]
+        if not entry["level"]:
+            entry["level"] = level_for_session(entry["session_number"])
+    return {"version": 1, "entries": [{k: e[k] for k in ENTRY_FIELDS} for e in ordered]}
 
 
 def save_log(log: dict, path: Path = DEFAULT_LOG_PATH) -> None:

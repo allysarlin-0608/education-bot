@@ -9,6 +9,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 ui.init_state()
+ui.show_pending_error()
 
 page = st.navigation([
     st.Page("views/daily.py", title="每日學習", icon=":material/school:", default=True),
