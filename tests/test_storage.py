@@ -187,3 +187,9 @@ def test_missing_books_table_only_disables_books():
     assert store.books_error == storage.BOOKS_TABLE_MISSING
     store.replace(loaded)                  # doesn't touch the missing table
     assert len(fake.rows) == 1
+
+
+def test_url_with_or_without_rest_suffix():
+    for url in (URL, URL + "/", URL + "/rest/v1", URL + "/rest/v1/", " " + URL + " "):
+        fake = FakePostgrest()
+        storage.SupabaseStore(url, KEY, session=fake).load()   # fake asserts the exact URL

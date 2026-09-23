@@ -79,7 +79,12 @@ class SupabaseStore:
     name = "supabase"
 
     def __init__(self, url: str, key: str, session=None):
-        self.base = f"{url.rstrip('/')}/rest/v1"
+        # Accept the Project URL with or without the /rest/v1 suffix that
+        # Supabase's "API URL" field sometimes shows.
+        url = url.strip().rstrip("/")
+        if url.endswith("/rest/v1"):
+            url = url[: -len("/rest/v1")]
+        self.base = f"{url}/rest/v1"
         # Set when the books table can't be read; the rest keeps working.
         self.books_error = None
         self.session = session or requests.Session()
