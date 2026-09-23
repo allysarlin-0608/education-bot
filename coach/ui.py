@@ -19,7 +19,18 @@ def get_setting(name: str) -> str:
     return value or os.environ.get(name, "")
 
 
+# Bump whenever the store or the log's shape changes. Sessions opened
+# before an update keep the old objects in st.session_state (e.g. a store
+# without save_book, a log without "books"), so on a mismatch those are
+# dropped and reloaded from storage, which is always up to date.
+STATE_VERSION = 2
+
+
 def init_state():
+    if st.session_state.get("coach_state_version") != STATE_VERSION:
+        for key in ("coach_store", "coach_log"):
+            st.session_state.pop(key, None)
+        st.session_state.coach_state_version = STATE_VERSION
     if "api_key" not in st.session_state:
         st.session_state.api_key = get_setting("GROQ_API_KEY")
     if "coach_store" not in st.session_state:
