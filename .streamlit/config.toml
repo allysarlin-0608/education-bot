@@ -1,0 +1,28 @@
+# Apple HIG look (see coach/style.py for the component CSS). Light and dark
+# follow the device setting.
+[theme]
+font = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Noto Sans TC", sans-serif'
+headingFont = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Noto Sans TC", sans-serif'
+baseFontSize = 17
+baseRadius = "12px"
+buttonRadius = "12px"
+showWidgetBorder = false
+
+[theme.light]
+primaryColor = "#007AFF"
+backgroundColor = "#F2F2F7"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#000000"
+linkColor = "#007AFF"
+borderColor = "rgba(60,60,67,0.29)"
+
+[theme.dark]
+primaryColor = "#0A84FF"
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#1C1C1E"
+textColor = "#FFFFFF"
+linkColor = "#0A84FF"
+borderColor = "#2C2C2E"
+
+[client]
+toolbarMode = "minimal"

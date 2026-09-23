@@ -257,7 +257,7 @@ def day_description(book: dict, day: int) -> str:
 def plan_table(book: dict) -> str:
     rows = ["| 天 | 章節範圍與標題 | 約略頁數 |", "| --- | --- | --- |"]
     for day in range(1, DAYS + 1):
-        mark = " ✅" if str(day) in book["checks"] else ""
+        mark = "・已確認" if str(day) in book["checks"] else ""
         page_hint = f"約 {pages_for_day(book, day)} 頁" if book["plan"][day - 1] else "—"
         rows.append(f"| 第{day}天{mark} | {day_description(book, day)} | {page_hint} |")
     table = "\n".join(rows)
@@ -542,7 +542,7 @@ def days_away(book: dict, today: date) -> int:
 # titles, so every request stays inside the token budget.
 
 BOOK_MODE_NOTE = (
-    "【App 補充：現在是看書模式】不使用六個區塊的輸出格式，也不需要結尾固定句式，用自然的對話語氣。"
+    "【App 補充：現在是看書模式】不使用 JSON 課程格式，也不需要結尾固定句式，用自然的對話語氣。"
     "進度、天數、章節範圍由 App 精確處理，以下面的資料為準。"
 )
 SUMMARY_CHARS = 150    # per-day cap on her own words quoted back to the model

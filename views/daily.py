@@ -2,7 +2,9 @@ from datetime import date
 
 import streamlit as st
 
-from coach import core, llm, reading, tokens, ui
+import json
+
+from coach import core, lesson_view, llm, reading, style, tokens, ui
 
 log = st.session_state.coach_log
 
@@ -22,7 +24,9 @@ def _query_date():
 
 
 if "coach_date" not in st.session_state:
-    st.session_state.coach_date = _query_date() or ui.today()
+    # A future date in the URL is clamped here, before the URL's topic is
+    # filed under it, so the topic isn't lost along with the date.
+    st.session_state.coach_date = min(_query_date() or ui.today(), ui.today())
     st.session_state.coach_topics = {}          # date iso -> chosen topic
     if st.query_params.get("topic") in core.TOPICS:
         st.session_state.coach_topics[st.session_state.coach_date.isoformat()] = st.query_params["topic"]
@@ -60,21 +64,24 @@ def run_kickoff(focus):
         st.rerun()
     kickoff = core.build_kickoff_message(topic, today, focus)
     chat.append({"role": "user", "content": kickoff})
-    with st.chat_message("user"):
-        st.markdown(kickoff)
-    lesson, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today), chat, max_tokens=tokens.LESSON_MAX_TOKENS,
-    )
-    if error:
+    with st.spinner("教練正在準備今天的課……"):
+        raw, error = llm.ask_raw_json(
+            core.build_system_prompt(log, topic, today), chat, max_tokens=tokens.LESSON_MAX_TOKENS,
+        )
+    lesson = core.parse_lesson(raw) if raw else None
+    if lesson is None:
+        if raw:
+            llm.logger.error("lesson reply was not a usable JSON lesson: %.300r", raw)
         chat.pop()
-        failed("kickoff", error, focus=focus)
-    lesson = core.finalize_reply(lesson, lesson=True)
-    chat.append({"role": "assistant", "content": lesson})
+        failed("kickoff", error or llm.FAILED, focus=focus)
+    lesson = core.finalize_lesson(lesson)
+    stored = json.dumps(lesson, ensure_ascii=False)
+    chat.append({"role": "assistant", "content": stored})
     new_entry = core.start_entry(log, today, topic)
-    new_entry["lesson"] = lesson
+    new_entry["lesson"] = stored
     new_entry["kickoff"] = kickoff             # her whole message, 「我今天特別想了解…」 included
-    new_entry["title"] = core.extract_section(lesson, "今日主題")
-    new_entry["followup_question"] = core.extract_section(lesson, "延伸提問")
+    new_entry["title"] = lesson["topic"]
+    new_entry["followup_question"] = lesson["followup_question"]
     ui.save_entry(log, new_entry)
     st.rerun()
 
@@ -114,45 +121,46 @@ def show_retry():
 
 
 # ============================================================
-# SIDEBAR
+# TOP: navigation, large title, date, stat tiles
 # ============================================================
-with st.sidebar:
-    st.markdown("### ◎ 每日學習教練")
-    st.caption("每天 15 到 20 分鐘，一個知識點、一個小任務。")
+style.nav("today")
 
-    client_ready = bool(st.session_state.api_key) and llm.GROQ_AVAILABLE
-    if not client_ready:
-        with st.expander("設定 API key", expanded=not st.session_state.api_key):
-            entered_key = st.text_input(
-                "Groq API key",
-                type="password",
-                value=st.session_state.api_key,
-                help="也可以設定 GROQ_API_KEY 環境變數或 secret。",
-            )
-            if entered_key != st.session_state.api_key:
-                st.session_state.api_key = entered_key
-                st.rerun()
-            if not llm.GROQ_AVAILABLE:
-                st.caption("缺少套件：請執行 `pip install groq`。")
+# No future dates: lessons "done" in the future would count toward the
+# real streak and levels (and a date past max_value makes Streamlit error).
+latest = ui.today()
+if st.session_state.coach_date > latest:
+    st.session_state.coach_date = latest
+if "w_date" not in st.session_state or st.session_state.w_date > latest:
+    st.session_state.w_date = st.session_state.coach_date
+today = st.session_state.w_date
 
-    # No future dates: lessons "done" in the future would count toward the
-    # real streak and levels (and a date past max_value makes Streamlit error).
-    latest = ui.today()
-    if st.session_state.coach_date > latest:
-        st.session_state.coach_date = latest
-    if "w_date" not in st.session_state or st.session_state.w_date > latest:
-        st.session_state.w_date = st.session_state.coach_date
-    today = st.date_input("日期", key="w_date", max_value=latest)
-    st.session_state.coach_date = today
+title_col, date_col = st.columns([3, 2], vertical_alignment="bottom")
+with title_col:
+    style.text("今天" if today == latest else f"{today.month}月{today.day}日", "t-large")
+    style.text(f"{today.year}年{today.month}月{today.day}日　{core.weekday_zh(today)}", "t-footnote")
+with date_col:
+    with st.popover("換日期", icon=":material/calendar_today:", width="stretch"):
+        st.date_input("日期", key="w_date", max_value=latest)
+today = st.session_state.w_date
+st.session_state.coach_date = today
 
-    st.divider()
-    # Same base date as the 學習紀錄 page (the real today), whatever date
-    # is picked above.
-    streak = core.current_streak(log, ui.today())
-    col_a, col_b = st.columns(2)
-    col_a.metric("連續完成", f"{streak} 天")
-    col_b.metric("累計完成", f"{len(core.completed_dates(log))} 天")
-    st.page_link("views/records.py", label="看完整學習紀錄", icon=":material/history:")
+# Same base date as the 紀錄 page (the real today), whatever date is picked.
+style.stats([(f"{core.current_streak(log, ui.today())} 天", "連續完成"),
+             (f"{len(core.completed_dates(log))} 天", "累計完成")])
+
+if not (bool(st.session_state.api_key) and llm.GROQ_AVAILABLE):
+    with st.expander("設定 API key", expanded=not st.session_state.api_key):
+        entered_key = st.text_input(
+            "Groq API key",
+            type="password",
+            value=st.session_state.api_key,
+            help="也可以設定 GROQ_API_KEY 環境變數或 secret。",
+        )
+        if entered_key != st.session_state.api_key:
+            st.session_state.api_key = entered_key
+            st.rerun()
+        if not llm.GROQ_AVAILABLE:
+            st.caption("缺少套件：請執行 `pip install groq`。")
 
 
 # ============================================================
@@ -160,7 +168,6 @@ with st.sidebar:
 # ============================================================
 scheduled = core.scheduled_topic(today)
 topic_keys = list(core.TOPICS)
-st.markdown(f"## {today.isoformat()}　{core.weekday_zh(today)}")
 
 chosen = st.session_state.coach_topics.get(today.isoformat(), scheduled)
 if st.session_state.get("w_topic_date") != today.isoformat() or "w_topic" not in st.session_state:
@@ -205,14 +212,21 @@ if not chat:
 # ============================================================
 # LESSON + CHAT
 # ============================================================
-for message in chat:
+focus_said = chat[0]["content"].partition("我今天特別想了解：")[2]
+if focus_said:
+    style.text(f"你今天想了解：{focus_said}", "t-footnote")
+lesson_view.render(chat[1]["content"], key=f"{today.isoformat()}_{topic}")
+
+if len(chat) > 2:
+    style.section("追問")
+for message in chat[2:]:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 if entry is not None:
-    st.divider()
-    done = st.checkbox(
-        "✅ 今天的任務完成了",
+    style.section("今天的進度")
+    done = st.toggle(
+        "今天的任務完成了",
         value=entry.get("completed", False),
         help="只做了一部分也算數。",
         key=f"done_{today.isoformat()}_{topic}",
@@ -222,9 +236,9 @@ if entry is not None:
         ui.save_entry(log, entry)
         st.rerun()
     if entry.get("completed"):
-        st.caption(f"已打勾。目前連續完成 {core.current_streak(log, ui.today())} 天。")
+        st.caption(f"已完成。目前連續完成 {core.current_streak(log, ui.today())} 天。")
     else:
-        st.caption("做了一部分也算數，打勾就好。")
+        st.caption("做了一部分也算數，打開就好。")
 
     with st.expander("我對延伸提問的想法（選填，下次教練會接著聊）"):
         reflection = st.text_area(

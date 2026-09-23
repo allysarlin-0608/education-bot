@@ -349,11 +349,11 @@ def build_history_context(log: dict, topic: str, today: date) -> str:
 # Appended only after today's lesson has been given, so follow-up chat
 # reads like a conversation instead of a fresh six-block lesson each time.
 FOLLOWUP_NOTE = """【App 補充：今天的課程已經給過了】
-她現在是在今天的課程之後追問、回報進度或聊天。這時候六個區塊的輸出格式不適用，也不需要加結尾固定句式：
+她現在是在今天的課程之後追問、回報進度或聊天。這時候不用 JSON 格式，也不需要結尾句，用一般文字回答：
 - 直接用自然的對話回答，通常幾句話到一小段就好，只回應她這次說的內容。
 - 其他規則照舊：語氣、特殊情境、投資內容結尾的免責聲明。
 - 她回報完成任務（包括只做了一部分）時，具體肯定「完成」這件事本身，並提醒她可以在頁面上打勾。
-- 只有在她明確要求一則新的課程內容時，才重新使用完整的六個區塊與結尾固定句式。"""
+- 她要新的一課時，請她換一個主題或改天再來（每個主題每天一課）。"""
 
 
 def build_system_prompt(log: dict, topic: str, today: date, followup: bool = False) -> str:
@@ -436,3 +436,81 @@ def calendar_weeks(log: dict, today: date, weeks: int = 4) -> list:
             row.append((day, status))
         rows.append(row)
     return rows
+
+
+# ------------------------------------------------------------
+# Lessons as structured data (shown as cards)
+# ------------------------------------------------------------
+
+LESSON_FIELDS = ("topic", "core_concept", "example", "tasks",
+                 "followup_question", "reminder", "disclaimer")
+# Chinese keys are accepted too, in case the model uses the field names
+# from the brief.
+_LESSON_ALIASES = {
+    "主題": "topic", "今日主題": "topic", "核心概念": "core_concept", "具體例子": "example",
+    "今日任務": "tasks", "延伸提問": "followup_question", "小提醒": "reminder", "免責聲明": "disclaimer",
+}
+
+
+def _as_tasks(value) -> list:
+    if isinstance(value, list):
+        items = [str(v) for v in value]
+    else:
+        items = re.split(r"[\n；;]+", str(value or ""))
+    items = [re.sub(r"^\s*\d+\s*[.、)）]\s*", "", t).strip(" \t-•・") for t in items]
+    return [t for t in items if t]
+
+
+def _lesson_from_mapping(data: dict):
+    lesson = {k: "" for k in LESSON_FIELDS}
+    lesson["tasks"] = []
+    for key, value in data.items():
+        field = _LESSON_ALIASES.get(key, key)
+        if field == "tasks":
+            lesson["tasks"] = _as_tasks(value)
+        elif field in lesson and value is not None:
+            lesson[field] = str(value).strip()
+    return lesson if (lesson["topic"] or lesson["core_concept"]) else None
+
+
+def parse_lesson(raw: str):
+    """A lesson as a dict of LESSON_FIELDS, from the model's JSON, or from
+    the 【今日主題】… text of lessons saved before the JSON format. Returns
+    None when neither works, so the page can fall back to plain text."""
+    if not raw:
+        return None
+    match = re.search(r"\{.*\}", raw, flags=re.DOTALL)
+    if match:
+        try:
+            data = json.loads(match.group())
+        except json.JSONDecodeError:
+            data = None
+        if isinstance(data, dict):
+            lesson = _lesson_from_mapping(data)
+            if lesson:
+                return lesson
+    if "【" in raw:
+        old = {name: extract_section(raw, name) for name in SECTION_NAMES}
+        clean = re.sub(r"[*#]+", "", raw)
+        old["免責聲明"] = ""
+        for name in SECTION_NAMES:
+            text = old[name].replace(CLOSING_LINE, "").strip()   # drop the closing line
+            if "※" in text and has_disclaimer(text):             # disclaimer placed before it
+                text, _, rest = text.partition("※")
+                old["免責聲明"] = "※" + rest.strip()
+            old[name] = text.strip()
+        tail = clean.split(CLOSING_LINE)[-1].strip() if CLOSING_LINE in clean else ""
+        if not old["免責聲明"] and has_disclaimer(tail):         # disclaimer placed after it
+            old["免責聲明"] = tail
+        return _lesson_from_mapping(old)
+    return None
+
+
+def finalize_lesson(lesson: dict) -> dict:
+    """The disclaimer is required whenever the lesson touches investing,
+    whatever the topic (the prompt asks for it; this guarantees it)."""
+    body = " ".join([lesson["topic"], lesson["core_concept"], lesson["example"],
+                     *lesson["tasks"], lesson["followup_question"], lesson["reminder"]])
+    if INVESTING_WORDS.search(body) and not has_disclaimer(lesson["disclaimer"]):
+        lesson = {**lesson, "disclaimer": DISCLAIMER}
+    return lesson

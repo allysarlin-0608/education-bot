@@ -154,6 +154,31 @@ def parse_json(text: str):
     return data if isinstance(data, dict) else None
 
 
+def ask_raw_json(system, messages, max_tokens):
+    """A JSON-mode completion returned as raw text (non-streaming), for
+    callers with their own fallback parsing. Returns (text, None) or
+    (None, friendly_error)."""
+    client = get_client()
+    if client is None:
+        return None, NO_KEY
+    try:
+        resp = _create(
+            client,
+            model=MODEL_NAME,
+            messages=_prepare(system, messages, max_tokens),
+            max_completion_tokens=max_tokens,
+            reasoning_effort="low",
+            response_format={"type": "json_object"},
+        )
+    except CoachError as e:
+        return None, str(e)
+    text = resp.choices[0].message.content or ""
+    if not text.strip():
+        logger.error("groq returned no text (finish_reason=%s)", resp.choices[0].finish_reason)
+        return None, FAILED
+    return text, None
+
+
 def ask_json(system, messages, max_tokens=tokens.JSON_MAX_TOKENS):
     """Ask for a JSON object (non-streaming). Returns (data, None) or
     (None, friendly_error)."""

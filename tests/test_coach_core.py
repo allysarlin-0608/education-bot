@@ -93,7 +93,7 @@ def test_history_context_mentions_past_and_gap():
 def test_system_prompt_is_core_plus_one_topic():
     prompt = core.build_system_prompt(core.empty_log(), "free", date(2026, 9, 27))
     assert prompt.startswith("你是Allysa的專屬「每日興趣學習教練」")
-    assert core.CLOSING_LINE in prompt
+    assert '"core_concept"' in prompt and '"tasks"' in prompt      # asks for the JSON lesson
     assert "4.7 自由主題" in prompt
     assert "4.2 哲學" not in prompt and "4.3 看書" not in prompt   # only today's topic
     assert "過去七天各主題互動次數" in prompt

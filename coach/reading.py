@@ -1,7 +1,7 @@
 """看書 (part 4.3): the book tracker shown on the lesson page on 看書 days."""
 import streamlit as st
 
-from coach import books, core, llm, tokens, ui
+from coach import books, core, llm, style, tokens, ui
 
 SWITCH_MESSAGE = "好，我們來設定新的一本。"
 RESTART_MESSAGE = "好，我們重新開始。"
@@ -20,7 +20,7 @@ def render(log, today):
         return
     if book["status"] == "reading" and today.isoformat() < book["started_on"]:
         # A date before the book started: no progress to show for it.
-        st.markdown(f"#### 看書：《{book['title']}》")
+        style.text(f"看書：《{book['title']}》", "t-title2")
         st.info(f"《{book['title']}》是從 {book['started_on']} 開始讀的，這一天還沒有這本書的閱讀進度。")
         return
 
@@ -136,9 +136,9 @@ def _placeholder(book):
 
 def _render_header(book):
     if not book["title"]:
-        st.markdown("#### 看書：新的一本書")
+        style.text("看書：新的一本書", "t-title2")
         return
-    st.markdown(f"#### 看書：《{book['title']}》")
+    style.text(f"看書：《{book['title']}》", "t-title2")
     if book["status"] == "reading":
         reading_days = [d for d in range(1, books.DAYS + 1) if book["plan"][d - 1]]
         done = len([d for d in reading_days if str(d) in book["checks"]])
@@ -151,7 +151,7 @@ def _render_bookshelf_start(log, today):
     finished = [b for b in log["books"] if b["status"] == "finished"]
     last = finished[-1] if finished else None
     if last:
-        st.markdown(f"#### 看書：《{last['title']}》讀完了")
+        style.text(f"看書：《{last['title']}》讀完了", "t-title2")
         if last.get("final_summary"):
             with st.chat_message("assistant"):
                 st.markdown(last["final_summary"])
@@ -162,7 +162,7 @@ def _render_bookshelf_start(log, today):
                     st.rerun()
         label = "開始規劃下一本書"
     else:
-        st.markdown("#### 看書")
+        style.text("看書", "t-title2")
         st.markdown(
             "看書用的是 14 天的進度追蹤：先一起把一本書分成 14 天，"
             "之後每天讀完指定範圍，回來聊聊讀到的內容。"
