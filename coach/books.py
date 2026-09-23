@@ -11,8 +11,8 @@ from datetime import date
 
 DAYS = 14
 
-EARLY_FINISH_NOTE = "本書進度已提前完成，這幾天可以拿來複習前面內容、整理筆記，或提前開始下一本書"
-REST_DAY_NOTE = "這天沒有分配章節，可以休息或複習前面的內容"
+EARLY_FINISH_NOTE = "複習／休息：本書進度已提前完成，這幾天可以拿來複習前面內容、整理筆記，或提前開始下一本書"
+REST_DAY_NOTE = "複習／休息：這天沒有分配章節，可以休息或複習前面的內容"
 PLAN_QUESTION = "這樣的分配感覺可以嗎？有沒有哪幾天想要加重或減輕份量？"
 PLAN_CONFIRMED = (
     "進度表已經確定了，從今天開始，你每天讀完指定範圍之後，回來跟我聊聊內容就可以了，"
@@ -282,8 +282,10 @@ def normalize_book(data):
 
 
 def current_book(books: list):
-    """The book she's working on (not finished or switched), if any."""
-    active = [b for b in books if b["status"] in ("setup", "planning", "reading")]
+    """The confirmed book she's reading, if any. Books still being set up
+    are session drafts; setup/planning rows left in storage by older
+    versions are ignored."""
+    active = [b for b in books if b["status"] == "reading"]
     return active[-1] if active else None
 
 

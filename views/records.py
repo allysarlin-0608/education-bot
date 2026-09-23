@@ -58,7 +58,7 @@ for key, label in core.TOPICS.items():
 # ============================================================
 # BOOKSHELF
 # ============================================================
-shelf = [b for b in log["books"] if b["status"] != "setup" or b["title"]]
+shelf = [b for b in log["books"] if b["status"] in ("reading", "finished", "switched")]
 if shelf:
     st.markdown("#### 書架")
     for b in reversed(shelf):

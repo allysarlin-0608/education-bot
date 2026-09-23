@@ -227,6 +227,8 @@ def test_current_book_ignores_finished_and_switched():
     a["status"], b["status"] = "switched", "finished"
     assert books.current_book([a, b]) is None
     c = books.new_book(TODAY)
+    assert books.current_book([a, c, b]) is None          # drafts aren't current
+    c["status"] = "reading"
     assert books.current_book([a, c, b]) is c
 
 

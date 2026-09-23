@@ -4,6 +4,7 @@ import streamlit as st
 from coach import books, core, llm, tokens, ui
 
 SWITCH_MESSAGE = "好，我們來設定新的一本。"
+RESTART_MESSAGE = "好，我們重新開始。"
 
 
 def render(log, today):
@@ -11,7 +12,9 @@ def render(log, today):
     if store.books_error:
         st.warning(store.books_error)
         return
-    book = books.current_book(log["books"])
+    # A book being set up or previewed lives only in this session; it is
+    # written to the database when she presses 確認進度表.
+    book = st.session_state.get("book_draft") or books.current_book(log["books"])
     if book is None:
         _render_bookshelf_start(log, today)
         return
@@ -75,8 +78,13 @@ def _set_awaiting(book, day):
 
 
 def _save(log, book, today):
+    """Drafts (setup / preview) stay in the session; confirmed books are
+    written to storage."""
     book["last_active_on"] = today.isoformat()
-    ui.save_book(log, book)
+    if book["status"] in ("setup", "planning"):
+        st.session_state.book_draft = book
+        return True
+    return ui.save_book(log, book)
 
 
 def _say(chat, text):
@@ -162,8 +170,7 @@ def _render_bookshelf_start(log, today):
 
 def _start_new_book(log, today, intro):
     book = books.new_book(today)
-    log["books"].append(book)
-    _save(log, book, today)
+    _save(log, book, today)          # a draft: not in log["books"] yet
     opening = books.question_for(book)
     st.session_state[f"book_chat_{book['id']}"] = [
         {"role": "assistant", "content": f"{intro}{opening}" if intro else opening}
@@ -174,12 +181,42 @@ def _start_new_book(log, today, intro):
 
 def _render_other_options(log, book, today):
     with st.expander("其他選項"):
-        st.caption("想換一本書也完全沒問題，我們直接設定新的一本就好。")
-        if st.button("換一本書", key=f"switch_{book['id']}"):
-            book["status"] = "switched"
-            _save(log, book, today)
-            _start_new_book(log, today, intro=SWITCH_MESSAGE)
-            st.rerun()
+        if book["chapters"] and book["status"] in ("planning", "reading"):
+            _render_title_editor(log, book, today)
+            st.divider()
+        if book["status"] == "reading":
+            st.caption("想換一本書也完全沒問題，這本的進度會留在書架上，我們直接設定新的一本。")
+            if st.button("放棄這本書，重新開始一本", key=f"switch_{book['id']}"):
+                book["status"] = "switched"
+                if _save(log, book, today):
+                    _start_new_book(log, today, intro=SWITCH_MESSAGE)
+                st.rerun()
+        else:
+            st.caption("還沒確認進度表，隨時可以從頭重新設定。")
+            if st.button("重新開始設定", key=f"restart_{book['id']}"):
+                st.session_state.book_draft = None
+                _start_new_book(log, today, intro=RESTART_MESSAGE)
+                st.rerun()
+
+
+def _render_title_editor(log, book, today):
+    st.markdown("**修改某一章的標題**")
+    number = st.selectbox(
+        "哪一章", list(range(1, len(book["chapters"]) + 1)),
+        format_func=lambda n: f"第{n}章：{book['chapters'][n - 1]}",
+        key=f"edit_ch_{book['id']}",
+    )
+    new_title = st.text_input("新的標題", key=f"edit_title_{book['id']}_{number}",
+                              value=book["chapters"][number - 1])
+    if st.button("儲存標題", key=f"edit_save_{book['id']}") and new_title.strip():
+        book["chapters"][number - 1] = new_title.strip()
+        if _save(log, book, today):
+            chat = _chat(book, today)
+            if book["status"] == "planning":
+                _say(chat, f"改好了，第{number}章是「{new_title.strip()}」。更新後的進度表：\n\n{books.plan_table(book)}")
+            else:
+                _say(chat, f"改好了，第{number}章是「{new_title.strip()}」。")
+        st.rerun()
 
 
 # ============================================================
@@ -224,9 +261,17 @@ def _apply_manual_move(log, book, chat, today, move, day, done_text):
 
 
 def _confirm_plan(log, book, chat, today):
+    """The first time the book is written to storage."""
     book["status"] = "reading"
+    if book not in log["books"]:
+        log["books"].append(book)
+    if not _save(log, book, today):
+        # Not saved: stay a draft so nothing is lost and she can retry.
+        book["status"] = "planning"
+        log["books"].remove(book)
+        return
+    st.session_state.book_draft = None
     _say(chat, books.PLAN_CONFIRMED)
-    _save(log, book, today)
 
 
 def _handle_planning(log, book, chat, text, today):
