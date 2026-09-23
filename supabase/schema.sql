@@ -1,4 +1,4 @@
--- 在 Supabase 的 SQL Editor 貼上並執行一次，建立學習紀錄的資料表。
+-- 在 Supabase 的 SQL Editor 貼上並執行一次，建立所有需要的資料表。
 create table public.learning_entries (
   date date not null,
   topic text not null,
@@ -13,3 +13,11 @@ create table public.learning_entries (
 );
 alter table public.learning_entries enable row level security;
 grant select, insert, update, delete on public.learning_entries to service_role;
+
+create table public.reading_books (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table public.reading_books enable row level security;
+grant select, insert, update, delete on public.reading_books to service_role;

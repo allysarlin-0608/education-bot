@@ -3,7 +3,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import core, ui
+from coach import books, core, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -54,6 +54,32 @@ for key, label in core.TOPICS.items():
         st.progress(p["fraction"], text=f"再 {p['remaining']} 次進入{p['next_level']}")
     else:
         st.progress(1.0, text="已經到進階")
+
+# ============================================================
+# BOOKSHELF
+# ============================================================
+shelf = [b for b in log["books"] if b["status"] != "setup" or b["title"]]
+if shelf:
+    st.markdown("#### 書架")
+    for b in reversed(shelf):
+        passed = len(b["checks"])
+        reading_days = len([d for d in b["plan"] if d])
+        status = {
+            "setup": "設定中",
+            "planning": "排進度中",
+            "reading": f"閱讀中・已確認 {passed} / {reading_days} 個閱讀日",
+            "finished": f"{b['finished_on']} 讀完",
+            "switched": f"換了別本・讀到第 {passed} 天",
+        }[b["status"]]
+        author = f"　{b['author']}" if b["author"] else ""
+        with st.expander(f"《{b['title'] or '（還沒有書名）'}》{author}・{status}"):
+            if b["plan"]:
+                st.markdown(books.plan_table(b))
+            for day, check in sorted(b["checks"].items(), key=lambda kv: int(kv[0])):
+                st.markdown(f"**第{day}天**（{check['passed_on']}）：{check['summary']}")
+            if b.get("final_summary"):
+                with st.container(border=True):
+                    st.markdown(b["final_summary"])
 
 # ============================================================
 # HISTORY

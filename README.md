@@ -12,6 +12,13 @@ Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知�
 - **學習紀錄**：日期、主題、難度、是否完成、今日主題、延伸提問、她的回應。
   有設定 Supabase 時存在雲端資料表 `learning_entries`，沒設定時存在 `data/learning_log.json`。
 - **打勾完成與連續天數**：今天還沒打勾時，連續天數會算到昨天為止。
+- **看書是 14 天的書籍追蹤**（第四部分 4.3），不是每日一課：
+  - 第一階段一次問一個問題（書名、作者、章數、頁數、章節標題），可以直接貼整份目錄，
+    接著用固定的 14 天演算法分配章節，可以用聊天或按鈕微調相鄰兩天的份量，確認後開始。
+  - 第二階段每天讀完回來用自己的話分享，教練判斷有沒有讀懂：通過才打勾、進到下一天；
+    一次讀了好幾天就一天一天確認；全部讀完會有具體的總結。隨時可以換書。
+  - 章節分配和進度由程式精確計算（`coach/books.py`），AI 只負責理解她的分享、整理太亂的目錄、
+    把「第3天想少一點」這類要求換成調整動作。
 - **學習紀錄頁面**：目前／最長連續天數、最近四週打勾表、各主題目前難度和離下一級還差幾次、
   每一次課程的內容、延伸提問與想法（可以補打勾、補寫想法），以及備份下載和匯入。
 - **追問不用六個區塊**：只有當天第一次上課用完整格式，之後的追問用自然對話回答
@@ -22,9 +29,11 @@ Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知�
 - `streamlit_app.py`：進入點，負責共用設定和兩個頁面的切換。
 - `views/daily.py`：每日學習（上課和追問）。
 - `views/records.py`：學習紀錄。
+- `coach/books.py`：看書的設定流程、14 天分配和驗收邏輯；`coach/reading.py`：看書的畫面；
+  `coach/llm.py`：呼叫 Groq。
 - `coach/core.py`：排程、難度、連續天數等邏輯；`coach/storage.py`：紀錄存在 Supabase 或檔案；
   `coach/ui.py`：頁面共用的小工具。
-- `supabase/schema.sql`：建立 Supabase 資料表的 SQL。
+- `supabase/schema.sql`：建立所有 Supabase 資料表的 SQL；`supabase/books.sql`：只建立看書用的資料表。
 
 ## 在 Streamlit Cloud 部署
 
@@ -42,6 +51,7 @@ Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知�
 
 1. 到 https://supabase.com 註冊並建立一個新專案（Free 方案即可）。
 2. 左邊選 **SQL Editor**，貼上 `supabase/schema.sql` 的內容，按 **Run**。
+   （之前已經執行過舊版 schema.sql 的話，只要再執行 `supabase/books.sql`，建立看書用的資料表。）
 3. 到 **Project Settings → API Keys**，複製 **secret key**（`sb_secret_` 開頭）；
    在 **Project Settings → Data API**（或專案首頁）複製 **Project URL**。
 4. 在 Streamlit 的 app **Settings → Secrets** 加上：

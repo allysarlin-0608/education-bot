@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 import streamlit as st
 
-from coach import core, storage
+from coach import storage
 
 TIMEZONE = ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))
 
@@ -56,6 +56,16 @@ def save_entry(log, entry):
         st.session_state.coach_store.save_entry(log, entry)
     except storage.StorageError as e:
         st.session_state.coach_save_error = f"這筆紀錄沒有存成功：{e}"
+        return False
+    return True
+
+
+def save_book(log, book):
+    """Save one book's state; same error handling as save_entry."""
+    try:
+        st.session_state.coach_store.save_book(log, book)
+    except storage.StorageError as e:
+        st.session_state.coach_save_error = f"讀書進度沒有存成功：{e}"
         return False
     return True
 

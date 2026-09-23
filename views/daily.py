@@ -1,54 +1,8 @@
 import streamlit as st
 
-from coach import core, ui
-
-try:
-    import groq
-    _GROQ_AVAILABLE = True
-except ImportError:
-    _GROQ_AVAILABLE = False
-
-MODEL_NAME = "openai/gpt-oss-120b"
+from coach import core, llm, reading, ui
 
 log = st.session_state.coach_log
-
-
-def get_client():
-    key = st.session_state.get("api_key", "")
-    if not key or not _GROQ_AVAILABLE:
-        return None
-    return groq.Groq(api_key=key)
-
-
-def stream_ai_response(client, system_prompt, messages):
-    full_messages = [{"role": "system", "content": system_prompt}] + messages
-    stream = client.chat.completions.create(
-        model=MODEL_NAME,
-        max_tokens=2048,
-        messages=full_messages,
-        stream=True,
-    )
-    for chunk in stream:
-        delta = chunk.choices[0].delta.content
-        if delta:
-            yield delta
-
-
-def ask_coach(system_prompt):
-    """Stream the coach's reply to the current chat and return its text,
-    or None if the call couldn't be made."""
-    client = get_client()
-    with st.chat_message("assistant"):
-        if client is None:
-            st.warning("還沒有設定 Groq API key，請先在側邊欄設定。")
-            return None
-        try:
-            return st.write_stream(
-                stream_ai_response(client, system_prompt, st.session_state.coach_messages)
-            )
-        except Exception as e:
-            st.error(f"呼叫 Groq 時出了點問題：{e}")
-            return None
 
 
 # ============================================================
@@ -60,7 +14,7 @@ with st.sidebar:
     st.markdown("### ◎ 每日學習教練")
     st.caption("每天 15 到 20 分鐘，一個知識點、一個小任務。")
 
-    client_ready = bool(st.session_state.api_key) and _GROQ_AVAILABLE
+    client_ready = bool(st.session_state.api_key) and llm.GROQ_AVAILABLE
     if not client_ready:
         with st.expander("設定 API key", expanded=not st.session_state.api_key):
             entered_key = st.text_input(
@@ -72,7 +26,7 @@ with st.sidebar:
             if entered_key != st.session_state.api_key:
                 st.session_state.api_key = entered_key
                 st.rerun()
-            if not _GROQ_AVAILABLE:
+            if not llm.GROQ_AVAILABLE:
                 st.caption("缺少套件：請執行 `pip install groq`。")
 
     today = st.date_input("日期", value=today_default)
@@ -98,6 +52,11 @@ topic = st.selectbox(
     index=topic_keys.index(scheduled),
     format_func=lambda k: core.TOPICS[k] + ("（今日行程）" if k == scheduled else ""),
 )
+if topic == "reading":
+    # 看書 is a two-phase book tracker (part 4.3), not a daily lesson.
+    reading.render(log, today)
+    st.stop()
+
 session_number = core.topic_session_number(log, topic, today)
 st.caption(
     f"這是你第 {session_number} 次接觸「{core.TOPICS[topic]}」，"
@@ -127,7 +86,7 @@ if not st.session_state.coach_messages:
         st.session_state.coach_messages.append({"role": "user", "content": kickoff})
         with st.chat_message("user"):
             st.markdown(kickoff)
-        lesson = ask_coach(core.build_system_prompt(log, topic, today))
+        lesson = llm.stream_reply(core.build_system_prompt(log, topic, today), st.session_state.coach_messages)
         if lesson:
             st.session_state.coach_messages.append({"role": "assistant", "content": lesson})
             entry = core.start_entry(log, today, topic)
@@ -183,7 +142,7 @@ if prompt is not None and prompt.strip():
     st.session_state.coach_messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
-    reply = ask_coach(core.build_system_prompt(log, topic, today, followup=True))
+    reply = llm.stream_reply(core.build_system_prompt(log, topic, today, followup=True), st.session_state.coach_messages)
     if reply:
         st.session_state.coach_messages.append({"role": "assistant", "content": reply})
     else:

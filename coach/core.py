@@ -7,6 +7,8 @@ import re
 from datetime import date, timedelta
 from pathlib import Path
 
+from coach import books
+
 SYSTEM_PROMPT_PATH = Path(__file__).with_name("system_prompt.md")
 DEFAULT_LOG_PATH = Path(
     os.environ.get(
@@ -73,7 +75,7 @@ def level_for_session(session_number: int) -> str:
 #   followup_question, reflection, lesson
 
 def empty_log() -> dict:
-    return {"version": 1, "entries": []}
+    return {"version": 1, "entries": [], "books": []}
 
 
 def load_log(path: Path = DEFAULT_LOG_PATH) -> dict:
@@ -123,7 +125,12 @@ def parse_log(data) -> dict:
             entry["session_number"] = counts[entry["topic"]]
         if not entry["level"]:
             entry["level"] = level_for_session(entry["session_number"])
-    return {"version": 1, "entries": [{k: e[k] for k in ENTRY_FIELDS} for e in ordered]}
+    book_list = [b for b in map(books.normalize_book, data.get("books") or []) if b]
+    return {
+        "version": 1,
+        "entries": [{k: e[k] for k in ENTRY_FIELDS} for e in ordered],
+        "books": book_list,
+    }
 
 
 def save_log(log: dict, path: Path = DEFAULT_LOG_PATH) -> None:

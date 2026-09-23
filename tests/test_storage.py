@@ -1,9 +1,9 @@
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 import requests
 
-from coach import core, storage
+from coach import books, core, storage
 
 URL = "https://abc.supabase.co"
 KEY = "sb_secret_test"
@@ -22,17 +22,20 @@ class FakeResponse:
 class FakePostgrest:
     """Just enough of PostgREST's /rest/v1/<table> behavior for the store."""
 
-    def __init__(self, key=KEY):
+    def __init__(self, key=KEY, books_table=True):
         self.key = key
         self.rows = {}
+        self.books = {} if books_table else None
         self.calls = []
 
     def request(self, method, url, params=None, json=None, headers=None, timeout=None):
         self.calls.append((method, params, headers))
-        assert url == f"{URL}/rest/v1/{storage.TABLE}"
         assert timeout
         if headers.get("apikey") != self.key:
             return FakeResponse(401, {"message": "Invalid API key"})
+        if url == f"{URL}/rest/v1/{storage.BOOKS_TABLE}":
+            return self.books_request(method, params, json)
+        assert url == f"{URL}/rest/v1/{storage.TABLE}"
         if method == "GET":
             rows = sorted(self.rows.values(), key=lambda r: (r["date"], r["topic"]))
             return FakeResponse(200, [dict(r, updated_at="2026-09-23T00:00:00Z") for r in rows])
@@ -47,6 +50,24 @@ class FakePostgrest:
             if not params:
                 return FakeResponse(400, {"message": "DELETE requires a WHERE clause"})
             self.rows.clear()
+            return FakeResponse(204)
+        raise AssertionError(method)
+
+    def books_request(self, method, params, json):
+        if self.books is None:
+            return FakeResponse(404, {"code": "PGRST205", "message": "Could not find the table"})
+        if method == "GET":
+            return FakeResponse(200, [{"data": b["data"]} for b in
+                                      sorted(self.books.values(), key=lambda b: b["updated_at"])])
+        if method == "POST":
+            assert params == {"on_conflict": "id"}
+            for row in json:
+                datetime.fromisoformat(row["updated_at"])     # a real timestamp
+                self.books[row["id"]] = row
+            return FakeResponse(201)
+        if method == "DELETE":
+            assert params
+            self.books.clear()
             return FakeResponse(204)
         raise AssertionError(method)
 
@@ -139,3 +160,30 @@ def test_parse_log_fills_missing_fields():
         ("2026-09-01", 1, "入門"), ("2026-09-02", 2, "入門")]
     assert all(set(e) == set(core.ENTRY_FIELDS) for e in log["entries"])
     assert log["entries"][0]["title"] == "第一章" and log["entries"][1]["completed"] is True
+
+
+def test_books_round_trip_and_replace():
+    fake, store = make()
+    log = store.load()
+    book = books.new_book(date(2026, 9, 23))
+    book["title"] = "原子習慣"
+    log["books"].append(book)
+    store.save_book(log, book)
+    book["status"] = "reading"
+    store.save_book(log, book)
+    assert len(fake.books) == 1
+    loaded = store.load()
+    assert loaded["books"] == [book] and store.books_error is None
+    store.replace(core.empty_log())
+    assert fake.books == {}
+
+
+def test_missing_books_table_only_disables_books():
+    fake, store = make(FakePostgrest(books_table=False))
+    log = core.empty_log()
+    store.save_entry(log, core.start_entry(log, date(2026, 9, 23), "cosmos"))
+    loaded = store.load()
+    assert len(loaded["entries"]) == 1 and loaded["books"] == []
+    assert store.books_error == storage.BOOKS_TABLE_MISSING
+    store.replace(loaded)                  # doesn't touch the missing table
+    assert len(fake.rows) == 1
