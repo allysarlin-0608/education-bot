@@ -1,0 +1,112 @@
+from datetime import date
+
+from coach import core
+
+WED = date(2026, 9, 23)
+
+
+def make_log(*entries):
+    log = core.empty_log()
+    for day, topic, completed in entries:
+        e = core.start_entry(log, day, topic)
+        e["completed"] = completed
+    return log
+
+
+def test_weekly_schedule():
+    assert core.scheduled_topic(date(2026, 9, 21)) == "fashion"      # Mon
+    assert core.scheduled_topic(date(2026, 9, 22)) == "philosophy"   # Tue
+    assert core.scheduled_topic(WED) == "reading"
+    assert core.scheduled_topic(date(2026, 9, 24)) == "cosmos"
+    assert core.scheduled_topic(date(2026, 9, 25)) == "fashion"
+    assert core.scheduled_topic(date(2026, 9, 26)) == "reading"
+    assert core.scheduled_topic(date(2026, 9, 27)) == "free"
+    assert core.weekday_zh(WED) == "星期三"
+
+
+def test_levels_follow_part_six():
+    assert [core.level_for_session(n) for n in (1, 3, 4, 7, 8, 20)] == [
+        "入門", "入門", "中階", "中階", "進階", "進階"]
+
+
+def test_session_number_is_per_topic():
+    log = make_log(
+        (date(2026, 9, 1), "philosophy", True),
+        (date(2026, 9, 8), "philosophy", True),
+        (date(2026, 9, 2), "reading", True),
+    )
+    assert core.topic_session_number(log, "philosophy", WED) == 3
+    assert core.topic_session_number(log, "reading", WED) == 2
+    assert core.topic_session_number(log, "cosmos", WED) == 1
+
+
+def test_start_entry_is_idempotent_for_same_day():
+    log = core.empty_log()
+    a = core.start_entry(log, WED, "reading")
+    b = core.start_entry(log, WED, "reading")
+    assert a is b and len(log["entries"]) == 1
+
+
+def test_streak_counts_through_yesterday_until_today_done():
+    log = make_log(
+        (date(2026, 9, 20), "free", True),
+        (date(2026, 9, 21), "fashion", True),
+        (date(2026, 9, 22), "philosophy", True),
+        (WED, "reading", False),
+    )
+    assert core.current_streak(log, WED) == 3
+    core.find_entry(log, WED, "reading")["completed"] = True
+    assert core.current_streak(log, WED) == 4
+
+
+def test_streak_resets_after_gap():
+    log = make_log((date(2026, 9, 20), "free", True))
+    assert core.current_streak(log, WED) == 0
+
+
+def test_extract_section_handles_markdown():
+    lesson = (
+        "**【今日主題】**：哲學 — 控制二分法（入門）\n"
+        "【核心概念】：重點。\n"
+        "### 【延伸提問】：哪些是你能控制的？\n"
+        "【小提醒】：很好。\n"
+        "完成後記得打勾，連續完成比完美更重要。"
+    )
+    assert core.extract_section(lesson, "今日主題") == "哲學 — 控制二分法（入門）"
+    assert core.extract_section(lesson, "延伸提問") == "哪些是你能控制的？"
+    assert core.extract_section(lesson, "不存在") == ""
+
+
+def test_history_context_mentions_past_and_gap():
+    log = make_log((date(2026, 9, 9), "reading", True))
+    e = log["entries"][0]
+    e["title"] = "看書 — 《原子習慣》第一章（入門）"
+    e["followup_question"] = "你最想養成哪個習慣？"
+    e["reflection"] = "每天寫商業計劃"
+    ctx = core.build_history_context(log, "reading", WED)
+    assert "第 2 次" in ctx and "入門" in ctx
+    assert "《原子習慣》" in ctx
+    assert "每天寫商業計劃" in ctx
+    assert "14 天" in ctx and "情境二" in ctx
+
+
+def test_system_prompt_includes_full_instructions():
+    prompt = core.build_system_prompt(core.empty_log(), "free", date(2026, 9, 27))
+    assert prompt.startswith("每日興趣學習教練")
+    assert core.CLOSING_LINE in prompt
+    assert "過去七天各主題互動次數" in prompt
+
+
+def test_log_round_trip(tmp_path):
+    path = tmp_path / "log.json"
+    log = make_log((WED, "cosmos", True))
+    core.save_log(log, path)
+    assert core.load_log(path) == log
+    assert core.load_log(tmp_path / "missing.json") == core.empty_log()
+
+
+def test_followup_prompt_relaxes_six_block_format():
+    lesson_prompt = core.build_system_prompt(core.empty_log(), "reading", WED)
+    followup_prompt = core.build_system_prompt(core.empty_log(), "reading", WED, followup=True)
+    assert core.FOLLOWUP_NOTE not in lesson_prompt
+    assert followup_prompt == f"{lesson_prompt}\n\n{core.FOLLOWUP_NOTE}"
