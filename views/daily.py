@@ -132,9 +132,14 @@ with st.sidebar:
             if not llm.GROQ_AVAILABLE:
                 st.caption("缺少套件：請執行 `pip install groq`。")
 
-    if "w_date" not in st.session_state:
+    # No future dates: lessons "done" in the future would count toward the
+    # real streak and levels (and a date past max_value makes Streamlit error).
+    latest = ui.today()
+    if st.session_state.coach_date > latest:
+        st.session_state.coach_date = latest
+    if "w_date" not in st.session_state or st.session_state.w_date > latest:
         st.session_state.w_date = st.session_state.coach_date
-    today = st.date_input("日期", key="w_date")
+    today = st.date_input("日期", key="w_date", max_value=latest)
     st.session_state.coach_date = today
 
     st.divider()
