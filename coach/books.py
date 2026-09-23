@@ -105,19 +105,66 @@ def strip_page_numbers(titles: list) -> list:
     return [m.group("title").strip() if m else t for t, m in zip(titles, matches)]
 
 
+# A chapter marker anywhere in the text: 第3章 / 第十二回 / Chapter 3 / Ch. 3,
+# or "3." / "3、" / "3)" at the start of a line or right after a separator.
+MARKER = re.compile(
+    r"第\s*(?P<zh>\d+|[零〇一二兩三四五六七八九十百]+)\s*[章回篇]"
+    r"|(?:chapter|ch\.)\s*(?P<en>\d+)"
+    r"|(?:^|(?<=[\n、，,；;。]))\s*(?P<num>\d{1,3})\s*[.．、)）](?!\d)",
+    re.IGNORECASE | re.MULTILINE,
+)
+SEPARATORS = re.compile(r"[\n、，,；;]+")
+EDGE_PUNCTUATION = " \t\u3000、，,；;:：.．。-—–)）"
+FRONT_BACK_MATTER = {
+    "目錄", "目次", "contents", "序", "序言", "自序", "前言", "推薦序", "導讀", "導論", "引言",
+    "後記", "結語", "附錄", "致謝", "謝辭", "參考資料", "參考書目", "註釋", "注釋", "索引",
+}
+
+
+def _marker_number(match):
+    raw = match.group("zh") or match.group("en") or match.group("num")
+    return int(raw) if raw.isdigit() else cn_to_int(raw)
+
+
+def parse_toc_detail(text: str) -> dict:
+    """Split a pasted table of contents into chapter titles, without AI.
+
+    With chapter markers (第N章 / Chapter N / N.) the text is cut at each
+    marker, whatever separates them (new lines, 、，；, or nothing), and
+    the chapter numbers are kept so gaps can be pointed out. Without
+    markers it is split on new lines, or else on 、，；. Front/back matter
+    such as 序 or 附錄 is dropped.
+
+    Returns {"titles": [...], "numbers": [...] or None}."""
+    text = text.replace("\r", "")
+    markers = [m for m in MARKER.finditer(text) if _marker_number(m)]
+    if len(markers) >= 2:
+        titles, numbers = [], []
+        for m, nxt in zip(markers, markers[1:] + [None]):
+            body = text[m.end(): nxt.start() if nxt else len(text)]
+            # Stop at a line break: what follows on later lines before the
+            # next marker (e.g. 附錄, a part heading) isn't this chapter's title.
+            body = body.strip(EDGE_PUNCTUATION + "\n").split("\n")[0]
+            numbers.append(_marker_number(m))
+            titles.append(body.strip(EDGE_PUNCTUATION))
+        titles = strip_page_numbers(titles)
+        return {"titles": [t or f"第{n}章" for t, n in zip(titles, numbers)], "numbers": numbers}
+
+    parts = [p.strip(EDGE_PUNCTUATION) for p in (text.split("\n") if "\n" in text.strip() else SEPARATORS.split(text))]
+    parts = [p for p in parts if p and p.lower() not in FRONT_BACK_MATTER]
+    return {"titles": strip_page_numbers(parts), "numbers": None}
+
+
 def parse_toc(text: str) -> list:
-    """Chapter titles, in order, from a pasted table of contents. Returns []
-    unless the numbered lines run 1, 2, 3, ... without gaps."""
-    found = [p for p in (parse_chapter_line(l) for l in text.splitlines()) if p]
-    numbers = [n for n, _ in found]
-    if len(found) < 2 or numbers != list(range(1, len(found) + 1)):
-        return []
-    titles = strip_page_numbers([title for _, title in found])
-    return [title or f"第{n}章" for n, title in zip(numbers, titles)]
+    """Chapter titles from a pasted table of contents ([] if fewer than 2)."""
+    titles = parse_toc_detail(text)["titles"]
+    return titles if len(titles) >= 2 else []
 
 
-def looks_like_toc(text: str) -> bool:
-    return len([l for l in text.splitlines() if l.strip()]) >= 3
+def has_several_chapters(text: str) -> bool:
+    """True when an answer clearly holds more than one chapter, so it must
+    never be stored as a single title."""
+    return len([m for m in MARKER.finditer(text) if _marker_number(m)]) >= 2
 
 
 def is_yes(text: str) -> bool:
@@ -215,6 +262,8 @@ def new_book(today: date) -> dict:
         "total_pages": 0,
         "chapters": [],
         "pending_toc": [],
+        "pending_numbers": [],
+        "pending_raw": "",
         "plan": [],
         "checks": {},              # "day" -> {"passed_on": iso date, "summary": her words}
         "started_on": today.isoformat(),
@@ -250,38 +299,65 @@ def question_for(book: dict) -> str:
     return QUESTIONS[book["step"]].format(title=book["title"])
 
 
+TOC_HELP = (
+    "沒問題的話回答「對」；想改某一章就打「第3章：新的標題」；"
+    "也可以整份重新貼一次，或直接告訴我正確的章數。"
+)
+
+
+def toc_preview(book: dict) -> str:
+    """The parsed chapter list, with any mismatch against the chapter
+    count she gave spelled out, for her to confirm."""
+    titles = book["pending_toc"]
+    listing = "\n".join(f"{i}. {t}" for i, t in enumerate(titles, 1))
+    count = book["chapter_count"]
+    lines = [f"我從目錄整理出 {len(titles)} 章：\n\n{listing}\n"]
+    if len(titles) != count:
+        diff = f"多了 {len(titles) - count} 章" if len(titles) > count else f"少了 {count - len(titles)} 章"
+        lines.append(f"跟你一開始說的 {count} 章不一樣（{diff}），幫你確認一下。")
+        numbers = book.get("pending_numbers") or []
+        if numbers:
+            missing = [n for n in range(1, max(max(numbers), count) + 1) if n not in numbers]
+            repeated = sorted({n for n in numbers if numbers.count(n) > 1})
+            if missing:
+                lines.append("目錄裡沒有找到：" + "、".join(f"第{n}章" for n in missing) + "。")
+            if repeated:
+                lines.append("出現不只一次：" + "、".join(f"第{n}章" for n in repeated) + "。")
+        lines.append(f"回答「對」就以這 {len(titles)} 章為準。")
+    lines.append(TOC_HELP)
+    if book.get("pending_raw"):
+        lines.append("如果這其實是同一章的標題，回答「這是一章」就好。")
+    return "\n".join(lines)
+
+
+def _show_toc(book: dict, titles: list, numbers=None, raw="") -> str:
+    book["pending_toc"] = list(titles)
+    book["pending_numbers"] = list(numbers or [])
+    # Only set when a single line was split on 、，； with no chapter
+    # markers: that could have been one title, so she can undo the split.
+    book["pending_raw"] = raw if not numbers and "\n" not in raw.strip() else ""
+    book["step"] = "confirm_toc"
+    return toc_preview(book)
+
+
 def _finish_setup(book: dict) -> str:
     book["chapter_count"] = len(book["chapters"])
     book["plan"] = allocate(book["chapter_count"])
     book["status"] = "planning"
     book["step"] = None
     book["pending_toc"] = []
+    book["pending_numbers"] = []
+    book["pending_raw"] = ""
     return (
         f"《{book['title']}》共 {book['chapter_count']} 章、{book['total_pages']} 頁，"
-        f"分成 14 天，每天大約 {pages_per_day(book['total_pages'])} 頁：\n\n"
+        f"分成 14 天，每天大約 {pages_per_day(book['total_pages'])} 頁。"
+        f"下面是完整的 14 天預覽，按「確認進度表」之後才會正式開始：\n\n"
         f"{plan_table(book)}\n\n{PLAN_QUESTION}"
     )
 
 
-def apply_toc(book: dict, titles: list) -> str:
-    """Use a parsed table of contents. Gently double-checks the chapter
-    count when it disagrees with what she said earlier."""
-    if len(titles) == book["chapter_count"]:
-        book["chapters"] = list(titles)
-        return _finish_setup(book)
-    book["pending_toc"] = list(titles)
-    book["step"] = "confirm_count"
-    return (
-        f"我從目錄整理出 {len(titles)} 章，跟你一開始說的 {book['chapter_count']} 章不太一樣，"
-        f"幫你確認一下：這本書應該是 {len(titles)} 章嗎？回答「是」，或告訴我正確的章數就好。"
-    )
-
-
-def answer_setup(book: dict, text: str):
-    """Advance phase 1 with her answer. Returns (reply, needs_toc_help):
-    needs_toc_help means the answer looks like a pasted table of contents
-    that parse_toc couldn't read, so the caller should ask the model to
-    extract titles and pass them to apply_toc."""
+def answer_setup(book: dict, text: str) -> str:
+    """Advance phase 1 with her answer and return the coach's reply."""
     text = text.strip()
     step = book["step"]
 
@@ -295,22 +371,23 @@ def answer_setup(book: dict, text: str):
         value = parse_number(text)
         if value is None:
             example = "12" if step == "chapter_count" else "320"
-            return NEED_NUMBER.format(example=example, question=question_for(book)), False
+            return NEED_NUMBER.format(example=example, question=question_for(book))
         book[step] = value
         book["step"] = "total_pages" if step == "chapter_count" else "chapters"
     elif step == "chapters":
         return _answer_chapters(book, text)
-    elif step == "confirm_count":
-        return _answer_confirm_count(book, text), False
-    return question_for(book), False
+    elif step == "confirm_toc":
+        return _answer_confirm_toc(book, text)
+    return question_for(book)
 
 
-def _answer_chapters(book: dict, text: str):
-    toc = parse_toc(text)
-    if toc:
-        return apply_toc(book, toc), False
-    if looks_like_toc(text) and not book["chapters"]:
-        return "", True
+def _answer_chapters(book: dict, text: str) -> str:
+    # Several chapters in one answer (a pasted table of contents, on one
+    # line or many): list them for her to confirm, never store as one title.
+    if has_several_chapters(text) or not book["chapters"]:
+        detail = parse_toc_detail(text)
+        if len(detail["titles"]) >= 2:
+            return _show_toc(book, detail["titles"], detail["numbers"], raw=text)
 
     expected = len(book["chapters"]) + 1
     parsed = parse_chapter_line(text)
@@ -321,43 +398,62 @@ def _answer_chapters(book: dict, text: str):
                 f"幫你確認一下：現在輪到第{expected}章，你寫的是第{number}章。"
                 f"如果這本書的章數跟一開始說的 {book['chapter_count']} 章不一樣，直接告訴我正確的章數；"
                 f"不然就給我第{expected}章的標題就好。"
-            ), False
+            )
     else:
         # A bare number here is a corrected chapter count, not a title.
         if re.fullmatch(r"\d+\s*章?", text):
             book["chapter_count"] = int(re.match(r"\d+", text).group())
             if len(book["chapters"]) >= book["chapter_count"]:
                 book["chapters"] = book["chapters"][: book["chapter_count"]]
-                return _finish_setup(book), False
-            return f"好，是 {book['chapter_count']} 章。第{expected}章的標題是？（第{expected}章：___）", False
+                return _finish_setup(book)
+            return f"好，是 {book['chapter_count']} 章。第{expected}章的標題是？（第{expected}章：___）"
         title = text
     book["chapters"].append(title or f"第{expected}章")
     if len(book["chapters"]) >= book["chapter_count"]:
-        return _finish_setup(book), False
-    n = len(book["chapters"]) + 1
-    return f"第{n}章的標題是？（第{n}章：___）", False
-
-
-def _answer_confirm_count(book: dict, text: str) -> str:
-    toc = book["pending_toc"]
-    number = parse_number(text)
-    if is_yes(text) or number == len(toc):
-        book["chapters"] = toc
         return _finish_setup(book)
-    if number is None:
-        return f"這本書應該是 {len(toc)} 章嗎？回答「是」，或告訴我正確的章數就好。"
-    book["chapter_count"] = number
-    book["pending_toc"] = []
-    book["step"] = "chapters"
-    if number > len(toc):
-        book["chapters"] = toc
-        n = len(toc) + 1
-        return f"好，是 {number} 章。目錄裡有 {len(toc)} 章，還差後面幾章：第{n}章的標題是？（第{n}章：___）"
-    book["chapters"] = []
-    return (
-        f"好，是 {number} 章。目錄裡可能多了序、附錄之類的部分，"
-        "可以再貼一次只有正式章節的目錄嗎？或是一章一章告訴我也可以，從「第1章：___」開始。"
-    )
+    n = len(book["chapters"]) + 1
+    return f"第{n}章的標題是？（第{n}章：___）"
+
+
+EDIT_TITLE = re.compile(r"^\s*第\s*(\d+|[零〇一二兩三四五六七八九十百]+)\s*章\s*[:：]\s*(.+)$")
+
+
+def parse_title_edit(text: str):
+    """(chapter number, new title) for 「第3章：新的標題」, else None."""
+    match = EDIT_TITLE.match(text)
+    if not match or has_several_chapters(text):
+        return None
+    raw = match.group(1)
+    number = int(raw) if raw.isdigit() else cn_to_int(raw)
+    return (number, match.group(2).strip()) if number else None
+
+
+def _answer_confirm_toc(book: dict, text: str) -> str:
+    titles = book["pending_toc"]
+    if is_yes(text):
+        book["chapters"] = list(titles)
+        return _finish_setup(book)
+    if book.get("pending_raw") and re.fullmatch(r"(這|那)?(其實)?(是|只是)?(同)?一章(的標題)?[。!！]?|不是|不對", text):
+        book["chapters"] = [book["pending_raw"].strip()]
+        book["pending_toc"], book["pending_numbers"], book["pending_raw"] = [], [], ""
+        book["step"] = "chapters"
+        if len(book["chapters"]) >= book["chapter_count"]:
+            return _finish_setup(book)
+        return f"好，第1章是「{book['chapters'][0]}」。第2章的標題是？（第2章：___）"
+    edit = parse_title_edit(text)
+    if edit:
+        number, title = edit
+        if not 1 <= number <= len(titles):
+            return f"目前清單只有 {len(titles)} 章，沒有第{number}章。{TOC_HELP}"
+        titles[number - 1] = title
+        return f"改好了。\n\n{toc_preview(book)}"
+    if re.fullmatch(r"\d+\s*章?", text) or re.fullmatch(r"[零〇一二兩三四五六七八九十百]+\s*章", text):
+        book["chapter_count"] = parse_number(text)
+        return toc_preview(book)
+    detail = parse_toc_detail(text)
+    if len(detail["titles"]) >= 2:
+        return _show_toc(book, detail["titles"], detail["numbers"], raw=text)
+    return f"我不太確定要怎麼改。{TOC_HELP}"
 
 
 def record_pass(book: dict, day: int, summary: str, today: date) -> None:
@@ -494,8 +590,8 @@ def resume_message(book: dict, today: date) -> str:
         if book["step"] == "chapters" and book["chapters"]:
             n = len(book["chapters"]) + 1
             return f"我們繼續整理《{book['title']}》的章節。第{n}章的標題是？（第{n}章：___）"
-        if book["step"] == "confirm_count":
-            return f"幫你確認一下：《{book['title']}》應該是 {len(book['pending_toc'])} 章嗎？回答「是」，或告訴我正確的章數就好。"
+        if book["step"] == "confirm_toc":
+            return toc_preview(book)
         return question_for(book)
     if book["status"] == "planning":
         return f"《{book['title']}》的 14 天進度表：\n\n{plan_table(book)}\n\n{PLAN_QUESTION}"

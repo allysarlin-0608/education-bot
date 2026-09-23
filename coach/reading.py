@@ -3,10 +3,6 @@ import streamlit as st
 
 from coach import books, core, llm, tokens, ui
 
-TOC_RETRY = (
-    "這段文字我沒辦法整理出章節，可以再貼一次，"
-    "或是一章一章告訴我也可以，從「第1章：___」開始。"
-)
 SWITCH_MESSAGE = "好，我們來設定新的一本。"
 
 
@@ -191,10 +187,7 @@ def _render_other_options(log, book, today):
 # ============================================================
 
 def _handle_setup(log, book, chat, text, today):
-    reply, needs_toc_help = books.answer_setup(book, text)
-    if needs_toc_help:
-        reply = TOC_RETRY
-    _say(chat, reply)
+    _say(chat, books.answer_setup(book, text))
     _save(log, book, today)
     st.rerun()
 
@@ -216,7 +209,7 @@ def _render_plan_controls(log, book, chat, today):
         if col2.button(f"加重：把第{day + 1}天第一章移過來", use_container_width=True):
             _apply_manual_move(log, book, chat, today, books.move_first_from_next, day,
                                f"把第{day + 1}天的第一章移到第{day}天了。")
-    if st.button("就這樣，開始讀吧", type="primary", use_container_width=True):
+    if st.button("確認進度表", type="primary", use_container_width=True):
         _confirm_plan(log, book, chat, today)
         st.rerun()
 
