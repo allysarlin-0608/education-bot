@@ -45,6 +45,8 @@ def test_followups_get_the_disclaimer_but_no_closing_line():
 
 def test_everyday_use_of_the_word_investment_is_not_flagged():
     assert core.finalize_reply("把時間投資在基本功上。", lesson=False) == "把時間投資在基本功上。"
+    assert core.finalize_reply("她成立了一個教育基金會。", lesson=False) == "她成立了一個教育基金會。"
+    assert core.DISCLAIMER in core.finalize_reply("指數型基金的費用比較低。", lesson=False)
 
 
 def test_prompt_has_fact_and_investing_rules_for_every_topic():

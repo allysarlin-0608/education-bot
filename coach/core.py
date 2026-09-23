@@ -246,7 +246,7 @@ def weekly_topic_counts(log: dict, today: date) -> dict:
 # app enforces them on the text the model returns.
 
 INVESTING_WORDS = re.compile(
-    r"股票|股價|個股|選股|股市|基金|ETF|加密貨幣|虛擬貨幣|比特幣|以太幣|幣價|選幣|"
+    r"股票|股價|個股|選股|股市|基金(?!會)|ETF|加密貨幣|虛擬貨幣|比特幣|以太幣|幣價|選幣|"
     r"殖利率|本益比|報酬率|投資組合|投資建議|進場|出場"
 )
 DISCLAIMER = (
