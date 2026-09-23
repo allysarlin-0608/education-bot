@@ -22,8 +22,9 @@ class FakeResponse:
 class FakePostgrest:
     """Just enough of PostgREST's /rest/v1/<table> behavior for the store."""
 
-    def __init__(self, key=KEY, books_table=True):
+    def __init__(self, key=KEY, books_table=True, followups_column=True):
         self.key = key
+        self.followups_column = followups_column
         self.rows = {}
         self.books = {} if books_table else None
         self.calls = []
@@ -42,6 +43,8 @@ class FakePostgrest:
         if method == "POST":
             assert params == {"on_conflict": "date,topic"}
             assert "resolution=merge-duplicates" in headers["Prefer"]
+            if not self.followups_column and any("followups" in r for r in json):
+                return FakeResponse(400, {"code": "PGRST204", "message": "Could not find the 'followups' column"})
             for row in json:
                 key = (row["date"], row["topic"])
                 self.rows[key] = {**self.rows.get(key, {}), **row}
@@ -195,3 +198,24 @@ def test_url_with_or_without_rest_suffix():
     for url in (URL, URL + "/", URL + "/rest/v1", URL + "/rest/v1/", " " + URL + " "):
         fake = FakePostgrest()
         storage.SupabaseStore(url, KEY, session=fake).load()   # fake asserts the exact URL
+
+
+def test_followups_round_trip():
+    fake, store = make()
+    log = core.empty_log()
+    e = core.start_entry(log, date(2026, 9, 23), "cosmos")
+    e["followups"] = [{"role": "user", "content": "再舉個例子"}, {"role": "assistant", "content": "好"}]
+    store.save_entry(log, e)
+    assert store.load()["entries"][0]["followups"] == e["followups"]
+
+
+def test_missing_followups_column_still_saves_the_entry():
+    fake, store = make(FakePostgrest(followups_column=False))
+    log = core.empty_log()
+    e = core.start_entry(log, date(2026, 9, 23), "cosmos")
+    e.update(completed=True, followups=[{"role": "user", "content": "q"}])
+    store.save_entry(log, e)                       # no error
+    assert store.followups_supported is False
+    row = fake.rows[("2026-09-23", "cosmos")]
+    assert row["completed"] is True and "followups" not in row
+    assert store.load()["entries"][0]["followups"] == []

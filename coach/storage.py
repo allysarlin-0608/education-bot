@@ -25,6 +25,7 @@ create table public.learning_entries (
   followup_question text not null default '',
   reflection text not null default '',
   lesson text not null default '',
+  followups jsonb not null default '[]'::jsonb,
   primary key (date, topic)
 );
 alter table public.learning_entries enable row level security;
@@ -40,6 +41,13 @@ create table public.reading_books (
 );
 alter table public.reading_books enable row level security;
 grant select, insert, update, delete on public.reading_books to service_role;
+"""
+
+# Added after the first release: the chat after a lesson, so it survives a
+# refresh. Databases created before that need this once.
+FOLLOWUPS_SQL = """\
+alter table public.learning_entries
+  add column if not exists followups jsonb not null default '[]'::jsonb;
 """
 
 BOOKS_TABLE_MISSING = (
@@ -97,6 +105,10 @@ class SupabaseStore:
         self.base = f"{url}/rest/v1"
         # Set when the books table can't be read; the rest keeps working.
         self.books_error = None
+        # False once Supabase says learning_entries has no followups column
+        # (supabase/followups.sql not run yet): entries are then saved
+        # without it instead of failing.
+        self.followups_supported = True
         self.session = session or requests.Session()
         self.headers = {"apikey": key, "Content-Type": "application/json"}
         # Legacy service_role keys are JWTs and also go in Authorization;
@@ -142,13 +154,21 @@ class SupabaseStore:
     def _upsert(self, entries: list) -> None:
         if not entries:
             return
-        rows = [{k: e[k] for k in core.ENTRY_FIELDS} for e in entries]
-        self._request(
-            "POST",
-            params={"on_conflict": "date,topic"},
-            json=rows,
-            prefer="resolution=merge-duplicates,return=minimal",
-        )
+        fields = [f for f in core.ENTRY_FIELDS if f != "followups" or self.followups_supported]
+        rows = [{k: e[k] for k in fields} for e in entries]
+        try:
+            self._request(
+                "POST",
+                params={"on_conflict": "date,topic"},
+                json=rows,
+                prefer="resolution=merge-duplicates,return=minimal",
+            )
+        except StorageError as e:
+            if e.status != 400 or not self.followups_supported:
+                raise
+            logger.warning("learning_entries has no followups column; run supabase/followups.sql")
+            self.followups_supported = False
+            self._upsert(entries)
 
     def save_entry(self, log: dict, entry: dict) -> None:
         self._upsert([entry])

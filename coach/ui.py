@@ -23,12 +23,12 @@ def get_setting(name: str) -> str:
 # before an update keep the old objects in st.session_state (e.g. a store
 # without save_book, a log without "books"), so on a mismatch those are
 # dropped and reloaded from storage, which is always up to date.
-STATE_VERSION = 2
+STATE_VERSION = 3
 
 
 def init_state():
     if st.session_state.get("coach_state_version") != STATE_VERSION:
-        for key in ("coach_store", "coach_log"):
+        for key in ("coach_store", "coach_log", "coach_chats"):
             st.session_state.pop(key, None)
         st.session_state.coach_state_version = STATE_VERSION
     if "api_key" not in st.session_state:
@@ -44,11 +44,10 @@ def init_state():
             # Don't cache the failure: the next rerun tries to load again.
             st.error(f"讀不到學習紀錄（{e}），等一下重新整理頁面再試一次。")
             st.stop()
-    if "coach_messages" not in st.session_state:
-        st.session_state.coach_messages = []
-    if "coach_active" not in st.session_state:
-        # (date iso, topic) of the lesson the chat belongs to.
-        st.session_state.coach_active = None
+    if "coach_chats" not in st.session_state:
+        # "date|topic" -> that lesson's chat, so switching pages or topics
+        # never loses it (restored from the saved entry when missing).
+        st.session_state.coach_chats = {}
 
 
 def today():
@@ -98,6 +97,5 @@ def replace_log(log):
 
 
 def reset_chat():
-    """Forget the on-screen chat so the lesson page reloads from the log."""
-    st.session_state.coach_messages = []
-    st.session_state.coach_active = None
+    """Forget the on-screen chats so the lesson page reloads them from the log."""
+    st.session_state.coach_chats = {}

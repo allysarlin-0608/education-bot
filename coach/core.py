@@ -95,7 +95,7 @@ def load_log(path: Path = DEFAULT_LOG_PATH) -> dict:
 
 ENTRY_FIELDS = (
     "date", "topic", "session_number", "level", "completed",
-    "title", "followup_question", "reflection", "lesson",
+    "title", "followup_question", "reflection", "lesson", "followups",
 )
 TEXT_FIELDS = ("title", "followup_question", "reflection", "lesson")
 
@@ -122,6 +122,7 @@ def parse_log(data) -> dict:
         }
         for field in TEXT_FIELDS:
             entry[field] = e.get(field) or ""
+        entry["followups"] = parse_followups(e.get("followups"))
         # One entry per (date, topic); a later duplicate wins.
         entries[(entry["date"], entry["topic"])] = entry
     ordered = sorted(entries.values(), key=lambda e: (e["date"], e["topic"]))
@@ -138,6 +139,18 @@ def parse_log(data) -> dict:
         "entries": [{k: e[k] for k in ENTRY_FIELDS} for e in ordered],
         "books": book_list,
     }
+
+
+def parse_followups(data) -> list:
+    """The chat after a lesson: [{"role": "user"|"assistant", "content": str}]."""
+    if not isinstance(data, list):
+        return []
+    return [
+        {"role": m["role"], "content": m["content"]}
+        for m in data
+        if isinstance(m, dict) and m.get("role") in ("user", "assistant")
+        and isinstance(m.get("content"), str)
+    ]
 
 
 def save_log(log: dict, path: Path = DEFAULT_LOG_PATH) -> None:
@@ -181,6 +194,7 @@ def start_entry(log: dict, day: date, topic: str) -> dict:
         "followup_question": "",
         "reflection": "",
         "lesson": "",
+        "followups": [],
     }
     log["entries"].append(entry)
     log["entries"].sort(key=lambda e: e["date"])

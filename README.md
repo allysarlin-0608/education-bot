@@ -58,6 +58,7 @@ Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知�
 1. 到 https://supabase.com 註冊並建立一個新專案（Free 方案即可）。
 2. 左邊選 **SQL Editor**，貼上 `supabase/schema.sql` 的內容，按 **Run**。
    （之前已經執行過舊版 schema.sql 的話，只要再執行 `supabase/books.sql`，建立看書用的資料表。）
+   （之前已經建好資料表的話，再執行 `supabase/followups.sql`，讓課程之後的追問對話也存起來。）
 3. 到 **Project Settings → API Keys**，複製 **secret key**（`sb_secret_` 開頭）；
    在 **Project Settings → Data API**（或專案首頁）複製 **Project URL**。
 4. 在 Streamlit 的 app **Settings → Secrets** 加上：

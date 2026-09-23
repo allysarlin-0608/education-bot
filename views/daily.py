@@ -1,3 +1,5 @@
+from datetime import date
+
 import streamlit as st
 
 from coach import core, llm, reading, tokens, ui
@@ -5,28 +7,68 @@ from coach import core, llm, reading, tokens, ui
 log = st.session_state.coach_log
 
 
+# ============================================================
+# Which lesson is on screen (survives page switches and refreshes)
+# ============================================================
+# Widget state is dropped when she visits another page, so the choices
+# live in plain session keys and are copied back into the widgets; they
+# are also mirrored into the URL so a refresh keeps them.
+
+def _query_date():
+    try:
+        return date.fromisoformat(st.query_params.get("date", ""))
+    except ValueError:
+        return None
+
+
+if "coach_date" not in st.session_state:
+    st.session_state.coach_date = _query_date() or ui.today()
+    st.session_state.coach_topics = {}          # date iso -> chosen topic
+    if st.query_params.get("topic") in core.TOPICS:
+        st.session_state.coach_topics[st.session_state.coach_date.isoformat()] = st.query_params["topic"]
+
+
+def chat_key():
+    return f"{today.isoformat()}|{topic}"
+
+
+def get_chat():
+    """This lesson's chat; rebuilt from the saved entry (lesson and the
+    follow-ups after it) when this session doesn't have it yet, so a
+    finished lesson is never generated twice."""
+    chats = st.session_state.coach_chats
+    if chat_key() not in chats:
+        entry = core.find_entry(log, today, topic)
+        chats[chat_key()] = (
+            [{"role": "user", "content": core.build_kickoff_message(topic, today)},
+             {"role": "assistant", "content": entry["lesson"]}] + entry["followups"]
+            if entry and entry.get("lesson") else []
+        )
+    return chats[chat_key()]
+
+
 def failed(kind, error, **payload):
     """Remember a failed call so the page can show a friendly message and
     a 重試 button that repeats it (the raw error only goes to the log)."""
-    st.session_state.coach_retry = {"kind": kind, "error": error,
-                                    "key": st.session_state.coach_active, **payload}
+    st.session_state.coach_retry = {"kind": kind, "error": error, "key": chat_key(), **payload}
     st.rerun()
 
 
 def run_kickoff(focus):
+    chat = get_chat()
+    if chat:        # already generated (e.g. in another tab): never call again
+        st.rerun()
     kickoff = core.build_kickoff_message(topic, today, focus)
-    st.session_state.coach_messages.append({"role": "user", "content": kickoff})
+    chat.append({"role": "user", "content": kickoff})
     with st.chat_message("user"):
         st.markdown(kickoff)
     lesson, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today),
-        st.session_state.coach_messages,
-        max_tokens=tokens.LESSON_MAX_TOKENS,
+        core.build_system_prompt(log, topic, today), chat, max_tokens=tokens.LESSON_MAX_TOKENS,
     )
     if error:
-        st.session_state.coach_messages.pop()
+        chat.pop()
         failed("kickoff", error, focus=focus)
-    st.session_state.coach_messages.append({"role": "assistant", "content": lesson})
+    chat.append({"role": "assistant", "content": lesson})
     new_entry = core.start_entry(log, today, topic)
     new_entry["lesson"] = lesson
     new_entry["title"] = core.extract_section(lesson, "今日主題")
@@ -36,24 +78,28 @@ def run_kickoff(focus):
 
 
 def run_followup(text):
-    st.session_state.coach_messages.append({"role": "user", "content": text})
+    chat = get_chat()
+    chat.append({"role": "user", "content": text})
     with st.chat_message("user"):
         st.markdown(text)
     reply, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today, followup=True),
-        st.session_state.coach_messages,
+        core.build_system_prompt(log, topic, today, followup=True), chat,
         max_tokens=tokens.CHAT_MAX_TOKENS,
     )
     if error:
-        st.session_state.coach_messages.pop()
+        chat.pop()
         failed("followup", error, text=text)
-    st.session_state.coach_messages.append({"role": "assistant", "content": reply})
+    chat.append({"role": "assistant", "content": reply})
+    entry = core.find_entry(log, today, topic)
+    if entry is not None:
+        entry["followups"] = chat[2:]          # everything after the lesson
+        ui.save_entry(log, entry)
 
 
 def show_retry():
     """Friendly message + 重試 for the last failed call on this lesson."""
     retry = st.session_state.get("coach_retry")
-    if not retry or retry["key"] != st.session_state.coach_active:
+    if not retry or retry["key"] != chat_key():
         return
     st.warning(retry["error"])
     if st.button("重試", key="coach_retry_button"):
@@ -67,8 +113,6 @@ def show_retry():
 # ============================================================
 # SIDEBAR
 # ============================================================
-today_default = ui.today()
-
 with st.sidebar:
     st.markdown("### ◎ 每日學習教練")
     st.caption("每天 15 到 20 分鐘，一個知識點、一個小任務。")
@@ -88,7 +132,10 @@ with st.sidebar:
             if not llm.GROQ_AVAILABLE:
                 st.caption("缺少套件：請執行 `pip install groq`。")
 
-    today = st.date_input("日期", value=today_default)
+    if "w_date" not in st.session_state:
+        st.session_state.w_date = st.session_state.coach_date
+    today = st.date_input("日期", key="w_date")
+    st.session_state.coach_date = today
 
     st.divider()
     streak = core.current_streak(log, today)
@@ -105,12 +152,20 @@ scheduled = core.scheduled_topic(today)
 topic_keys = list(core.TOPICS)
 st.markdown(f"## {today.isoformat()}　{core.weekday_zh(today)}")
 
+chosen = st.session_state.coach_topics.get(today.isoformat(), scheduled)
+if st.session_state.get("w_topic_date") != today.isoformat() or "w_topic" not in st.session_state:
+    st.session_state.w_topic = chosen
+    st.session_state.w_topic_date = today.isoformat()
 topic = st.selectbox(
     "今天的主題",
     topic_keys,
-    index=topic_keys.index(scheduled),
+    key="w_topic",
     format_func=lambda k: core.TOPICS[k] + ("（今日行程）" if k == scheduled else ""),
 )
+st.session_state.coach_topics[today.isoformat()] = topic
+if st.query_params.get("date") != today.isoformat() or st.query_params.get("topic") != topic:
+    st.query_params.update(date=today.isoformat(), topic=topic)
+
 if topic == "reading":
     # 看書 is a two-phase book tracker (part 4.3), not a daily lesson.
     reading.render(log, today)
@@ -123,19 +178,9 @@ st.caption(
 )
 
 entry = core.find_entry(log, today, topic)
-active_key = (today.isoformat(), topic)
+chat = get_chat()
 
-# Switching date/topic: reload that day's saved lesson (if any) into the chat.
-if st.session_state.coach_active != active_key:
-    st.session_state.coach_active = active_key
-    st.session_state.coach_messages = []
-    if entry and entry.get("lesson"):
-        st.session_state.coach_messages = [
-            {"role": "user", "content": core.build_kickoff_message(topic, today)},
-            {"role": "assistant", "content": entry["lesson"]},
-        ]
-
-if not st.session_state.coach_messages:
+if not chat:
     focus = st.text_input(
         "今天有特別想了解的方向嗎？（選填）",
         placeholder="例如：斯多葛學派、區塊鏈、黑洞……",
@@ -150,7 +195,7 @@ if not st.session_state.coach_messages:
 # ============================================================
 # LESSON + CHAT
 # ============================================================
-for message in st.session_state.coach_messages:
+for message in chat:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
