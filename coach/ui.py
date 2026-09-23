@@ -1,4 +1,5 @@
 """Streamlit helpers shared by the app's pages."""
+import hmac
 import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -17,6 +18,33 @@ def get_setting(name: str) -> str:
     except Exception:  # no secrets.toml at all
         value = ""
     return value or os.environ.get(name, "")
+
+
+PASSWORD_MISSING = (
+    "這個 app 還沒有設定密碼，為了保護學習紀錄，先不開放使用。"
+    "請到 Streamlit 的 Settings → Secrets 加上一行 APP_PASSWORD = \"你的密碼\"，儲存後重新整理。"
+)
+
+
+def require_password():
+    """Basic gate for a public URL: nothing is loaded until the password
+    from secrets (APP_PASSWORD) is entered in this session."""
+    if st.session_state.get("coach_authed"):
+        return
+    expected = get_setting("APP_PASSWORD")
+    st.markdown("### ◎ 每日學習教練")
+    if not expected:
+        st.error(PASSWORD_MISSING)
+        st.stop()
+    with st.form("login"):
+        entered = st.text_input("密碼", type="password")
+        submitted = st.form_submit_button("進入", type="primary")
+    if submitted:
+        if hmac.compare_digest(entered.encode(), expected.encode()):
+            st.session_state.coach_authed = True
+            st.rerun()
+        st.error("密碼不對，再試一次。")
+    st.stop()
 
 
 # Bump whenever the store or the log's shape changes. Sessions opened

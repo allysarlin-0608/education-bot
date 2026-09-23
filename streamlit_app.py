@@ -8,6 +8,7 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="auto",   # collapsed on phones, so it never covers the page
 )
+ui.require_password()      # before any data is loaded
 ui.init_state()
 ui.show_pending_error()
 

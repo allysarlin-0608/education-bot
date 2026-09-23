@@ -50,6 +50,25 @@ alter table public.learning_entries
   add column if not exists followups jsonb not null default '[]'::jsonb;
 """
 
+# Run once: make sure only the app's secret key (service_role) can touch
+# the tables. RLS on with no policies already blocks the public
+# anon/authenticated roles; revoking their grants closes it twice.
+HARDEN_SQL = """\
+alter table public.learning_entries enable row level security;
+alter table public.reading_books enable row level security;
+revoke all on public.learning_entries from anon, authenticated;
+revoke all on public.reading_books from anon, authenticated;
+grant select, insert, update, delete on public.learning_entries to service_role;
+grant select, insert, update, delete on public.reading_books to service_role;
+
+-- 檢查：兩個資料表的 rls_enabled 都要是 true，policies 都要是 0。
+select c.relname as table_name,
+       c.relrowsecurity as rls_enabled,
+       (select count(*) from pg_policies p where p.tablename = c.relname) as policies
+from pg_class c
+where c.relname in ('learning_entries', 'reading_books');
+"""
+
 BOOKS_TABLE_MISSING = (
     "Supabase 裡還沒有 reading_books 資料表。到 Supabase 的 SQL Editor 執行 "
     "supabase/books.sql 的內容，就可以開始用看書的進度追蹤。"

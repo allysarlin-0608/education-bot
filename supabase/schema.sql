@@ -22,3 +22,6 @@ create table public.reading_books (
 );
 alter table public.reading_books enable row level security;
 grant select, insert, update, delete on public.reading_books to service_role;
+
+revoke all on public.learning_entries from anon, authenticated;
+revoke all on public.reading_books from anon, authenticated;

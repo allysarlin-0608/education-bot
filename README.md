@@ -51,6 +51,11 @@ Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知�
    ```
 4. 按 **Deploy**。
 
+## 密碼（必填）
+
+app 的網址是公開的，所以打開時要先輸入密碼，沒輸入之前不會讀取任何紀錄。
+在 Streamlit 的 Settings → Secrets 加上 `APP_PASSWORD = "你的密碼"`；沒設定的話 app 會停在提示畫面。
+
 ## 把學習紀錄存到 Supabase
 
 沒設定的話，紀錄存在 app 伺服器上，Streamlit Cloud 重新啟動時會被清掉。
@@ -69,6 +74,7 @@ Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知�
 5. 如果之前已經有紀錄，先在「學習紀錄」頁下載備份，設定好之後再用「匯入學習紀錄」匯入。
 
 資料表開啟了 RLS 而且沒有任何 policy，所以只有放在 Streamlit Secrets 裡的 secret key 讀寫得到。
+已經建好的資料庫請再執行一次 `supabase/harden.sql`（收回公開角色的權限，最後會列出檢查結果）。
 secret key 等同資料庫密碼，不要放進程式碼或傳給別人。
 
 ## 在自己電腦上跑
@@ -86,6 +92,7 @@ streamlit run streamlit_app.py
 | 變數 | 預設 | 用途 |
 | --- | --- | --- |
 | `GROQ_API_KEY` | — | Groq API key |
+| `APP_PASSWORD` | — | 打開 app 要輸入的密碼（必填） |
 | `COACH_TIMEZONE` | `Asia/Taipei` | 決定「今天」是哪一天 |
 | `SUPABASE_URL` / `SUPABASE_KEY` | — | 設定後學習紀錄改存 Supabase |
 | `COACH_LOG_PATH` | `data/learning_log.json` | 沒設定 Supabase 時的紀錄檔位置 |
