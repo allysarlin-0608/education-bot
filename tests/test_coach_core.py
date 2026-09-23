@@ -110,3 +110,39 @@ def test_followup_prompt_relaxes_six_block_format():
     followup_prompt = core.build_system_prompt(core.empty_log(), "reading", WED, followup=True)
     assert core.FOLLOWUP_NOTE not in lesson_prompt
     assert followup_prompt == f"{lesson_prompt}\n\n{core.FOLLOWUP_NOTE}"
+
+
+def test_longest_streak_finds_best_run():
+    log = make_log(
+        (date(2026, 9, 1), "reading", True),
+        (date(2026, 9, 2), "cosmos", True),
+        (date(2026, 9, 3), "fashion", True),
+        (date(2026, 9, 5), "free", True),
+        (date(2026, 9, 6), "free", False),
+    )
+    assert core.longest_streak(log) == 3
+    assert core.longest_streak(core.empty_log()) == 0
+
+
+def test_topic_progress_levels():
+    assert core.topic_progress(core.empty_log(), "cosmos") == {
+        "sessions": 0, "completed": 0, "level": None,
+        "next_level": "中階", "remaining": 3, "fraction": 0.0}
+    log = make_log(*[(date(2026, 9, d), "philosophy", d % 2 == 0) for d in range(1, 6)])
+    p = core.topic_progress(log, "philosophy")
+    assert (p["sessions"], p["completed"], p["level"]) == (5, 2, "中階")
+    assert (p["next_level"], p["remaining"], p["fraction"]) == ("進階", 2, 0.5)
+    log = make_log(*[(date(2026, 9, d), "reading", True) for d in range(1, 9)])
+    p = core.topic_progress(log, "reading")
+    assert (p["level"], p["next_level"], p["remaining"], p["fraction"]) == ("進階", None, None, 1.0)
+
+
+def test_calendar_weeks_statuses():
+    log = make_log((date(2026, 9, 21), "fashion", True), (date(2026, 9, 22), "philosophy", False))
+    weeks = core.calendar_weeks(log, WED, weeks=2)
+    assert weeks[0][0][0] == date(2026, 9, 14)            # starts on a Monday
+    statuses = {day: s for row in weeks for day, s in row}
+    assert statuses[date(2026, 9, 21)] == "done"
+    assert statuses[date(2026, 9, 22)] == "started"
+    assert statuses[WED] == "none"
+    assert statuses[date(2026, 9, 24)] == "future"

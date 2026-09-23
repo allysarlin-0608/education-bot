@@ -265,3 +265,71 @@ def build_kickoff_message(topic: str, today: date, focus: str = "") -> str:
     if focus.strip():
         message += f"我今天特別想了解：{focus.strip()}"
     return message
+
+
+# ------------------------------------------------------------
+# Learning-record page summaries
+# ------------------------------------------------------------
+
+# Session number at which each level starts (see level_for_session).
+LEVEL_STARTS = {"入門": 1, "中階": 4, "進階": 8}
+
+
+def longest_streak(log: dict) -> int:
+    done = sorted(completed_dates(log))
+    best = run = 0
+    prev = None
+    for day in done:
+        run = run + 1 if prev and day - prev == timedelta(days=1) else 1
+        best = max(best, run)
+        prev = day
+    return best
+
+
+def topic_progress(log: dict, topic: str) -> dict:
+    """Sessions so far on a topic, its current level, and how many more
+    sessions until the next level (None once at 進階)."""
+    sessions = len({e["date"] for e in log["entries"] if e["topic"] == topic})
+    completed = len({e["date"] for e in log["entries"]
+                     if e["topic"] == topic and e.get("completed")})
+    level = level_for_session(sessions) if sessions else None
+    next_level = {"入門": "中階", "中階": "進階"}.get(level or "入門")
+    if next_level is None:
+        remaining, fraction = None, 1.0
+    else:
+        start = LEVEL_STARTS[level] - 1 if level else 0
+        target = LEVEL_STARTS[next_level] - 1
+        remaining = target - sessions
+        fraction = (sessions - start) / (target - start)
+    return {
+        "sessions": sessions,
+        "completed": completed,
+        "level": level,
+        "next_level": next_level,
+        "remaining": remaining,
+        "fraction": fraction,
+    }
+
+
+def calendar_weeks(log: dict, today: date, weeks: int = 4) -> list:
+    """Monday-first weeks ending with the current one. Each day is
+    (date, status), status one of "done", "started", "none", "future"."""
+    done = completed_dates(log)
+    started = {date.fromisoformat(e["date"]) for e in log["entries"]}
+    monday = today - timedelta(days=today.weekday()) - timedelta(weeks=weeks - 1)
+    rows = []
+    for w in range(weeks):
+        row = []
+        for d in range(7):
+            day = monday + timedelta(weeks=w, days=d)
+            if day > today:
+                status = "future"
+            elif day in done:
+                status = "done"
+            elif day in started:
+                status = "started"
+            else:
+                status = "none"
+            row.append((day, status))
+        rows.append(row)
+    return rows
