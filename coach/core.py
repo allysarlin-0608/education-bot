@@ -95,9 +95,9 @@ def load_log(path: Path = DEFAULT_LOG_PATH) -> dict:
 
 ENTRY_FIELDS = (
     "date", "topic", "session_number", "level", "completed",
-    "title", "followup_question", "reflection", "lesson", "followups",
+    "title", "followup_question", "reflection", "lesson", "followups", "kickoff",
 )
-TEXT_FIELDS = ("title", "followup_question", "reflection", "lesson")
+TEXT_FIELDS = ("title", "followup_question", "reflection", "lesson", "kickoff")
 
 
 def parse_log(data) -> dict:
@@ -195,6 +195,7 @@ def start_entry(log: dict, day: date, topic: str) -> dict:
         "reflection": "",
         "lesson": "",
         "followups": [],
+        "kickoff": "",
     }
     log["entries"].append(entry)
     log["entries"].sort(key=lambda e: e["date"])

@@ -26,6 +26,7 @@ create table public.learning_entries (
   reflection text not null default '',
   lesson text not null default '',
   followups jsonb not null default '[]'::jsonb,
+  kickoff text not null default '',
   primary key (date, topic)
 );
 alter table public.learning_entries enable row level security;
@@ -69,6 +70,16 @@ from pg_class c
 where c.relname in ('learning_entries', 'reading_books');
 """
 
+# Added later still: her full opening message (with 「我今天特別想了解…」).
+KICKOFF_SQL = """\
+alter table public.learning_entries
+  add column if not exists kickoff text not null default '';
+"""
+
+# Columns added after the first release. If a database doesn't have one
+# yet, entries are saved without it instead of failing.
+OPTIONAL_COLUMNS = ("followups", "kickoff")
+
 BOOKS_TABLE_MISSING = (
     "Supabase 裡還沒有 reading_books 資料表。到 Supabase 的 SQL Editor 執行 "
     "supabase/books.sql 的內容，就可以開始用看書的進度追蹤。"
@@ -82,9 +93,10 @@ class StorageError(Exception):
     """str(e) is safe to show the user; details are logged, not shown.
     status is the HTTP status (None for connection problems)."""
 
-    def __init__(self, message, status=None):
+    def __init__(self, message, status=None, detail=""):
         super().__init__(message)
         self.status = status
+        self.detail = detail     # the raw response, for code paths only
 
 
 class FileStore:
@@ -124,10 +136,9 @@ class SupabaseStore:
         self.base = f"{url}/rest/v1"
         # Set when the books table can't be read; the rest keeps working.
         self.books_error = None
-        # False once Supabase says learning_entries has no followups column
-        # (supabase/followups.sql not run yet): entries are then saved
-        # without it instead of failing.
-        self.followups_supported = True
+        # Optional columns Supabase said it doesn't have (their .sql not run
+        # yet); entries are saved without them instead of failing.
+        self.missing_columns = set()
         self.session = session or requests.Session()
         self.headers = {"apikey": key, "Content-Type": "application/json"}
         # Legacy service_role keys are JWTs and also go in Authorization;
@@ -149,7 +160,7 @@ class SupabaseStore:
             raise StorageError("暫時連不到資料庫") from e
         if resp.status_code >= 400:
             logger.error("supabase %s %s -> %s: %s", method, table, resp.status_code, resp.text[:500])
-            raise StorageError("資料庫暫時沒有回應", status=resp.status_code)
+            raise StorageError("資料庫暫時沒有回應", status=resp.status_code, detail=resp.text[:500])
         return resp
 
     def load(self) -> dict:
@@ -173,7 +184,7 @@ class SupabaseStore:
     def _upsert(self, entries: list) -> None:
         if not entries:
             return
-        fields = [f for f in core.ENTRY_FIELDS if f != "followups" or self.followups_supported]
+        fields = [f for f in core.ENTRY_FIELDS if f not in self.missing_columns]
         rows = [{k: e[k] for k in fields} for e in entries]
         try:
             self._request(
@@ -183,10 +194,12 @@ class SupabaseStore:
                 prefer="resolution=merge-duplicates,return=minimal",
             )
         except StorageError as e:
-            if e.status != 400 or not self.followups_supported:
+            missing = [c for c in OPTIONAL_COLUMNS
+                       if c not in self.missing_columns and f"'{c}'" in e.detail]
+            if e.status != 400 or not missing:
                 raise
-            logger.warning("learning_entries has no followups column; run supabase/followups.sql")
-            self.followups_supported = False
+            logger.warning("learning_entries lacks column(s) %s; run the matching supabase/*.sql", missing)
+            self.missing_columns.update(missing)
             self._upsert(entries)
 
     def save_entry(self, log: dict, entry: dict) -> None:

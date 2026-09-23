@@ -40,7 +40,7 @@ def get_chat():
     if chat_key() not in chats:
         entry = core.find_entry(log, today, topic)
         chats[chat_key()] = (
-            [{"role": "user", "content": core.build_kickoff_message(topic, today)},
+            [{"role": "user", "content": entry.get("kickoff") or core.build_kickoff_message(topic, today)},
              {"role": "assistant", "content": entry["lesson"]}] + entry["followups"]
             if entry and entry.get("lesson") else []
         )
@@ -72,6 +72,7 @@ def run_kickoff(focus):
     chat.append({"role": "assistant", "content": lesson})
     new_entry = core.start_entry(log, today, topic)
     new_entry["lesson"] = lesson
+    new_entry["kickoff"] = kickoff             # her whole message, 「我今天特別想了解…」 included
     new_entry["title"] = core.extract_section(lesson, "今日主題")
     new_entry["followup_question"] = core.extract_section(lesson, "延伸提問")
     ui.save_entry(log, new_entry)
@@ -235,7 +236,7 @@ if entry is not None:
         if st.button("儲存想法"):
             entry["reflection"] = reflection.strip()
             if ui.save_entry(log, entry):
-                st.success("存好了。")
+                st.toast("存好了。")     # a toast isn't hidden behind the chat input
             else:
                 ui.show_pending_error()
 

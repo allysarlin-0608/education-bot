@@ -18,6 +18,11 @@ def render(log, today):
     if book is None:
         _render_bookshelf_start(log, today)
         return
+    if book["status"] == "reading" and today.isoformat() < book["started_on"]:
+        # A date before the book started: no progress to show for it.
+        st.markdown(f"#### 看書：《{book['title']}》")
+        st.info(f"《{book['title']}》是從 {book['started_on']} 開始讀的，這一天還沒有這本書的閱讀進度。")
+        return
 
     chat = _chat(book, today)
     _render_header(book)
@@ -261,8 +266,10 @@ def _apply_manual_move(log, book, chat, today, move, day, done_text):
 
 
 def _confirm_plan(log, book, chat, today):
-    """The first time the book is written to storage."""
+    """The first time the book is written to storage. The day she
+    confirms is day 1."""
     book["status"] = "reading"
+    book["started_on"] = today.isoformat()
     if book not in log["books"]:
         log["books"].append(book)
     if not _save(log, book, today):

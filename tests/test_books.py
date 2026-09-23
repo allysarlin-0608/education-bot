@@ -55,8 +55,10 @@ def test_plan_table_lists_titles_and_early_finish():
     book, _ = setup_book("原子習慣", "James Clear", "3", "280", "第1章：A\n第2章：B\n第3章：C")
     table = books.plan_table(book)
     assert "| 第1天 | 第1章：A | 約 93 頁 |" in table     # 280 pages / 3 chapters
-    assert f"| 第4天 | {books.EARLY_FINISH_NOTE} | — |" in table
-    assert table.count("\n") == 15
+    assert "| 第4天 | 複習／休息 | — |" in table
+    assert table.count(books.EARLY_FINISH_NOTE) == 1              # O: explained once, under the table
+    assert f"※ 第4–14天：{books.EARLY_FINISH_NOTE}" in table
+    assert len([l for l in table.splitlines() if l.startswith("|")]) == 16   # header + rule + 14 days
 
 
 def test_adjust_moves_chapters_between_neighbours():
@@ -73,7 +75,8 @@ def test_adjust_moves_chapters_between_neighbours():
 def test_empty_middle_day_is_a_rest_day():
     book, _ = setup_book("書", "作者", "3", "90", "第1章：A\n第2章：B\n第3章：C")
     books.move_last_to_next(book["plan"], 2)      # day 2 now empty, day 3 has 2 and 3
-    assert books.day_description(book, 2) == books.REST_DAY_NOTE
+    assert books.day_description(book, 2) == books.REVIEW_LABEL
+    assert f"※ 第2天：{books.REST_DAY_NOTE}" in books.plan_table(book)
     assert books.day_description(book, 3) == "第2–3章：B；C"
 
 

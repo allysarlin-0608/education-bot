@@ -11,8 +11,9 @@ from datetime import date
 
 DAYS = 14
 
-EARLY_FINISH_NOTE = "複習／休息：本書進度已提前完成，這幾天可以拿來複習前面內容、整理筆記，或提前開始下一本書"
-REST_DAY_NOTE = "複習／休息：這天沒有分配章節，可以休息或複習前面的內容"
+REVIEW_LABEL = "複習／休息"
+EARLY_FINISH_NOTE = "本書進度已提前完成，這幾天可以拿來複習前面內容、整理筆記，或提前開始下一本書"
+REST_DAY_NOTE = "這天沒有分配章節，可以休息或複習前面的內容"
 PLAN_QUESTION = "這樣的分配感覺可以嗎？有沒有哪幾天想要加重或減輕份量？"
 PLAN_CONFIRMED = (
     "進度表已經確定了，從今天開始，你每天讀完指定範圍之後，回來跟我聊聊內容就可以了，"
@@ -248,7 +249,7 @@ def day_description(book: dict, day: int) -> str:
     """"第3–4章：標題A；標題B" or the note for a day with no chapters."""
     chapters = book["plan"][day - 1]
     if not chapters:
-        return EARLY_FINISH_NOTE if day > last_reading_day(book["plan"]) else REST_DAY_NOTE
+        return REVIEW_LABEL
     titles = "；".join(book["chapters"][c - 1] for c in chapters)
     return f"{chapter_range(chapters)}：{titles}"
 
@@ -259,7 +260,25 @@ def plan_table(book: dict) -> str:
         mark = " ✅" if str(day) in book["checks"] else ""
         page_hint = f"約 {pages_for_day(book, day)} 頁" if book["plan"][day - 1] else "—"
         rows.append(f"| 第{day}天{mark} | {day_description(book, day)} | {page_hint} |")
-    return "\n".join(rows)
+    table = "\n".join(rows)
+    # The explanation for 複習／休息 days goes under the table, once.
+    last = last_reading_day(book["plan"])
+    empty = [d for d in range(1, DAYS + 1) if not book["plan"][d - 1]]
+    notes = []
+    rest = [d for d in empty if d < last]
+    if rest:
+        notes.append(f"※ {_day_list(rest)}{REST_DAY_NOTE}。")
+    early = [d for d in empty if d > last]
+    if early:
+        notes.append(f"※ {_day_list(early)}{EARLY_FINISH_NOTE}。")
+    return table + ("\n\n" + "\n".join(notes) if notes else "")
+
+
+def _day_list(days: list) -> str:
+    """「第11–14天：」 for a run of days, 「第3、5天：」 otherwise."""
+    if len(days) > 1 and days == list(range(days[0], days[-1] + 1)):
+        return f"第{days[0]}–{days[-1]}天："
+    return "第" + "、".join(map(str, days)) + "天："
 
 
 # ------------------------------------------------------------

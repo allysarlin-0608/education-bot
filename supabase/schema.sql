@@ -10,6 +10,7 @@ create table public.learning_entries (
   reflection text not null default '',
   lesson text not null default '',
   followups jsonb not null default '[]'::jsonb,
+  kickoff text not null default '',
   primary key (date, topic)
 );
 alter table public.learning_entries enable row level security;

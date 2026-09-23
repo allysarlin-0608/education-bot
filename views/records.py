@@ -122,8 +122,10 @@ for e in entries:
         )
         if st.button("儲存想法", key=f"rec_save_{key}"):
             e["reflection"] = reflection.strip()
-            ui.save_entry(log, e)
-            st.rerun()
+            if ui.save_entry(log, e):
+                st.toast("存好了。")
+            else:
+                ui.show_pending_error()
         if e.get("lesson") and st.toggle("顯示當天的課程", key=f"rec_lesson_{key}"):
             with st.container(border=True):
                 st.markdown(e["lesson"])

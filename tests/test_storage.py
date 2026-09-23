@@ -22,9 +22,9 @@ class FakeResponse:
 class FakePostgrest:
     """Just enough of PostgREST's /rest/v1/<table> behavior for the store."""
 
-    def __init__(self, key=KEY, books_table=True, followups_column=True):
+    def __init__(self, key=KEY, books_table=True, followups_column=True, missing_columns=()):
         self.key = key
-        self.followups_column = followups_column
+        self.missing = set(missing_columns) | (set() if followups_column else {"followups"})
         self.rows = {}
         self.books = {} if books_table else None
         self.calls = []
@@ -43,8 +43,9 @@ class FakePostgrest:
         if method == "POST":
             assert params == {"on_conflict": "date,topic"}
             assert "resolution=merge-duplicates" in headers["Prefer"]
-            if not self.followups_column and any("followups" in r for r in json):
-                return FakeResponse(400, {"code": "PGRST204", "message": "Could not find the 'followups' column"})
+            for col in sorted(self.missing):
+                if any(col in r for r in json):
+                    return FakeResponse(400, {"code": "PGRST204", "message": f"Could not find the '{col}' column of 'learning_entries' in the schema cache"})
             for row in json:
                 key = (row["date"], row["topic"])
                 self.rows[key] = {**self.rows.get(key, {}), **row}
@@ -215,7 +216,33 @@ def test_missing_followups_column_still_saves_the_entry():
     e = core.start_entry(log, date(2026, 9, 23), "cosmos")
     e.update(completed=True, followups=[{"role": "user", "content": "q"}])
     store.save_entry(log, e)                       # no error
-    assert store.followups_supported is False
+    assert store.missing_columns == {"followups"}
     row = fake.rows[("2026-09-23", "cosmos")]
     assert row["completed"] is True and "followups" not in row
     assert store.load()["entries"][0]["followups"] == []
+
+
+def test_kickoff_round_trip_and_missing_column():
+    fake, store = make()
+    log = core.empty_log()
+    e = core.start_entry(log, date(2026, 9, 23), "cosmos")
+    e["kickoff"] = "今天是 2026-09-23，星期三。今天的主題：宇宙學。我今天特別想了解：黑洞"
+    store.save_entry(log, e)
+    assert store.load()["entries"][0]["kickoff"].endswith("我今天特別想了解：黑洞")
+    # a database without the new columns still saves everything else
+    fake, store = make(FakePostgrest(missing_columns=("kickoff", "followups")))
+    store.save_entry(log, e)
+    assert store.missing_columns == {"kickoff", "followups"}
+    assert "kickoff" not in fake.rows[("2026-09-23", "cosmos")]
+
+
+def test_other_400_errors_are_not_swallowed():
+    class Bad(FakePostgrest):
+        def request(self, method, url, **kw):
+            if method == "POST":
+                return FakeResponse(400, {"message": "invalid input syntax for type date"})
+            return super().request(method, url, **kw)
+    _, store = make(Bad())
+    log = core.empty_log()
+    with pytest.raises(storage.StorageError):
+        store.save_entry(log, core.start_entry(log, date(2026, 9, 23), "cosmos"))
