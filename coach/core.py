@@ -239,6 +239,44 @@ def weekly_topic_counts(log: dict, today: date) -> dict:
 
 
 # ------------------------------------------------------------
+# Checks applied to every reply before it is shown and saved
+# ------------------------------------------------------------
+# The prompt asks for these too, but a prompt can't guarantee them, so the
+# app enforces them on the text the model returns.
+
+INVESTING_WORDS = re.compile(
+    r"股票|股價|個股|選股|股市|基金|ETF|加密貨幣|虛擬貨幣|比特幣|以太幣|幣價|選幣|"
+    r"殖利率|本益比|報酬率|投資組合|投資建議|進場|出場"
+)
+DISCLAIMER = (
+    "※ 以上是教育性質的知識分享，不構成任何投資建議；"
+    "實際的投資決策請自己進一步研究，並謹慎評估風險。"
+)
+
+
+def has_disclaimer(text: str) -> bool:
+    return "不構成" in text and "投資建議" in text
+
+
+def finalize_reply(text: str, lesson: bool) -> str:
+    """Add the investing disclaimer when the reply touches investing and
+    lacks one, and (for a lesson) make the fixed closing line the very
+    last line, with the disclaimer right before it."""
+    text = text.strip()
+    needs_disclaimer = bool(INVESTING_WORDS.search(text)) and not has_disclaimer(text)
+    closing_ok = not lesson or (text.endswith(CLOSING_LINE) and text.count(CLOSING_LINE) == 1)
+    if closing_ok and not needs_disclaimer:
+        return text                     # already right: leave it exactly as written
+    if lesson:
+        text = text.replace(CLOSING_LINE, "").rstrip()
+    if INVESTING_WORDS.search(text) and not has_disclaimer(text):
+        text = f"{text}\n\n{DISCLAIMER}"
+    if lesson:
+        text = f"{text}\n\n{CLOSING_LINE}"
+    return text
+
+
+# ------------------------------------------------------------
 # Parsing the coach's six-block answer
 # ------------------------------------------------------------
 

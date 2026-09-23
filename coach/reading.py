@@ -334,8 +334,8 @@ def _handle_reading(log, book, chat, text, today):
                                         max_tokens=tokens.CHAT_MAX_TOKENS)
         if error:
             _failed(book, chat, error, text)
-        _say(chat, reply)
-        return
+        _say(chat, core.finalize_reply(reply, lesson=False))
+        st.rerun()
 
     with st.spinner("教練正在讀你的分享……"):
         data, error = llm.ask_json(_system(books.judge_prompt(book, day)),

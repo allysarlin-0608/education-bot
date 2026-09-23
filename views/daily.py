@@ -68,6 +68,7 @@ def run_kickoff(focus):
     if error:
         chat.pop()
         failed("kickoff", error, focus=focus)
+    lesson = core.finalize_reply(lesson, lesson=True)
     chat.append({"role": "assistant", "content": lesson})
     new_entry = core.start_entry(log, today, topic)
     new_entry["lesson"] = lesson
@@ -89,11 +90,12 @@ def run_followup(text):
     if error:
         chat.pop()
         failed("followup", error, text=text)
-    chat.append({"role": "assistant", "content": reply})
+    chat.append({"role": "assistant", "content": core.finalize_reply(reply, lesson=False)})
     entry = core.find_entry(log, today, topic)
     if entry is not None:
         entry["followups"] = chat[2:]          # everything after the lesson
         ui.save_entry(log, entry)
+    st.rerun()                                 # show the checked text, not the raw stream
 
 
 def show_retry():
