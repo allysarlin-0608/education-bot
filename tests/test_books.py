@@ -227,9 +227,9 @@ def test_judge_prompt_knows_today_and_tomorrow():
     assert '"passed"' in prompt
 
 
-def test_book_context_includes_her_summaries():
+def test_final_summary_prompt_quotes_her_words_clipped():
     book = reading_book()
-    books.record_pass(book, 1, "習慣像複利", TODAY)
-    ctx = books.book_context(book)
-    assert "六個區塊" in ctx and "第1天她分享的內容：習慣像複利" in ctx
-    assert "| 第1天 ✅ |" in ctx
+    books.record_pass(book, 1, "習慣像複利" * 100, TODAY)
+    prompt = books.final_summary_prompt(book, summary_chars=20)
+    assert "六個區塊" in prompt and "第1天（第1章）她分享：習慣像複利" in prompt
+    assert "習慣像複利" * 5 not in prompt

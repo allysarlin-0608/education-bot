@@ -373,28 +373,37 @@ def days_away(book: dict, today: date) -> int:
 
 
 # ------------------------------------------------------------
-# Prompts for the model (appended to the full system prompt)
+# Prompts for the model
 # ------------------------------------------------------------
+# These are appended to core + the 看書 module (see reading.py). They
+# carry only what each call needs, never the whole 14-day table with
+# titles, so every request stays inside the token budget.
 
 BOOK_MODE_NOTE = (
-    "【App 補充：現在是看書模式（第四部分 4.3）】\n"
-    "這裡不使用第五部分的六個區塊格式，也不需要加結尾固定句式，用自然的對話語氣。"
-    "進度表的計算、目前是第幾天、章節範圍都由 App 精確處理，以下面的資料為準，不要自己重新計算。"
+    "【App 補充：現在是看書模式】不使用六個區塊的輸出格式，也不需要結尾固定句式，用自然的對話語氣。"
+    "進度、天數、章節範圍由 App 精確處理，以下面的資料為準。"
 )
+SUMMARY_CHARS = 150    # per-day cap on her own words quoted back to the model
 
 
-def book_context(book: dict) -> str:
-    lines = [
-        BOOK_MODE_NOTE,
-        "",
-        f"書名：《{book['title']}》　作者：{book['author']}",
-        f"共 {book['chapter_count']} 章、{book['total_pages']} 頁，每天約 {pages_per_day(book['total_pages'])} 頁",
-    ]
-    if book["plan"]:
-        lines += ["", "14 天進度表（✅ 是已經確認讀懂的天數）：", plan_table(book)]
-    for day, check in sorted(book["checks"].items(), key=lambda kv: int(kv[0])):
-        lines.append(f"- 第{day}天她分享的內容：{check['summary']}")
-    return "\n".join(lines)
+def _clip(text: str, limit: int) -> str:
+    return text if len(text) <= limit else text[:limit] + "…"
+
+
+def book_header(book: dict) -> str:
+    return (
+        f"{BOOK_MODE_NOTE}\n"
+        f"書名：《{book['title']}》　作者：{book['author']}　"
+        f"共 {book['chapter_count']} 章、{book['total_pages']} 頁，每天約 {pages_per_day(book['total_pages'])} 頁"
+    )
+
+
+def compact_plan(book: dict) -> str:
+    """Day → chapter range only (no titles), for plan adjustments."""
+    return "\n".join(
+        f"第{d}天：{chapter_range(book['plan'][d - 1]) or '（沒有章節）'}"
+        for d in range(1, DAYS + 1)
+    )
 
 
 def judge_prompt(book: dict, day: int) -> str:
@@ -405,17 +414,14 @@ def judge_prompt(book: dict, day: int) -> str:
     else:
         after = (
             f"通過時，明確告訴她「今天算完成了，明天進到第{upcoming}天」，"
-            f"並用一句話預告第{upcoming}天的範圍：{day_description(book, upcoming)}。"
+            f"並用一句話預告第{upcoming}天的範圍：{_clip(day_description(book, upcoming), 200)}。"
         )
     return (
-        f"{book_context(book)}\n\n"
+        f"{book_header(book)}\n\n"
         f"【現在的任務】她接下來的訊息，是用自己的話分享第{day}天的閱讀內容。"
-        f"第{day}天的範圍是：{day_description(book, day)}。\n"
-        "請依照 4.3 第二階段的標準，負責任地判斷她是否真的讀過並理解了這個範圍的內容大意："
-        "講得出大致的情節走向、論點方向或核心概念就算通過，用詞不精確、細節遺漏都沒關係；"
-        "只有明顯敷衍（例如只有「讀完了」「還不錯」）或內容跟範圍明顯對不上才不通過。\n"
+        f"第{day}天的範圍是：{_clip(day_description(book, day), 400)}。\n"
+        "依照上面的通過標準判斷她是否讀過並理解這個範圍的大意。\n"
         f"{after}\n"
-        "不通過時，語氣維持鼓勵，具體指出好像還沒掌握到的部分，最後說「等你確認過再回來跟我聊聊，我們再確認一次就好」。\n"
         '只輸出一個 JSON 物件，格式：{"passed": true 或 false, "reply": "你要對她說的話"}'
     )
 
@@ -423,7 +429,7 @@ def judge_prompt(book: dict, day: int) -> str:
 def adjust_prompt(book: dict) -> str:
     """Turn her free-text adjustment request into chapter moves."""
     return (
-        f"{book_context(book)}\n\n"
+        f"{book_header(book)}\n\n目前的 14 天分配：\n{compact_plan(book)}\n\n"
         "【現在的任務】她正在看這份進度表，接下來的訊息是她的想法。"
         "如果她想調整某幾天的份量，把她的需求換成「在相鄰兩天之間移動章節」的操作："
         '{"day": 3, "action": "to_next"} 是把第3天的最後一章移到第4天；'
@@ -435,29 +441,25 @@ def adjust_prompt(book: dict) -> str:
     )
 
 
-def toc_prompt(chapter_count: int) -> str:
-    return (
-        "下面是一本書的目錄文字，可能是從書店網頁複製、或拍照辨識的，格式可能很亂。"
-        f"她說這本書有 {chapter_count} 章。"
-        "請依順序找出正式章節的標題；序、前言、推薦序、附錄、參考資料、索引這類不算章節，"
-        "除非它們本身有章號。標題不要包含章號和頁碼。\n"
-        '只輸出一個 JSON 物件，格式：{"chapters": ["第一章的標題", "第二章的標題", ...]}'
+def final_summary_prompt(book: dict, summary_chars: int = SUMMARY_CHARS) -> str:
+    days = sorted(book["checks"].items(), key=lambda kv: int(kv[0]))
+    shared = "\n".join(
+        f"- 第{d}天（{chapter_range(book['plan'][int(d) - 1])}）她分享：{_clip(c['summary'], summary_chars)}"
+        for d, c in days
     )
-
-
-def final_summary_prompt(book: dict) -> str:
     return (
-        f"{book_context(book)}\n\n"
-        "【現在的任務】她剛剛把這本書的每一天都確認讀懂了。依照 4.3 的說明，"
-        "給她一個真誠而且具體的總結式肯定：具體提到她在這幾天分別掌握了哪些重點或概念"
-        "（用上面她自己分享過的內容），不要籠統地說「恭喜你讀完了」。"
-        "最後自然地問她要不要開始規劃下一本書。"
+        f"{book_header(book)}\n\n她每天用自己的話分享的內容：\n{shared}\n\n"
+        "【現在的任務】她剛剛把這本書的每一天都確認讀懂了。給她一個真誠而且具體的總結式肯定："
+        "具體提到她在這幾天分別掌握了哪些重點或概念（用上面她自己分享過的內容），"
+        "不要籠統地說「恭喜你讀完了」。最後自然地問她要不要開始規劃下一本書。"
     )
 
 
 def chat_prompt(book: dict) -> str:
+    day = next_day(book)
+    today_range = f"目前進行到第{day}天：{_clip(day_description(book, day), 300)}" if day else ""
     return (
-        f"{book_context(book)}\n\n"
+        f"{book_header(book)}\n{today_range}\n\n"
         "【現在的任務】她在聊這本書、問問題，或聊別的事情（不是在回報讀完今天的範圍，那個 App 會另外處理）。"
         "用自然、簡短的對話回應她這次說的內容。"
     )

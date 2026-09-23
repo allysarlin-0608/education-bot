@@ -9,7 +9,11 @@ from pathlib import Path
 
 from coach import books
 
-SYSTEM_PROMPT_PATH = Path(__file__).with_name("system_prompt.md")
+# What is sent to the model: a shared core plus the one topic module for
+# the day (see coach/prompts/). system_prompt.md is the full original
+# spec, kept as the reference those modules were made from; it is too
+# large to send (Groq's 8000 TPM limit) and is not read at runtime.
+PROMPTS_DIR = Path(__file__).with_name("prompts")
 DEFAULT_LOG_PATH = Path(
     os.environ.get(
         "COACH_LOG_PATH",
@@ -46,8 +50,11 @@ CLOSING_LINE = "完成後記得打勾，連續完成比完美更重要。"
 SECTION_NAMES = ("今日主題", "核心概念", "具體例子", "今日任務", "延伸提問", "小提醒")
 
 
-def load_system_prompt() -> str:
-    return SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
+def load_system_prompt(topic: str) -> str:
+    """Shared core + that topic's section of the knowledge map."""
+    core_text = (PROMPTS_DIR / "core.md").read_text(encoding="utf-8")
+    topic_text = (PROMPTS_DIR / "topics" / f"{topic}.md").read_text(encoding="utf-8")
+    return f"{core_text}\n今天的主題範圍：\n{topic_text}"
 
 
 def scheduled_topic(day: date) -> str:
@@ -234,6 +241,10 @@ def extract_section(text: str, name: str) -> str:
 # Context sent to the model
 # ------------------------------------------------------------
 
+def _clip(text: str, limit: int) -> str:
+    return text if len(text) <= limit else text[:limit] + "…"
+
+
 def build_history_context(log: dict, topic: str, today: date) -> str:
     """Summarize her track record for the model, so it can apply part 6
     (no repeats, difficulty by per-topic count, a specific 小提醒)."""
@@ -243,7 +254,7 @@ def build_history_context(log: dict, topic: str, today: date) -> str:
         "【App 自動提供的學習紀錄】",
         f"- 今天：{today.isoformat()}（{weekday_zh(today)}）",
         f"- 今天的主題：{TOPICS[topic]}",
-        f"- 這是她第 {session_number} 次接觸這個主題，依第六部分規則，難度為：{level}",
+        f"- 這是她第 {session_number} 次接觸這個主題，依難度規則，難度為：{level}",
         f"- 目前連續完成天數：{current_streak(log, today)} 天",
         f"- 累計完成天數：{len(completed_dates(log))} 天",
     ]
@@ -253,7 +264,7 @@ def build_history_context(log: dict, topic: str, today: date) -> str:
         lines.append("- 這是她第一次使用，沒有更早的紀錄。")
     elif gap > 1:
         lines.append(
-            f"- 距離上次互動已經 {gap} 天。請依第九部分情境二處理："
+            f"- 距離上次互動已經 {gap} 天。請依特殊情境二處理："
             "不要提到中斷，直接自然地「從這裡繼續」。"
         )
 
@@ -261,14 +272,15 @@ def build_history_context(log: dict, topic: str, today: date) -> str:
             if e["topic"] == topic and e["date"] < today.isoformat()]
     if past:
         lines.append("- 這個主題過去學過的內容（避免重複，除非是刻意複習深化）：")
-        for e in past[-10:]:
+        for e in past[-5:]:
             status = "已完成" if e.get("completed") else "未打勾"
-            lines.append(f"  - {e['date']}：{e.get('title') or '（無標題）'}（{status}）")
+            lines.append(f"  - {e['date']}：{_clip(e.get('title') or '（無標題）', 50)}（{status}）")
+        # Clipped so the whole request stays inside tokens.REQUEST_BUDGET.
         last = past[-1]
         if last.get("followup_question"):
-            lines.append(f"- 上次留給她的延伸提問：{last['followup_question']}")
+            lines.append(f"- 上次留給她的延伸提問：{_clip(last['followup_question'], 120)}")
         if last.get("reflection"):
-            lines.append(f"- 她對上次延伸提問的回應：{last['reflection']}")
+            lines.append(f"- 她對上次延伸提問的回應：{_clip(last['reflection'], 150)}")
 
     if topic == "free":
         counts = weekly_topic_counts(log, today)
@@ -284,15 +296,15 @@ def build_history_context(log: dict, topic: str, today: date) -> str:
 # Appended only after today's lesson has been given, so follow-up chat
 # reads like a conversation instead of a fresh six-block lesson each time.
 FOLLOWUP_NOTE = """【App 補充：今天的課程已經給過了】
-她現在是在今天的課程之後追問、回報進度或聊天。這時候第五部分的六個區塊格式不適用，也不需要加結尾固定句式：
+她現在是在今天的課程之後追問、回報進度或聊天。這時候六個區塊的輸出格式不適用，也不需要加結尾固定句式：
 - 直接用自然的對話回答，通常幾句話到一小段就好，只回應她這次說的內容。
-- 其他規則照舊：語氣（第七部分）、行為設計（第八部分）、特殊情境（第九部分）、投資內容結尾的免責聲明。
+- 其他規則照舊：語氣、特殊情境、投資內容結尾的免責聲明。
 - 她回報完成任務（包括只做了一部分）時，具體肯定「完成」這件事本身，並提醒她可以在頁面上打勾。
 - 只有在她明確要求一則新的課程內容時，才重新使用完整的六個區塊與結尾固定句式。"""
 
 
 def build_system_prompt(log: dict, topic: str, today: date, followup: bool = False) -> str:
-    prompt = f"{load_system_prompt()}\n\n{build_history_context(log, topic, today)}"
+    prompt = f"{load_system_prompt(topic)}\n\n{build_history_context(log, topic, today)}"
     if followup:
         prompt += f"\n\n{FOLLOWUP_NOTE}"
     return prompt

@@ -130,14 +130,16 @@ def test_auth_headers_by_key_type():
 
 def test_errors_become_storage_errors():
     _, store = make(FakePostgrest(key="other"))
-    with pytest.raises(storage.StorageError, match="401"):
+    with pytest.raises(storage.StorageError) as info:
         store.load()
+    assert info.value.status == 401
+    assert "Invalid API key" not in str(info.value)     # details stay in the log
 
     class Down:
         def request(self, *a, **k):
             raise requests.ConnectionError("no route")
 
-    with pytest.raises(storage.StorageError, match="連不到"):
+    with pytest.raises(storage.StorageError, match="連不到資料庫"):
         storage.SupabaseStore(URL, KEY, session=Down()).load()
 
 

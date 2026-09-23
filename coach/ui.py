@@ -42,7 +42,7 @@ def init_state():
             st.session_state.coach_log = st.session_state.coach_store.load()
         except storage.StorageError as e:
             # Don't cache the failure: the next rerun tries to load again.
-            st.error(f"讀不到學習紀錄：{e}。請確認 Supabase 設定後重新整理頁面。")
+            st.error(f"讀不到學習紀錄（{e}），等一下重新整理頁面再試一次。")
             st.stop()
     if "coach_messages" not in st.session_state:
         st.session_state.coach_messages = []
@@ -66,7 +66,7 @@ def save_entry(log, entry):
     try:
         st.session_state.coach_store.save_entry(log, entry)
     except storage.StorageError as e:
-        st.session_state.coach_save_error = f"這筆紀錄沒有存成功：{e}"
+        st.session_state.coach_save_error = f"這筆紀錄沒有存成功（{e}），等一下再試一次。"
         return False
     return True
 
@@ -76,7 +76,7 @@ def save_book(log, book):
     try:
         st.session_state.coach_store.save_book(log, book)
     except storage.StorageError as e:
-        st.session_state.coach_save_error = f"讀書進度沒有存成功：{e}"
+        st.session_state.coach_save_error = f"讀書進度沒有存成功（{e}），等一下再試一次。"
         return False
     return True
 
@@ -92,7 +92,7 @@ def replace_log(log):
     try:
         st.session_state.coach_store.replace(log)
     except storage.StorageError as e:
-        st.error(f"匯入沒有存成功：{e}")
+        st.error(f"匯入沒有存成功（{e}），等一下再試一次。")
         return False
     return True
 

@@ -1,8 +1,67 @@
 import streamlit as st
 
-from coach import core, llm, reading, ui
+from coach import core, llm, reading, tokens, ui
 
 log = st.session_state.coach_log
+
+
+def failed(kind, error, **payload):
+    """Remember a failed call so the page can show a friendly message and
+    a 重試 button that repeats it (the raw error only goes to the log)."""
+    st.session_state.coach_retry = {"kind": kind, "error": error,
+                                    "key": st.session_state.coach_active, **payload}
+    st.rerun()
+
+
+def run_kickoff(focus):
+    kickoff = core.build_kickoff_message(topic, today, focus)
+    st.session_state.coach_messages.append({"role": "user", "content": kickoff})
+    with st.chat_message("user"):
+        st.markdown(kickoff)
+    lesson, error = llm.stream_reply(
+        core.build_system_prompt(log, topic, today),
+        st.session_state.coach_messages,
+        max_tokens=tokens.LESSON_MAX_TOKENS,
+    )
+    if error:
+        st.session_state.coach_messages.pop()
+        failed("kickoff", error, focus=focus)
+    st.session_state.coach_messages.append({"role": "assistant", "content": lesson})
+    new_entry = core.start_entry(log, today, topic)
+    new_entry["lesson"] = lesson
+    new_entry["title"] = core.extract_section(lesson, "今日主題")
+    new_entry["followup_question"] = core.extract_section(lesson, "延伸提問")
+    ui.save_entry(log, new_entry)
+    st.rerun()
+
+
+def run_followup(text):
+    st.session_state.coach_messages.append({"role": "user", "content": text})
+    with st.chat_message("user"):
+        st.markdown(text)
+    reply, error = llm.stream_reply(
+        core.build_system_prompt(log, topic, today, followup=True),
+        st.session_state.coach_messages,
+        max_tokens=tokens.CHAT_MAX_TOKENS,
+    )
+    if error:
+        st.session_state.coach_messages.pop()
+        failed("followup", error, text=text)
+    st.session_state.coach_messages.append({"role": "assistant", "content": reply})
+
+
+def show_retry():
+    """Friendly message + 重試 for the last failed call on this lesson."""
+    retry = st.session_state.get("coach_retry")
+    if not retry or retry["key"] != st.session_state.coach_active:
+        return
+    st.warning(retry["error"])
+    if st.button("重試", key="coach_retry_button"):
+        st.session_state.coach_retry = None
+        if retry["kind"] == "kickoff":
+            run_kickoff(retry["focus"])
+        else:
+            run_followup(retry["text"])
 
 
 # ============================================================
@@ -80,23 +139,12 @@ if not st.session_state.coach_messages:
     focus = st.text_input(
         "今天有特別想了解的方向嗎？（選填）",
         placeholder="例如：斯多葛學派、區塊鏈、黑洞……",
+        max_chars=100,
     )
+    show_retry()
     if st.button("開始今天的學習", type="primary", use_container_width=True):
-        kickoff = core.build_kickoff_message(topic, today, focus)
-        st.session_state.coach_messages.append({"role": "user", "content": kickoff})
-        with st.chat_message("user"):
-            st.markdown(kickoff)
-        lesson = llm.stream_reply(core.build_system_prompt(log, topic, today), st.session_state.coach_messages)
-        if lesson:
-            st.session_state.coach_messages.append({"role": "assistant", "content": lesson})
-            entry = core.start_entry(log, today, topic)
-            entry["lesson"] = lesson
-            entry["title"] = core.extract_section(lesson, "今日主題")
-            entry["followup_question"] = core.extract_section(lesson, "延伸提問")
-            ui.save_entry(log, entry)
-            st.rerun()
-        else:
-            st.session_state.coach_messages.pop()
+        st.session_state.coach_retry = None
+        run_kickoff(focus)
     st.stop()
 
 # ============================================================
@@ -137,13 +185,8 @@ if entry is not None:
             else:
                 ui.show_pending_error()
 
+show_retry()
 prompt = st.chat_input("想追問、回報進度，或聊聊今天的內容……")
 if prompt is not None and prompt.strip():
-    st.session_state.coach_messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    reply = llm.stream_reply(core.build_system_prompt(log, topic, today, followup=True), st.session_state.coach_messages)
-    if reply:
-        st.session_state.coach_messages.append({"role": "assistant", "content": reply})
-    else:
-        st.session_state.coach_messages.pop()
+    st.session_state.coach_retry = None
+    run_followup(prompt)

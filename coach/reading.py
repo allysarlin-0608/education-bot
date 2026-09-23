@@ -1,7 +1,7 @@
 """看書 (part 4.3): the book tracker shown on the lesson page on 看書 days."""
 import streamlit as st
 
-from coach import books, core, llm, ui
+from coach import books, core, llm, tokens, ui
 
 TOC_RETRY = (
     "這段文字我沒辦法整理出章節，可以再貼一次，"
@@ -32,10 +32,15 @@ def render(log, today):
         _render_reading_controls(log, book, chat, today)
     _render_other_options(log, book, today)
 
+    _render_retry(log, book, chat, today)
     text = st.chat_input(_placeholder(book))
     if text is None or not text.strip():
         return
-    text = text.strip()
+    st.session_state.book_retry = None
+    _handle_message(log, book, chat, text.strip(), today)
+
+
+def _handle_message(log, book, chat, text, today):
     chat.append({"role": "user", "content": text})
     with st.chat_message("user"):
         st.markdown(text)
@@ -82,6 +87,30 @@ def _say(chat, text):
     chat.append({"role": "assistant", "content": text})
 
 
+def _system(task_prompt):
+    """Shared core + the 看書 module + this call's task."""
+    return f"{core.load_system_prompt('reading')}\n\n{task_prompt}"
+
+
+def _failed(book, chat, error, text):
+    """A model call failed: take back her message, remember it, and show a
+    friendly note with 重試 (the raw error is only in the log)."""
+    if chat and chat[-1] == {"role": "user", "content": text}:
+        chat.pop()
+    st.session_state.book_retry = {"id": book["id"], "text": text, "error": error}
+    st.rerun()
+
+
+def _render_retry(log, book, chat, today):
+    retry = st.session_state.get("book_retry")
+    if not retry or retry["id"] != book["id"]:
+        return
+    st.warning(retry["error"])
+    if st.button("重試", key=f"book_retry_{book['id']}"):
+        st.session_state.book_retry = None
+        _handle_message(log, book, chat, retry["text"], today)
+
+
 def _placeholder(book):
     if book["status"] == "setup":
         return "回答教練的問題……"
@@ -117,6 +146,11 @@ def _render_bookshelf_start(log, today):
         if last.get("final_summary"):
             with st.chat_message("assistant"):
                 st.markdown(last["final_summary"])
+        else:
+            st.warning(st.session_state.get("book_summary_error") or llm.FAILED)
+            if st.button("重試", key=f"summary_retry_{last['id']}"):
+                if _write_final_summary(log, last, today):
+                    st.rerun()
         label = "開始規劃下一本書"
     else:
         st.markdown("#### 看書")
@@ -159,16 +193,7 @@ def _render_other_options(log, book, today):
 def _handle_setup(log, book, chat, text, today):
     reply, needs_toc_help = books.answer_setup(book, text)
     if needs_toc_help:
-        with st.spinner("整理目錄中……"):
-            data, error = llm.ask_json(
-                books.toc_prompt(book["chapter_count"]),
-                [{"role": "user", "content": text}],
-            )
-        titles = data.get("chapters") if data else None
-        if isinstance(titles, list) and titles and all(isinstance(t, str) for t in titles):
-            reply = books.apply_toc(book, [t.strip() for t in titles])
-        else:
-            reply = error or TOC_RETRY
+        reply = TOC_RETRY
     _say(chat, reply)
     _save(log, book, today)
     st.rerun()
@@ -216,10 +241,9 @@ def _handle_planning(log, book, chat, text, today):
         _confirm_plan(log, book, chat, today)
         st.rerun()
     with st.spinner("調整進度表中……"):
-        data, error = llm.ask_json(books.adjust_prompt(book), [{"role": "user", "content": text}])
+        data, error = llm.ask_json(_system(books.adjust_prompt(book)), [{"role": "user", "content": text}])
     if error:
-        _say(chat, error)
-        st.rerun()
+        _failed(book, chat, error, text)
     applied = books.apply_moves(book["plan"], data.get("moves"))
     reply = str(data.get("reply") or "").strip()
     if applied:
@@ -268,18 +292,19 @@ def _handle_reading(log, book, chat, text, today):
             _start_check(book, chat, day)
             st.rerun()
     if day is None:
-        reply = llm.stream_reply(books.chat_prompt(book), chat[-12:])
-        if reply:
-            _say(chat, reply)
-        else:
-            chat.pop()
+        reply, error = llm.stream_reply(_system(books.chat_prompt(book)), chat[-12:],
+                                        max_tokens=tokens.CHAT_MAX_TOKENS)
+        if error:
+            _failed(book, chat, error, text)
+        _say(chat, reply)
         return
 
     with st.spinner("教練正在讀你的分享……"):
-        data, error = llm.ask_json(books.judge_prompt(book, day), [{"role": "user", "content": text}])
+        data, error = llm.ask_json(_system(books.judge_prompt(book, day)),
+                                   [{"role": "user", "content": text}])
     if error:
-        _say(chat, error)
-        st.rerun()
+        _set_awaiting(book, day)
+        _failed(book, chat, error, text)
     reply = str(data.get("reply") or "").strip()
     if data.get("passed") is not True:
         # Not marked, not advanced; her next message is checked again.
@@ -293,14 +318,27 @@ def _handle_reading(log, book, chat, text, today):
     _record_learning_entry(log, book, today)
     _save(log, book, today)
     if book["status"] == "finished":
-        summary = llm.stream_reply(
-            books.final_summary_prompt(book),
-            [{"role": "user", "content": f"我把《{book['title']}》全部讀完了。"}],
-        )
-        if summary:
-            book["final_summary"] = summary
-            _save(log, book, today)
+        _write_final_summary(log, book, today)
     st.rerun()
+
+
+def _write_final_summary(log, book, today):
+    """Stream the end-of-book wrap-up. Her daily notes are clipped until
+    the request fits the token budget. On failure the book stays
+    finished and the bookshelf view offers 重試."""
+    messages = [{"role": "user", "content": f"我把《{book['title']}》全部讀完了。"}]
+    for chars in (150, 100, 60, 30, 0):
+        system = _system(books.final_summary_prompt(book, summary_chars=chars))
+        if tokens.estimate_request(system, messages, tokens.LESSON_MAX_TOKENS) <= tokens.REQUEST_BUDGET:
+            break
+    summary, error = llm.stream_reply(system, messages, max_tokens=tokens.LESSON_MAX_TOKENS)
+    if error:
+        st.session_state.book_summary_error = error
+        return False
+    st.session_state.book_summary_error = None
+    book["final_summary"] = summary
+    _save(log, book, today)
+    return True
 
 
 def _record_learning_entry(log, book, today):

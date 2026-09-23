@@ -1,6 +1,7 @@
 """Where the learning log lives: a Supabase table when SUPABASE_URL and
 SUPABASE_KEY are configured, otherwise a local JSON file (which Streamlit
 Cloud wipes on restart)."""
+import logging
 from datetime import datetime, timezone
 
 import requests
@@ -47,8 +48,16 @@ BOOKS_TABLE_MISSING = (
 )
 
 
+logger = logging.getLogger("coach.storage")
+
+
 class StorageError(Exception):
-    pass
+    """str(e) is safe to show the user; details are logged, not shown.
+    status is the HTTP status (None for connection problems)."""
+
+    def __init__(self, message, status=None):
+        super().__init__(message)
+        self.status = status
 
 
 class FileStore:
@@ -66,7 +75,8 @@ class FileStore:
         try:
             core.save_log(log, self.path)
         except OSError as e:
-            raise StorageError(str(e)) from e
+            logger.error("saving the local log failed: %s", e)
+            raise StorageError("紀錄沒辦法存到檔案。") from e
 
     def save_book(self, log: dict, book: dict) -> None:
         self.save_entry(log, None)
@@ -104,9 +114,11 @@ class SupabaseStore:
                 headers=headers, timeout=TIMEOUT,
             )
         except requests.RequestException as e:
-            raise StorageError(f"連不到 Supabase：{e}") from e
+            logger.error("supabase %s %s unreachable: %s", method, table, e)
+            raise StorageError("暫時連不到資料庫") from e
         if resp.status_code >= 400:
-            raise StorageError(f"Supabase 回應 {resp.status_code}：{resp.text[:300]}")
+            logger.error("supabase %s %s -> %s: %s", method, table, resp.status_code, resp.text[:500])
+            raise StorageError("資料庫暫時沒有回應", status=resp.status_code)
         return resp
 
     def load(self) -> dict:
@@ -122,7 +134,7 @@ class SupabaseStore:
             resp = self._request("GET", params={"select": "data", "order": "updated_at.asc"},
                                  table=BOOKS_TABLE)
         except StorageError as e:
-            self.books_error = BOOKS_TABLE_MISSING if "404" in str(e) or "42P01" in str(e) else str(e)
+            self.books_error = BOOKS_TABLE_MISSING if e.status == 404 else f"看書進度{e}，等一下重新整理再試一次。"
             return []
         self.books_error = None
         return [row["data"] for row in resp.json()]
