@@ -1,27 +1,46 @@
 [theme]
-font = '"Inter", "Noto Sans TC", sans-serif'
-headingFont = '"Bodoni Moda", "Noto Serif TC", serif'
+base = "dark"
+font = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Helvetica Neue", "Noto Sans TC", Arial, sans-serif'
+headingFont = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang TC", "Helvetica Neue", "Noto Sans TC", Arial, sans-serif'
 baseFontSize = 15
-baseRadius = "none"
-buttonRadius = "none"
+baseRadius = "12px"
+buttonRadius = "12px"
 showWidgetBorder = true
 showSidebarBorder = true
+primaryColor = "#F2F2F2"
+backgroundColor = "#080808"
+secondaryBackgroundColor = "#141414"
+textColor = "#EDEDED"
+linkColor = "#EDEDED"
+borderColor = "#2B2B2B"
+codeTextColor = "#D9D9D9"
+codeBackgroundColor = "#141414"
+redColor = "#BFBFBF"
+redBackgroundColor = "#1A1A1A"
+redTextColor = "#D9D9D9"
+orangeColor = "#BFBFBF"
+orangeBackgroundColor = "#1A1A1A"
+orangeTextColor = "#D9D9D9"
+yellowColor = "#BFBFBF"
+yellowBackgroundColor = "#1A1A1A"
+yellowTextColor = "#D9D9D9"
+blueColor = "#BFBFBF"
+blueBackgroundColor = "#1A1A1A"
+blueTextColor = "#D9D9D9"
+greenColor = "#BFBFBF"
+greenBackgroundColor = "#1A1A1A"
+greenTextColor = "#D9D9D9"
+violetColor = "#BFBFBF"
+violetBackgroundColor = "#1A1A1A"
+violetTextColor = "#D9D9D9"
+grayColor = "#BFBFBF"
+grayBackgroundColor = "#1A1A1A"
+grayTextColor = "#D9D9D9"
+chartCategoricalColors = ["#F2F2F2", "#BFBFBF", "#8C8C8C", "#595959"]
 
-[theme.light]
-primaryColor = "#111111"
-backgroundColor = "#FAFAF7"
-secondaryBackgroundColor = "#F0EFEB"
-textColor = "#141414"
-linkColor = "#141414"
-borderColor = "#DEDDD8"
-
-[theme.dark]
-primaryColor = "#EDEDE8"
-backgroundColor = "#0B0B0B"
-secondaryBackgroundColor = "#161616"
-textColor = "#EDEDE8"
-linkColor = "#EDEDE8"
-borderColor = "#2A2A2A"
+[theme.sidebar]
+backgroundColor = "#080808"
+secondaryBackgroundColor = "#141414"
 
 [client]
 toolbarMode = "minimal"
