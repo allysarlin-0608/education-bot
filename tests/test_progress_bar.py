@@ -50,3 +50,13 @@ def test_lesson_bar_motion(monkeypatch):
 def test_custom_left_label():
     html = progress_bar.build("No book in progress", 0, 1, "2 books finished", left="Start one on the Reading page")
     assert "<span>Start one on the Reading page</span>" in html and "<span>0 / 1" not in html
+
+
+def test_vertical_tube_for_today():
+    html = progress_bar.build_vertical("Friday, September 25", "Jewelry & Craft", 2, 5, previous=0)
+    assert 'class="lqv flowing"' in html and "--to:40;--from:0" in html
+    assert "Friday, September 25" in html and "Jewelry &amp; Craft" in html
+    assert ">40<span>%" in html and "2 of 5 lessons today" in html
+    empty = progress_bar.build_vertical("Friday", "Jewelry", 0, 5)
+    assert "lqv empty" in empty and "flowing" not in empty
+    assert "No lessons left to do" in progress_bar.build_vertical("Friday", "Jewelry", 0, 0)
