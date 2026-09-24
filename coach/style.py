@@ -1,4 +1,4 @@
-"""Look of the app: monochrome "liquid glass" on a softly lit environment,
+"""Look of the app: monochrome "liquid glass" on pure white or pure black,
 light or dark with the system or the theme picked in Settings.
 
 Colors and fonts live in .streamlit/config.toml (every palette color,
@@ -24,13 +24,10 @@ CSS = f"""
   /* grayscale only; each token is light-dark(light, dark). Streamlit sets
      color-scheme on .stApp from the active theme (system or the one picked
      in Settings), and light-dark() follows it. */
-  --env: light-dark(#F2F2F2, #080808);
-  --light-1: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.06));
-  --light-2: light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.035));
-  --light-3: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.04));
+  --env: light-dark(#FFFFFF, #000000);          /* pure white or pure black, nothing else */
   --label: light-dark(#141414, #EDEDED); --label-2: light-dark(#5C5C5C, #9B9B9B);
   --label-3: light-dark(#8C8C8C, #6A6A6A); --strong: light-dark(#000000, #FFFFFF);
-  --hair: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.08));
+  --hair: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.07));
   --wash: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
   --field: light-dark(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.03));
   --field-edge: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.12));
@@ -38,25 +35,42 @@ CSS = f"""
   --chrome: light-dark(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.02));
   --sidebar: light-dark(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.015));
   --popover: light-dark(rgba(250, 250, 250, 0.82), rgba(20, 20, 20, 0.72));
-  --popover-edge: light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.18));
+  --popover-edge: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
   --outline: light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.7));
   --selection: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.22));
 
-  /* glass */
-  --glass: light-dark(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.04));
-  --glass-strong: light-dark(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.08));
-  --glass-faint: light-dark(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.02));
-  --glass-edge: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.42));
-  --glass-edge-strong: light-dark(rgba(0, 0, 0, 0.28), rgba(255, 255, 255, 0.6));
-  --glass-edge-soft: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.22));
-  --glass-edge-bubble: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.3));
-  --glass-edge-circle: light-dark(rgba(0, 0, 0, 0.35), rgba(255, 255, 255, 0.4));
-  --hilite: light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.5));
-  --hilite-soft: light-dark(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.28));
-  --shadow: light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.12));
-  --glass-blur: blur(8px) saturate(100%);
-  --glass-depth: inset 0 1px var(--hilite), 0 12px 40px var(--shadow);
-  --glass-depth-soft: inset 0 1px var(--hilite-soft), 0 8px 24px var(--shadow);
+  /* glass: an ultra-thin optical sheet. Almost no fill, no drawn border;
+     the edge is suggested optically instead of stroked: light catching the
+     upper edge (fading toward the sides), the lower edge a shade deeper,
+     a barely-there boundary, and a narrow band just inside the edge that
+     is a touch brighter (dark) or darker (light) than the clear center,
+     the way thin glass bends light near its rim. */
+  --glass: light-dark(rgba(0, 0, 0, 0.006), rgba(255, 255, 255, 0.018));
+  --glass-strong: light-dark(rgba(0, 0, 0, 0.012), rgba(255, 255, 255, 0.03));
+  --glass-faint: light-dark(rgba(0, 0, 0, 0.003), rgba(255, 255, 255, 0.01));
+  --glass-edge: transparent;
+  --glass-edge-strong: transparent;
+  --glass-edge-soft: transparent;
+  --glass-edge-bubble: transparent;
+  --glass-edge-circle: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.36));
+  --hilite: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34));
+  --hilite-soft: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.22));
+  --shadow: light-dark(rgba(0, 0, 0, 0.03), transparent);
+  --glass-blur: blur(2px);
+  --optic:
+    inset 0 1px 1px -1px var(--hilite-soft),
+    inset 0 -1px 1px -1px light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.1)),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.06)),
+    inset 0 0 10px -4px light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.09)),
+    0 1px 2px var(--shadow);
+  --optic-strong:
+    inset 0 1px 1px -1px var(--hilite),
+    inset 0 -1px 1px -1px light-dark(rgba(0, 0, 0, 0.16), rgba(255, 255, 255, 0.14)),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
+    inset 0 0 12px -4px light-dark(rgba(0, 0, 0, 0.09), rgba(255, 255, 255, 0.13)),
+    0 1px 3px var(--shadow);
+  --glass-depth: var(--optic-strong);
+  --glass-depth-soft: var(--optic);
 
   /* geometry */
   --radius-small: 12px; --radius-medium: 16px; --radius-large: 24px; --radius-pill: 999px;
@@ -69,20 +83,8 @@ CSS = f"""
   --t-micro: 200ms; --t-space: 400ms;
 }}
 
-/* ---------- environment: dark interior, soft grayscale light ---------- */
+/* ---------- environment: pure black or pure white, no ambient light ---------- */
 .stApp {{ background: var(--env); }}
-.stApp::before {{
-  content: ""; position: fixed; inset: -12%; pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(circle at 20% 20%, var(--light-1), transparent 30%),
-    radial-gradient(circle at 80% 30%, var(--light-2), transparent 28%),
-    radial-gradient(circle at 55% 105%, var(--light-3), transparent 38%);
-  animation: ambient 90s ease-in-out infinite alternate;
-}}
-@keyframes ambient {{
-  from {{ transform: translate3d(0, 0, 0); }}
-  to   {{ transform: translate3d(-2.5%, 1.5%, 0); }}
-}}
 [data-testid="stAppViewContainer"], [data-testid="stMain"] {{ position: relative; z-index: 1; background: transparent; }}
 ::selection {{ background: var(--selection); color: var(--strong); }}
 
@@ -185,10 +187,10 @@ CSS = f"""
   --wash: rgb(from currentColor r g b / 0.07);
   --glass-strong: rgb(from currentColor r g b / 0.1);
   --glass-edge-strong: rgb(from currentColor r g b / 0.5);
-  --hilite: rgba(255, 255, 255, 0.5);
+  --hilite: rgba(255, 255, 255, 0.3);
   background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.82) !important;
-  backdrop-filter: blur(10px) saturate(100%); -webkit-backdrop-filter: blur(10px) saturate(100%);
-  border: 1px solid rgb(from currentColor r g b / 0.14) !important; border-radius: var(--radius-medium) !important;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgb(from currentColor r g b / 0.08) !important; border-radius: var(--radius-medium) !important;
   box-shadow: var(--glass-depth-soft) !important; overflow: hidden;
   animation: fade var(--t-space) var(--ease) both;   /* opacity only: the popover is positioned by transform */
 }}
@@ -197,8 +199,8 @@ CSS = f"""
   --strong: currentColor;
   --wash: rgb(from currentColor r g b / 0.07);
   --glass-strong: rgb(from currentColor r g b / 0.1);
-  --glass-edge-strong: rgb(from currentColor r g b / 0.5);
-  --hilite: rgba(255, 255, 255, 0.5);
+  --glass-edge-strong: rgb(from currentColor r g b / 0.16);
+  --hilite: rgba(255, 255, 255, 0.3);
 }}
 [role="grid"] [role="button"] {{
   border-radius: 50% !important; border: 1px solid transparent;
@@ -206,7 +208,7 @@ CSS = f"""
 }}
 [role="grid"] [role="button"][data-selected="true"] {{
   background: var(--glass-strong) !important; color: var(--strong) !important;
-  border-color: var(--glass-edge-strong) !important; box-shadow: inset 0 1px var(--hilite);
+  border-color: var(--glass-edge-strong) !important; box-shadow: inset 0 1px 1px -1px var(--hilite);
   animation: settle 300ms var(--ease) both;
 }}
 [role="grid"] [role="button"][data-hovered="true"]:not([data-selected="true"]) {{ background: var(--wash) !important; }}
@@ -223,7 +225,7 @@ CSS = f"""
 }}
 [data-testid="stCheckbox"][data-selected="true"] label > div:has(> svg) {{
   background: var(--glass-strong) !important; border-color: var(--glass-edge-strong) !important;
-  box-shadow: inset 0 1px var(--hilite);
+  box-shadow: var(--optic-strong);
 }}
 [data-testid="stCheckbox"] label > div > svg {{ width: 11px; height: 9px; overflow: visible; opacity: 1 !important; }}
 [data-testid="stCheckbox"] label > div > svg polyline {{
@@ -264,7 +266,8 @@ CSS = f"""
 [data-testid="stAlertContainer"] [data-testid="stAlertDynamicIcon"] {{ display: none; }}
 [data-testid="stToast"] {{
   background: var(--popover) !important; border: 1px solid var(--popover-edge);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: var(--radius-medium);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: var(--radius-medium);
+  box-shadow: var(--optic);
 }}
 
 /* ---------- conversation ---------- */
@@ -335,7 +338,7 @@ CSS = f"""
 .cal-day.future {{ color: var(--label-3); opacity: 0.5; }}
 .cal-day.today {{
   color: var(--strong); background: var(--glass); border-color: var(--glass-edge);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-depth-soft);
   animation: settle 300ms var(--ease) both;
 }}
@@ -382,10 +385,11 @@ LIQUID = """
   --lq-hi: #EAF4FA;
   --lq-deep: light-dark(#B4CEE0, #C2D8E7);
   --lq-glow: light-dark(#D0E2EF, #D9EBF7);
-  --lq-glass-top: light-dark(rgba(0, 0, 0, 0.01), rgba(255, 255, 255, 0.03));
-  --lq-glass-bottom: light-dark(rgba(0, 0, 0, 0.022), rgba(255, 255, 255, 0.012));
-  --lq-edge-hi: light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.14));
-  --lq-edge-lo: light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.35));
+  --lq-glass-top: light-dark(rgba(0, 0, 0, 0.006), rgba(255, 255, 255, 0.022));
+  --lq-glass-bottom: light-dark(rgba(0, 0, 0, 0.014), rgba(255, 255, 255, 0.01));
+  --lq-edge-hi: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.2));
+  --lq-edge-lo: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.06));
+  --lq-edge-near: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.05));   /* the rim bends a little light */
 }
 .lq {
   --height: 9px; --inset: 2.5px;               /* the liquid is 4px */
@@ -414,8 +418,9 @@ LIQUID = """
   position: relative; height: var(--height); padding: var(--inset) 0; box-sizing: border-box;
   border-radius: 999px;
   background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
-  box-shadow: inset 0 0.5px 0 var(--lq-edge-hi), inset 0 -0.5px 0 var(--lq-edge-lo);
-  backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px);
+  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo),
+              inset 0 2px 3px -2px var(--lq-edge-near), inset 0 -2px 3px -2px var(--lq-edge-near);
+  backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
 }
 /* the liquid: full colour to a soft round end, a touch lighter there so no
    colour gathers; while flowing the end draws out a little */
@@ -425,11 +430,9 @@ LIQUID = """
   /* exact radii: a 999px corner would make the browser shrink them all */
   border-radius: var(--lh) calc(var(--lh) * (1.3 + var(--surge) * 1.6)) calc(var(--lh) * (1.1 + var(--surge) * 0.8)) var(--lh) /
                  var(--lh) var(--lh) var(--lh) var(--lh);
-  background: linear-gradient(90deg,
-    color-mix(in srgb, var(--lq-liquid) 88%, var(--lq-deep)) 0%,
-    var(--lq-liquid) 55%,
-    color-mix(in srgb, var(--lq-liquid) 75%, var(--lq-hi)) calc(100% - 14px),
-    color-mix(in srgb, var(--lq-liquid) 60%, var(--lq-hi)) 100%);
+  /* one continuous liquid: the faintest drift from depth to light, no
+     bands and nothing gathered or brightened at the end */
+  background: linear-gradient(90deg, color-mix(in srgb, var(--lq-liquid) 94%, var(--lq-deep)), var(--lq-liquid));
   opacity: 0.92;
   box-shadow: 0 0 6px color-mix(in srgb, var(--lq-glow) 7%, transparent);
 }
@@ -480,7 +483,8 @@ LIQUID = """
 [class*="st-key-course_card"] [data-testid="stButtonGroup"] button::before {
   content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 9px;
   background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
-  box-shadow: inset 0 0.5px 0 var(--lq-edge-hi), inset 0 -0.5px 0 var(--lq-edge-lo);
+  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo),
+              inset 0 2px 3px -2px var(--lq-edge-near), inset 0 -2px 3px -2px var(--lq-edge-near);
 }
 [class*="st-key-course_card"] [data-testid="stButtonGroup"] button:first-child::before { border-radius: 999px 0 0 999px; }
 [class*="st-key-course_card"] [data-testid="stButtonGroup"] button:last-child::before { border-radius: 0 999px 999px 0; }
@@ -493,7 +497,6 @@ LIQUID = """
 [class*="st-key-course_card"] [data-testid="stButtonGroup"] button:has([data-testid="stIconMaterial"])::after { width: 100%; }
 [class*="st-key-course_card"] [data-testid="stButtonGroup"] button:has([data-testid="stIconMaterial"]):not(:has(+ button [data-testid="stIconMaterial"]))::after {
   border-radius: 0 2.6px 2.2px 0 / 0 2px 2px 0;
-  background: linear-gradient(90deg, var(--lq-liquid) calc(100% - 14px), color-mix(in srgb, var(--lq-liquid) 60%, var(--lq-hi)));
 }
 [class*="st-key-course_card"] [data-testid="stButtonGroup"] button:first-child:has([data-testid="stIconMaterial"]):not(:has(+ button [data-testid="stIconMaterial"]))::after {
   border-radius: 2px 2.6px 2.2px 2px / 2px 2px 2px 2px;
