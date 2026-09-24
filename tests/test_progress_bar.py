@@ -45,3 +45,8 @@ def test_lesson_bar_motion(monkeypatch):
     assert progress_bar.lesson_motion("d", [True, False, False]) == "still"  # e.g. reviewing lesson 1
     assert progress_bar.lesson_motion("d", [True, True, False]) == "tick2"   # lesson 2 just ticked
     assert progress_bar.lesson_motion("d", [True, False, False]) == "still"  # unticked: no fill to play
+
+
+def test_custom_left_label():
+    html = progress_bar.build("No book in progress", 0, 1, "2 books finished", left="Start one on the Reading page")
+    assert "<span>Start one on the Reading page</span>" in html and "<span>0 / 1" not in html

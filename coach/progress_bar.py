@@ -22,7 +22,7 @@ def entering() -> bool:
 
 def build(title: str, done: int, total: int, meta: str = "", *, previous=None,
           label: str = "Course progress", compact: bool = False, noun: str = "lesson",
-          bar: bool = True) -> str:
+          bar: bool = True, left: str = None) -> str:
     """The block: label, title and percentage, then (with bar=True) the
     liquid line and a count."""
     pct = percent(done, total)
@@ -45,7 +45,7 @@ def build(title: str, done: int, total: int, meta: str = "", *, previous=None,
             f'<div class="lq-glass" role="progressbar" aria-valuemin="0" aria-valuemax="100" '
             f'aria-valuenow="{pct}" aria-valuetext="{pct}% · {count(done, total, noun)}">'
             f'<div class="lq-liquid"></div></div>',
-            meta_row(count(done, total, noun), meta),
+            meta_row(left or count(done, total, noun), meta),
         ]
     parts.append("</section>")
     return "".join(parts)
