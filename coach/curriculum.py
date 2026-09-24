@@ -86,6 +86,30 @@ def new_slot(topic: str, n: int) -> dict:
             "kickoff": "", "lesson": "", "followups": [], "completed": False}
 
 
+def unit_progress(log: dict, topic: str) -> dict:
+    """The unit she is in now (the one holding her next lesson, or the last
+    unit once everything written is done) and how far through it she is."""
+    lessons = _load(topic)
+    if not lessons:
+        return None
+    upcoming = next_numbers(log, topic, 1)
+    n = upcoming[0] if upcoming else len(lessons)
+    unit = lessons[n - 1][0]
+    first = last = n
+    while first > 1 and lessons[first - 2][0] == unit:
+        first -= 1
+    while last < len(lessons) and lessons[last][0] == unit:
+        last += 1
+    done = completed_numbers(log, topic)
+    return {
+        "unit": unit,
+        "first": first,
+        "last": last,
+        "total": last - first + 1,
+        "done": sum(1 for k in range(first, last + 1) if k in done),
+    }
+
+
 def refresh_titles(topic: str, slots: list) -> list:
     """Show saved lessons under the syllabus's current wording (lesson
     numbers never change, only titles can be reworded or translated)."""

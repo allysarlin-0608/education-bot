@@ -66,6 +66,26 @@ def test_progress_counts_completed_lessons():
     assert (p["done"], p["total"], p["level"], p["level_done"]) == (4, 3000, "Beginner", 4)
 
 
+def test_unit_progress_follows_the_next_lesson():
+    log = core.empty_log()
+    first = curriculum.unit_progress(log, "philosophy")
+    assert first == {"unit": "What philosophy is", "first": 1, "last": 5, "total": 5, "done": 0}
+    day(log, THU, "philosophy", 3)
+    assert curriculum.unit_progress(log, "philosophy")["done"] == 3
+    day(log, date(2026, 10, 1), "philosophy", 5)       # lessons 4–8: into the next unit
+    now = curriculum.unit_progress(log, "philosophy")
+    assert (now["unit"], now["first"], now["done"]) == ("Thinking tools: arguments", 6, 3)
+
+
+def test_unit_progress_after_everything_written_is_done():
+    log = core.empty_log()
+    entry = core.start_entry(log, THU, "cosmos")
+    entry["lessons"] = [dict(curriculum.new_slot("cosmos", n), completed=True)
+                        for n in range(1, curriculum.written("cosmos") + 1)]
+    last = curriculum.unit_progress(log, "cosmos")
+    assert last["last"] == curriculum.written("cosmos") and last["done"] == last["total"]
+
+
 def test_lessons_survive_save_and_load(tmp_path):
     log = core.empty_log()
     entry = day(log, THU, "jewelry", done=2)

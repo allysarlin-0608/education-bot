@@ -3,7 +3,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import books, core, curriculum, lesson_view, ui
+from coach import books, core, curriculum, lesson_view, progress_bar, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -52,14 +52,18 @@ st.html(
 # PER-TOPIC PROGRESS
 # ============================================================
 st.markdown("#### Progress by subject")
-st.caption(f"Each subject has {curriculum.TOTAL:,} lessons taken in order: lessons 1–{curriculum.LEVEL_SIZE:,} "
-           f"are Beginner, {curriculum.LEVEL_SIZE + 1:,}–{2 * curriculum.LEVEL_SIZE:,} Intermediate, the rest Advanced.")
+st.caption(f"Each bar is the unit you're in now. Every subject has {curriculum.TOTAL:,} lessons taken in "
+           f"order: lessons 1–{curriculum.LEVEL_SIZE:,} are Beginner, {curriculum.LEVEL_SIZE + 1:,}–"
+           f"{2 * curriculum.LEVEL_SIZE:,} Intermediate, the rest Advanced.")
 for key, label in core.TOPICS.items():
     if curriculum.has_syllabus(key):
         p = curriculum.progress(log, key)
-        st.markdown(f"**{label}** · {p['done']:,} of {p['total']:,} lessons done · {p['level']}")
-        st.progress(p["level_done"] / p["level_size"],
-                    text=f"{p['level']}: {p['level_done']:,} of {p['level_size']:,}")
+        unit = curriculum.unit_progress(log, key)
+        progress_bar.render(
+            f"course_{key}", unit["unit"], unit["done"], unit["total"],
+            f"{p['done']:,} of {p['total']:,} overall · {p['level']}",
+            label=label, compact=True,
+        )
         continue
     p = core.topic_progress(log, key)
     if p["sessions"] == 0:

@@ -6,7 +6,8 @@ status colors included, is a gray). This adds what the theme can't
 express: the lit environment, thin glass surfaces with a light-catching
 edge, the type scale and motion. Glass is used only where there is
 something to touch or something selected: buttons, the current page,
-today in the calendar, her own messages and the chat bar."""
+today in the calendar, her own messages and the chat bar. The one hue is
+the pale air-blue liquid of the course progress bar (LIQUID below)."""
 import streamlit as st
 
 # Headings and numbers: Newsreader (light) with Noto Serif TC for Chinese;
@@ -366,6 +367,102 @@ CSS = f"""
 </style>
 """
 
+# The course progress bar (coach/progress_bar.py): the one place with a hue,
+# a pale air-blue liquid in clear glass. Kept apart from CSS because the
+# @property rules would need every brace doubled in the f-string. Their
+# "<number>" is written \3C number> (the same string to CSS) because st.html
+# sanitizes the markup and a literal "<number" reads as a tag, which drops
+# the whole stylesheet.
+LIQUID = """
+<style>
+@property --p { syntax: "\\3C number>"; inherits: true; initial-value: 0; }      /* the liquid's front */
+@property --surge { syntax: "\\3C number>"; inherits: true; initial-value: 0; }  /* 0 still … 1 moving */
+:root {
+  --lq-liquid: light-dark(#C2D8E7, #D0E2EF);     /* one step deeper on a pale page */
+  --lq-hi: #EAF4FA;
+  --lq-deep: light-dark(#B4CEE0, #C2D8E7);
+  --lq-glow: light-dark(#D0E2EF, #D9EBF7);
+  --lq-glass-top: light-dark(rgba(0, 0, 0, 0.01), rgba(255, 255, 255, 0.03));
+  --lq-glass-bottom: light-dark(rgba(0, 0, 0, 0.022), rgba(255, 255, 255, 0.012));
+  --lq-edge-hi: light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.14));
+  --lq-edge-lo: light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.35));
+}
+.lq {
+  --height: 9px; --inset: 2.5px;               /* the liquid is 4px */
+  --lh: calc((var(--height) - 2 * var(--inset)) / 2);
+  --p: var(--to);
+  display: grid; gap: 14px; margin: 4px 0 8px;
+}
+.lq-label { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
+.lq-head { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; }
+.lq-title {
+  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-variant-numeric: lining-nums;
+  font-size: 1.625rem; line-height: 1.2; color: var(--label); min-width: 0;
+}
+.lq-pct {
+  font-family: "Newsreader", serif; font-weight: 300; font-size: 2.125rem; line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums; color: var(--label); flex: none;
+}
+.lq-pct span { font-size: 0.55em; margin-left: 2px; color: var(--label-2); }
+.lq-meta { display: flex; justify-content: space-between; gap: 16px; font-size: 0.8125rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
+.lq.compact { gap: 10px; }
+.lq.compact .lq-title { font-size: 1.1875rem; }
+.lq.compact .lq-pct { font-size: 1.5rem; }
+
+/* the glass: no frame, a clear sliver with a trace of edge */
+.lq-glass {
+  position: relative; height: var(--height); padding: var(--inset) 0; box-sizing: border-box;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
+  box-shadow: inset 0 0.5px 0 var(--lq-edge-hi), inset 0 -0.5px 0 var(--lq-edge-lo);
+  backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px);
+}
+/* the liquid: full colour to a soft round end, a touch lighter there so no
+   colour gathers; while flowing the end draws out a little */
+.lq-liquid {
+  position: relative; height: 100%;
+  width: max(calc(var(--lh) * 2), calc(var(--p) * 1%));
+  /* exact radii: a 999px corner would make the browser shrink them all */
+  border-radius: var(--lh) calc(var(--lh) * (1.3 + var(--surge) * 1.6)) calc(var(--lh) * (1.1 + var(--surge) * 0.8)) var(--lh) /
+                 var(--lh) var(--lh) var(--lh) var(--lh);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--lq-liquid) 88%, var(--lq-deep)) 0%,
+    var(--lq-liquid) 55%,
+    color-mix(in srgb, var(--lq-liquid) 75%, var(--lq-hi)) calc(100% - 14px),
+    color-mix(in srgb, var(--lq-liquid) 60%, var(--lq-hi)) 100%);
+  opacity: 0.92;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--lq-glow) 7%, transparent);
+}
+.lq-liquid::after {              /* the one light response, barely there */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 45%; border-radius: inherit;
+  background: linear-gradient(90deg, transparent 10%,
+    color-mix(in srgb, var(--lq-hi) calc(14% + var(--surge) * 10%), transparent) 55%, transparent 95%);
+}
+.lq.empty .lq-liquid { visibility: hidden; }
+
+/* motion: flows in, settles, then is still (no bounce, no loop) */
+.lq.flowing .lq-liquid {
+  animation: lq-front 950ms cubic-bezier(0.3, 0.6, 0.25, 1) both,
+             lq-surge 1100ms cubic-bezier(0.4, 0, 0.3, 1) both;
+}
+@keyframes lq-front { from { --p: var(--from); } to { --p: var(--to); } }
+@keyframes lq-surge { 0% { --surge: 0; } 30% { --surge: 1; } 100% { --surge: 0; } }
+
+@media (max-width: 640px) {
+  .lq { --height: 8px; --inset: 2.25px; }
+  .lq-title { font-size: 1.375rem; }
+  .lq-pct { font-size: 1.875rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lq.flowing .lq-liquid { animation: none; }
+}
+</style>
+"""
+
+
+def stylesheet() -> str:
+    return CSS.replace("</style>", LIQUID.replace("<style>", ""))
+
 
 def inject():
-    st.html(CSS)
+    st.html(stylesheet())
