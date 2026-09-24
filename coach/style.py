@@ -426,7 +426,7 @@ LIQUID = """
   font-family: "Newsreader", serif; font-weight: 300; font-size: 2.125rem; line-height: 1;
   font-variant-numeric: lining-nums tabular-nums; color: var(--label); flex: none;
 }
-.lq-pct span { font-size: 0.55em; margin-left: 2px; color: var(--label-2); }
+.lq-pct .unit { font-size: 0.55em; margin-left: 2px; color: var(--label-2); }
 .lq-meta { display: flex; justify-content: space-between; gap: 16px; font-size: 0.8125rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
 .lq.compact { gap: 10px; }
 .lq.compact .lq-title { font-size: 1.1875rem; }
@@ -563,9 +563,45 @@ LIQUID = """
   font-family: "Newsreader", serif; font-weight: 300; font-size: 2.5rem; line-height: 1;
   font-variant-numeric: lining-nums tabular-nums; color: var(--label); margin-top: auto;
 }
-.lqv-pct span { font-size: 0.5em; margin-left: 2px; color: var(--label-2); }
+.lqv-pct .unit { font-size: 0.5em; margin-left: 2px; color: var(--label-2); }
 .lqv-count { font-size: 0.75rem; color: var(--label-3); margin-top: 6px; }
 @media (prefers-reduced-motion: reduce) { .lqv.flowing .lqv-liquid { animation: none; } }
+
+/* ---------- rolling numbers (coach/rolling.py) ---------- */
+/* each changed digit is a window onto a vertical strip (blank, 0-9, 0-9)
+   drawn by ::before, sliding from the old digit to the new one; the digit
+   itself (transparent) is the text and gives the window its width and
+   baseline, so nothing around it moves and copying gives the number */
+.rd, .rd-d, .rd-still, .rd-sep { font-variant-numeric: lining-nums tabular-nums; }
+.rd-d {
+  position: relative; display: inline-block; line-height: 1.1; clip-path: inset(0 -0.2em);
+  -webkit-text-fill-color: transparent;       /* the digit is there for width, baseline and copying */
+}
+.rd-d::before {
+  content: "\\00a0\\A 0\\A 1\\A 2\\A 3\\A 4\\A 5\\A 6\\A 7\\A 8\\A 9\\A 0\\A 1\\A 2\\A 3\\A 4\\A 5\\A 6\\A 7\\A 8\\A 9";
+  position: absolute; left: 0; right: 0; top: 0; text-align: center; white-space: pre; line-height: 1.1;
+  -webkit-text-fill-color: currentColor; pointer-events: none;
+  transform: translateY(calc(var(--b) * -1.1em));
+}
+.rd.rolling .rd-d {
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
+          mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
+}
+.rd.rolling .rd-d::before { animation: rd-roll 600ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes rd-roll {
+  from { transform: translateY(calc(var(--a) * -1.1em)); }
+  to   { transform: translateY(calc(var(--b) * -1.1em)); }
+}
+@media (prefers-reduced-motion: reduce) { .rd.rolling .rd-d::before { animation: none; } }
+
+/* ---------- the four figures at the top of Progress ---------- */
+.figures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.figure-label { font-size: 0.75rem; color: var(--label-3); margin-bottom: 4px; }
+.figure-value {
+  font-family: "Newsreader", "Noto Serif TC", serif; font-size: 1.875rem; font-weight: 300; line-height: 1.2;
+  color: var(--label); font-variant-numeric: lining-nums tabular-nums;
+}
+@media (max-width: 640px) { .figures { grid-template-columns: repeat(2, 1fr); row-gap: 24px; } }
 
 @media (max-width: 640px) {
   .lq { --height: 8px; --inset: 2.25px; }

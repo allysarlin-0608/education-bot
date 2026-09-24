@@ -216,7 +216,13 @@ done_flags = [s["completed"] for s in plan]
 done_count = sum(done_flags)
 motion = progress_bar.lesson_motion(sel_key, done_flags)
 with st.container(key=f"course_card_{motion}"):
-    st.html(progress_bar.build(f"{core.TOPICS[topic]}: {unit['unit']}", done_count, len(plan), bar=False))
+    card_left = f"{done_count} / {len(plan)} lessons today"
+    card_right = (f"Unit lesson {min(unit['done'] + 1, unit['total'])} of {unit['total']} · "
+                  f"{curriculum.level_for(plan[0]['n'])}")
+    card_old = progress_bar.seen(f"card_{topic}", pct=progress_bar.percent(done_count, len(plan)),
+                                 left=card_left, right=card_right)     # numbers roll when they change
+    st.html(progress_bar.build(f"{core.TOPICS[topic]}: {unit['unit']}", done_count, len(plan), bar=False,
+                               old=card_old))
     i = st.segmented_control(
         "Today's lessons",
         list(range(len(plan))),
@@ -225,10 +231,7 @@ with st.container(key=f"course_card_{motion}"):
         key=sel_key,
         label_visibility="collapsed",
     ) or 0
-    st.html(progress_bar.meta_row(
-        f"{done_count} / {len(plan)} lessons today",
-        f"Unit lesson {min(unit['done'] + 1, unit['total'])} of {unit['total']} · {curriculum.level_for(plan[0]['n'])}",
-    ))
+    st.html(progress_bar.meta_row(card_left, card_right, old=card_old))
 
 slot = plan[i]
 if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit

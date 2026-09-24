@@ -3,7 +3,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import books, core, curriculum, lesson_view, progress_bar, ui
+from coach import books, core, curriculum, lesson_view, progress_bar, rolling, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -16,15 +16,21 @@ if not log["entries"]:
 # ============================================================
 # OVERVIEW
 # ============================================================
-col1, col2, col3, col4 = st.columns(4)
 def days(n):
     return f"{n} {'day' if n == 1 else 'days'}"
 
 
-col1.metric("Current streak", days(core.current_streak(log, today)))
-col2.metric("Longest streak", days(core.longest_streak(log)))
-col3.metric("Days completed", days(len(core.completed_dates(log))))
-col4.metric("Days studied", days(len({e['date'] for e in log['entries']})))
+figures = {
+    "Current streak": days(core.current_streak(log, today)),
+    "Longest streak": days(core.longest_streak(log)),
+    "Days completed": days(len(core.completed_dates(log))),
+    "Days studied": days(len({e['date'] for e in log['entries']})),
+}
+before = progress_bar.seen("progress_figures", **{k.replace(" ", "_"): v for k, v in figures.items()})
+st.html('<div class="figures">' + "".join(          # numbers roll when they change
+    f'<div class="figure"><div class="figure-label">{label}</div>'
+    f'<div class="figure-value">{rolling.html(value, before.get(label.replace(" ", "_")))}</div></div>'
+    for label, value in figures.items()) + "</div>")
 
 # ============================================================
 # LAST FOUR WEEKS
