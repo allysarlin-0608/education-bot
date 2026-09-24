@@ -117,7 +117,7 @@ def show_retry():
 # SIDEBAR
 # ============================================================
 with st.sidebar:
-    st.markdown("### ◎ 每日學習教練")
+    st.markdown("### 每日學習教練")
     st.caption("每天 15 到 20 分鐘，一個知識點、一個小任務。")
 
     client_ready = bool(st.session_state.api_key) and llm.GROQ_AVAILABLE
@@ -152,7 +152,7 @@ with st.sidebar:
     col_a, col_b = st.columns(2)
     col_a.metric("連續完成", f"{streak} 天")
     col_b.metric("累計完成", f"{len(core.completed_dates(log))} 天")
-    st.page_link("views/records.py", label="看完整學習紀錄", icon=":material/history:")
+    st.page_link("views/records.py", label="看完整學習紀錄")
 
 
 # ============================================================
@@ -160,7 +160,7 @@ with st.sidebar:
 # ============================================================
 scheduled = core.scheduled_topic(today)
 topic_keys = list(core.TOPICS)
-st.markdown(f"## {today.isoformat()}　{core.weekday_zh(today)}")
+st.markdown(f"## {today:%Y.%m.%d}　{core.weekday_zh(today)}")
 
 chosen = st.session_state.coach_topics.get(today.isoformat(), scheduled)
 if st.session_state.get("w_topic_date") != today.isoformat() or "w_topic" not in st.session_state:
@@ -212,7 +212,7 @@ for message in chat:
 if entry is not None:
     st.divider()
     done = st.checkbox(
-        "✅ 今天的任務完成了",
+        "今天的任務完成了",
         value=entry.get("completed", False),
         help="只做了一部分也算數。",
         key=f"done_{today.isoformat()}_{topic}",

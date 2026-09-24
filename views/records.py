@@ -8,7 +8,7 @@ from coach import books, core, ui
 log = st.session_state.coach_log
 today = ui.today()
 
-STATUS_MARK = {"done": "✅", "started": "○", "none": "·", "future": ""}
+STATUS_MARK = {"done": "●", "started": "○", "none": "·", "future": ""}
 
 st.markdown("## 學習紀錄")
 
@@ -36,7 +36,7 @@ for week in weeks:
     cells = [STATUS_MARK[status] for _, status in week]
     rows.append(f"| {start.month}/{start.day} | " + " | ".join(cells) + " |")
 st.markdown("\n".join(rows))
-st.caption("✅ 完成　○ 有上課、還沒打勾　· 沒有紀錄")
+st.caption("● 完成　○ 有上課、還沒打勾　· 沒有紀錄")
 
 # ============================================================
 # PER-TOPIC PROGRESS
@@ -98,7 +98,7 @@ if log["entries"] and not entries:
 
 for e in entries:
     day = date.fromisoformat(e["date"])
-    mark = "✅" if e.get("completed") else "○"
+    mark = "●" if e.get("completed") else "○"
     title = e.get("title") or core.TOPICS[e["topic"]]
     with st.expander(f"{mark} {e['date']}（{core.weekday_zh(day)}）{title}"):
         st.caption(f"{core.TOPICS[e['topic']]}・第 {e['session_number']} 次・{e['level']}")

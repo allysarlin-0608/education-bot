@@ -1,0 +1,27 @@
+[theme]
+font = '"Inter", "Noto Sans TC", sans-serif'
+headingFont = '"Bodoni Moda", "Noto Serif TC", serif'
+baseFontSize = 15
+baseRadius = "none"
+buttonRadius = "none"
+showWidgetBorder = true
+showSidebarBorder = true
+
+[theme.light]
+primaryColor = "#111111"
+backgroundColor = "#FAFAF7"
+secondaryBackgroundColor = "#F0EFEB"
+textColor = "#141414"
+linkColor = "#141414"
+borderColor = "#DEDDD8"
+
+[theme.dark]
+primaryColor = "#EDEDE8"
+backgroundColor = "#0B0B0B"
+secondaryBackgroundColor = "#161616"
+textColor = "#EDEDE8"
+linkColor = "#EDEDE8"
+borderColor = "#2A2A2A"
+
+[client]
+toolbarMode = "minimal"
