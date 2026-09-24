@@ -296,6 +296,18 @@ CSS = f"""
 [data-testid="stProgress"] [role="progressbar"],
 [data-testid="stProgress"] [role="progressbar"] div {{ height: 2px !important; border-radius: 1px; }}
 
+/* ---------- lesson diagrams: natural size, centered, never wider than the page ---------- */
+[data-testid="stGraphVizChart"] {{ display: flex; justify-content: center; margin: var(--space-2) 0; }}
+[data-testid="stGraphVizChart"] svg {{ max-width: 100%; height: auto; }}
+
+/* ---------- lesson tables: hairlines, no fills ---------- */
+.stApp [data-testid="stMarkdownContainer"] table {{ border-collapse: collapse; width: 100%; font-size: 0.875rem; }}
+.stApp [data-testid="stMarkdownContainer"] th, .stApp [data-testid="stMarkdownContainer"] td {{
+  border: none !important; border-bottom: 1px solid var(--hair) !important;
+  background: transparent !important; padding: var(--space-2) var(--space-3); text-align: left;
+}}
+.stApp [data-testid="stMarkdownContainer"] th {{ color: var(--label-2); font-weight: 500; }}
+
 /* ---------- calendar (紀錄) ---------- */
 .cal {{ display: grid; gap: var(--space-4); }}
 .cal-head {{ display: flex; align-items: baseline; justify-content: space-between; }}

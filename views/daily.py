@@ -2,7 +2,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import core, curriculum, llm, tokens, ui
+from coach import core, curriculum, lesson_view, llm, tokens, ui
 
 log = st.session_state.coach_log
 
@@ -224,9 +224,12 @@ if not chat:
 # ============================================================
 # LESSON + CHAT
 # ============================================================
-for message in chat[1:]:                       # the kickoff line is shown as the heading
+for k, message in enumerate(chat[1:]):         # the kickoff line is shown as the heading
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        if k == 0:
+            lesson_view.render(message["content"])  # tables and diagrams
+        else:
+            st.markdown(message["content"])
 
 st.divider()
 entry = day_entry()

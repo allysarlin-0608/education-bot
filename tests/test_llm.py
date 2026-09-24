@@ -65,13 +65,13 @@ def test_429_is_retried_with_retry_after_then_succeeds(monkeypatch, waits):
     assert 4 <= waits[1] < 4.6            # then exponential: 2 ** 2
 
 
-def test_429_three_times_gives_friendly_busy_message(monkeypatch, waits):
-    use(monkeypatch, FakeClient([status_error(groq.RateLimitError, 429, retry_after=1)] * 3))
+def test_429_every_time_gives_friendly_busy_message(monkeypatch, waits):
+    use(monkeypatch, FakeClient([status_error(groq.RateLimitError, 429, retry_after=1)] * 4))
     with pytest.raises(llm.CoachError) as info:
         list(llm.stream_text(SYSTEM, MSGS, 500))
     assert str(info.value) == llm.BUSY
     assert ORG_LEAK not in str(info.value) and "Upgrade" not in str(info.value)
-    assert len(waits) == 2                # 1–2 retries, then give up
+    assert len(waits) == llm.MAX_RETRIES  # every retry used, then give up
 
 
 def test_413_is_not_retried_and_is_friendly(monkeypatch, waits):
