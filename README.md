@@ -16,7 +16,7 @@ Allysa 專屬的每日興趣學習教練：每天照固定課綱上當天主題�
 - **每週行程**：一 Fashion & Clothing · 二 Philosophy · 三 Business Planning · 四 Astronomy · 五 Jewelry & Craft · 六 Stocks, Investing & Crypto · 日 General Knowledge；看書（Reading）每天做，在自己的頁面。
   每天只上當天排定的主題，不能換。
 - **固定課綱**（`coach/curriculum/<主題>.txt`，一行一課，`#` 開頭是單元名稱）：每個主題規劃 3000 課，
-  照順序上，排到的那天上 5 堂，每堂課最後有 10 題選擇題小考，答對 9 題（90%）以上這堂才算完成、才能開始下一堂（沒過可以重考，每次換一組新題目），5 堂都通過這一天才算完成；
+  照順序上，排到的那天上 5 堂，每堂課最後有 10 題小考（6 題選擇、1 題配對、3 題簡答，簡答由 AI 批改），拿到 9 分（90%）以上這堂才算完成、才能開始下一堂（沒過可以重考，每次換一組新題目），5 堂都通過這一天才算完成；
   沒上完的下次接著上。難度看課綱位置：第 1–1000 課 Beginner、1001–2000 Intermediate、2001–3000 Advanced。
   課綱標題是英文；課程格式是八個區塊（Topic, Key Idea, Deep Dive, Example, Today's Task, Vocabulary,
   Question to Explore, Note），需要時附表格或結構圖。
