@@ -44,3 +44,15 @@ def test_remember_hands_back_what_was_shown_last():
     store = {}
     assert rolling.remember(store, "k", pct=40) == {}
     assert rolling.remember(store, "k", pct=60) == {"pct": 40}
+
+
+def test_on_arrival_numbers_count_up_from_zero(monkeypatch):
+    from coach import progress_bar
+    state = {"lq_entering": True}
+    monkeypatch.setattr(progress_bar.st, "session_state", state)
+    assert rolling.zeroed("3 / 5 lessons today") == "0 / 0 lessons today"
+    old = progress_bar.seen("card", pct=40, left="2 / 5 lessons today")
+    assert old == {"pct": "0", "left": "0 / 0 lessons today"}                  # arriving: count up from 0
+    assert windows(rolling.html("40", old["pct"])) == [(0, 5)]                 # blank → 4, the 0 stays still
+    state["lq_entering"] = False
+    assert progress_bar.seen("card", pct=40, left="2 / 5 lessons today") == {"pct": 40, "left": "2 / 5 lessons today"}
