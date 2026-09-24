@@ -38,6 +38,8 @@ class FakePostgrest:
             return self.books_request(method, params, json)
         assert url == f"{URL}/rest/v1/{storage.TABLE}"
         if method == "GET":
+            if params and params.get("select") in self.missing:
+                return FakeResponse(400, {"code": "42703", "message": f"column learning_entries.{params['select']} does not exist"})
             rows = sorted(self.rows.values(), key=lambda r: (r["date"], r["topic"]))
             return FakeResponse(200, [dict(r, updated_at="2026-09-23T00:00:00Z") for r in rows])
         if method == "POST":

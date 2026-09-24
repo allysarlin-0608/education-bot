@@ -3,7 +3,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import books, core, ui
+from coach import books, core, curriculum, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -48,8 +48,15 @@ st.html(
 # PER-TOPIC PROGRESS
 # ============================================================
 st.markdown("#### 各主題進度")
-st.caption("等級看的是上課次數：同一主題上第 1–3 次是入門、第 4–7 次中階、第 8 次以後進階，有沒有打勾都算一次。")
+st.caption(f"每個主題共 {curriculum.TOTAL} 課，照順序上：第 1–{curriculum.LEVEL_SIZE} 課入門、"
+           f"第 {curriculum.LEVEL_SIZE + 1}–{2 * curriculum.LEVEL_SIZE} 課中階、之後進階。")
 for key, label in core.TOPICS.items():
+    if curriculum.has_syllabus(key):
+        p = curriculum.progress(log, key)
+        st.markdown(f"**{label}**　上完 {p['done']} / {p['total']} 課・目前 {p['level']}")
+        st.progress(p["level_done"] / p["level_size"],
+                    text=f"{p['level']} {p['level_done']} / {p['level_size']} 課")
+        continue
     p = core.topic_progress(log, key)
     if p["sessions"] == 0:
         st.markdown(f"**{label}**　還沒開始")
@@ -107,8 +114,23 @@ for e in entries:
     mark = "●" if e.get("completed") else "○"
     title = e.get("title") or core.TOPICS[e["topic"]]
     with st.expander(f"{mark} {e['date']}（{core.weekday_zh(day)}）{title}"):
-        st.caption(f"{core.TOPICS[e['topic']]}・第 {e['session_number']} 次・{e['level']}")
         key = f"{e['date']}_{e['topic']}"
+        if e.get("lessons"):
+            # A syllabus day: done when every lesson is ticked on the daily page.
+            done_count = sum(1 for s in e["lessons"] if s["completed"])
+            st.caption(f"{core.TOPICS[e['topic']]}・{e['level']}・完成 {done_count} / {len(e['lessons'])} 堂")
+            for s in e["lessons"]:
+                st.markdown(f"{'●' if s['completed'] else '○'} 第 {s['n']} 課　{s['title']}")
+            show = st.toggle("顯示當天的課程內容", key=f"rec_lessons_{key}")
+            for s in e["lessons"]:
+                if show and s.get("lesson"):
+                    with st.container(border=True):
+                        st.markdown(f"**第 {s['n']} 課　{s['title']}**")
+                        st.markdown(s["lesson"])
+            if e.get("followup_question"):
+                st.markdown(f"**延伸提問**：{e['followup_question']}")
+            continue
+        st.caption(f"{core.TOPICS[e['topic']]}・第 {e['session_number']} 次・{e['level']}")
         done = st.checkbox(
             "任務完成了（補打勾也算數）",
             value=e.get("completed", False),

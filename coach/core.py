@@ -7,7 +7,7 @@ import re
 from datetime import date, timedelta
 from pathlib import Path
 
-from coach import books
+from coach import books, curriculum
 
 # What is sent to the model: a shared core plus the one topic module for
 # the day (see coach/prompts/). system_prompt.md is the full original
@@ -97,6 +97,7 @@ def load_log(path: Path = DEFAULT_LOG_PATH) -> dict:
 ENTRY_FIELDS = (
     "date", "topic", "session_number", "level", "completed",
     "title", "followup_question", "reflection", "lesson", "followups", "kickoff",
+    "lessons",
 )
 TEXT_FIELDS = ("title", "followup_question", "reflection", "lesson", "kickoff")
 
@@ -124,6 +125,7 @@ def parse_log(data) -> dict:
         for field in TEXT_FIELDS:
             entry[field] = e.get(field) or ""
         entry["followups"] = parse_followups(e.get("followups"))
+        entry["lessons"] = curriculum.parse_slots(e.get("lessons"))
         # One entry per (date, topic); a later duplicate wins.
         entries[(entry["date"], entry["topic"])] = entry
     ordered = sorted(entries.values(), key=lambda e: (e["date"], e["topic"]))
@@ -197,6 +199,7 @@ def start_entry(log: dict, day: date, topic: str) -> dict:
         "lesson": "",
         "followups": [],
         "kickoff": "",
+        "lessons": [],
     }
     log["entries"].append(entry)
     log["entries"].sort(key=lambda e: e["date"])
@@ -288,16 +291,37 @@ def _clip(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit] + "…"
 
 
-def build_history_context(log: dict, topic: str, today: date) -> str:
+def _syllabus_lines(topic: str, slot: dict) -> list:
+    """Where this lesson sits in the fixed syllabus, so the model teaches
+    exactly this title at this level and doesn't run ahead."""
+    n = slot["n"]
+    lines = [
+        f"- 今天要上的課（依固定課綱，照這個標題講，不要換題目）：第 {n} 課「{slot['title']}」",
+        f"- 所屬單元：{slot['unit'] or '（無）'}；難度（依課綱位置）：{curriculum.level_for(n)}",
+    ]
+    before, after = curriculum.lesson(topic, n - 1), curriculum.lesson(topic, n + 1)
+    if before:
+        lines.append(f"- 上一課是「{before['title']}」，可以自然銜接，但不要重講。")
+    if after:
+        lines.append(f"- 下一課是「{after['title']}」，這一課不要提前講它的內容。")
+    return lines
+
+
+def build_history_context(log: dict, topic: str, today: date, slot: dict = None) -> str:
     """Summarize her track record for the model, so it can apply part 6
-    (no repeats, difficulty by per-topic count, a specific 小提醒)."""
-    session_number = topic_session_number(log, topic, today)
-    level = level_for_session(session_number)
+    (no repeats, the right difficulty, a specific 小提醒). With a syllabus
+    lesson (slot), the title and level come from the syllabus."""
     lines = [
         "【App 自動提供的學習紀錄】",
         f"- 今天：{today.isoformat()}（{weekday_zh(today)}）",
         f"- 今天的主題：{TOPICS[topic]}",
-        f"- 這是她第 {session_number} 次接觸這個主題，依難度規則，難度為：{level}",
+    ]
+    if slot is not None:
+        lines += _syllabus_lines(topic, slot)
+    else:
+        session_number = topic_session_number(log, topic, today)
+        lines.append(f"- 這是她第 {session_number} 次接觸這個主題，依難度規則，難度為：{level_for_session(session_number)}")
+    lines += [
         f"- 目前連續完成天數：{current_streak(log, today)} 天",
         f"- 累計完成天數：{len(completed_dates(log))} 天",
     ]
@@ -339,15 +363,18 @@ FOLLOWUP_NOTE = """【App 補充：今天的課程已經給過了】
 - 只有在她明確要求一則新的課程內容時，才重新使用完整的六個區塊與結尾固定句式。"""
 
 
-def build_system_prompt(log: dict, topic: str, today: date, followup: bool = False) -> str:
-    prompt = f"{load_system_prompt(topic)}\n\n{build_history_context(log, topic, today)}"
+def build_system_prompt(log: dict, topic: str, today: date, followup: bool = False,
+                        slot: dict = None) -> str:
+    prompt = f"{load_system_prompt(topic)}\n\n{build_history_context(log, topic, today, slot)}"
     if followup:
         prompt += f"\n\n{FOLLOWUP_NOTE}"
     return prompt
 
 
-def build_kickoff_message(topic: str, today: date, focus: str = "") -> str:
+def build_kickoff_message(topic: str, today: date, focus: str = "", slot: dict = None) -> str:
     message = f"今天是 {today.isoformat()}，{weekday_zh(today)}。今天的主題：{TOPICS[topic]}。"
+    if slot is not None:
+        message += f"第 {slot['n']} 課：{slot['title']}"
     if focus.strip():
         message += f"我今天特別想了解：{focus.strip()}"
     return message

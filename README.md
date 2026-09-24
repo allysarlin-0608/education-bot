@@ -13,8 +13,11 @@ Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知�
 - **錯誤處理**：429／連線錯誤會自動等待重試 2 次；還是失敗時畫面只顯示一句中文提示和「重試」按鈕，
   詳細錯誤只寫進 log（Streamlit Cloud：Manage app）。
 - **每週行程**：一 時尚與服裝 · 二 哲學 · 三 商業計劃 · 四 天文學 · 五 珠寶與工藝 · 六 股票投資 · 日 通識；看書每天做，在自己的頁面。
-  商業計劃、股票投資可以隨時手動選。
-- **難度依主題分開計算**：同一主題第 1–3 次入門、第 4–7 次中階、第 8 次以後進階。
+  每天只上當天排定的主題，不能換。
+- **固定課綱**（`coach/curriculum/<主題>.txt`，一行一課，`#` 開頭是單元名稱）：每個主題規劃 3000 課，
+  照順序上，排到的那天上 5 堂，前一堂打勾才能開始下一堂，5 堂都打勾這一天才算完成；
+  沒上完的下次接著上。難度看課綱位置：第 1–1000 課入門、1001–2000 中階、2001–3000 進階。
+  目前每個主題寫到第 260 課（一年份），之後分批往後補，只能加在檔案最後面（課號就是行的順序）。
 - **學習紀錄**：日期、主題、難度、是否完成、今日主題、延伸提問、她的回應。
   有設定 Supabase 時存在雲端資料表 `learning_entries`，沒設定時存在 `data/learning_log.json`。
 - **打勾完成與連續天數**：今天還沒打勾時，連續天數會算到昨天為止。
@@ -33,7 +36,8 @@ Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知�
 ## 檔案結構
 
 - `streamlit_app.py`：進入點，負責共用設定和兩個頁面的切換。
-- `views/daily.py`：每日學習（上課和追問）。
+- `views/daily.py`：每日學習（當天 5 堂課和追問）；`views/reading.py`：看書。
+- `coach/curriculum.py` 與 `coach/curriculum/`：固定課綱與每天 5 堂的進度邏輯。
 - `views/records.py`：學習紀錄。
 - `coach/books.py`：看書的設定流程、14 天分配和驗收邏輯；`coach/reading.py`：看書的畫面；
   `coach/llm.py`：呼叫 Groq。
@@ -68,7 +72,7 @@ app 的網址是公開的，所以打開時要先輸入密碼，沒輸入之前�
 1. 到 https://supabase.com 註冊並建立一個新專案（Free 方案即可）。
 2. 左邊選 **SQL Editor**，貼上 `supabase/schema.sql` 的內容，按 **Run**。
    （之前已經執行過舊版 schema.sql 的話，只要再執行 `supabase/books.sql`，建立看書用的資料表。）
-   （之前已經建好資料表的話，再執行 `supabase/followups.sql` 和 `supabase/kickoff.sql`，
+   （之前已經建好資料表的話，再執行 `supabase/followups.sql`、`supabase/kickoff.sql` 和 `supabase/lessons.sql`，
    讓課程之後的追問對話、開頭的完整訊息也存起來。）
 3. 到 **Project Settings → API Keys**，複製 **secret key**（`sb_secret_` 開頭）；
    在 **Project Settings → Data API**（或專案首頁）複製 **Project URL**。
