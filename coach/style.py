@@ -305,7 +305,10 @@ CSS = f"""
 .stApp [data-testid="stMarkdownContainer"] th, .stApp [data-testid="stMarkdownContainer"] td {{
   border: none !important; border-bottom: 1px solid var(--hair) !important;
   background: transparent !important; padding: var(--space-2) var(--space-3); text-align: left;
+  word-break: keep-all;   /* short Chinese terms stay on one line on phones */
 }}
+.stApp [data-testid="stMarkdownContainer"]:has(> table) {{ overflow-x: auto; }}   /* a wide table scrolls, not the page */
+
 .stApp [data-testid="stMarkdownContainer"] th {{ color: var(--label-2); font-weight: 500; }}
 
 /* ---------- calendar (紀錄) ---------- */

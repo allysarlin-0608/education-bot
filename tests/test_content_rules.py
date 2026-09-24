@@ -73,3 +73,52 @@ def test_fashion_jewelry_and_general_topics_stay_in_their_lanes():
     assert "衣服與穿搭在星期一" in core.load_system_prompt("jewelry")
     general = core.load_system_prompt("free")
     assert "4.7 通識" in general and "不要講時尚、珠寶、哲學、天文學、商業、投資本身的內容" in general
+
+
+# ---------- English-first bilingual lessons ----------
+
+EN_LESSON = (
+    "【Topic｜今日主題】：What Astronomers Study（天文學在研究什麼）— Beginner 入門\n"
+    "【Key Idea｜核心概念】：Astronomy studies everything beyond Earth's atmosphere（大氣層）.\n"
+    "【Vocabulary｜單字】：\n| English | 中文 | Meaning |\n|---|---|---|\n| orbit | 軌道 | the path around a star |\n"
+    "【Question to Explore｜延伸提問】：How could we measure a star's distance?\n"
+    "【Note｜小提醒】：One idea is enough today.\n" + CLOSE
+)
+
+
+def test_bilingual_titles_are_found_by_their_chinese_name():
+    assert core.extract_section(EN_LESSON, "延伸提問") == "How could we measure a star's distance?"
+    assert core.extract_section(EN_LESSON, "今日主題").startswith("What Astronomers Study")
+    assert "| orbit | 軌道 |" in core.extract_section(EN_LESSON, "單字")
+
+
+def test_old_chinese_lessons_still_parse():
+    old = "【延伸提問】：哪些是你能控制的？\n【小提醒】：……\n完成後記得打勾，連續完成比完美更重要。"
+    assert core.extract_section(old, "延伸提問") == "哪些是你能控制的？"
+    assert core.extract_section(old, "小提醒") == "……"
+
+
+def test_english_investing_words_get_the_bilingual_disclaimer():
+    lesson = EN_LESSON.replace("Astronomy studies", "A stock is a small piece of a company; astronomy studies")
+    out = core.finalize_reply(lesson, lesson=True)
+    assert core.DISCLAIMER in out and out.endswith(CLOSE)
+    assert "not investment advice" in core.DISCLAIMER and "不構成任何投資建議" in core.DISCLAIMER
+    assert core.DISCLAIMER in core.finalize_reply("Index funds usually cost less.", lesson=False)
+
+
+def test_an_english_disclaimer_from_the_model_is_not_doubled():
+    reply = "Bitcoin has a fixed supply. This is for education only and not investment advice."
+    assert core.finalize_reply(reply, lesson=False) == reply
+
+
+def test_everyday_english_is_not_mistaken_for_investing():
+    for text in ("Share your thoughts next time.", "Build a portfolio of your design work.",
+                 "Invest time in practice."):
+        assert core.finalize_reply(text, lesson=False) == text, text
+
+
+def test_prompt_asks_for_english_with_chinese_terms_and_a_vocabulary_table():
+    prompt = core.load_system_prompt("cosmos")
+    assert "以英文為主" in prompt and "photosynthesis（光合作用）" in prompt
+    assert "【Vocabulary｜單字】" in prompt and "English｜中文｜簡短英文解釋" in prompt
+    assert core.CLOSING_LINE in prompt
