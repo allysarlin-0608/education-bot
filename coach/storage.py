@@ -27,6 +27,7 @@ create table public.learning_entries (
   lesson text not null default '',
   followups jsonb not null default '[]'::jsonb,
   kickoff text not null default '',
+  lessons jsonb not null default '[]'::jsonb,
   primary key (date, topic)
 );
 alter table public.learning_entries enable row level security;
@@ -76,9 +77,16 @@ alter table public.learning_entries
   add column if not exists kickoff text not null default '';
 """
 
+# Added with the fixed syllabus: the day's lessons (up to 5 per day).
+LESSONS_SQL = """\
+alter table public.learning_entries
+  add column if not exists lessons jsonb not null default '[]'::jsonb;
+"""
+
 # Columns added after the first release. If a database doesn't have one
-# yet, entries are saved without it instead of failing.
-OPTIONAL_COLUMNS = ("followups", "kickoff")
+# yet, entries are saved without it instead of failing (the daily page
+# warns when "lessons" is missing, since lesson progress needs it).
+OPTIONAL_COLUMNS = ("followups", "kickoff", "lessons")
 
 BOOKS_TABLE_MISSING = (
     "Supabase 裡還沒有 reading_books 資料表。到 Supabase 的 SQL Editor 執行 "
@@ -166,10 +174,22 @@ class SupabaseStore:
     def load(self) -> dict:
         resp = self._request("GET", params={"select": "*", "order": "date.asc,topic.asc"})
         rows = resp.json()
+        self._check_lessons_column()
         return core.parse_log({
             "entries": [{k: v for k, v in row.items() if k in core.ENTRY_FIELDS} for row in rows],
             "books": self._load_books(),
         })
+
+    def _check_lessons_column(self) -> None:
+        """Find out up front whether supabase/lessons.sql has been run, so the
+        daily page can ask for it before a lesson is saved without it."""
+        try:
+            self._request("GET", params={"select": "lessons", "limit": "1"})
+        except StorageError as e:
+            if e.status != 400:
+                raise
+            logger.warning("learning_entries has no lessons column; run supabase/lessons.sql")
+            self.missing_columns.add("lessons")
 
     def _load_books(self) -> list:
         try:
