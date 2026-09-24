@@ -12,13 +12,16 @@ these estimates err on the safe side."""
 import math
 import re
 
-REQUEST_BUDGET = 4000        # system + history + max_tokens, estimated
+# One request stays well under the 8000/minute limit; two in the same
+# minute (a lesson, then a quick follow-up) may hit a 429, which llm.py
+# waits out and retries.
+REQUEST_BUDGET = 5500        # system + history + max_tokens, estimated (~30% high)
 MESSAGE_OVERHEAD = 4         # role markers etc. per message
 REQUEST_OVERHEAD = 3
 
 # Completion budgets. Groq counts these toward the limit even if unused,
 # so they are sized to the reply, with reasoning_effort="low" on the call.
-LESSON_MAX_TOKENS = 1300     # six-block lesson (~1000 real tokens incl. reasoning)
+LESSON_MAX_TOKENS = 2400     # seven-block lesson, ~600–1000 characters plus reasoning
 CHAT_MAX_TOKENS = 900        # follow-ups and book chat
 JSON_MAX_TOKENS = 900        # verdicts / plan adjustments
 

@@ -3,7 +3,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import books, core, curriculum, ui
+from coach import books, core, curriculum, lesson_view, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -126,7 +126,7 @@ for e in entries:
                 if show and s.get("lesson"):
                     with st.container(border=True):
                         st.markdown(f"**第 {s['n']} 課　{s['title']}**")
-                        st.markdown(s["lesson"])
+                        lesson_view.render(s["lesson"])
             if e.get("followup_question"):
                 st.markdown(f"**延伸提問**：{e['followup_question']}")
             continue
@@ -156,7 +156,7 @@ for e in entries:
                 ui.show_pending_error()
         if e.get("lesson") and st.toggle("顯示當天的課程", key=f"rec_lesson_{key}"):
             with st.container(border=True):
-                st.markdown(e["lesson"])
+                lesson_view.render(e["lesson"])
 
 # ============================================================
 # BACKUP

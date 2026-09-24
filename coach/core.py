@@ -271,7 +271,7 @@ def finalize_reply(text: str, lesson: bool) -> str:
 
 
 # ------------------------------------------------------------
-# Parsing the coach's six-block answer
+# Parsing the coach's lesson blocks
 # ------------------------------------------------------------
 
 def extract_section(text: str, name: str) -> str:
@@ -356,11 +356,11 @@ def build_history_context(log: dict, topic: str, today: date, slot: dict = None)
 # Appended only after today's lesson has been given, so follow-up chat
 # reads like a conversation instead of a fresh six-block lesson each time.
 FOLLOWUP_NOTE = """【App 補充：今天的課程已經給過了】
-她現在是在今天的課程之後追問、回報進度或聊天。這時候六個區塊的輸出格式不適用，也不需要加結尾固定句式：
+她現在是在今天的課程之後追問、回報進度或聊天。這時候七個區塊的課程格式不適用，也不需要加結尾固定句式：
 - 直接用自然的對話回答，通常幾句話到一小段就好，只回應她這次說的內容。
 - 其他規則照舊：語氣、特殊情境、投資內容結尾的免責聲明。
 - 她回報完成任務（包括只做了一部分）時，具體肯定「完成」這件事本身，並提醒她可以在頁面上打勾。
-- 只有在她明確要求一則新的課程內容時，才重新使用完整的六個區塊與結尾固定句式。"""
+- 只有在她明確要求一則新的課程內容時，才重新使用完整的七個區塊與結尾固定句式。"""
 
 
 def build_system_prompt(log: dict, topic: str, today: date, followup: bool = False,

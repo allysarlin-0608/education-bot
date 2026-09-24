@@ -560,7 +560,7 @@ def days_away(book: dict, today: date) -> int:
 # titles, so every request stays inside the token budget.
 
 BOOK_MODE_NOTE = (
-    "【App 補充：現在是看書模式】不使用六個區塊的輸出格式，也不需要結尾固定句式，用自然的對話語氣。"
+    "【App 補充：現在是看書模式】不使用每日課程的區塊格式，也不需要結尾固定句式，用自然的對話語氣。"
     "進度、天數、章節範圍由 App 精確處理，以下面的資料為準。"
 )
 SUMMARY_CHARS = 150    # per-day cap on her own words quoted back to the model

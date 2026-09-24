@@ -21,7 +21,7 @@ except ImportError:
     GROQ_AVAILABLE = False
 
 MODEL_NAME = "openai/gpt-oss-120b"
-MAX_RETRIES = 2            # after the first attempt, on 429 / connection errors
+MAX_RETRIES = 3            # after the first attempt, on 429 / connection errors (up to ~45s)
 MAX_WAIT_SECONDS = 15.0    # cap on a single backoff wait
 
 NO_KEY = "還沒有設定 Groq API key，請先在側邊欄設定。"
