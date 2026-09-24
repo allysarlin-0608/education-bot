@@ -186,17 +186,12 @@ if not plan:
             f"{core.TOPICS[topic]}. The next ones will appear once they're added.")
     st.stop()
 
+# ============================================================
+# COURSE CARD: unit progress and today's lessons in one block
+# ============================================================
+# The bar only follows ticked lessons: opening an earlier lesson to review
+# it never moves it back.
 unit = curriculum.unit_progress(log, topic)
-progress_bar.render(
-    f"course_{topic}", f"{core.TOPICS[topic]}: {unit['unit']}", unit["done"], unit["total"],
-    f"Unit lessons {unit['first']}–{unit['last']}",
-)
-
-done_count = sum(1 for s in plan if s["completed"])
-st.caption(
-    f"Lessons {plan[0]['n']}–{plan[-1]['n']} · {curriculum.level_for(plan[0]['n'])} · "
-    f"finish all {len(plan)} to complete the day ({done_count} of {len(plan)} done)"
-)
 
 # Which lesson is open: the first unfinished one unless she picked another.
 sel_key = f"lesson_{today.isoformat()}_{topic}"
@@ -206,15 +201,28 @@ if goto and goto[0] == sel_key:
     st.session_state[sel_key] = goto[1]
 if st.session_state.get(sel_key) is None or st.session_state[sel_key] >= len(plan):
     st.session_state[sel_key] = first_open
-i = st.segmented_control(
-    "Today's lessons",
-    list(range(len(plan))),
-    format_func=lambda k: f"Lesson {plan[k]['n']}" + (" · done" if plan[k]["completed"] else ""),
-    key=sel_key,
-    label_visibility="collapsed",
-) or 0
+
+done_count = sum(1 for s in plan if s["completed"])
+with st.container(key="course_card"):
+    progress_bar.render(
+        f"course_{topic}", f"{core.TOPICS[topic]}: {unit['unit']}", unit["done"], unit["total"],
+        f"Unit lessons {unit['first']}–{unit['last']}",
+    )
+    # Short labels (the number, a tick once done) so all five stay on one
+    # row on a phone.
+    i = st.segmented_control(
+        "Today's lessons",
+        list(range(len(plan))),
+        format_func=lambda k: (":material/check: " if plan[k]["completed"] else "") + str(plan[k]["n"]),
+        key=sel_key,
+    ) or 0
+    st.caption(
+        f"Lessons {plan[0]['n']}–{plan[-1]['n']} · {curriculum.level_for(plan[0]['n'])} · "
+        f"{done_count} of {len(plan)} done · finish all {len(plan)} to complete the day"
+    )
+
 slot = plan[i]
-if slot["unit"]:
+if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit
     st.markdown(f"#### {slot['unit']}")
 st.markdown(f"### Lesson {slot['n']}: {slot['title']}")
 
