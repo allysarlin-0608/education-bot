@@ -15,6 +15,7 @@ ui.show_pending_error()
 
 page = st.navigation([
     st.Page("views/daily.py", title="每日學習", default=True),
+    st.Page("views/reading.py", title="看書"),
     st.Page("views/records.py", title="學習紀錄"),
 ])
 page.run()

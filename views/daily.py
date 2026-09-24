@@ -2,17 +2,18 @@ from datetime import date
 
 import streamlit as st
 
-from coach import core, llm, reading, tokens, ui
+from coach import core, llm, tokens, ui
 
 log = st.session_state.coach_log
 
 
 # ============================================================
-# Which lesson is on screen (survives page switches and refreshes)
+# Which day is on screen (survives page switches and refreshes)
 # ============================================================
-# Widget state is dropped when she visits another page, so the choices
-# live in plain session keys and are copied back into the widgets; they
-# are also mirrored into the URL so a refresh keeps them.
+# Widget state is dropped when she visits another page, so the date lives
+# in a plain session key and is copied back into the widget; it is also
+# mirrored into the URL so a refresh keeps it. The topic is always the
+# one scheduled for that day.
 
 def _query_date():
     try:
@@ -23,9 +24,6 @@ def _query_date():
 
 if "coach_date" not in st.session_state:
     st.session_state.coach_date = _query_date() or ui.today()
-    st.session_state.coach_topics = {}          # date iso -> chosen topic
-    if st.query_params.get("topic") in core.TOPICS:
-        st.session_state.coach_topics[st.session_state.coach_date.isoformat()] = st.query_params["topic"]
 
 
 def chat_key():
@@ -156,30 +154,14 @@ with st.sidebar:
 
 
 # ============================================================
-# TOPIC PICKER
+# TODAY'S TOPIC: fixed by the weekly schedule (看書 has its own page)
 # ============================================================
-scheduled = core.scheduled_topic(today)
-topic_keys = list(core.TOPICS)
+topic = core.scheduled_topic(today)
 st.markdown(f"## {today:%Y.%m.%d}　{core.weekday_zh(today)}")
-
-chosen = st.session_state.coach_topics.get(today.isoformat(), scheduled)
-if st.session_state.get("w_topic_date") != today.isoformat() or "w_topic" not in st.session_state:
-    st.session_state.w_topic = chosen
-    st.session_state.w_topic_date = today.isoformat()
-topic = st.selectbox(
-    "今天的主題",
-    topic_keys,
-    key="w_topic",
-    format_func=lambda k: core.TOPICS[k] + ("（今日行程）" if k == scheduled else ""),
-)
-st.session_state.coach_topics[today.isoformat()] = topic
-if st.query_params.get("date") != today.isoformat() or st.query_params.get("topic") != topic:
-    st.query_params.update(date=today.isoformat(), topic=topic)
-
-if topic == "reading":
-    # 看書 is a two-phase book tracker (part 4.3), not a daily lesson.
-    reading.render(log, today)
-    st.stop()
+st.markdown(f"### {core.TOPICS[topic]}")
+if st.query_params.get("date") != today.isoformat() or "topic" in st.query_params:
+    st.query_params.clear()
+    st.query_params["date"] = today.isoformat()
 
 session_number = core.topic_session_number(log, topic, today)
 st.caption(

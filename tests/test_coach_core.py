@@ -16,10 +16,11 @@ def make_log(*entries):
 def test_weekly_schedule():
     assert core.scheduled_topic(date(2026, 9, 21)) == "fashion"      # Mon
     assert core.scheduled_topic(date(2026, 9, 22)) == "philosophy"   # Tue
-    assert core.scheduled_topic(WED) == "reading"
+    assert core.scheduled_topic(WED) == "business"
     assert core.scheduled_topic(date(2026, 9, 24)) == "cosmos"
     assert core.scheduled_topic(date(2026, 9, 25)) == "jewelry"      # Fri
-    assert core.scheduled_topic(date(2026, 9, 26)) == "reading"
+    assert core.scheduled_topic(date(2026, 9, 26)) == "investing"
+    assert "reading" not in core.WEEKDAY_TOPIC.values()          # daily, own page
     assert core.scheduled_topic(date(2026, 9, 27)) == "free"
     assert core.weekday_zh(WED) == "星期三"
 
