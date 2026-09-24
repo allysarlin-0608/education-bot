@@ -48,3 +48,15 @@ def test_blocks_become_cards_without_brackets():
     assert parts[2][1].strip() == "Tilt makes seasons."
     assert "【" not in "".join(body for _, body in parts)
     assert lesson_view.blocks("No blocks here.") == [("", "No blocks here.")]
+
+
+def test_the_same_lesson_can_be_shown_twice_on_a_page(tmp_path):
+    from streamlit.testing.v1 import AppTest
+    script = tmp_path / "twice.py"
+    script.write_text(
+        "from coach import lesson_view\n"
+        "text = '【Topic】 Gold\\n\\n【Key Idea】 24K is soft.'\n"
+        "lesson_view.render(text, 'jewelry', key='2026-09-18_jewelry_3')\n"
+        "lesson_view.render(text, 'jewelry', key='2026-09-25_jewelry_3')\n")
+    at = AppTest.from_file(str(script)).run()
+    assert not at.exception

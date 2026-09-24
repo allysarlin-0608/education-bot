@@ -139,7 +139,7 @@ for e in entries:
                 if show and s.get("lesson"):
                     with st.container(border=True):
                         st.markdown(f"**Lesson {s['n']}: {s['title']}**")
-                        lesson_view.render(s["lesson"], e["topic"])
+                        lesson_view.render(s["lesson"], e["topic"], key=f"rec_{key}_{s['n']}")
             if e.get("followup_question"):
                 st.markdown(f"**Question to explore:** {e['followup_question']}")
             continue
@@ -161,7 +161,7 @@ for e in entries:
                 ui.show_pending_error()
         if e.get("lesson") and st.toggle("Show the lesson", key=f"rec_lesson_{key}"):
             with st.container(border=True):
-                lesson_view.render(e["lesson"], e["topic"])
+                lesson_view.render(e["lesson"], e["topic"], key=f"rec_{key}")
 
 # ============================================================
 # BACKUP

@@ -74,7 +74,9 @@ def _body(text: str, dark: bool) -> None:
             st.graphviz_chart(dot, width="content")
 
 
-def render(text: str, topic: str = None) -> None:
+def render(text: str, topic: str = None, key: str = "") -> None:
+    """key names this showing of the lesson (the same lesson can be on a
+    page twice, e.g. in the history, and card keys must be unique)."""
     dark = getattr(getattr(st.context, "theme", None), "type", "dark") != "light"
     if topic and topic != "investing" and core.has_disclaimer(text):
         text = core.DISCLAIMER_LINE.sub("", text)      # saved before the disclaimer was investing-only
@@ -84,7 +86,7 @@ def render(text: str, topic: str = None) -> None:
         if line in text:
             text = text.replace(line, "")
             footer.append(line)
-    tag = hashlib.md5(text.encode()).hexdigest()[:8]
+    tag = hashlib.md5(f"{key}|{text}".encode()).hexdigest()[:10]
     for k, (title, body) in enumerate(blocks(text.strip())):
         if not title:
             if body.strip():
