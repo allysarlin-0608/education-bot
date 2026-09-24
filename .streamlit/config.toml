@@ -1,7 +1,7 @@
 [theme]
 base = "dark"
-font = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Helvetica Neue", "Noto Sans TC", Arial, sans-serif'
-headingFont = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang TC", "Helvetica Neue", "Noto Sans TC", Arial, sans-serif'
+font = '"Inter", "Noto Sans TC", sans-serif'
+headingFont = '"Newsreader", "Noto Serif TC", serif'
 baseFontSize = 15
 baseRadius = "12px"
 buttonRadius = "12px"

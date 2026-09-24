@@ -9,9 +9,12 @@ something to touch or something selected: buttons, the current page,
 today in the calendar, her own messages and the chat bar."""
 import streamlit as st
 
-# Non-Apple devices get Noto Sans TC for Chinese; Apple devices use
-# their own system fonts first.
-FONTS = "https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600&display=swap"
+# Headings and numbers: Newsreader (light) with Noto Serif TC for Chinese;
+# body text: Inter with Noto Sans TC.
+SERIF = '"Newsreader", "Noto Serif TC", serif'
+FONTS = ("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600"
+         "&family=Noto+Sans+TC:wght@300;400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400"
+         "&family=Noto+Serif+TC:wght@300;400;500&display=swap")
 
 CSS = f"""
 <style>
@@ -87,9 +90,9 @@ CSS = f"""
 [data-testid="stVerticalBlock"] {{ gap: var(--space-5); }}
 
 /* ---------- type ---------- */
-.stApp h1, .stApp h2, .stApp h3 {{ color: var(--label); font-weight: 600; }}
-.stApp h2 {{ font-size: 2.25rem; line-height: 1.12; letter-spacing: -0.03em; padding: 0 0 var(--space-3); }}
-.stApp h3 {{ font-size: 1.375rem; line-height: 1.25; letter-spacing: -0.02em; padding: 0; }}
+.stApp h1, .stApp h2, .stApp h3 {{ color: var(--label); font-family: {SERIF}; font-weight: 300; font-variant-numeric: lining-nums; }}
+.stApp h2 {{ font-size: 2.25rem; line-height: 1.12; letter-spacing: 0; padding: 0 0 var(--space-3); }}
+.stApp h3 {{ font-size: 1.375rem; line-height: 1.25; letter-spacing: 0; padding: 0; }}
 .stApp h4 {{
   font-size: 0.8125rem; font-weight: 600; letter-spacing: 0; color: var(--label-2);
   padding: var(--space-6) 0 0; margin: 0;
@@ -104,13 +107,14 @@ CSS = f"""
 /* ---------- numbers: typography, no boxes ---------- */
 [data-testid="stMetricLabel"] p {{ font-size: 0.75rem; color: var(--label-3); }}
 [data-testid="stMetricValue"] {{
-  font-size: 1.875rem; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+  font-family: {SERIF}; font-size: 1.875rem; font-weight: 300; letter-spacing: 0;
+  font-variant-numeric: lining-nums tabular-nums;
 }}
 
 /* ---------- buttons: thin glass ---------- */
 .stButton button, .stFormSubmitButton button, .stDownloadButton button {{
   min-height: var(--control); padding: 0 var(--space-5);
-  border-radius: var(--radius-small); font-weight: 500; letter-spacing: -0.01em;
+  border-radius: var(--radius-small); font-weight: 500; letter-spacing: 0.01em;
   background: rgba(255, 255, 255, 0.02); color: var(--label);
   border: 1px solid rgba(255, 255, 255, 0.22);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
@@ -205,7 +209,7 @@ CSS = f"""
   box-shadow: var(--glass-depth-soft);
 }}
 [data-testid="stSidebarNav"] a[aria-current="page"] span {{ color: #FFFFFF; font-weight: 500; }}
-[data-testid="stSidebar"] h3 {{ font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; }}
+[data-testid="stSidebar"] h3 {{ font-size: 1.125rem; font-weight: 400; }}
 
 /* ---------- disclosure: hairlines only ---------- */
 [data-testid="stExpander"] details {{
@@ -258,7 +262,7 @@ CSS = f"""
 /* ---------- calendar (紀錄) ---------- */
 .cal {{ display: grid; gap: var(--space-4); }}
 .cal-head {{ display: flex; align-items: baseline; justify-content: space-between; }}
-.cal-month {{ font-size: 1.375rem; font-weight: 600; letter-spacing: -0.02em; color: var(--label); }}
+.cal-month {{ font-family: {SERIF}; font-size: 1.375rem; font-weight: 300; font-variant-numeric: lining-nums; color: var(--label); }}
 .cal-range {{ font-size: 0.8125rem; color: var(--label-3); }}
 .cal-grid {{ display: grid; grid-template-columns: repeat(7, 1fr); row-gap: var(--space-2); }}
 .cal-wd {{ text-align: center; font-size: 0.75rem; color: var(--label-3); padding-bottom: var(--space-2); }}
