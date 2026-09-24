@@ -273,18 +273,27 @@ def has_disclaimer(text: str) -> bool:
         or "not financial advice" in lowered
 
 
-def finalize_reply(text: str, lesson: bool) -> str:
-    """Add the investing disclaimer when the reply touches investing and
-    lacks one, and (for a lesson) make the fixed closing line the very
-    last line, with the disclaimer right before it."""
+DISCLAIMER_LINE = re.compile(
+    r"^.*(?:not (?:investment|financial) advice|不構成.*投資建議).*$\n?", re.IGNORECASE | re.MULTILINE)
+
+
+def finalize_reply(text: str, lesson: bool, topic: str = None) -> str:
+    """Put the investing disclaimer where it belongs and (for a lesson) make
+    the fixed closing line the very last line, the disclaimer right before
+    it. The disclaimer is only for the investing subject (when the reply
+    touches investing); on every other subject it never appears, and one
+    the model added anyway is taken out."""
     text = text.strip()
-    needs_disclaimer = bool(INVESTING_WORDS.search(text)) and not has_disclaimer(text)
+    investing = topic == "investing"
+    if not investing and has_disclaimer(text):
+        text = re.sub(r"\n{3,}", "\n\n", DISCLAIMER_LINE.sub("", text)).strip()
+    needs_disclaimer = investing and bool(INVESTING_WORDS.search(text)) and not has_disclaimer(text)
     closing_ok = not lesson or (text.endswith(CLOSING_LINE) and text.count(CLOSING_LINE) == 1)
     if closing_ok and not needs_disclaimer:
         return text                     # already right: leave it exactly as written
     if lesson:
         text = text.replace(CLOSING_LINE, "").rstrip()
-    if INVESTING_WORDS.search(text) and not has_disclaimer(text):
+    if needs_disclaimer:
         text = f"{text}\n\n{DISCLAIMER}"
     if lesson:
         text = f"{text}\n\n{CLOSING_LINE}"

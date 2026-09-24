@@ -1,8 +1,17 @@
-"""Showing a lesson: markdown (tables included) plus any ```dot diagram,
-drawn with st.graphviz_chart in the app's grays."""
+"""Showing a lesson: each 【Block】 as a card with its name as the title
+(the brackets are only in the stored text, which the quiz and history read),
+markdown inside (tables included) plus any ```dot diagram, drawn with
+st.graphviz_chart in the app's grays."""
+import hashlib
 import re
+from html import escape
 
 import streamlit as st
+
+from coach import core
+
+# 【Key Idea】, **【Key Idea】**, ### 【Key Idea】: at the start of a line
+BLOCK = re.compile(r"^[ \t]*(?:#+[ \t]*)?(?:\*\*)?【([^】\n]+)】(?:\*\*)?[ \t]*[:：]?[ \t]*", re.MULTILINE)
 
 DOT_BLOCK = re.compile(r"```(?:dot|graphviz)\s*\n(.*?)```", re.DOTALL)
 # Colors the model might set; the app draws every diagram in its own grays.
@@ -42,8 +51,20 @@ def styled(source: str, dark: bool):
     return f"{head}{{ {defaults}{rest}"
 
 
-def render(text: str) -> None:
-    dark = getattr(getattr(st.context, "theme", None), "type", "dark") != "light"
+def blocks(text: str) -> list:
+    """[(title or "", body), ...]: the text before the first block (if any)
+    has no title."""
+    out, marks = [], list(BLOCK.finditer(text))
+    if not marks:
+        return [("", text)]
+    if text[:marks[0].start()].strip():
+        out.append(("", text[:marks[0].start()]))
+    for m, nxt in zip(marks, marks[1:] + [None]):
+        out.append((m.group(1).strip(), text[m.end():nxt.start() if nxt else len(text)]))
+    return out
+
+
+def _body(text: str, dark: bool) -> None:
     for kind, content in split(text):
         if kind == "md":
             st.markdown(content)
@@ -51,3 +72,26 @@ def render(text: str) -> None:
         dot = styled(content, dark)
         if dot is not None:
             st.graphviz_chart(dot, width="content")
+
+
+def render(text: str, topic: str = None) -> None:
+    dark = getattr(getattr(st.context, "theme", None), "type", "dark") != "light"
+    if topic and topic != "investing" and core.has_disclaimer(text):
+        text = core.DISCLAIMER_LINE.sub("", text)      # saved before the disclaimer was investing-only
+    # the closing line and a disclaimer read as a footnote, not part of the last card
+    footer = []
+    for line in (core.DISCLAIMER, core.CLOSING_LINE):
+        if line in text:
+            text = text.replace(line, "")
+            footer.append(line)
+    tag = hashlib.md5(text.encode()).hexdigest()[:8]
+    for k, (title, body) in enumerate(blocks(text.strip())):
+        if not title:
+            if body.strip():
+                _body(body, dark)
+            continue
+        with st.container(key=f"lcard_{tag}_{k}"):
+            st.html(f'<div class="lcard-title">{escape(title)}</div>')
+            _body(body, dark)
+    for line in footer:
+        st.caption(line)

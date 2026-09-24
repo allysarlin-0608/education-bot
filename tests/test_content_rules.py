@@ -18,14 +18,14 @@ LESSON_I = (   # the reported investing lesson: disclaimer after the closing lin
 
 
 def test_investing_lesson_without_disclaimer_gets_one_before_the_closing_line():
-    out = core.finalize_reply(LESSON_C, lesson=True)
+    out = core.finalize_reply(LESSON_C, lesson=True, topic="investing")
     assert core.DISCLAIMER in out
     assert out.endswith(CLOSE) and out.count(CLOSE) == 1
     assert out.index(core.DISCLAIMER) < out.index(CLOSE)
 
 
 def test_closing_line_is_always_last_even_if_the_model_put_the_disclaimer_after_it():
-    out = core.finalize_reply(LESSON_I, lesson=True)
+    out = core.finalize_reply(LESSON_I, lesson=True, topic="investing")
     assert out.endswith(CLOSE) and out.count(CLOSE) == 1
     assert "不構成投資建議" in out and core.DISCLAIMER not in out   # kept, not duplicated
 
@@ -38,15 +38,15 @@ def test_non_investing_lesson_is_untouched_apart_from_the_closing_line():
 
 
 def test_followups_get_the_disclaimer_but_no_closing_line():
-    out = core.finalize_reply("可以看看這支 ETF 的殖利率。", lesson=False)
+    out = core.finalize_reply("可以看看這支 ETF 的殖利率。", lesson=False, topic="investing")
     assert out.endswith(core.DISCLAIMER) and CLOSE not in out
     assert core.finalize_reply("棉比較吸汗。", lesson=False) == "棉比較吸汗。"
 
 
 def test_everyday_use_of_the_word_investment_is_not_flagged():
-    assert core.finalize_reply("把時間投資在基本功上。", lesson=False) == "把時間投資在基本功上。"
-    assert core.finalize_reply("她成立了一個教育基金會。", lesson=False) == "她成立了一個教育基金會。"
-    assert core.DISCLAIMER in core.finalize_reply("指數型基金的費用比較低。", lesson=False)
+    assert core.finalize_reply("把時間投資在基本功上。", lesson=False, topic="investing") == "把時間投資在基本功上。"
+    assert core.finalize_reply("她成立了一個教育基金會。", lesson=False, topic="investing") == "她成立了一個教育基金會。"
+    assert core.DISCLAIMER in core.finalize_reply("指數型基金的費用比較低。", lesson=False, topic="investing")
 
 
 def test_prompt_has_fact_and_investing_rules_for_every_topic():
@@ -102,16 +102,16 @@ def test_old_chinese_lessons_still_parse():
 
 def test_english_investing_words_get_the_english_disclaimer():
     lesson = EN_LESSON.replace("Astronomy studies", "A stock is a small piece of a company; astronomy studies")
-    out = core.finalize_reply(lesson, lesson=True)
+    out = core.finalize_reply(lesson, lesson=True, topic="investing")
     assert core.DISCLAIMER in out and out.endswith(CLOSE)
     assert "not investment advice" in core.DISCLAIMER
     assert not any("\u4e00" <= c <= "\u9fff" for c in core.DISCLAIMER + CLOSE)   # no Chinese
-    assert core.DISCLAIMER in core.finalize_reply("Index funds usually cost less.", lesson=False)
+    assert core.DISCLAIMER in core.finalize_reply("Index funds usually cost less.", lesson=False, topic="investing")
 
 
 def test_an_english_disclaimer_from_the_model_is_not_doubled():
     reply = "Bitcoin has a fixed supply. This is for education only and not investment advice."
-    assert core.finalize_reply(reply, lesson=False) == reply
+    assert core.finalize_reply(reply, lesson=False, topic="investing") == reply
 
 
 def test_everyday_english_is_not_mistaken_for_investing():
@@ -127,3 +127,14 @@ def test_prompt_asks_for_english_only_and_an_english_vocabulary_table():
     assert core.CLOSING_LINE in prompt
     followup = core.build_system_prompt(core.empty_log(), "cosmos", date(2026, 9, 24), followup=True)
     assert "只用英文" in followup
+
+
+def test_the_disclaimer_is_only_for_the_investing_subject():
+    gold = ("【Key Idea】 Gold keeps its value, and some people buy stocks of mining companies.\n\n"
+            "※ For education only — this is not investment advice.\n\n" + CLOSE)
+    for topic in ("jewelry", "fashion", "business", "free", "reading"):
+        out = core.finalize_reply(gold, lesson=True, topic=topic)
+        assert "not investment advice" not in out and core.DISCLAIMER not in out, topic
+        assert out.endswith(CLOSE) and "Gold keeps its value" in out
+    assert core.DISCLAIMER not in core.finalize_reply("Index funds usually cost less.", lesson=False, topic="jewelry")
+    assert "not investment advice" in core.finalize_reply(gold, lesson=True, topic="investing")

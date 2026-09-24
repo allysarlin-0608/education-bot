@@ -347,7 +347,7 @@ def _handle_reading(log, book, chat, text, today):
                                         max_tokens=tokens.CHAT_MAX_TOKENS)
         if error:
             _failed(book, chat, error, text)
-        _say(chat, core.finalize_reply(reply, lesson=False))
+        _say(chat, core.finalize_reply(reply, lesson=False, topic="reading"))
         st.rerun()
 
     with st.spinner("The coach is reading what you shared…"):

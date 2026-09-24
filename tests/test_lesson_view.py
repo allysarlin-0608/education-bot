@@ -38,3 +38,13 @@ def test_broken_diagrams_are_skipped():
 
 def test_a_lesson_without_diagrams_is_one_markdown_part():
     assert lesson_view.split("只有文字\n\n| a | b |\n|---|---|") == [("md", "只有文字\n\n| a | b |\n|---|---|")]
+
+
+def test_blocks_become_cards_without_brackets():
+    text = ("Intro line.\n【Topic】 The orbit\n\n**【Key Idea】**: Tilt makes seasons.\n"
+            "### 【Deep Dive】\n| a | b |\n|---|---|\n| 1 | 2 |\n")
+    parts = lesson_view.blocks(text)
+    assert [t for t, _ in parts] == ["", "Topic", "Key Idea", "Deep Dive"]
+    assert parts[2][1].strip() == "Tilt makes seasons."
+    assert "【" not in "".join(body for _, body in parts)
+    assert lesson_view.blocks("No blocks here.") == [("", "No blocks here.")]

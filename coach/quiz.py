@@ -6,14 +6,19 @@ three kinds, so it checks understanding from different angles:
 - "short":  a one- or two-sentence answer in her own words, marked by the
             model against a model answer (1 point)
 
-Nine points or more (90%) completes the lesson and opens the next one;
-otherwise she can take a fresh set of questions as often as she likes.
+Every quiz is checked by a second model call before she sees it (is each
+keyed answer factually right and the only defensible one?); questions that
+fail are rewritten and checked again.
+
+Eight points or more (80%) completes the lesson; otherwise she can take a
+fresh set of questions as often as she likes.
 
 A lesson's quiz lives in its slot, slot["quiz"]:
 {"id", "questions", "answers": her last submitted answers (or None),
  "marks": points per question (None for a short answer not marked yet),
  "feedback": a line per question (short answers), "score": % once every
- question is marked, "attempts", "best"}. Quizzes saved before question
+ question is marked, "attempts", "best", "draft": answers given so far,
+ saved as she goes, until she submits}. Quizzes saved before question
 kinds existed are all multiple choice."""
 import random
 import uuid
@@ -21,8 +26,9 @@ import uuid
 QUESTIONS = 10
 OPTIONS = 4
 PAIRS = 4
-PASS_MARK = 90          # percent
-MIX = {"choice": 6, "match": 1, "short": 3}
+PASS_MARK = 80          # percent
+MIX = {"choice": 7, "match": 1, "short": 2}
+CHECK_ROUNDS = 2        # rewrite-and-recheck rounds before giving up
 
 SYSTEM = f"""You write a short quiz that checks whether a learner really understood one lesson.
 
@@ -36,6 +42,15 @@ Write exactly {QUESTIONS} questions about the lesson you are given, in English, 
 Cover the whole lesson (key idea, deep dive, example, vocabulary) and test understanding, not
 wording. Only ask about what the lesson actually says. "why" is one sentence explaining the answer.
 
+Correctness comes first:
+- The keyed answer must be factually correct in the real world, not just in the lesson, and it
+  must be the only correct option. If you are not completely sure a fact is right, don't ask
+  about it; ask about something else. (For example: pure gold is soft; alloys are harder.)
+- No two options may both be defensible. Every wrong option must be clearly wrong on reflection.
+- If a question asks for the most common, main, best or usual thing, the true answer must be
+  among the options.
+- Matching pairs and model answers must be correct too.
+
 Reply with JSON only, in this shape (questions in any order):
 {{"questions": [
   {{"type": "choice", "question": "...", "options": ["...", "...", "...", "..."], "answer": 0, "why": "..."}},
@@ -48,10 +63,22 @@ GRADER = """You mark a learner's short answers to questions about a lesson she j
 For each answer decide whether it shows she understood the point the question asks about. Her own
 words are fine and grammar or spelling mistakes don't matter, but the answer must be correct and
 specific enough; vague, off-topic or empty answers are not correct. Use the model answer as a guide,
-not as wording she must match. Give one short, kind sentence of feedback in English saying what was
-right or what was missing.
+not as wording she must match.
+"feedback" is one or two short, kind sentences in English. If the answer is correct, say what she
+got right. If it is not, say specifically why: what is wrong or what key point is missing.
 
 Reply with JSON only: {"results": [{"id": 0, "correct": true, "feedback": "..."}]}, one entry per id."""
+
+CHECKER = """You check a quiz before a learner sees it. For each question, decide whether it is sound:
+- "choice": the keyed answer is factually correct in the real world and is the ONLY defensible
+  option; no other option could also be argued to be right; if it asks for the most common, main,
+  best or usual thing, the true answer is among the options.
+- "match": every pair is factually correct and no term could reasonably match a different meaning.
+- "short": the model answer is factually correct and answers the question.
+Judge by real-world facts, not only by what a lesson might have said.
+
+Reply with JSON only: {"problems": [{"id": 0, "issue": "one sentence"}]} listing only the questions
+with a problem; {"problems": []} if every question is sound."""
 
 
 def request(slot: dict):
@@ -110,20 +137,85 @@ def parse(data, rng=random) -> list:
     """The quiz's questions from the model's JSON, or None if there aren't
     QUESTIONS usable ones. Multiple choice comes first, then matching,
     then short answers."""
-    items = data.get("questions") if isinstance(data, dict) else None
-    if not isinstance(items, list):
-        return None
-    questions = []
-    for item in items:
-        if isinstance(item, dict):
-            kind = item.get("type", "choice")
-            q = KINDS[kind](item, rng) if kind in KINDS else None
-            if q:
-                questions.append(q)
+    questions = parse_items(data, rng)
     if len(questions) < QUESTIONS:
         return None
     order = list(KINDS)
     return sorted(questions[:QUESTIONS], key=lambda q: order.index(q["type"]))
+
+
+def _describe(k: int, q: dict) -> str:
+    if q["type"] == "choice":
+        opts = "\n".join(f"  {'*' if j == q['answer'] else '-'} {o}" for j, o in enumerate(q["options"]))
+        return f"id {k} (choice): {q['question']}\n{opts}\n  (* = keyed answer)"
+    if q["type"] == "match":
+        pairs = "\n".join(f"  {left} = {q['right'][key]}" for left, key in zip(q["left"], q["key"]))
+        return f"id {k} (match): {q['question']}\n{pairs}"
+    return f"id {k} (short): {q['question']}\n  model answer: {q['answer']}"
+
+
+def check_request(questions: list):
+    """(system, messages) asking the model to vet every question."""
+    return CHECKER, [{"role": "user", "content": "\n\n".join(_describe(k, q) for k, q in enumerate(questions))}]
+
+
+def problems(data, n: int):
+    """{id: issue} for the questions the checker flagged, or None if its
+    reply can't be read."""
+    items = data.get("problems") if isinstance(data, dict) else None
+    if not isinstance(items, list):
+        return None
+    out = {}
+    for item in items:
+        if isinstance(item, dict) and isinstance(item.get("id"), int) and 0 <= item["id"] < n:
+            out[item["id"]] = _text(item.get("issue")) or "flagged"
+    return out
+
+
+def rewrite_request(slot: dict, questions: list, flagged: dict):
+    """(system, messages) asking for replacements for the flagged questions,
+    same kinds, different content."""
+    kinds = [questions[k]["type"] for k in sorted(flagged)]
+    wanted = ", ".join(f'{kinds.count(t)} "{t}"' for t in KINDS if t in kinds)
+    avoid = "\n".join(f"- {questions[k]['question']} (problem: {issue})" for k, issue in sorted(flagged.items()))
+    keep = "\n".join(f"- {q['question']}" for k, q in enumerate(questions) if k not in flagged)
+    system = SYSTEM.split("Reply with JSON only")[0].replace(
+        f"Write exactly {QUESTIONS} questions about the lesson you are given, in English, in this mix:",
+        f"Write exactly {len(flagged)} replacement questions ({wanted}) about the lesson you are given, "
+        "in English. The kinds are:")
+    system += ("Reply with JSON only, in the same shape as before: "
+               '{"questions": [{"type": "choice" | "match" | "short", ...}]}.')
+    user = (f"Lesson {slot['n']}: {slot['title']}\n\n{slot['lesson']}\n\n"
+            f"These questions had problems; write different ones:\n{avoid}\n\n"
+            f"Don't repeat the questions already in the quiz:\n{keep}")
+    return system, [{"role": "user", "content": user}]
+
+
+def parse_items(data, rng=random) -> list:
+    """Every usable question in the model's JSON, in the order given."""
+    items = data.get("questions") if isinstance(data, dict) else None
+    out = []
+    for item in items if isinstance(items, list) else []:
+        if isinstance(item, dict):
+            kind = item.get("type", "choice")
+            q = KINDS[kind](item, rng) if kind in KINDS else None
+            if q:
+                out.append(q)
+    return out
+
+
+def replace(questions: list, flagged: dict, fresh: list):
+    """The quiz with each flagged question swapped for a fresh one of the
+    same kind, or None if the fresh ones don't cover every kind needed."""
+    fresh = list(fresh)
+    out = list(questions)
+    for k in sorted(flagged):
+        match = next((f for f in fresh if f["type"] == questions[k]["type"]), None)
+        if match is None:
+            return None
+        fresh.remove(match)
+        out[k] = match
+    return out
 
 
 def new(questions: list, previous=None) -> dict:
@@ -131,7 +223,13 @@ def new(questions: list, previous=None) -> dict:
     previous = previous or {}
     return {"id": uuid.uuid4().hex[:8], "questions": questions, "answers": None, "marks": None,
             "feedback": None, "score": None, "attempts": previous.get("attempts", 0),
-            "best": previous.get("best")}
+            "best": previous.get("best"), "draft": None}
+
+
+def blank_draft(quiz: dict) -> list:
+    """Unanswered: None for choice, a None per term for matching, "" for short."""
+    return [[None] * len(q["left"]) if q["type"] == "match" else ("" if q["type"] == "short" else None)
+            for q in quiz["questions"]]
 
 
 def answered(question: dict, answer) -> bool:
@@ -155,6 +253,7 @@ def submit(quiz: dict, answers: list) -> bool:
     """Record a submission and mark what can be marked here. Returns True
     if short answers still need the model."""
     quiz["answers"] = list(answers)
+    quiz["draft"] = None
     quiz["marks"] = [_mark(q, a) for q, a in zip(quiz["questions"], answers)]
     quiz["feedback"] = [""] * len(answers)
     quiz["score"] = None
@@ -254,7 +353,10 @@ def parse_saved(data):
     elif not (isinstance(feedback, list) and len(feedback) == n):
         feedback = [""] * n
     number = lambda v: v if isinstance(v, int) and not isinstance(v, bool) else None  # noqa: E731
+    draft = data.get("draft")
+    if not (answers is None and isinstance(draft, list) and len(draft) == n):
+        draft = None
     return {"id": str(data.get("id") or uuid.uuid4().hex[:8]), "questions": questions, "answers": answers,
             "marks": marks, "feedback": feedback,
             "score": number(data.get("score")) if answers is not None else None,
-            "attempts": number(data.get("attempts")) or 0, "best": number(data.get("best"))}
+            "attempts": number(data.get("attempts")) or 0, "best": number(data.get("best")), "draft": draft}
