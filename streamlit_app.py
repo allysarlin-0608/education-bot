@@ -18,4 +18,7 @@ page = st.navigation([
     st.Page("views/reading.py", title="Reading"),
     st.Page("views/records.py", title="Progress"),
 ])
+# Progress bars flow in on arriving at a page, not on every rerun.
+st.session_state.lq_entering = st.session_state.get("lq_page") != page.url_path
+st.session_state.lq_page = page.url_path
 page.run()

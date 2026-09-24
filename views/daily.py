@@ -187,10 +187,11 @@ if not plan:
     st.stop()
 
 # ============================================================
-# COURSE CARD: unit progress and today's lessons in one block
+# COURSE CARD: the day's lessons are the progress bar
 # ============================================================
-# The bar only follows ticked lessons: opening an earlier lesson to review
-# it never moves it back.
+# Each lesson is one stretch of the liquid line, filled once ticked, with
+# its number below to open it. Opening an earlier lesson to review it only
+# changes which number is marked; the bar never empties.
 unit = curriculum.unit_progress(log, topic)
 
 # Which lesson is open: the first unfinished one unless she picked another.
@@ -202,24 +203,23 @@ if goto and goto[0] == sel_key:
 if st.session_state.get(sel_key) is None or st.session_state[sel_key] >= len(plan):
     st.session_state[sel_key] = first_open
 
-done_count = sum(1 for s in plan if s["completed"])
-with st.container(key="course_card"):
-    progress_bar.render(
-        f"course_{topic}", f"{core.TOPICS[topic]}: {unit['unit']}", unit["done"], unit["total"],
-        f"Unit lessons {unit['first']}–{unit['last']}",
-    )
-    # Short labels (the number, a tick once done) so all five stay on one
-    # row on a phone.
+done_flags = [s["completed"] for s in plan]
+done_count = sum(done_flags)
+motion = progress_bar.lesson_motion(sel_key, done_flags)
+with st.container(key=f"course_card_{motion}"):
+    st.html(progress_bar.build(f"{core.TOPICS[topic]}: {unit['unit']}", done_count, len(plan), bar=False))
     i = st.segmented_control(
         "Today's lessons",
         list(range(len(plan))),
+        # the icon marks a ticked lesson (the CSS fills its stretch and hides it)
         format_func=lambda k: (":material/check: " if plan[k]["completed"] else "") + str(plan[k]["n"]),
         key=sel_key,
+        label_visibility="collapsed",
     ) or 0
-    st.caption(
-        f"Lessons {plan[0]['n']}–{plan[-1]['n']} · {curriculum.level_for(plan[0]['n'])} · "
-        f"{done_count} of {len(plan)} done · finish all {len(plan)} to complete the day"
-    )
+    st.html(progress_bar.meta_row(
+        f"{done_count} / {len(plan)} lessons today",
+        f"Unit {unit['done']} of {unit['total']} · {curriculum.level_for(plan[0]['n'])}",
+    ))
 
 slot = plan[i]
 if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit

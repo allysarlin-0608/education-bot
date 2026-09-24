@@ -1,7 +1,7 @@
 """Reading (part 4.3): the book tracker on the Reading page."""
 import streamlit as st
 
-from coach import books, core, llm, tokens, ui
+from coach import books, core, llm, progress_bar, tokens, ui
 
 SWITCH_MESSAGE = "OK, let's set up a new book. "
 RESTART_MESSAGE = "OK, let's start over. "
@@ -142,7 +142,8 @@ def _render_header(book):
     if book["status"] == "reading":
         reading_days = [d for d in range(1, books.DAYS + 1) if book["plan"][d - 1]]
         done = len([d for d in reading_days if str(d) in book["checks"]])
-        st.progress(done / len(reading_days), text=f"{done} of {len(reading_days)} reading days confirmed")
+        progress_bar.render(f"book_{book['id']}", "Reading days confirmed", done, len(reading_days),
+                            label="Reading progress", compact=True, noun="reading day")
         with st.expander("14-day plan"):
             st.markdown(books.plan_table(book))
 

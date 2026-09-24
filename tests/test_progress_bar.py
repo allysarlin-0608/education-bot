@@ -28,3 +28,20 @@ def test_stylesheet_has_no_stray_angle_brackets():
     css = style.stylesheet()
     body = css.split("<style>", 1)[1].rsplit("</style>", 1)[0]
     assert "<" not in body and "lq-liquid" in body
+
+
+def test_header_only_and_counts():
+    html = progress_bar.build("Astronomy: Earth's orbit", 2, 5, bar=False)
+    assert ">40<span>%" in html and "lq-glass" not in html
+    assert progress_bar.count(3, 10, "reading day") == "3 / 10 reading days"
+
+
+def test_lesson_bar_motion(monkeypatch):
+    state = {}
+    monkeypatch.setattr(progress_bar.st, "session_state", state)
+    state["lq_entering"] = True
+    assert progress_bar.lesson_motion("d", [True, False, False]) == "flow"   # arriving on the page
+    state["lq_entering"] = False
+    assert progress_bar.lesson_motion("d", [True, False, False]) == "still"  # e.g. reviewing lesson 1
+    assert progress_bar.lesson_motion("d", [True, True, False]) == "tick2"   # lesson 2 just ticked
+    assert progress_bar.lesson_motion("d", [True, False, False]) == "still"  # unticked: no fill to play
