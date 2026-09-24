@@ -145,13 +145,15 @@ def run_quiz(i):
     st.rerun()
 
 
-def show_retry(slot):
-    """Friendly message + Retry for the last failed call on this lesson."""
+def show_retry(slot, kinds):
+    """Friendly message + Retry for the last failed call on this lesson, if
+    it was one of `kinds`. Each kind is shown in one place on the page (the
+    lesson start, the quiz, the chat), so there is only ever one Retry."""
     retry = st.session_state.get("coach_retry")
-    if not retry or retry["key"] != chat_key(slot):
-        return
+    if not retry or retry["key"] != chat_key(slot) or retry["kind"] not in kinds:
+        return False
     st.warning(retry["error"])
-    if st.button("Retry", key="coach_retry_button"):
+    if st.button("Retry", key=f"coach_retry_{retry['kind']}"):
         st.session_state.coach_retry = None
         if retry["kind"] == "kickoff":
             run_kickoff(retry["i"])
@@ -161,6 +163,7 @@ def show_retry(slot):
             run_grading(retry["i"])
         else:
             run_followup(retry["i"], retry["text"])
+    return True
 
 
 # ============================================================
@@ -275,7 +278,7 @@ st.markdown(f"### Lesson {slot['n']}: {slot['title']}")
 
 chat = get_chat(slot)
 if not chat:
-    show_retry(slot)
+    show_retry(slot, ("kickoff",))
     if (before := curriculum.blocking(plan, i)):
         st.caption(f"Pass the quiz for Lesson {before['n']} first, then start this one.")
     else:
@@ -430,10 +433,9 @@ elif (before := curriculum.blocking(entry["lessons"], i)):
 elif q is not None and quiz.needs_grading(q):
     # submitted, but marking the short answers didn't go through yet
     st.caption("Your answers are saved. They just need marking.")
-    show_retry(slot)
-    pending = st.session_state.get("coach_retry")
+    retrying = show_retry(slot, ("grade",))
     mark = st.empty()
-    if (not pending or pending["key"] != chat_key(slot)) and mark.button(
+    if not retrying and mark.button(
             "Mark my answers", type="primary", use_container_width=True):
         mark.empty()
         run_grading(i)
@@ -446,9 +448,9 @@ elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
     else:
         st.caption(f"{quiz.QUESTIONS} questions on this lesson: multiple choice, matching and short answers. "
                    f"Score {quiz.PASS_MARK}% or more to finish it.")
-    show_retry(slot)
+    retrying = show_retry(slot, ("quiz",))
     take = st.empty()               # hidden while the quiz is being written
-    if take.button("Take the quiz" if q is None else "Try a new quiz", type="primary", use_container_width=True):
+    if not retrying and take.button("Take the quiz" if q is None else "Try a new quiz", type="primary", use_container_width=True):
         take.empty()
         st.session_state.coach_retry = None
         run_quiz(i)
@@ -476,7 +478,7 @@ with st.expander("My thoughts on the question to explore (optional, the coach pi
         else:
             ui.show_pending_error()
 
-show_retry(slot)
+show_retry(slot, ("followup",))
 prompt = st.chat_input(f"Ask about Lesson {slot['n']}, report your progress, or just talk it through…")
 if prompt is not None and prompt.strip():
     st.session_state.coach_retry = None
