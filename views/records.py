@@ -54,7 +54,8 @@ st.html(
 st.markdown("#### Progress by subject")
 st.caption(f"Each bar is the unit you're in now. Every subject has {curriculum.TOTAL:,} lessons taken in "
            f"order: lessons 1–{curriculum.LEVEL_SIZE:,} are Beginner, {curriculum.LEVEL_SIZE + 1:,}–"
-           f"{2 * curriculum.LEVEL_SIZE:,} Intermediate, the rest Advanced.")
+           f"{2 * curriculum.LEVEL_SIZE:,} Intermediate, the rest Advanced. Reading follows the book "
+           f"you're reading.")
 for key, label in core.TOPICS.items():
     if curriculum.has_syllabus(key):
         p = curriculum.progress(log, key)
@@ -65,17 +66,18 @@ for key, label in core.TOPICS.items():
             label=label, compact=True,
         )
         continue
-    p = core.topic_progress(log, key)
-    if p["sessions"] == 0:
-        st.markdown(f"**{label}** · not started yet")
-        continue
-    st.markdown(
-        f"**{label}** · {p['sessions']} sessions ({p['completed']} finished) · {p['level']}"
-    )
-    if p["next_level"]:
-        st.progress(p["fraction"], text=f"{p['remaining']} more to reach {p['next_level']}")
+    # Reading has no syllabus: its bar is the book she is reading now.
+    book = books.current_book(log["books"])
+    finished = sum(1 for b in log["books"] if b["status"] == "finished")
+    shelf_note = f"{finished} {'book' if finished == 1 else 'books'} finished"
+    if book and book["status"] == "reading":
+        reading_days = [d for d in range(1, books.DAYS + 1) if book["plan"][d - 1]]
+        done = len([d for d in reading_days if str(d) in book["checks"]])
+        progress_bar.render(f"course_{key}", book["title"] or "(untitled)", done, len(reading_days),
+                            shelf_note, label=label, compact=True, noun="reading day")
     else:
-        st.progress(1.0, text="Advanced")
+        progress_bar.render(f"course_{key}", "No book in progress", 0, 1, shelf_note,
+                            label=label, compact=True, left="Start one on the Reading page")
 
 # ============================================================
 # BOOKSHELF
