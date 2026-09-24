@@ -138,3 +138,13 @@ def test_a_syllabus_lesson_request_fits_the_budget(topic):
     system = core.build_system_prompt(log, topic, THU, slot=slot)
     kickoff = [{"role": "user", "content": core.build_kickoff_message(topic, THU, slot=slot)}]
     assert tokens.estimate_request(system, kickoff, tokens.LESSON_MAX_TOKENS) <= tokens.REQUEST_BUDGET
+
+
+def test_lessons_are_finished_strictly_in_order():
+    slots = [curriculum.new_slot("cosmos", n) for n in range(1, 6)]
+    assert curriculum.blocking(slots, 0) is None
+    assert curriculum.blocking(slots, 1)["n"] == 1         # lesson 2 waits for lesson 1
+    slots[1]["completed"] = True                            # old data: lesson 2 done, lesson 1 not
+    assert curriculum.blocking(slots, 2)["n"] == 1          # lesson 3 still waits for lesson 1
+    slots[0]["completed"] = True
+    assert curriculum.blocking(slots, 2) is None

@@ -131,6 +131,13 @@ def day_plan(log: dict, topic: str, entry) -> list:
     return [new_slot(topic, n) for n in next_numbers(log, topic)]
 
 
+def blocking(slots: list, i: int):
+    """The first earlier lesson of the day not finished yet, or None.
+    Lessons are finished strictly in order: lesson i can't be started or
+    quizzed while one before it is open."""
+    return next((s for s in slots[:i] if not s.get("completed")), None)
+
+
 def day_complete(slots: list) -> bool:
     return bool(slots) and all(s.get("completed") for s in slots)
 

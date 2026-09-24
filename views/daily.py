@@ -63,6 +63,8 @@ def failed(kind, error, slot, **payload):
 def run_kickoff(i):
     entry = day_entry()
     slot = entry["lessons"][i]
+    if curriculum.blocking(entry["lessons"], i):     # strictly in order
+        st.rerun()
     chat = get_chat(slot)
     if chat:        # already generated (e.g. in another tab): never call again
         st.rerun()
@@ -109,6 +111,8 @@ def run_quiz(i):
     """Write a fresh quiz for lesson i (a new set on every retake)."""
     entry = day_entry()
     slot = entry["lessons"][i]
+    if curriculum.blocking(entry["lessons"], i):     # strictly in order
+        st.rerun()
     system, messages = quiz.request(slot)
     with st.spinner("Writing your quiz…"):
         data, error = llm.ask_json(system, messages, max_tokens=tokens.QUIZ_MAX_TOKENS)
@@ -249,8 +253,8 @@ st.markdown(f"### Lesson {slot['n']}: {slot['title']}")
 chat = get_chat(slot)
 if not chat:
     show_retry(slot)
-    if i > 0 and not plan[i - 1]["completed"]:
-        st.caption(f"Pass the quiz for Lesson {plan[i - 1]['n']} first, then start this one.")
+    if (before := curriculum.blocking(plan, i)):
+        st.caption(f"Pass the quiz for Lesson {before['n']} first, then start this one.")
     elif st.button("Start this lesson", type="primary", use_container_width=True):
         st.session_state.coach_retry = None
         run_kickoff(i)
@@ -296,6 +300,9 @@ if slot["completed"]:
             show_results(q)
     else:
         st.caption("This lesson is done.")
+elif (before := curriculum.blocking(entry["lessons"], i)):
+    # e.g. a lesson started under the old tick box before the one ahead of it was finished
+    st.caption(f"Pass the quiz for Lesson {before['n']} first; this quiz opens after that.")
 elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
     if q is not None:               # the last attempt fell short
         right = sum(1 for item, a in zip(q["questions"], q["answers"]) if a == item["answer"])
@@ -321,6 +328,8 @@ else:
             ))
         submitted = st.form_submit_button("Submit answers", type="primary", use_container_width=True)
     if submitted:
+        if curriculum.blocking(entry["lessons"], i):    # finished strictly in order
+            st.rerun()
         if None in choices:
             st.warning(f"Answer all {len(choices)} questions first.")
         else:
