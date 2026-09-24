@@ -33,15 +33,15 @@ TOPICS = {
     "free": "通識",
 }
 
-# date.weekday(): Monday == 0. Business and investing have no fixed day;
-# they only run when she picks them.
+# date.weekday(): Monday == 0. One topic per day, fixed. 看書 isn't a
+# weekday topic: it is a daily task on its own page.
 WEEKDAY_TOPIC = {
     0: "fashion",
     1: "philosophy",
-    2: "reading",
+    2: "business",
     3: "cosmos",
     4: "jewelry",
-    5: "reading",
+    5: "investing",
     6: "free",
 }
 WEEKDAY_ZH = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
