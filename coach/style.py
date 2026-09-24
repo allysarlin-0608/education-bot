@@ -117,9 +117,12 @@ CSS = f"""
 /* ---------- type ---------- */
 .stApp h1, .stApp h2, .stApp h3 {{ color: var(--label); font-family: {SERIF}; font-weight: 300; font-variant-numeric: lining-nums; }}
 .stApp h2 {{ font-size: 2.25rem; line-height: 1.12; letter-spacing: 0; padding: 0 0 var(--space-3); }}
-.stApp h3 {{ font-size: 1.375rem; line-height: 1.25; letter-spacing: 0; padding: 0; }}
+.stApp h3 {{ font-size: 1.625rem; line-height: 1.22; letter-spacing: 0; padding: 0; }}
+/* section headings (Quiz, Last four weeks, Progress by subject, ...): the
+   serif at a size that reads as a heading, in full ink */
 .stApp h4 {{
-  font-size: 0.8125rem; font-weight: 600; letter-spacing: 0; color: var(--label-2);
+  font-family: {SERIF}; font-size: 1.3125rem; font-weight: 400; line-height: 1.25;
+  font-variant-numeric: lining-nums; letter-spacing: 0; color: var(--label);
   padding: var(--space-6) 0 0; margin: 0;
 }}
 .stApp p, .stApp li {{ line-height: 1.65; }}
@@ -306,7 +309,8 @@ CSS = f"""
   background: var(--glass); box-shadow: var(--optic); gap: var(--space-2);
 }}
 [class*="st-key-lcard_"] .lcard-title {{
-  font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3);
+  font-family: {SERIF}; font-size: 1.3125rem; font-weight: 400; line-height: 1.25;
+  font-variant-numeric: lining-nums; color: var(--label);
 }}
 [class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] {{ margin-bottom: 0 !important; }}
 [class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] > :last-child,
@@ -331,7 +335,7 @@ CSS = f"""
 /* ---------- calendar (Progress page) ---------- */
 .cal {{ display: grid; gap: var(--space-4); }}
 .cal-head {{ display: flex; align-items: baseline; justify-content: space-between; }}
-.cal-month {{ font-family: {SERIF}; font-size: 1.375rem; font-weight: 300; font-variant-numeric: lining-nums; color: var(--label); }}
+.cal-month {{ font-family: {SERIF}; font-size: 1.125rem; font-weight: 300; font-variant-numeric: lining-nums; color: var(--label); }}
 .cal-range {{ font-size: 0.8125rem; color: var(--label-3); }}
 .cal-grid {{ display: grid; grid-template-columns: repeat(7, 1fr); row-gap: var(--space-2); }}
 .cal-wd {{ text-align: center; font-size: 0.75rem; color: var(--label-3); padding-bottom: var(--space-2); }}
@@ -366,6 +370,8 @@ CSS = f"""
 @media (max-width: 640px) {{
   .stMainBlockContainer {{ padding: 88px var(--space-4) 160px; }}
   .stApp h2 {{ font-size: 1.875rem; }}
+  .stApp h3 {{ font-size: 1.4375rem; }}
+  .stApp h4, [class*="st-key-lcard_"] .lcard-title {{ font-size: 1.1875rem; }}
   [data-testid="stVerticalBlock"] {{ gap: var(--space-4); }}
   /* the four numbers become a 2 × 2 grid instead of a tall column */
   [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) {{
