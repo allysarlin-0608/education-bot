@@ -8,8 +8,6 @@ from coach import books, core, ui
 log = st.session_state.coach_log
 today = ui.today()
 
-STATUS_MARK = {"done": "●", "started": "○", "none": "·", "future": ""}
-
 st.markdown("## 學習紀錄")
 
 if not log["entries"]:
@@ -29,14 +27,22 @@ col4.metric("上課次數", f"{len(log['entries'])} 次")
 # ============================================================
 st.markdown("#### 最近四週")
 weeks = core.calendar_weeks(log, today, weeks=4)
-header = "| 週 | " + " | ".join(d[-1] for d in core.WEEKDAY_ZH) + " |"
-rows = [header, "|" + " --- |" * 8]
+first = weeks[0][0][0]
+cells = [f'<span class="cal-wd">{d[-1]}</span>' for d in core.WEEKDAY_ZH]
 for week in weeks:
-    start = week[0][0]
-    cells = [STATUS_MARK[status] for _, status in week]
-    rows.append(f"| {start.month}/{start.day} | " + " | ".join(cells) + " |")
-st.markdown("\n".join(rows))
-st.caption("● 完成　○ 有上課、還沒打勾　· 沒有紀錄")
+    for day, status in week:
+        label = f"{day.month}/{day.day}" if day.day == 1 else str(day.day)
+        classes = f"cal-day {status}" + (" today" if day == today else "")
+        cells.append(f'<span class="{classes}" title="{day.isoformat()}"><b>{label}</b><i></i></span>')
+st.html(
+    '<div class="cal">'
+    f'<div class="cal-head"><span class="cal-month">{today.year}年{today.month}月</span>'
+    f'<span class="cal-range">{first.month}月{first.day}日 – {today.month}月{today.day}日</span></div>'
+    f'<div class="cal-grid">{"".join(cells)}</div>'
+    '<div class="cal-legend"><span><i style="background:var(--label)"></i>完成</span>'
+    '<span><i style="border:1px solid var(--label-2)"></i>有上課、還沒打勾</span></div>'
+    '</div>'
+)
 
 # ============================================================
 # PER-TOPIC PROGRESS
