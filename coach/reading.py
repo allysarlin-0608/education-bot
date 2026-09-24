@@ -315,6 +315,9 @@ def _render_reading_controls(log, book, chat, today):
             _set_awaiting(book, None)
             _say(chat, "沒問題，準備好了再跟我說。")
             st.rerun()
+    elif day and not books.is_open(book, day, today):
+        opens = books.opens_on(book, day)
+        st.caption(f"第{day}天的範圍 {opens.month}月{opens.day}日開放。")
     elif day:
         if st.button(f"我讀完第{day}天的範圍了", type="primary", use_container_width=True):
             chat.append({"role": "user", "content": f"我讀完第{day}天的範圍了"})
@@ -331,6 +334,9 @@ def _handle_reading(log, book, chat, text, today):
     day = _awaiting_day(book)
     if day is None and books.says_finished_reading(text):
         day = books.next_day(book)
+        if not books.is_open(book, day, today):
+            _say(chat, books.not_open_message(book, day))
+            st.rerun()
         # A short "讀完了" gets the reminder and the invitation to share;
         # a longer message already is her sharing, so check it right away.
         if len(text) < 40:

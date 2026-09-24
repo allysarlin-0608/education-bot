@@ -7,7 +7,7 @@ model is only used for judging her summaries and for tables of contents
 too messy for parse_toc."""
 import re
 import uuid
-from datetime import date
+from datetime import date, timedelta
 
 DAYS = 14
 
@@ -329,6 +329,24 @@ def next_day(book: dict):
         if book["plan"][day - 1] and str(day) not in book["checks"]:
             return day
     return None
+
+
+def opens_on(book: dict, day: int) -> date:
+    """Day N of the plan opens N-1 days after the book started: days she
+    missed can be caught up, but she can't read ahead of the calendar."""
+    return date.fromisoformat(book["started_on"]) + timedelta(days=day - 1)
+
+
+def is_open(book: dict, day: int, today: date) -> bool:
+    return today >= opens_on(book, day)
+
+
+def not_open_message(book: dict, day: int) -> str:
+    opens = opens_on(book, day)
+    return (
+        f"今天的份量已經完成了。第{day}天的範圍（{day_description(book, day)}）"
+        f"{opens.month}月{opens.day}日才開放，一天讀一點比較記得住，到時候再回來跟我聊。"
+    )
 
 
 def question_for(book: dict) -> str:
@@ -662,6 +680,8 @@ def resume_message(book: dict, today: date) -> str:
     if book["status"] == "planning":
         return f"《{book['title']}》的 14 天進度表：\n\n{plan_table(book)}\n\n{PLAN_QUESTION}"
     day = next_day(book)
+    if not is_open(book, day, today):
+        return not_open_message(book, day)
     pages = pages_for_day(book, day)
     if days_away(book, today) > 1:
         return (

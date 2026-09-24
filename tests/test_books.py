@@ -300,11 +300,30 @@ def test_says_finished_reading():
 
 def test_resume_message_after_days_away():
     book = reading_book()
+    book["started_on"] = "2026-09-18"
     books.record_pass(book, 1, "講了 T1", date(2026, 9, 18))
     msg = books.resume_message(book, date(2026, 9, 23))
     assert msg.startswith("我們從第2天繼續")
     assert "你去哪" not in msg and "中斷" not in msg
     assert books.resume_message(book, date(2026, 9, 19)).startswith("《書》今天是第2天")
+
+
+def test_days_open_by_calendar_and_can_be_caught_up():
+    """E: day N opens on start + N-1; missed days can be caught up, but she
+    can't read ahead of the calendar."""
+    book = reading_book(5)
+    book["started_on"] = "2026-09-20"
+    assert books.opens_on(book, 1) == date(2026, 9, 20)
+    assert books.opens_on(book, 4) == date(2026, 9, 23)
+    assert [books.is_open(book, d, TODAY) for d in (1, 4, 5)] == [True, True, False]
+
+    for d in (1, 2, 3, 4):                               # four days caught up today
+        assert books.is_open(book, books.next_day(book), TODAY)
+        books.record_pass(book, d, f"講了 T{d}", TODAY)
+    assert books.next_day(book) == 5 and not books.is_open(book, 5, TODAY)
+    msg = books.resume_message(book, TODAY)
+    assert msg.startswith("今天的份量已經完成了") and "9月24日才開放" in msg
+    assert books.resume_message(book, date(2026, 9, 24)).startswith("《書》今天是第5天")
 
 
 def test_resume_message_mid_setup():
