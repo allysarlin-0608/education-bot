@@ -438,7 +438,7 @@ LIQUID = """
   background: linear-gradient(90deg, transparent 10%,
     color-mix(in srgb, var(--lq-hi) calc(14% + var(--surge) * 10%), transparent) 55%, transparent 95%);
 }
-.lq.empty .lq-liquid { visibility: hidden; }
+.lq.empty .lq-liquid { opacity: 0.45; }   /* a droplet at the start, so the bar is never missing */
 
 /* motion: flows in, settles, then is still (no bounce, no loop) */
 .lq.flowing .lq-liquid {
@@ -448,18 +448,57 @@ LIQUID = """
 @keyframes lq-front { from { --p: var(--from); } to { --p: var(--to); } }
 @keyframes lq-surge { 0% { --surge: 0; } 30% { --surge: 1; } 100% { --surge: 0; } }
 
-/* Today's course card: the bar and the day's lessons read as one block */
-.st-key-course_card { gap: 14px; }
-.st-key-course_card [data-testid="stWidgetLabel"] p {
-  font-size: 0.6875rem; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3);
+/* Today's course card: the day's lessons are the progress bar. Each
+   lesson is one stretch of the same liquid line, its number below; a
+   ticked lesson is filled. Opening a lesson only marks its number, so
+   going back to review never empties the bar. */
+[class*="st-key-course_card"] { gap: 10px; }
+[class*="st-key-course_card"] .stElementContainer:has(> [data-testid="stButtonGroup"]),
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] { width: 100% !important; max-width: none; }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] > div {
+  display: flex; flex-wrap: nowrap; width: 100%; max-width: none; gap: 0;
+  border: none !important; background: transparent !important; box-shadow: none !important;
 }
-/* the row spans the card: Streamlit sizes it to fit its content */
-.st-key-course_card .stElementContainer:has(> [data-testid="stButtonGroup"]),
-.st-key-course_card [data-testid="stButtonGroup"] { width: 100% !important; max-width: none; }
-.st-key-course_card [data-testid="stButtonGroup"] > div { display: flex; flex-wrap: nowrap; width: 100%; max-width: none; }
-.st-key-course_card [data-testid="stButtonGroup"] button [data-testid="stMarkdownContainer"] { min-width: max-content; }
-.st-key-course_card [data-testid="stButtonGroup"] button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; }
-.st-key-course_card [data-testid="stButtonGroup"] button p { font-variant-numeric: tabular-nums; white-space: nowrap; }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button {
+  --lh: 2px;
+  position: relative; flex: 1 1 0; min-width: 0; height: auto; min-height: 44px;
+  padding: 20px 0 4px !important; margin: 0 !important;
+  border: none !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important;
+  color: var(--label-3); transition: color var(--t-micro) var(--ease);
+}
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button p {
+  font-size: 0.8125rem; font-variant-numeric: tabular-nums; white-space: nowrap; color: inherit;
+}
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button [data-testid="stMarkdownContainer"] { min-width: max-content; }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button span:has(> [data-testid="stIconMaterial"]) { display: none; }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:hover { color: var(--label-2); }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button[aria-checked="true"] { color: var(--label); }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button[aria-checked="true"] p { font-weight: 600; }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:focus-visible { outline: none; }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:focus-visible p { outline: 1px solid var(--outline); outline-offset: 3px; border-radius: 4px; }
+/* the glass line, continuous across the lessons */
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 9px;
+  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
+  box-shadow: inset 0 0.5px 0 var(--lq-edge-hi), inset 0 -0.5px 0 var(--lq-edge-lo);
+}
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:first-child::before { border-radius: 999px 0 0 999px; }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:last-child::before { border-radius: 0 999px 999px 0; }
+/* the liquid in a ticked lesson; the last filled one ends in a round meniscus */
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button::after {
+  content: ""; position: absolute; left: 0; top: 6.5px; height: 4px; width: 0;
+  background: var(--lq-liquid); opacity: 0.92;
+}
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:first-child::after { left: 0; border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:has([data-testid="stIconMaterial"])::after { width: 100%; }
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:has([data-testid="stIconMaterial"]):not(:has(+ button [data-testid="stIconMaterial"]))::after {
+  border-radius: 0 2.6px 2.2px 0 / 0 2px 2px 0;
+  background: linear-gradient(90deg, var(--lq-liquid) calc(100% - 14px), color-mix(in srgb, var(--lq-liquid) 60%, var(--lq-hi)));
+}
+[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:first-child:has([data-testid="stIconMaterial"]):not(:has(+ button [data-testid="stIconMaterial"]))::after {
+  border-radius: 2px 2.6px 2.2px 2px / 2px 2px 2px 2px;
+}
+@keyframes lq-fill { from { width: 0; } to { width: 100%; } }
 
 @media (max-width: 640px) {
   .lq { --height: 8px; --inset: 2.25px; }
@@ -472,9 +511,27 @@ LIQUID = """
 </style>
 """
 
+# Motion for the lesson bar on Today (views/daily.py picks the container
+# key): on arriving the ticked lessons fill one after another, ~1 s in all;
+# when one lesson is ticked only that stretch fills.
+_SEG = '[data-testid="stButtonGroup"] button'
+_DONE = ':has([data-testid="stIconMaterial"])'
+LESSON_MOTION = "".join(
+    f'.st-key-course_card_flow {_SEG}:nth-child({k}){_DONE}::after '
+    f'{{ animation: lq-fill 200ms linear {(k - 1) * 200}ms both; }}\n'
+    for k in range(1, 8)
+) + (
+    f'.st-key-course_card_flow {_SEG}{_DONE}:not(:has(+ button [data-testid="stIconMaterial"]))::after '
+    '{ animation-duration: 420ms; animation-timing-function: cubic-bezier(0.3, 0.6, 0.25, 1); }\n'
+) + "".join(
+    f'.st-key-course_card_tick{k} {_SEG}:nth-child({k})::after '
+    '{ animation: lq-fill 700ms cubic-bezier(0.3, 0.6, 0.25, 1) both; }\n'
+    for k in range(1, 8)
+)
+
 
 def stylesheet() -> str:
-    return CSS.replace("</style>", LIQUID.replace("<style>", ""))
+    return CSS.replace("</style>", LIQUID.replace("<style>", "").replace("</style>", LESSON_MOTION + "</style>"))
 
 
 def inject():
