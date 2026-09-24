@@ -69,9 +69,13 @@ def _previous(key: str, pct: int) -> int:
 
 
 def seen(key: str, **texts) -> dict:
-    """The numbers last shown under `key` in this session, so they roll
-    only when they have really changed."""
-    return rolling.remember(st.session_state.setdefault("lq_texts", {}), key, **texts)
+    """What the numbers roll from: 0 when she arrives on the page (they
+    count up together with the liquid flowing in), otherwise the value last
+    shown, so later they roll only when they have really changed."""
+    old = rolling.remember(st.session_state.setdefault("lq_texts", {}), key, **texts)
+    if entering():
+        return {k: rolling.zeroed(v) for k, v in texts.items()}
+    return old
 
 
 def render(key: str, title: str, done: int, total: int, meta: str = "", **kwargs):

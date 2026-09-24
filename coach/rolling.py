@@ -73,6 +73,11 @@ def html(new: str, old=None) -> str:
     return "".join(out)
 
 
+def zeroed(text) -> str:
+    """The same text with every number at 0, to count up from on arrival."""
+    return NUMBER.sub("0", str(text))
+
+
 def remember(store: dict, key: str, **texts) -> dict:
     """The texts last shown under `key` (empty the first time), and keep
     these new ones for next time."""
