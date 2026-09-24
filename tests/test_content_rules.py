@@ -62,5 +62,14 @@ def test_topic_modules_state_the_facts_that_were_wrong():
     assert "棉吸濕性好，但乾得慢" in core.load_system_prompt("fashion")
     canvas = core.load_system_prompt("business")
     assert "不公平優勢" in canvas and "沒有「核心假設」" in canvas
-    for topic in ("philosophy", "free"):
-        assert "最多人" in core.load_system_prompt(topic) and "期望報酬" in core.load_system_prompt(topic)
+    philosophy = core.load_system_prompt("philosophy")
+    assert "最多人" in philosophy and "期望報酬" in philosophy
+    jewelry = core.load_system_prompt("jewelry")
+    assert "18K含金75%" in jewelry and "白金" in jewelry and "免責聲明" in jewelry
+
+
+def test_fashion_jewelry_and_general_topics_stay_in_their_lanes():
+    assert "珠寶在星期五" in core.load_system_prompt("fashion")
+    assert "衣服與穿搭在星期一" in core.load_system_prompt("jewelry")
+    general = core.load_system_prompt("free")
+    assert "4.7 通識" in general and "不要講時尚、珠寶、哲學、天文學、商業、投資本身的內容" in general
