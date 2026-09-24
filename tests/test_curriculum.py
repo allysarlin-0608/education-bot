@@ -28,7 +28,7 @@ def test_reading_has_no_syllabus():
 
 def test_levels_follow_position_in_the_syllabus():
     assert [curriculum.level_for(n) for n in (1, 1000, 1001, 2000, 2001, 3000)] == \
-        ["入門", "入門", "中階", "中階", "進階", "進階"]
+        ["Beginner", "Beginner", "Intermediate", "Intermediate", "Advanced", "Advanced"]
 
 
 def day(log, when, topic, done):
@@ -63,7 +63,7 @@ def test_progress_counts_completed_lessons():
     log = core.empty_log()
     day(log, THU, "philosophy", done=4)
     p = curriculum.progress(log, "philosophy")
-    assert (p["done"], p["total"], p["level"], p["level_done"]) == (4, 3000, "入門", 4)
+    assert (p["done"], p["total"], p["level"], p["level_done"]) == (4, 3000, "Beginner", 4)
 
 
 def test_lessons_survive_save_and_load(tmp_path):
@@ -103,10 +103,10 @@ def test_prompt_names_this_lesson_and_fences_off_the_next():
     slot = curriculum.new_slot("cosmos", 2)
     prompt = core.build_system_prompt(core.empty_log(), "cosmos", THU, slot=slot)
     this, before, after = curriculum.lesson("cosmos", 2), curriculum.lesson("cosmos", 1), curriculum.lesson("cosmos", 3)
-    assert f"第 2 課「{this['title']}」" in prompt and "難度（依課綱位置）：入門" in prompt
+    assert f"第 2 課「{this['title']}」" in prompt and "難度（依課綱位置）：Beginner" in prompt
     assert before["title"] in prompt and after["title"] in prompt and "不要提前講" in prompt
     kickoff = core.build_kickoff_message("cosmos", THU, slot=slot)
-    assert kickoff.endswith(f"第 2 課：{this['title']}")
+    assert kickoff.endswith(f"Lesson 2: {this['title']}")
 
 
 @pytest.mark.parametrize("topic", TOPICS)

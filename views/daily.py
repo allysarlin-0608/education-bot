@@ -55,7 +55,7 @@ def day_entry():
 
 def failed(kind, error, slot, **payload):
     """Remember a failed call so the page can show a friendly message and
-    a 重試 button that repeats it (the raw error only goes to the log)."""
+    a Retry button that repeats it (the raw error only goes to the log)."""
     st.session_state.coach_retry = {"kind": kind, "error": error, "key": chat_key(slot), **payload}
     st.rerun()
 
@@ -78,9 +78,9 @@ def run_kickoff(i):
     chat.append({"role": "assistant", "content": lesson})
     slot["kickoff"], slot["lesson"] = kickoff, lesson
     first, last = entry["lessons"][0]["n"], entry["lessons"][-1]["n"]
-    entry["title"] = f"第 {first}–{last} 課"
+    entry["title"] = f"Lessons {first}–{last}"
     entry["level"] = curriculum.level_for(first)
-    entry["followup_question"] = core.extract_section(lesson, "延伸提問")
+    entry["followup_question"] = core.extract_section(lesson, "Question to Explore")
     ui.save_entry(log, entry)
     st.rerun()
 
@@ -106,12 +106,12 @@ def run_followup(i, text):
 
 
 def show_retry(slot):
-    """Friendly message + 重試 for the last failed call on this lesson."""
+    """Friendly message + Retry for the last failed call on this lesson."""
     retry = st.session_state.get("coach_retry")
     if not retry or retry["key"] != chat_key(slot):
         return
     st.warning(retry["error"])
-    if st.button("重試", key="coach_retry_button"):
+    if st.button("Retry", key="coach_retry_button"):
         st.session_state.coach_retry = None
         if retry["kind"] == "kickoff":
             run_kickoff(retry["i"])
@@ -123,23 +123,23 @@ def show_retry(slot):
 # SIDEBAR
 # ============================================================
 with st.sidebar:
-    st.markdown("### 每日學習教練")
-    st.caption("每天 15 到 20 分鐘，一個知識點、一個小任務。")
+    st.markdown("### Daily Learning Coach")
+    st.caption("A few focused lessons a day, one idea and one small task at a time.")
 
     client_ready = bool(st.session_state.api_key) and llm.GROQ_AVAILABLE
     if not client_ready:
-        with st.expander("設定 API key", expanded=not st.session_state.api_key):
+        with st.expander("Set the API key", expanded=not st.session_state.api_key):
             entered_key = st.text_input(
                 "Groq API key",
                 type="password",
                 value=st.session_state.api_key,
-                help="也可以設定 GROQ_API_KEY 環境變數或 secret。",
+                help="You can also set GROQ_API_KEY as an environment variable or secret.",
             )
             if entered_key != st.session_state.api_key:
                 st.session_state.api_key = entered_key
                 st.rerun()
             if not llm.GROQ_AVAILABLE:
-                st.caption("缺少套件：請執行 `pip install groq`。")
+                st.caption("Missing package: run `pip install groq`.")
 
     # No future dates: lessons "done" in the future would count toward the
     # real streak and levels (and a date past max_value makes Streamlit error).
@@ -148,24 +148,25 @@ with st.sidebar:
         st.session_state.coach_date = latest
     if "w_date" not in st.session_state or st.session_state.w_date > latest:
         st.session_state.w_date = st.session_state.coach_date
-    today = st.date_input("日期", key="w_date", max_value=latest)
+    today = st.date_input("Date", key="w_date", max_value=latest)
     st.session_state.coach_date = today
 
     st.divider()
-    # Same base date as the 學習紀錄 page (the real today), whatever date
+    # Same base date as the Progress page (the real today), whatever date
     # is picked above.
     streak = core.current_streak(log, ui.today())
     col_a, col_b = st.columns(2)
-    col_a.metric("連續完成", f"{streak} 天")
-    col_b.metric("累計完成", f"{len(core.completed_dates(log))} 天")
-    st.page_link("views/records.py", label="看完整學習紀錄")
+    col_a.metric("Current streak", f"{streak} {'day' if streak == 1 else 'days'}")
+    done_days = len(core.completed_dates(log))
+    col_b.metric("Days completed", f"{done_days} {'day' if done_days == 1 else 'days'}")
+    st.page_link("views/records.py", label="See full progress")
 
 
 # ============================================================
-# TODAY'S TOPIC: fixed by the weekly schedule (看書 has its own page)
+# TODAY'S TOPIC: fixed by the weekly schedule (Reading has its own page)
 # ============================================================
 topic = core.scheduled_topic(today)
-st.markdown(f"## {today:%Y.%m.%d}　{core.weekday_zh(today)}")
+st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
 st.markdown(f"### {core.TOPICS[topic]}")
 if st.query_params.get("date") != today.isoformat() or "topic" in st.query_params:
     st.query_params.clear()
@@ -177,18 +178,19 @@ plan = curriculum.day_plan(log, topic, entry)
 store = st.session_state.coach_store
 if "lessons" in getattr(store, "missing_columns", ()):
     st.warning(
-        "資料庫還沒有存課程進度的欄位。請到 Supabase 的 SQL Editor 執行 "
-        "supabase/lessons.sql 的內容，再重新整理這一頁，就可以開始上課。"
+        "The database can't store lesson progress yet. Run supabase/lessons.sql in "
+        "Supabase's SQL Editor, then refresh this page to start."
     )
     st.stop()
 if not plan:
-    st.info(f"「{core.TOPICS[topic]}」的課綱目前寫到第 {curriculum.written(topic)} 課，都上完了。下一批課綱補上之後就能繼續。")
+    st.info(f"You've finished all {curriculum.written(topic)} lessons written so far for "
+            f"{core.TOPICS[topic]}. The next ones will appear once they're added.")
     st.stop()
 
 done_count = sum(1 for s in plan if s["completed"])
 st.caption(
-    f"第 {plan[0]['n']}–{plan[-1]['n']} 課・{curriculum.level_for(plan[0]['n'])}・"
-    f"今天 {len(plan)} 堂都上完才算完成（已完成 {done_count} / {len(plan)}）"
+    f"Lessons {plan[0]['n']}–{plan[-1]['n']} · {curriculum.level_for(plan[0]['n'])} · "
+    f"finish all {len(plan)} to complete the day ({done_count} of {len(plan)} done)"
 )
 
 # Which lesson is open: the first unfinished one unless she picked another.
@@ -200,23 +202,23 @@ if goto and goto[0] == sel_key:
 if st.session_state.get(sel_key) is None or st.session_state[sel_key] >= len(plan):
     st.session_state[sel_key] = first_open
 i = st.segmented_control(
-    "今天的課",
+    "Today's lessons",
     list(range(len(plan))),
-    format_func=lambda k: f"第 {plan[k]['n']} 課" + ("・完成" if plan[k]["completed"] else ""),
+    format_func=lambda k: f"Lesson {plan[k]['n']}" + (" · done" if plan[k]["completed"] else ""),
     key=sel_key,
     label_visibility="collapsed",
 ) or 0
 slot = plan[i]
 if slot["unit"]:
     st.markdown(f"#### {slot['unit']}")
-st.markdown(f"### 第 {slot['n']} 課　{slot['title']}")
+st.markdown(f"### Lesson {slot['n']}: {slot['title']}")
 
 chat = get_chat(slot)
 if not chat:
     show_retry(slot)
     if i > 0 and not plan[i - 1]["completed"]:
-        st.caption(f"先把第 {plan[i - 1]['n']} 課上完、打勾，再開始這一課。")
-    elif st.button("開始這一課", type="primary", use_container_width=True):
+        st.caption(f"Finish and tick off Lesson {plan[i - 1]['n']} first, then start this one.")
+    elif st.button("Start this lesson", type="primary", use_container_width=True):
         st.session_state.coach_retry = None
         run_kickoff(i)
     st.stop()
@@ -235,7 +237,7 @@ st.divider()
 entry = day_entry()
 slot = entry["lessons"][i]
 done = st.checkbox(
-    "這一課完成了",
+    "I finished this lesson",
     value=slot["completed"],
     key=f"done_{today.isoformat()}_{topic}_{slot['n']}",
 )
@@ -247,27 +249,28 @@ if done != slot["completed"]:
         st.session_state.lesson_goto = (sel_key, i + 1)   # straight on to the next lesson
     st.rerun()
 if entry["completed"]:
-    st.caption(f"今天的 {len(entry['lessons'])} 堂都上完了。目前連續完成 {core.current_streak(log, ui.today())} 天。")
+    streak = core.current_streak(log, ui.today())
+    st.caption(f"All {len(entry['lessons'])} lessons done for today. Current streak: {streak} {'day' if streak == 1 else 'days'}.")
 else:
     left = sum(1 for s in entry["lessons"] if not s["completed"])
-    st.caption(f"今天還有 {left} 堂，全部打勾這一天才算完成。")
+    st.caption(f"{left} {'lesson' if left == 1 else 'lessons'} to go. Tick them all off to complete the day.")
 
-with st.expander("我對延伸提問的想法（選填，下次教練會接著聊）"):
+with st.expander("My thoughts on the question to explore (optional, the coach picks it up next time)"):
     reflection = st.text_area(
-        "延伸提問",
+        "Question to explore",
         value=entry.get("reflection", ""),
         label_visibility="collapsed",
         key=f"reflection_{today.isoformat()}_{topic}",
     )
-    if st.button("儲存想法"):
+    if st.button("Save my thoughts"):
         entry["reflection"] = reflection.strip()
         if ui.save_entry(log, entry):
-            st.toast("存好了。")     # a toast isn't hidden behind the chat input
+            st.toast("Saved.")     # a toast isn't hidden behind the chat input
         else:
             ui.show_pending_error()
 
 show_retry(slot)
-prompt = st.chat_input(f"想追問第 {slot['n']} 課、回報進度，或聊聊今天的內容……")
+prompt = st.chat_input(f"Ask about Lesson {slot['n']}, report your progress, or just talk it through…")
 if prompt is not None and prompt.strip():
     st.session_state.coach_retry = None
     run_followup(i, prompt)

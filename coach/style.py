@@ -311,7 +311,7 @@ CSS = f"""
 
 .stApp [data-testid="stMarkdownContainer"] th {{ color: var(--label-2); font-weight: 500; }}
 
-/* ---------- calendar (紀錄) ---------- */
+/* ---------- calendar (Progress page) ---------- */
 .cal {{ display: grid; gap: var(--space-4); }}
 .cal-head {{ display: flex; align-items: baseline; justify-content: space-between; }}
 .cal-month {{ font-family: {SERIF}; font-size: 1.375rem; font-weight: 300; font-variant-numeric: lining-nums; color: var(--label); }}

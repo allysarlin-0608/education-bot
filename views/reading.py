@@ -7,6 +7,6 @@ from coach import core, reading, ui
 log = st.session_state.coach_log
 today = ui.today()
 
-st.markdown("## 看書")
-st.caption(f"{today:%Y.%m.%d}　{core.weekday_zh(today)}　每天讀一點，讀完回來聊聊。")
+st.markdown("## Reading")
+st.caption(f"{core.weekday_name(today)}, {today:%B} {today.day} · Read a little every day, then come back and talk about it.")
 reading.render(log, today)

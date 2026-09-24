@@ -89,8 +89,8 @@ alter table public.learning_entries
 OPTIONAL_COLUMNS = ("followups", "kickoff", "lessons")
 
 BOOKS_TABLE_MISSING = (
-    "Supabase 裡還沒有 reading_books 資料表。到 Supabase 的 SQL Editor 執行 "
-    "supabase/books.sql 的內容，就可以開始用看書的進度追蹤。"
+    "Supabase doesn't have the reading_books table yet. Run supabase/books.sql in "
+    "Supabase's SQL Editor to start tracking your reading."
 )
 
 
@@ -123,7 +123,7 @@ class FileStore:
             core.save_log(log, self.path)
         except OSError as e:
             logger.error("saving the local log failed: %s", e)
-            raise StorageError("紀錄沒辦法存到檔案。") from e
+            raise StorageError("the records couldn't be written to a file") from e
 
     def save_book(self, log: dict, book: dict) -> None:
         self.save_entry(log, None)
@@ -165,10 +165,10 @@ class SupabaseStore:
             )
         except requests.RequestException as e:
             logger.error("supabase %s %s unreachable: %s", method, table, e)
-            raise StorageError("暫時連不到資料庫") from e
+            raise StorageError("can't reach the database right now") from e
         if resp.status_code >= 400:
             logger.error("supabase %s %s -> %s: %s", method, table, resp.status_code, resp.text[:500])
-            raise StorageError("資料庫暫時沒有回應", status=resp.status_code, detail=resp.text[:500])
+            raise StorageError("the database isn't responding right now", status=resp.status_code, detail=resp.text[:500])
         return resp
 
     def load(self) -> dict:
@@ -196,7 +196,7 @@ class SupabaseStore:
             resp = self._request("GET", params={"select": "data", "order": "updated_at.asc"},
                                  table=BOOKS_TABLE)
         except StorageError as e:
-            self.books_error = BOOKS_TABLE_MISSING if e.status == 404 else f"看書進度{e}，等一下重新整理再試一次。"
+            self.books_error = BOOKS_TABLE_MISSING if e.status == 404 else f"Reading progress: {e}. Refresh in a moment to try again."
             return []
         self.books_error = None
         return [row["data"] for row in resp.json()]

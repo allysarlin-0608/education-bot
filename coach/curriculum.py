@@ -14,7 +14,9 @@ from pathlib import Path
 
 TOTAL = 3000            # lessons planned per topic
 PER_DAY = 5             # lessons on the day a topic is scheduled
-# Level by position in the syllabus: 1–1000 入門, 1001–2000 中階, 2001–3000 進階.
+# Level by position in the syllabus: 1–1000 Beginner, 1001–2000 Intermediate,
+# 2001–3000 Advanced.
+LEVELS = ("Beginner", "Intermediate", "Advanced")
 LEVEL_SIZE = TOTAL // 3
 
 DIR = Path(__file__).resolve().parent / "curriculum"
@@ -53,7 +55,7 @@ def lesson(topic: str, n: int) -> dict:
 
 
 def level_for(n: int) -> str:
-    return ("入門", "中階", "進階")[min((n - 1) // LEVEL_SIZE, 2)]
+    return LEVELS[min((n - 1) // LEVEL_SIZE, 2)]
 
 
 def completed_numbers(log: dict, topic: str) -> set:
@@ -84,11 +86,21 @@ def new_slot(topic: str, n: int) -> dict:
             "kickoff": "", "lesson": "", "followups": [], "completed": False}
 
 
+def refresh_titles(topic: str, slots: list) -> list:
+    """Show saved lessons under the syllabus's current wording (lesson
+    numbers never change, only titles can be reworded or translated)."""
+    for slot in slots:
+        info = lesson(topic, slot["n"])
+        if info:
+            slot["title"], slot["unit"] = info["title"], info["unit"]
+    return slots
+
+
 def day_plan(log: dict, topic: str, entry) -> list:
     """The day's lessons: the saved ones if the day has started, otherwise
     the next PER_DAY lessons (not saved until one is started)."""
     if entry is not None and entry.get("lessons"):
-        return entry["lessons"]
+        return refresh_titles(topic, entry["lessons"])
     return [new_slot(topic, n) for n in next_numbers(log, topic)]
 
 
@@ -101,7 +113,7 @@ def progress(log: dict, topic: str) -> dict:
     done = len(completed_numbers(log, topic))
     current = min(done + 1, TOTAL)
     level = level_for(current)
-    start = (("入門", "中階", "進階").index(level)) * LEVEL_SIZE
+    start = LEVELS.index(level) * LEVEL_SIZE
     return {
         "done": done,
         "total": TOTAL,

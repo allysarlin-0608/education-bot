@@ -23,14 +23,14 @@ DEFAULT_LOG_PATH = Path(
 
 # Topic keys map to the seven areas in part 4 of the system prompt.
 TOPICS = {
-    "fashion": "時尚與服裝",
-    "jewelry": "珠寶與工藝",
-    "philosophy": "哲學",
-    "reading": "看書",
-    "cosmos": "天文學",
-    "business": "商業計劃",
-    "investing": "股票、投資與加密貨幣",
-    "free": "通識",
+    "fashion": "Fashion & Clothing",
+    "jewelry": "Jewelry & Craft",
+    "philosophy": "Philosophy",
+    "reading": "Reading",
+    "cosmos": "Astronomy",
+    "business": "Business Planning",
+    "investing": "Stocks, Investing & Crypto",
+    "free": "General Knowledge",
 }
 
 # date.weekday(): Monday == 0. One topic per day, fixed. 看書 isn't a
@@ -44,11 +44,22 @@ WEEKDAY_TOPIC = {
     5: "investing",
     6: "free",
 }
-WEEKDAY_ZH = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-LEVELS = ("入門", "中階", "進階")
-CLOSING_LINE = "Tick it off when you're done — consistency beats perfection. 完成後記得打勾，連續完成比完美更重要。"
-SECTION_NAMES = ("今日主題", "核心概念", "具體例子", "今日任務", "延伸提問", "小提醒")
+LEVELS = ("Beginner", "Intermediate", "Advanced")
+# Older entries stored the level in Chinese.
+LEGACY_LEVELS = {"入門": "Beginner", "中階": "Intermediate", "進階": "Advanced"}
+CLOSING_LINE = "Tick it off when you're done — consistency beats perfection."
+# Block names: English lessons, and the Chinese titles older lessons used.
+SECTION_ALIASES = {
+    "Topic": ("Topic", "今日主題"),
+    "Key Idea": ("Key Idea", "核心概念"),
+    "Question to Explore": ("Question to Explore", "延伸提問"),
+    "Vocabulary": ("Vocabulary", "單字"),
+}
+for _name, _aliases in list(SECTION_ALIASES.items()):
+    for _alias in _aliases:
+        SECTION_ALIASES.setdefault(_alias, _aliases)
 
 
 def load_system_prompt(topic: str) -> str:
@@ -62,17 +73,17 @@ def scheduled_topic(day: date) -> str:
     return WEEKDAY_TOPIC[day.weekday()]
 
 
-def weekday_zh(day: date) -> str:
-    return WEEKDAY_ZH[day.weekday()]
+def weekday_name(day: date) -> str:
+    return WEEKDAYS[day.weekday()]
 
 
 def level_for_session(session_number: int) -> str:
-    """Part 6: sessions 1–3 are 入門, 4–7 中階, 8 and later 進階."""
+    """Part 6: sessions 1–3 are Beginner, 4–7 Intermediate, 8 and later Advanced."""
     if session_number <= 3:
-        return "入門"
+        return "Beginner"
     if session_number <= 7:
-        return "中階"
-    return "進階"
+        return "Intermediate"
+    return "Advanced"
 
 
 # ------------------------------------------------------------
@@ -106,7 +117,7 @@ def parse_log(data) -> dict:
     """Validate a log loaded from disk, the database, or a user upload, and
     fill in any missing fields so every entry has the full shape."""
     if not isinstance(data, dict) or not isinstance(data.get("entries"), list):
-        raise ValueError("學習紀錄格式不正確")
+        raise ValueError("this isn't a learning-record backup")
     entries = {}
     for e in data["entries"]:
         if not isinstance(e, dict) or e.get("topic") not in TOPICS:
@@ -119,7 +130,7 @@ def parse_log(data) -> dict:
             "date": day.isoformat(),
             "topic": e["topic"],
             "session_number": e.get("session_number") or 0,
-            "level": e.get("level") if e.get("level") in LEVELS else "",
+            "level": LEGACY_LEVELS.get(e.get("level"), e.get("level") if e.get("level") in LEVELS else ""),
             "completed": bool(e.get("completed")),
         }
         for field in TEXT_FIELDS:
@@ -248,9 +259,8 @@ INVESTING_WORDS = re.compile(
     re.IGNORECASE,
 )
 DISCLAIMER = (
-    "※ For education only — this is not investment advice; do your own research and weigh "
-    "the risks carefully before any real decision. 以上是教育性質的知識分享，不構成任何投資建議；"
-    "實際的投資決策請自己進一步研究，並謹慎評估風險。"
+    "※ For education only — this is not investment advice. Do your own research and weigh "
+    "the risks carefully before making any real decision."
 )
 
 
@@ -284,14 +294,17 @@ def finalize_reply(text: str, lesson: bool) -> str:
 
 def extract_section(text: str, name: str) -> str:
     """Pull one 【...】 block's body out of a lesson, tolerating markdown
-    bold/heading markers around the block titles. The title only has to
-    contain the name, so 【延伸提問】 and 【Question to Explore｜延伸提問】
-    both match "延伸提問"."""
+    bold/heading markers around the block titles. A title only has to
+    contain one of the block's names, so English lessons (【Question to
+    Explore】) and older Chinese ones (【延伸提問】) both parse."""
     clean = re.sub(r"[*#]+", "", text)
-    pattern = (rf"【[^】\n]*{name}[^】\n]*】\s*[:：]?\s*(.+?)"
-               rf"(?=\n\s*【|{re.escape(CLOSING_LINE[:6])}|完成後記得打勾|\Z)")
-    match = re.search(pattern, clean, flags=re.DOTALL)
-    return match.group(1).strip() if match else ""
+    for alias in SECTION_ALIASES.get(name, (name,)):
+        pattern = (rf"【[^】\n]*{re.escape(alias)}[^】\n]*】\s*[:：]?\s*(.+?)"
+                   rf"(?=\n\s*【|{re.escape(CLOSING_LINE[:6])}|完成後記得打勾|\Z)")
+        match = re.search(pattern, clean, flags=re.DOTALL)
+        if match:
+            return match.group(1).strip()
+    return ""
 
 
 # ------------------------------------------------------------
@@ -324,7 +337,7 @@ def build_history_context(log: dict, topic: str, today: date, slot: dict = None)
     lesson (slot), the title and level come from the syllabus."""
     lines = [
         "【App 自動提供的學習紀錄】",
-        f"- 今天：{today.isoformat()}（{weekday_zh(today)}）",
+        f"- 今天：{today.isoformat()}（{weekday_name(today)}）",
         f"- 今天的主題：{TOPICS[topic]}",
     ]
     if slot is not None:
@@ -369,7 +382,7 @@ def build_history_context(log: dict, topic: str, today: date, slot: dict = None)
 FOLLOWUP_NOTE = """【App 補充：今天的課程已經給過了】
 她現在是在今天的課程之後追問、回報進度或聊天。這時候七個區塊的課程格式不適用，也不需要加結尾固定句式：
 - 直接用自然的對話回答，通常幾句話到一小段就好，只回應她這次說的內容。
-- 跟課程一樣以英文為主，新的專有名詞附中文；她用中文問也用英文回答，她看起來卡住時再補一句中文說明。
+- 跟課程一樣只用英文，不要出現中文；她用中文問也用英文回答，看起來卡住時換更簡單的英文說明。
 - 其他規則照舊：語氣、特殊情境、投資內容結尾的免責聲明。
 - 她回報完成任務（包括只做了一部分）時，具體肯定「完成」這件事本身，並提醒她可以在頁面上打勾。
 - 只有在她明確要求一則新的課程內容時，才重新使用完整的七個區塊與結尾固定句式。"""
@@ -384,11 +397,11 @@ def build_system_prompt(log: dict, topic: str, today: date, followup: bool = Fal
 
 
 def build_kickoff_message(topic: str, today: date, focus: str = "", slot: dict = None) -> str:
-    message = f"今天是 {today.isoformat()}，{weekday_zh(today)}。今天的主題：{TOPICS[topic]}。"
+    message = f"Today is {weekday_name(today)}, {today.isoformat()}. Subject: {TOPICS[topic]}."
     if slot is not None:
-        message += f"第 {slot['n']} 課：{slot['title']}"
+        message += f" Lesson {slot['n']}: {slot['title']}"
     if focus.strip():
-        message += f"我今天特別想了解：{focus.strip()}"
+        message += f" I'd especially like to learn about: {focus.strip()}"
     return message
 
 
@@ -397,7 +410,7 @@ def build_kickoff_message(topic: str, today: date, focus: str = "", slot: dict =
 # ------------------------------------------------------------
 
 # Session number at which each level starts (see level_for_session).
-LEVEL_STARTS = {"入門": 1, "中階": 4, "進階": 8}
+LEVEL_STARTS = {"Beginner": 1, "Intermediate": 4, "Advanced": 8}
 
 
 def longest_streak(log: dict) -> int:
@@ -413,12 +426,12 @@ def longest_streak(log: dict) -> int:
 
 def topic_progress(log: dict, topic: str) -> dict:
     """Sessions so far on a topic, its current level, and how many more
-    sessions until the next level (None once at 進階)."""
+    sessions until the next level (None once Advanced)."""
     sessions = len({e["date"] for e in log["entries"] if e["topic"] == topic})
     completed = len({e["date"] for e in log["entries"]
                      if e["topic"] == topic and e.get("completed")})
     level = level_for_session(sessions) if sessions else None
-    next_level = {"入門": "中階", "中階": "進階"}.get(level or "入門")
+    next_level = {"Beginner": "Intermediate", "Intermediate": "Advanced"}.get(level or "Beginner")
     if next_level is None:
         remaining, fraction = None, 1.0
     else:

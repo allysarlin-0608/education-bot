@@ -1,4 +1,4 @@
-"""看書 (part 4.3): a book tracker instead of a daily lesson.
+"""Reading (part 4.3): a book tracker instead of a daily lesson.
 
 Phase 1 collects title, author, chapter count, page count and chapter
 titles one question at a time, then splits the book over 14 days.
@@ -11,30 +11,33 @@ from datetime import date, timedelta
 
 DAYS = 14
 
-REVIEW_LABEL = "複習／休息"
-EARLY_FINISH_NOTE = "本書進度已提前完成，這幾天可以拿來複習前面內容、整理筆記，或提前開始下一本書"
-REST_DAY_NOTE = "這天沒有分配章節，可以休息或複習前面的內容"
-PLAN_QUESTION = "這樣的分配感覺可以嗎？有沒有哪幾天想要加重或減輕份量？"
+REVIEW_LABEL = "Review / rest"
+EARLY_FINISH_NOTE = ("the book is already finished by then, so use these days to review, tidy up "
+                     "your notes, or start the next book early")
+REST_DAY_NOTE = "no chapters on this day, so rest or review what you've read"
+PLAN_QUESTION = "Does this split feel right? Are there days you'd like to make heavier or lighter?"
 PLAN_CONFIRMED = (
-    "進度表已經確定了，從今天開始，你每天讀完指定範圍之後，回來跟我聊聊內容就可以了，"
-    "我會幫你確認有沒有真的讀懂。"
+    "Your plan is set. From today, read each day's section, then come back and tell me about it, "
+    "and I'll check that it really sank in."
 )
 
 QUESTIONS = {
-    "title": "想開始讀哪一本書呢？先跟我說書名就好。",
-    "author": "《{title}》，好。作者是誰呢？",
-    "chapter_count": "這本書總共有幾章？給我一個明確的數字就好，例如「12」。",
-    "total_pages": "那總共有幾頁呢？一樣給我一個數字就好。",
+    "title": "Which book would you like to start? Just tell me the title.",
+    "author": "{title}, great. Who's the author?",
+    "chapter_count": "How many chapters does it have? A clear number is best, e.g. \"12\".",
+    "total_pages": "And how many pages in total? Again, just a number.",
     "chapters": (
-        "最後是每一章的標題。你可以直接把整份目錄貼上來（從書店網頁複製、或拍照辨識的文字都可以），"
-        "我會自己整理出來；也可以一章一章告訴我，從「第1章：___」開始。"
+        "Last, the chapter titles. You can paste the whole table of contents (copied from a shop "
+        "page or text from a photo is fine) and I'll sort it out, or tell me one chapter at a time, "
+        "starting with \"Chapter 1: ___\"."
     ),
 }
-NEED_NUMBER = "我需要一個明確的數字，例如「{example}」，這樣分配才算得準。{question}"
+NEED_NUMBER = "I need a clear number, e.g. \"{example}\", so the split works out. {question}"
 
 CN_DIGITS = {"零": 0, "〇": 0, "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4,
              "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
-YES_WORDS = ("是", "對", "沒錯", "嗯", "好", "yes", "ok", "OK", "Yes", "可以")
+YES_WORDS = ("是", "對", "沒錯", "嗯", "好", "可以", "yes", "yep", "yeah", "ok", "okay", "sure",
+             "correct", "right", "looks good", "that's right", "sounds good", "fine")
 
 
 # ------------------------------------------------------------
@@ -149,7 +152,7 @@ def parse_toc_detail(text: str) -> dict:
             numbers.append(_marker_number(m))
             titles.append(body.strip(EDGE_PUNCTUATION))
         titles = strip_page_numbers(titles)
-        return {"titles": [t or f"第{n}章" for t, n in zip(titles, numbers)], "numbers": numbers}
+        return {"titles": [t or f"Chapter {n}" for t, n in zip(titles, numbers)], "numbers": numbers}
 
     parts = [p.strip(EDGE_PUNCTUATION) for p in (text.split("\n") if "\n" in text.strip() else SEPARATORS.split(text))]
     parts = [p for p in parts if p and p.lower() not in FRONT_BACK_MATTER]
@@ -169,7 +172,8 @@ def has_several_chapters(text: str) -> bool:
 
 
 def is_yes(text: str) -> bool:
-    return text.strip().rstrip("。!！~～") in YES_WORDS or text.strip().startswith(("是", "對", "沒錯"))
+    clean = text.strip().rstrip("。!！~～.").lower()
+    return clean in YES_WORDS or clean.startswith(("是", "對", "沒錯", "yes", "yep", "yeah", "correct"))
 
 
 # ------------------------------------------------------------
@@ -241,44 +245,44 @@ def chapter_range(chapters: list) -> str:
     if not chapters:
         return ""
     if len(chapters) == 1:
-        return f"第{chapters[0]}章"
-    return f"第{chapters[0]}–{chapters[-1]}章"
+        return f"Chapter {chapters[0]}"
+    return f"Chapters {chapters[0]}–{chapters[-1]}"
 
 
 def day_description(book: dict, day: int) -> str:
-    """"第3–4章：標題A；標題B" or the note for a day with no chapters."""
+    """"Chapters 3–4: Title A; Title B" or the note for a day with no chapters."""
     chapters = book["plan"][day - 1]
     if not chapters:
         return REVIEW_LABEL
-    titles = "；".join(book["chapters"][c - 1] for c in chapters)
-    return f"{chapter_range(chapters)}：{titles}"
+    titles = "; ".join(book["chapters"][c - 1] for c in chapters)
+    return f"{chapter_range(chapters)}: {titles}"
 
 
 def plan_table(book: dict) -> str:
-    rows = ["| 天 | 章節範圍與標題 | 約略頁數 |", "| --- | --- | --- |"]
+    rows = ["| Day | Chapters | About |", "| --- | --- | --- |"]
     for day in range(1, DAYS + 1):
-        mark = "・已確認" if str(day) in book["checks"] else ""
-        page_hint = f"約 {pages_for_day(book, day)} 頁" if book["plan"][day - 1] else "—"
-        rows.append(f"| 第{day}天{mark} | {day_description(book, day)} | {page_hint} |")
+        mark = " · done" if str(day) in book["checks"] else ""
+        page_hint = f"{pages_for_day(book, day)} pages" if book["plan"][day - 1] else "—"
+        rows.append(f"| Day {day}{mark} | {day_description(book, day)} | {page_hint} |")
     table = "\n".join(rows)
-    # The explanation for 複習／休息 days goes under the table, once.
+    # The explanation for review/rest days goes under the table, once.
     last = last_reading_day(book["plan"])
     empty = [d for d in range(1, DAYS + 1) if not book["plan"][d - 1]]
     notes = []
     rest = [d for d in empty if d < last]
     if rest:
-        notes.append(f"※ {_day_list(rest)}{REST_DAY_NOTE}。")
+        notes.append(f"※ {_day_list(rest)} {REST_DAY_NOTE}.")
     early = [d for d in empty if d > last]
     if early:
-        notes.append(f"※ {_day_list(early)}{EARLY_FINISH_NOTE}。")
+        notes.append(f"※ {_day_list(early)} {EARLY_FINISH_NOTE}.")
     return table + ("\n\n" + "\n".join(notes) if notes else "")
 
 
 def _day_list(days: list) -> str:
-    """「第11–14天：」 for a run of days, 「第3、5天：」 otherwise."""
+    """"Days 11–14:" for a run of days, "Days 3, 5:" otherwise."""
     if len(days) > 1 and days == list(range(days[0], days[-1] + 1)):
-        return f"第{days[0]}–{days[-1]}天："
-    return "第" + "、".join(map(str, days)) + "天："
+        return f"Days {days[0]}–{days[-1]}:"
+    return ("Day " if len(days) == 1 else "Days ") + ", ".join(map(str, days)) + ":"
 
 
 # ------------------------------------------------------------
@@ -344,8 +348,8 @@ def is_open(book: dict, day: int, today: date) -> bool:
 def not_open_message(book: dict, day: int) -> str:
     opens = opens_on(book, day)
     return (
-        f"今天的份量已經完成了。第{day}天的範圍（{day_description(book, day)}）"
-        f"{opens.month}月{opens.day}日才開放，一天讀一點比較記得住，到時候再回來跟我聊。"
+        f"Today's reading is done. Day {day} ({day_description(book, day)}) opens on "
+        f"{opens:%B} {opens.day}. A little each day sticks better, so come back then and tell me about it."
     )
 
 
@@ -354,8 +358,8 @@ def question_for(book: dict) -> str:
 
 
 TOC_HELP = (
-    "沒問題的話回答「對」；想改或補某一章就打「第3章：標題」；"
-    "也可以整份重新貼一次，或直接告訴我正確的章數。"
+    "If it's right, answer \"yes\". To change or add a chapter, type \"Chapter 3: title\". "
+    "You can also paste the whole list again, or just tell me the correct number of chapters."
 )
 
 
@@ -365,22 +369,22 @@ def toc_preview(book: dict) -> str:
     titles = book["pending_toc"]
     listing = "\n".join(f"{i}. {t}" for i, t in enumerate(titles, 1))
     count = book["chapter_count"]
-    lines = [f"我從目錄整理出 {len(titles)} 章：\n\n{listing}\n"]
+    lines = [f"I found {len(titles)} chapters in the table of contents:\n\n{listing}\n"]
     if len(titles) != count:
-        diff = f"多了 {len(titles) - count} 章" if len(titles) > count else f"少了 {count - len(titles)} 章"
-        lines.append(f"跟你一開始說的 {count} 章不一樣（{diff}），幫你確認一下。")
+        diff = f"{len(titles) - count} more" if len(titles) > count else f"{count - len(titles)} fewer"
+        lines.append(f"That's different from the {count} chapters you mentioned ({diff}), so let's check.")
         numbers = book.get("pending_numbers") or []
         if numbers:
             missing = [n for n in range(1, max(max(numbers), count) + 1) if n not in numbers]
             repeated = sorted({n for n in numbers if numbers.count(n) > 1})
             if missing:
-                lines.append("目錄裡沒有找到：" + "、".join(f"第{n}章" for n in missing) + "。")
+                lines.append("Not found in the list: " + ", ".join(f"Chapter {n}" for n in missing) + ".")
             if repeated:
-                lines.append("出現不只一次：" + "、".join(f"第{n}章" for n in repeated) + "。")
-        lines.append(f"回答「對」就以這 {len(titles)} 章為準。")
+                lines.append("Listed more than once: " + ", ".join(f"Chapter {n}" for n in repeated) + ".")
+        lines.append(f"Answer \"yes\" to go with these {len(titles)} chapters.")
     lines.append(TOC_HELP)
     if book.get("pending_raw"):
-        lines.append("如果這其實是同一章的標題，回答「這是一章」就好。")
+        lines.append("If that's actually one chapter's title, just answer \"one chapter\".")
     return "\n".join(lines)
 
 
@@ -403,9 +407,9 @@ def _finish_setup(book: dict) -> str:
     book["pending_numbers"] = []
     book["pending_raw"] = ""
     return (
-        f"《{book['title']}》共 {book['chapter_count']} 章、{book['total_pages']} 頁，"
-        f"分成 14 天，平均每章大約 {pages_per_chapter(book)} 頁，每天的頁數寫在表格裡。"
-        f"下面是完整的 14 天預覽，按「確認進度表」之後才會正式開始：\n\n"
+        f"{book['title']} has {book['chapter_count']} chapters and {book['total_pages']} pages, split over "
+        f"14 days: about {pages_per_chapter(book)} pages per chapter, with each day's pages in the table. "
+        f"Here's the full 14-day preview. It starts once you press \"Confirm the plan\":\n\n"
         f"{plan_table(book)}\n\n{PLAN_QUESTION}"
     )
 
@@ -416,7 +420,7 @@ def answer_setup(book: dict, text: str) -> str:
     step = book["step"]
 
     if step == "title":
-        book["title"] = text.strip("《》〈〉「」\"' ")
+        book["title"] = text.strip("《》〈〉「」\"'“”‘’ ")
         book["step"] = "author"
     elif step == "author":
         book["author"] = text
@@ -449,69 +453,72 @@ def _answer_chapters(book: dict, text: str) -> str:
         number, title = parsed
         if number != expected:
             return (
-                f"幫你確認一下：現在輪到第{expected}章，你寫的是第{number}章。"
-                f"如果這本書的章數跟一開始說的 {book['chapter_count']} 章不一樣，直接告訴我正確的章數；"
-                f"不然就給我第{expected}章的標題就好。"
+                f"Just checking: we're on Chapter {expected}, and you wrote Chapter {number}. "
+                f"If the book doesn't have {book['chapter_count']} chapters after all, tell me the right number; "
+                f"otherwise just give me the title of Chapter {expected}."
             )
     else:
         # A bare number here is a corrected chapter count, not a title.
-        if re.fullmatch(r"\d+\s*章?", text):
+        if re.fullmatch(r"\d+\s*(?:章|chapters?)?", text, flags=re.IGNORECASE):
             book["chapter_count"] = int(re.match(r"\d+", text).group())
             if len(book["chapters"]) >= book["chapter_count"]:
                 book["chapters"] = book["chapters"][: book["chapter_count"]]
                 return _finish_setup(book)
-            return f"好，是 {book['chapter_count']} 章。第{expected}章的標題是？（第{expected}章：___）"
+            return f"OK, {book['chapter_count']} chapters. What's the title of Chapter {expected}? (Chapter {expected}: ___)"
         title = text
-    book["chapters"].append(title or f"第{expected}章")
+    book["chapters"].append(title or f"Chapter {expected}")
     if len(book["chapters"]) >= book["chapter_count"]:
         return _finish_setup(book)
     n = len(book["chapters"]) + 1
-    return f"第{n}章的標題是？（第{n}章：___）"
+    return f"What's the title of Chapter {n}? (Chapter {n}: ___)"
 
 
-EDIT_TITLE = re.compile(r"^\s*第\s*(\d+|[零〇一二兩三四五六七八九十百]+)\s*章\s*[:：]\s*(.+)$")
+EDIT_TITLE = re.compile(
+    r"^\s*(?:第\s*(\d+|[零〇一二兩三四五六七八九十百]+)\s*章|(?:chapter|ch\.?)\s*(\d+))\s*[:：]\s*(.+)$",
+    re.IGNORECASE,
+)
 
 
 def parse_title_edit(text: str):
-    """(chapter number, new title) for 「第3章：新的標題」, else None."""
+    """(chapter number, new title) for "Chapter 3: new title" (or 第3章：), else None."""
     match = EDIT_TITLE.match(text)
     if not match or has_several_chapters(text):
         return None
-    raw = match.group(1)
+    raw = match.group(1) or match.group(2)
     number = int(raw) if raw.isdigit() else cn_to_int(raw)
-    return (number, match.group(2).strip()) if number else None
+    return (number, match.group(3).strip()) if number else None
 
 
 def _edit_or_add_chapter(book: dict, number: int, title: str) -> str:
-    """「第N章：標題」 while confirming the list: change chapter N, or add it
+    """"Chapter N: title" while confirming the list: change chapter N, or add it
     when it's missing (so a short list can be completed without pasting
     the whole table of contents again)."""
     titles, numbers = book["pending_toc"], book.get("pending_numbers") or []
     limit = max(book["chapter_count"], len(titles) + 1)
     if number > limit and number not in numbers:
         return (
-            f"幫你確認一下：你說這本書有 {book['chapter_count']} 章，清單現在有 {len(titles)} 章，"
-            f"所以還不能補第{number}章。如果章數不對，直接告訴我正確的章數就好。"
+            f"Just checking: you said the book has {book['chapter_count']} chapters and the list has "
+            f"{len(titles)}, so I can't add Chapter {number} yet. If the chapter count is wrong, just tell me the right one."
         )
     if numbers:
         # A numbered list: chapter N is the entry labelled N, and a missing
         # N is slotted in by number.
         if number in numbers:
             titles[numbers.index(number)] = title
-            return f"改好了。\n\n{toc_preview(book)}"
+            return f"Updated.\n\n{toc_preview(book)}"
         at = len([n for n in numbers if n < number])
         numbers.insert(at, number)
         titles.insert(at, title)
-        return f"補上第{number}章了。\n\n{toc_preview(book)}"
+        return f"Added Chapter {number}.\n\n{toc_preview(book)}"
     if 1 <= number <= len(titles):
         titles[number - 1] = title
-        return f"改好了。\n\n{toc_preview(book)}"
+        return f"Updated.\n\n{toc_preview(book)}"
     if number == len(titles) + 1:
         titles.append(title)
-        return f"補上第{number}章了。\n\n{toc_preview(book)}"
+        return f"Added Chapter {number}.\n\n{toc_preview(book)}"
     return (
-        f"目前清單有 {len(titles)} 章，要補的話請從第{len(titles) + 1}章開始補，"
-        f"例如「第{len(titles) + 1}章：標題」。{TOC_HELP}"
+        f"The list has {len(titles)} chapters, so add the next one as Chapter {len(titles) + 1}, "
+        f"e.g. \"Chapter {len(titles) + 1}: title\". {TOC_HELP}"
     )
 
 
@@ -520,24 +527,28 @@ def _answer_confirm_toc(book: dict, text: str) -> str:
     if is_yes(text):
         book["chapters"] = list(titles)
         return _finish_setup(book)
-    if book.get("pending_raw") and re.fullmatch(r"(這|那)?(其實)?(是|只是)?(同)?一章(的標題)?[。!！]?|不是|不對", text):
+    one_chapter = (re.fullmatch(r"(這|那)?(其實)?(是|只是)?(同)?一章(的標題)?[。!！]?|不是|不對", text)
+                   or re.fullmatch(r"(it'?s |that'?s )?(just |actually )?(one|a single|the same) chapter[.!]?|no",
+                                   text.strip(), flags=re.IGNORECASE))
+    if book.get("pending_raw") and one_chapter:
         book["chapters"] = [book["pending_raw"].strip()]
         book["pending_toc"], book["pending_numbers"], book["pending_raw"] = [], [], ""
         book["step"] = "chapters"
         if len(book["chapters"]) >= book["chapter_count"]:
             return _finish_setup(book)
-        return f"好，第1章是「{book['chapters'][0]}」。第2章的標題是？（第2章：___）"
+        return f"OK, Chapter 1 is \"{book['chapters'][0]}\". What's the title of Chapter 2? (Chapter 2: ___)"
     edit = parse_title_edit(text)
     if edit:
         number, title = edit
         return _edit_or_add_chapter(book, number, title)
-    if re.fullmatch(r"\d+\s*章?", text) or re.fullmatch(r"[零〇一二兩三四五六七八九十百]+\s*章", text):
+    if (re.fullmatch(r"\d+\s*(?:章|chapters?)?", text, flags=re.IGNORECASE)
+            or re.fullmatch(r"[零〇一二兩三四五六七八九十百]+\s*章", text)):
         book["chapter_count"] = parse_number(text)
         return toc_preview(book)
     detail = parse_toc_detail(text)
     if len(detail["titles"]) >= 2:
         return _show_toc(book, detail["titles"], detail["numbers"], raw=text)
-    return f"我不太確定要怎麼改。{TOC_HELP}"
+    return f"I'm not sure what to change. {TOC_HELP}"
 
 
 def record_pass(book: dict, day: int, summary: str, today: date) -> None:
@@ -561,6 +572,7 @@ def days_away(book: dict, today: date) -> int:
 
 BOOK_MODE_NOTE = (
     "【App 補充：現在是看書模式】不使用每日課程的區塊格式，也不需要結尾固定句式，用自然的對話語氣。"
+    "回覆她時一律用英文，不要出現中文；她可以用中文或英文分享，兩種都照樣判斷。"
     "進度、天數、章節範圍由 App 精確處理，以下面的資料為準。"
 )
 SUMMARY_CHARS = 150    # per-day cap on her own words quoted back to the model
@@ -593,8 +605,8 @@ def judge_prompt(book: dict, day: int) -> str:
         after = "這是這本書最後一個閱讀日。通過時不用預告明天，App 會接著產生整本書的總結。"
     else:
         after = (
-            f"通過時，明確告訴她「今天算完成了，明天進到第{upcoming}天」，"
-            f"並用一句話預告第{upcoming}天的範圍：{_clip(day_description(book, upcoming), 200)}。"
+            f"通過時，用英文明確告訴她今天算完成了、明天進到 Day {upcoming}，"
+            f"並用一句話預告 Day {upcoming} 的範圍：{_clip(day_description(book, upcoming), 200)}。"
         )
     return (
         f"{book_header(book)}\n\n"
@@ -631,7 +643,7 @@ def final_summary_prompt(book: dict, summary_chars: int = SUMMARY_CHARS) -> str:
         f"{book_header(book)}\n\n她每天用自己的話分享的內容：\n{shared}\n\n"
         "【現在的任務】她剛剛把這本書的每一天都確認讀懂了。給她一個真誠而且具體的總結式肯定："
         "具體提到她在這幾天分別掌握了哪些重點或概念（用上面她自己分享過的內容），"
-        "不要籠統地說「恭喜你讀完了」。最後自然地問她要不要開始規劃下一本書。"
+        "不要籠統地說恭喜讀完了。最後自然地問她要不要開始規劃下一本書。全部用英文。"
     )
 
 
@@ -661,7 +673,12 @@ def apply_moves(plan: list, moves) -> int:
     return applied
 
 
-FINISHED_READING_WORDS = re.compile(r"(讀|看)(完|好)了?|完成了|讀到了?第")
+FINISHED_READING_WORDS = re.compile(
+    r"(讀|看)(完|好)了?|完成了|讀到了?第"
+    r"|\b(i'?ve |i have |i )?(finished|done|read)\b.*\b(day|chapter|reading|it|today|section)\b"
+    r"|\bfinished\b|\ball done\b",
+    re.IGNORECASE,
+)
 
 
 def says_finished_reading(text: str) -> bool:
@@ -673,30 +690,31 @@ def resume_message(book: dict, today: date) -> str:
     if book["status"] == "setup":
         if book["step"] == "chapters" and book["chapters"]:
             n = len(book["chapters"]) + 1
-            return f"我們繼續整理《{book['title']}》的章節。第{n}章的標題是？（第{n}章：___）"
+            return f"Let's keep going with the chapters of {book['title']}. What's the title of Chapter {n}? (Chapter {n}: ___)"
         if book["step"] == "confirm_toc":
             return toc_preview(book)
         return question_for(book)
     if book["status"] == "planning":
-        return f"《{book['title']}》的 14 天進度表：\n\n{plan_table(book)}\n\n{PLAN_QUESTION}"
+        return f"The 14-day plan for {book['title']}:\n\n{plan_table(book)}\n\n{PLAN_QUESTION}"
     day = next_day(book)
     if not is_open(book, day, today):
         return not_open_message(book, day)
     pages = pages_for_day(book, day)
     if days_away(book, today) > 1:
         return (
-            f"我們從第{day}天繼續。《{book['title']}》第{day}天的範圍是{day_description(book, day)}，"
-            f"大約 {pages} 頁。讀完之後回來跟我聊聊就好。"
+            f"Let's pick up from Day {day}. For {book['title']}, Day {day} is {day_description(book, day)}, "
+            f"about {pages} pages. Come back and tell me about it when you've read it."
         )
     return (
-        f"《{book['title']}》今天是第{day}天：{day_description(book, day)}，大約 {pages} 頁。"
-        "讀完之後按下面的按鈕，或直接跟我說一聲。"
+        f"{book['title']}, Day {day}: {day_description(book, day)}, about {pages} pages. "
+        "When you've read it, press the button below or just tell me."
     )
 
 
 def check_start_message(book: dict, day: int) -> str:
     return (
-        f"第{day}天的範圍是{day_description(book, day)}。\n\n"
-        "用你自己的話跟我說說今天讀到了什麼：大概在講什麼、印象最深的片段，或任何想法都可以。"
-        "這不是考試，不用寫得很工整，像跟朋友聊天分享一樣就好。"
+        f"Day {day} was {day_description(book, day)}.\n\n"
+        "Tell me in your own words what you read today: roughly what it was about, the part that stuck "
+        "with you, or any thoughts at all. It's not a test and doesn't need to be polished; just share it "
+        "like you would with a friend. English or Chinese is fine."
     )

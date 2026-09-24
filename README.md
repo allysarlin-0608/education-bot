@@ -1,6 +1,7 @@
 # 每日學習教練（Daily Learning Coach）
 
-Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知識點、一個小任務。
+Allysa 專屬的每日興趣學習教練：每天照固定課綱上當天主題的 5 堂課，加上每天看書。
+整個網站（介面、課程、看書對話）都是英文，為了留學準備；她可以用中文分享讀書心得。
 用 Streamlit 做成，透過 Groq API 呼叫 AI 模型。
 
 ## 功能
@@ -8,15 +9,17 @@ Allysa 專屬的每日興趣學習教練：每天 15 到 20 分鐘，一個知�
 - **系統指令分模組送出**：每次呼叫只送「共通核心」（`coach/prompts/core.md`）＋當天主題
   （`coach/prompts/topics/<主題>.md`）＋自動產生的學習紀錄摘要。`coach/system_prompt.md` 是完整原版，
   只當參考，太大（約 7,400 tokens）不會送出。
-- **Token 預算**：每次請求（system＋對話＋max_tokens）估算後控制在 4,000 以內（`coach/tokens.py`），
+- **Token 預算**：每次請求（system＋對話＋max_tokens）估算後控制在 5,500 以內（估算刻意多算約 30%，`coach/tokens.py`），
   超過就先丟掉最舊的對話。Groq 免費方案 openai/gpt-oss-120b 每分鐘 8,000 tokens。
-- **錯誤處理**：429／連線錯誤會自動等待重試 2 次；還是失敗時畫面只顯示一句中文提示和「重試」按鈕，
+- **錯誤處理**：429／連線錯誤會自動等待重試 3 次；還是失敗時畫面只顯示一句提示和「Retry」按鈕，
   詳細錯誤只寫進 log（Streamlit Cloud：Manage app）。
-- **每週行程**：一 時尚與服裝 · 二 哲學 · 三 商業計劃 · 四 天文學 · 五 珠寶與工藝 · 六 股票投資 · 日 通識；看書每天做，在自己的頁面。
+- **每週行程**：一 Fashion & Clothing · 二 Philosophy · 三 Business Planning · 四 Astronomy · 五 Jewelry & Craft · 六 Stocks, Investing & Crypto · 日 General Knowledge；看書（Reading）每天做，在自己的頁面。
   每天只上當天排定的主題，不能換。
 - **固定課綱**（`coach/curriculum/<主題>.txt`，一行一課，`#` 開頭是單元名稱）：每個主題規劃 3000 課，
   照順序上，排到的那天上 5 堂，前一堂打勾才能開始下一堂，5 堂都打勾這一天才算完成；
-  沒上完的下次接著上。難度看課綱位置：第 1–1000 課入門、1001–2000 中階、2001–3000 進階。
+  沒上完的下次接著上。難度看課綱位置：第 1–1000 課 Beginner、1001–2000 Intermediate、2001–3000 Advanced。
+  課綱標題是英文；課程格式是八個區塊（Topic, Key Idea, Deep Dive, Example, Today's Task, Vocabulary,
+  Question to Explore, Note），需要時附表格或結構圖。
   目前每個主題寫到第 260 課（一年份），之後分批往後補，只能加在檔案最後面（課號就是行的順序）。
 - **學習紀錄**：日期、主題、難度、是否完成、今日主題、延伸提問、她的回應。
   有設定 Supabase 時存在雲端資料表 `learning_entries`，沒設定時存在 `data/learning_log.json`。

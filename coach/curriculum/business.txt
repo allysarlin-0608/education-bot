@@ -1,312 +1,312 @@
-# 生意是什麼
-生意的本質：解決別人的問題並得到回報
-產品、服務與商業模式的差別
-創業與做生意的差別
-好點子不等於好生意
-創業者最常犯的第一個錯誤
-# 找到值得解決的問題
-問題從哪裡來：觀察生活中的麻煩
-痛點的強度：想要與需要
-問題的頻率與規模
-自己的問題與別人的問題
-把問題寫成一句話
-# 認識客戶
-誰是你的客戶
-用需求與行為把客戶分群
-早期採用者
-客戶與使用者不一定是同一個人
-建立客戶輪廓（人物誌）
-# 價值主張
-價值主張是什麼
-一句話價值主張的寫法
-客戶的任務、痛點與獲益
-功能與好處的差別
-比競爭對手好在哪裡
-# 精實畫布（一）：問題端
-精實畫布的九格
-問題
-客戶區隔
-獨特價值主張
-解決方案
-# 精實畫布（二）：商業端
-通路
-營收來源
-成本結構
-關鍵指標
-不公平優勢
-# 最小可行產品
-MVP 的核心邏輯
-MVP 不等於半成品
-常見的 MVP 形式
-先驗證需求，再做產品
-從 MVP 學到什麼
-# 驗證假設
-把想法寫成可以驗證的假設
-最危險的假設先驗證
-設計一個小實驗
-用數字判斷實驗結果
-建構、測量、學習循環
-# 客戶訪談
-為什麼要跟客戶聊
-找到 10 到 20 個受訪者
-不誘導的問法
-問過去的行為，不問未來的意願
-整理訪談筆記
-# 問卷調查
-問卷適合回答什麼問題
-問題的類型
-避免誘導與雙重問題
-樣本與偏差
-問卷結果的解讀
-# 市場規模
-TAM、SAM、SOM
-由上而下估算
-由下而上估算
-市場規模的常見誤區
-小市場也可以是好生意
-# 競爭分析
-直接競爭者與間接競爭者
-替代方案也是競爭
-競爭分析表
-差異化
-護城河的概念
-# 商業模式（一）
-直接販售
-零售與批發
-製造與代工
-服務收費
-授權
-# 商業模式（二）
-訂閱制
-平台模式與雙邊市場
-免費增值
-廣告模式
-直營電商（DTC）
-# 定價基礎
-價格傳達的訊息
-客戶願意付多少
-成本加成定價
-價值定價
-競爭定價
-# 定價策略
-價格錨點：先看到的價格影響判斷
-方案分級
-心理定價
-折扣的代價
-漲價的時機與方法
-# 成本
-固定成本與變動成本
-直接成本與間接成本
-毛利與毛利率
-隱藏成本
-成本控制的基本方法
-# 損益表
-損益表在說什麼
-營收
-營業費用
-淨利
-讀一份簡單的損益表
-# 損益兩平
-損益兩平點是什麼
-計算損益兩平的公式
-單位邊際貢獻
-用損益兩平檢查定價
-損益兩平的限制
-# 現金流
-賺錢但沒錢：現金流的問題
-現金流入與流出
-應收帳款與應付帳款
-現金流預測
-資金不足的常見原因
-# 資產負債表基礎
-資產、負債與權益
-資產負債表的平衡
-流動與非流動
-讀一份簡單的資產負債表
-三張財務報表的關係
-# 單位經濟
-一個客戶帶來多少收入
-獲客成本
-顧客終身價值
-單位經濟為什麼決定生死
-改善單位經濟的方法
-# 行銷基礎
-行銷的 4P
-定位
-目標市場
-行銷漏斗
-行銷與銷售的差別
-# 品牌
-品牌是什麼
-品牌名稱與識別
-品牌故事
-品牌一致性
-小品牌如何建立信任
-# 社群行銷
-選擇對的平台
-內容與互動
-社群的經營節奏
-網紅合作
-社群數據的解讀
-# 內容行銷
-內容行銷的邏輯
-找到受眾關心的主題
-不同內容形式
-搜尋與關鍵字的基本觀念
-內容的長期價值
-# 銷售
-銷售流程
-找到潛在客戶
-了解需求再推薦
-處理拒絕
-成交之後
-# 顧客關係與留存
-留住客戶比找新客戶便宜
-顧客滿意與忠誠
-回頭客與推薦
-處理客訴
-會員制度的設計
-# 產品設計
-從客戶需求出發
-功能的優先順序
-使用者體驗
-原型與測試
-產品的迭代
-# 營運與供應鏈
-營運是什麼
-供應商的選擇
-庫存管理
-品質控制
-物流與配送
-# 電商
-開一家網路商店的基本要素
-商品頁的設計
-金流與物流
-電商平台與自建網站
-電商的轉換率
-# 服務業
-服務的特性
-服務流程設計
-定價與時間
-服務品質
-從服務到產品化
-# 團隊
-第一批夥伴
-創辦人之間的分工
-股份分配的基本觀念
-招募的基本原則
-外包與全職
-# 領導與溝通
-設定目標
-給予回饋
-開會的方法
-衝突處理
-建立團隊文化
-# 談判
-談判前的準備
-底線與最佳替代方案
-雙贏談判
-價格談判
-談判中的傾聽
-# 簡報與提案
-簡報的結構
-用故事說明問題
-數據的呈現
-回答問題
-提案的準備清單
-# 商業計劃書（一）
-商業計劃書的用途
-摘要
-問題與解決方案
-市場分析
-商業模式
-# 商業計劃書（二）
-行銷與銷售計畫
-營運計畫
-團隊介紹
-財務預測
-風險與對策
-# 資金從哪裡來
-自有資金
-親友資金
-補助與競賽
-群眾募資
-貸款
-# 天使投資與創投
-天使投資人是誰
-創投的運作方式
-投資人在看什麼
-股權稀釋的基本概念
-募資的階段
-# 公司的型態
-個人工作者與行號
-有限公司與股份有限公司的差別
-選擇公司型態的考量
-成立公司需要準備什麼
-公司與個人財務的分開
-# 法律常識
-合約的基本要素
-商標
-著作權
-專利的基本觀念
-保密協議
-# 稅務與記帳常識
-為什麼要記帳
-發票與收據
-營業稅與所得稅的基本觀念
-報稅的時間觀念
-找會計師的時機
-# 時間與精力管理
-創業者的時間分配
-重要與緊急
-專注時間
-避免過度忙碌
-休息也是工作的一部分
-# 失敗與轉向
-創業失敗的常見原因
-轉向是什麼
-什麼時候該堅持，什麼時候該轉向
-從失敗中學習
-停損的勇氣
-# 案例研究（一）
-從車庫開始的科技公司
-一家咖啡店的商業模式
-共享經濟的案例
-訂閱盒的案例
-一個失敗的新創
-# 案例研究（二）
-時尚品牌的直營電商
-小眾市場的成功品牌
-社群起家的品牌
-從副業到公司
-一家公司的轉向故事
-# 創業者心態
-承擔不確定性
-行動勝過完美計畫
-持續學習
-尋求回饋
-心理健康與支持系統
-# 副業與個人品牌
-副業的起點
-用技能創造收入
-個人品牌的經營
-作品集
-從副業轉為正職的判斷
-# 數據與指標
-北極星指標
-虛榮指標與可行動指標
-追蹤的基本工具
-同期群分析的概念
-用數據做決策
-# 成長策略
-成長的四個方向
-口碑成長
-合作夥伴
-擴張的時機
-成長太快的風險
-# 整合與回顧
-回顧：問題、客戶與價值主張
-回顧：精實畫布與驗證
-回顧：定價與財務
-回顧：行銷與銷售
-為自己的點子寫一頁精實畫布
+# What a business is
+The essence of business: solving someone's problem and getting paid
+Products, services and business models
+Starting a startup versus running a business
+A good idea isn't the same as a good business
+The first mistake most founders make
+# Finding a problem worth solving
+Where problems come from: noticing everyday frustrations
+How painful is it? Wants versus needs
+How often and how many people
+Your own problem versus other people's
+Writing the problem in one sentence
+# Understanding customers
+Who your customer is
+Grouping customers by needs and behaviour
+Early adopters
+Customers and users aren't always the same people
+Building a customer persona
+# The value proposition
+What a value proposition is
+Writing a one-sentence value proposition
+Customer jobs, pains and gains
+Features versus benefits
+Why you're better than the alternatives
+# The Lean Canvas (1): the problem side
+The nine boxes of the Lean Canvas
+Problem
+Customer Segments
+Unique Value Proposition
+Solution
+# The Lean Canvas (2): the business side
+Channels
+Revenue Streams
+Cost Structure
+Key Metrics
+Unfair Advantage
+# The minimum viable product
+The core logic of an MVP
+An MVP isn't a half-finished product
+Common forms of MVP
+Test the demand before building the product
+What an MVP teaches you
+# Testing assumptions
+Turning an idea into a testable assumption
+Test the riskiest assumption first
+Designing a small experiment
+Judging results with numbers
+The build–measure–learn loop
+# Customer interviews
+Why talk to customers
+Finding 10 to 20 people to interview
+Asking without leading
+Ask about past behaviour, not future intentions
+Organising interview notes
+# Surveys
+What surveys are good for
+Types of question
+Avoiding leading and double-barrelled questions
+Samples and bias
+Reading survey results
+# Market size
+TAM, SAM and SOM
+Top-down estimates
+Bottom-up estimates
+Common mistakes in sizing a market
+A small market can still be a good business
+# Competitive analysis
+Direct and indirect competitors
+Alternatives count as competition
+The competitor comparison table
+Differentiation
+The idea of a moat
+# Business models (1)
+Selling directly
+Retail and wholesale
+Manufacturing and contract manufacturing
+Charging for services
+Licensing
+# Business models (2)
+Subscriptions
+Platforms and two-sided markets
+Freemium
+Advertising
+Direct-to-consumer (DTC)
+# Pricing basics
+What a price communicates
+What customers are willing to pay
+Cost-plus pricing
+Value-based pricing
+Competitive pricing
+# Pricing strategy
+Price anchors: the first price you see shapes your judgement
+Tiered plans
+Psychological pricing
+The cost of discounts
+When and how to raise prices
+# Costs
+Fixed and variable costs
+Direct and indirect costs
+Gross profit and gross margin
+Hidden costs
+Basic ways to control costs
+# The income statement
+What an income statement tells you
+Revenue
+Operating expenses
+Net profit
+Reading a simple income statement
+# Break-even
+What the break-even point is
+The break-even formula
+Contribution margin per unit
+Checking your price with break-even
+The limits of break-even analysis
+# Cash flow
+Profitable but broke: the cash-flow problem
+Cash in and cash out
+Accounts receivable and accounts payable
+Forecasting cash flow
+Common reasons businesses run out of cash
+# Balance sheet basics
+Assets, liabilities and equity
+Why the balance sheet balances
+Current and non-current
+Reading a simple balance sheet
+How the three financial statements connect
+# Unit economics
+How much revenue one customer brings in
+Customer acquisition cost
+Customer lifetime value
+Why unit economics decide survival
+Ways to improve unit economics
+# Marketing basics
+The 4Ps of marketing
+Positioning
+Target markets
+The marketing funnel
+Marketing versus sales
+# Brand
+What a brand is
+Brand names and identity
+Brand stories
+Brand consistency
+How a small brand builds trust
+# Social media marketing
+Choosing the right platforms
+Content and engagement
+A posting rhythm
+Working with influencers
+Reading social media data
+# Content marketing
+The logic of content marketing
+Finding topics your audience cares about
+Different content formats
+The basics of search and keywords
+The long-term value of content
+# Sales
+The sales process
+Finding potential customers
+Understanding needs before recommending
+Handling rejection
+After the sale
+# Customer relationships and retention
+Keeping customers is cheaper than finding new ones
+Satisfaction and loyalty
+Repeat customers and referrals
+Handling complaints
+Designing a membership programme
+# Product design
+Starting from customer needs
+Prioritising features
+User experience
+Prototypes and testing
+Iterating on a product
+# Operations and supply chain
+What operations are
+Choosing suppliers
+Inventory management
+Quality control
+Logistics and delivery
+# E-commerce
+The basics of an online shop
+Designing a product page
+Payments and shipping
+Marketplaces versus your own site
+Conversion rates in e-commerce
+# Service businesses
+What makes services different
+Designing a service process
+Pricing time
+Service quality
+Turning a service into a product
+# Teams
+Your first partners
+Dividing roles between founders
+The basics of splitting equity
+Basic principles of hiring
+Freelancers versus full-time staff
+# Leadership and communication
+Setting goals
+Giving feedback
+Running meetings
+Handling conflict
+Building team culture
+# Negotiation
+Preparing to negotiate
+Your bottom line and your best alternative
+Win–win negotiation
+Negotiating on price
+Listening during a negotiation
+# Presentations and pitches
+The structure of a presentation
+Explaining the problem with a story
+Presenting data
+Answering questions
+A pitch preparation checklist
+# The business plan (1)
+What a business plan is for
+The executive summary
+Problem and solution
+Market analysis
+Business model
+# The business plan (2)
+Marketing and sales plan
+Operations plan
+Introducing the team
+Financial projections
+Risks and how to handle them
+# Where funding comes from
+Your own money
+Friends and family
+Grants and competitions
+Crowdfunding
+Loans
+# Angel investors and venture capital
+Who angel investors are
+How venture capital works
+What investors look for
+The basics of equity dilution
+The stages of fundraising
+# Types of company
+Sole traders
+How limited companies and corporations differ
+Choosing a company structure
+What you need to set up a company
+Keeping company and personal money apart
+# Legal basics
+The essentials of a contract
+Trademarks
+Copyright
+The basics of patents
+Non-disclosure agreements
+# Tax and bookkeeping basics
+Why keep books
+Invoices and receipts
+The basics of sales tax and income tax
+Tax deadlines
+When to hire an accountant
+# Managing time and energy
+How founders divide their time
+Important versus urgent
+Focus time
+Avoiding busyness for its own sake
+Rest is part of the work
+# Failure and pivoting
+Why startups commonly fail
+What a pivot is
+When to persist and when to pivot
+Learning from failure
+The courage to cut your losses
+# Case studies (1)
+Tech companies that started in a garage
+The business model of a coffee shop
+A sharing-economy case
+A subscription-box case
+A startup that failed
+# Case studies (2)
+A fashion brand selling direct to consumers
+A successful niche brand
+A brand built on a community
+From side project to company
+A company that pivoted
+# The founder mindset
+Living with uncertainty
+Action beats a perfect plan
+Keep learning
+Asking for feedback
+Mental health and support
+# Side projects and personal brand
+Starting a side project
+Earning from your skills
+Building a personal brand
+Your portfolio
+When a side project should become your main work
+# Data and metrics
+The North Star metric
+Vanity metrics versus actionable metrics
+Basic tracking tools
+The idea of cohort analysis
+Making decisions with data
+# Growth strategy
+The four directions of growth
+Word-of-mouth growth
+Partnerships
+When to expand
+The risks of growing too fast
+# Review and bringing it together
+Review: problem, customer and value proposition
+Review: the Lean Canvas and testing
+Review: pricing and finance
+Review: marketing and sales
+A one-page Lean Canvas for your own idea
