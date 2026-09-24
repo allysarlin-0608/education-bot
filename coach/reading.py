@@ -162,7 +162,6 @@ def _render_bookshelf_start(log, today):
                     st.rerun()
         label = "開始規劃下一本書"
     else:
-        st.markdown("### 看書")
         st.markdown(
             "看書用的是 14 天的進度追蹤：先一起把一本書分成 14 天，"
             "之後每天讀完指定範圍，回來聊聊讀到的內容。"

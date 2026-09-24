@@ -41,5 +41,6 @@ def test_right_password_opens_the_app(monkeypatch):
     at.text_input[0].input("correct horse").run()
     at.button[0].click().run()
     assert not at.exception
-    assert at.selectbox and at.selectbox[0].label == "今天的主題"
+    assert not at.selectbox                                      # no topic picker: the day decides
+    assert any(m.value.startswith("### ") for m in at.markdown)  # today's topic heading
     assert any(method == "GET" for method, *_ in db.calls)
