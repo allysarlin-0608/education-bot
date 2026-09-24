@@ -23,13 +23,14 @@ DEFAULT_LOG_PATH = Path(
 
 # Topic keys map to the seven areas in part 4 of the system prompt.
 TOPICS = {
-    "fashion": "時尚、材質與珠寶",
+    "fashion": "時尚與服裝",
+    "jewelry": "珠寶與工藝",
     "philosophy": "哲學",
     "reading": "看書",
     "cosmos": "天文學",
     "business": "商業計劃",
     "investing": "股票、投資與加密貨幣",
-    "free": "自由主題",
+    "free": "通識",
 }
 
 # date.weekday(): Monday == 0. Business and investing have no fixed day;
@@ -39,7 +40,7 @@ WEEKDAY_TOPIC = {
     1: "philosophy",
     2: "reading",
     3: "cosmos",
-    4: "fashion",
+    4: "jewelry",
     5: "reading",
     6: "free",
 }
@@ -228,17 +229,6 @@ def days_since_last_visit(log: dict, today: date):
     return (today - max(earlier)).days
 
 
-def weekly_topic_counts(log: dict, today: date) -> dict:
-    """Interactions per topic over the 7 days before today (for Sunday's
-    free topic, which should favor what she touched least)."""
-    start = (today - timedelta(days=7)).isoformat()
-    counts = {key: 0 for key in TOPICS}
-    for e in log["entries"]:
-        if start <= e["date"] < today.isoformat():
-            counts[e["topic"]] += 1
-    return counts
-
-
 # ------------------------------------------------------------
 # Checks applied to every reply before it is shown and saved
 # ------------------------------------------------------------
@@ -334,13 +324,6 @@ def build_history_context(log: dict, topic: str, today: date) -> str:
             lines.append(f"- 上次留給她的延伸提問：{_clip(last['followup_question'], 120)}")
         if last.get("reflection"):
             lines.append(f"- 她對上次延伸提問的回應：{_clip(last['reflection'], 150)}")
-
-    if topic == "free":
-        counts = weekly_topic_counts(log, today)
-        summary = "、".join(
-            f"{TOPICS[k]} {counts[k]} 次" for k in TOPICS if k != "free"
-        )
-        lines.append(f"- 過去七天各主題互動次數：{summary}")
 
     lines.append("- App 已自動記錄學習軌跡，不用再問她要不要記錄。")
     return "\n".join(lines)
