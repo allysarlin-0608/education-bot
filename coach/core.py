@@ -26,7 +26,7 @@ TOPICS = {
     "fashion": "時尚、材質與珠寶",
     "philosophy": "哲學",
     "reading": "看書",
-    "cosmos": "宇宙學、維度理論與地外文明",
+    "cosmos": "天文學",
     "business": "商業計劃",
     "investing": "股票、投資與加密貨幣",
     "free": "自由主題",
