@@ -7,10 +7,13 @@ lessons below them belong to; blank lines are ignored. Lesson numbers are
 positions in the file (1-based), so lessons are only ever appended.
 
 A day's lessons live in that day's entry, entry["lessons"]: a list of
-{"n", "title", "unit", "kickoff", "lesson", "followups", "completed"}.
-The day is complete once every lesson in it is completed."""
+{"n", "title", "unit", "kickoff", "lesson", "followups", "completed", "quiz"}.
+A lesson is completed by passing its quiz (coach/quiz.py); the day is
+complete once every lesson in it is completed."""
 from functools import lru_cache
 from pathlib import Path
+
+from coach import quiz
 
 TOTAL = 3000            # lessons planned per topic
 PER_DAY = 5             # lessons on the day a topic is scheduled
@@ -83,7 +86,7 @@ def next_numbers(log: dict, topic: str, count: int = PER_DAY) -> list:
 def new_slot(topic: str, n: int) -> dict:
     info = lesson(topic, n)
     return {"n": n, "title": info["title"], "unit": info["unit"],
-            "kickoff": "", "lesson": "", "followups": [], "completed": False}
+            "kickoff": "", "lesson": "", "followups": [], "completed": False, "quiz": None}
 
 
 def unit_progress(log: dict, topic: str) -> dict:
@@ -170,5 +173,6 @@ def parse_slots(data) -> list:
             "lesson": str(s.get("lesson") or ""),
             "followups": followups,
             "completed": bool(s.get("completed")),
+            "quiz": quiz.parse_saved(s.get("quiz")),
         })
     return slots

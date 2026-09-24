@@ -101,7 +101,7 @@ def test_lessons_survive_save_and_load(tmp_path):
 def test_parse_slots_drops_junk():
     assert curriculum.parse_slots("nope") == []
     assert curriculum.parse_slots([{"n": "1"}, "x", {"n": 2, "followups": [{"role": "hacker", "content": "x"}]}]) == [
-        {"n": 2, "title": "", "unit": "", "kickoff": "", "lesson": "", "followups": [], "completed": False}]
+        {"n": 2, "title": "", "unit": "", "kickoff": "", "lesson": "", "followups": [], "completed": False, "quiz": None}]
 
 
 def test_supabase_without_the_lessons_column_is_detected_on_load():

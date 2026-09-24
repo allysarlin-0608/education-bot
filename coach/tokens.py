@@ -24,6 +24,7 @@ REQUEST_OVERHEAD = 3
 LESSON_MAX_TOKENS = 2400     # seven-block lesson, ~600–1000 characters plus reasoning
 CHAT_MAX_TOKENS = 900        # follow-ups and book chat
 JSON_MAX_TOKENS = 900        # verdicts / plan adjustments
+QUIZ_MAX_TOKENS = 2400       # ten questions with options and a line of explanation each
 
 CJK = re.compile(r"[⺀-鿿豈-﫿＀-￯　-〿]")
 

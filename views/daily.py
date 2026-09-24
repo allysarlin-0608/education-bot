@@ -2,7 +2,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import core, curriculum, lesson_view, llm, progress_bar, tokens, ui
+from coach import core, curriculum, lesson_view, llm, progress_bar, quiz, tokens, ui
 
 log = st.session_state.coach_log
 
@@ -105,6 +105,21 @@ def run_followup(i, text):
     st.rerun()                                 # show the checked text, not the raw stream
 
 
+def run_quiz(i):
+    """Write a fresh quiz for lesson i (a new set on every retake)."""
+    entry = day_entry()
+    slot = entry["lessons"][i]
+    system, messages = quiz.request(slot)
+    with st.spinner("Writing your quiz…"):
+        data, error = llm.ask_json(system, messages, max_tokens=tokens.QUIZ_MAX_TOKENS)
+    questions = quiz.parse(data) if data else None
+    if error or questions is None:
+        failed("quiz", error or llm.FAILED, slot, i=i)
+    slot["quiz"] = quiz.new(questions, slot.get("quiz"))
+    ui.save_entry(log, entry)
+    st.rerun()
+
+
 def show_retry(slot):
     """Friendly message + Retry for the last failed call on this lesson."""
     retry = st.session_state.get("coach_retry")
@@ -115,6 +130,8 @@ def show_retry(slot):
         st.session_state.coach_retry = None
         if retry["kind"] == "kickoff":
             run_kickoff(retry["i"])
+        elif retry["kind"] == "quiz":
+            run_quiz(retry["i"])
         else:
             run_followup(retry["i"], retry["text"])
 
@@ -170,6 +187,9 @@ st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
 if st.query_params.get("date") != today.isoformat() or "topic" in st.query_params:
     st.query_params.clear()
     st.query_params["date"] = today.isoformat()
+
+if st.session_state.get("coach_toast"):           # set just before a rerun, shown after it
+    st.toast(st.session_state.pop("coach_toast"))
 
 entry = core.find_entry(log, today, topic)
 plan = curriculum.day_plan(log, topic, entry)
@@ -230,7 +250,7 @@ chat = get_chat(slot)
 if not chat:
     show_retry(slot)
     if i > 0 and not plan[i - 1]["completed"]:
-        st.caption(f"Finish and tick off Lesson {plan[i - 1]['n']} first, then start this one.")
+        st.caption(f"Pass the quiz for Lesson {plan[i - 1]['n']} first, then start this one.")
     elif st.button("Start this lesson", type="primary", use_container_width=True):
         st.session_state.coach_retry = None
         run_kickoff(i)
@@ -249,24 +269,78 @@ for k, message in enumerate(chat[1:]):         # the kickoff line is shown as th
 st.divider()
 entry = day_entry()
 slot = entry["lessons"][i]
-done = st.checkbox(
-    "I finished this lesson",
-    value=slot["completed"],
-    key=f"done_{today.isoformat()}_{topic}_{slot['n']}",
-)
-if done != slot["completed"]:
-    slot["completed"] = done
-    entry["completed"] = curriculum.day_complete(entry["lessons"])
-    ui.save_entry(log, entry)
-    if done and i + 1 < len(entry["lessons"]):
-        st.session_state.lesson_goto = (sel_key, i + 1)   # straight on to the next lesson
-    st.rerun()
+
+
+def show_results(q, missed_only=False):
+    """The questions with her answer, the right one and why."""
+    for k, item in enumerate(q["questions"]):
+        mine = q["answers"][k]
+        right = mine == item["answer"]
+        if right and missed_only:
+            continue
+        st.markdown(f"{'✓' if right else '✗'} {k + 1}. {item['question']}")
+        if not right:
+            yours = item["options"][mine] if mine is not None else "no answer"
+            st.caption(f"Your answer: {yours} · Correct: {item['options'][item['answer']]}. {item['why']}")
+
+
+# ============================================================
+# QUIZ: 9 of 10 (90%) or better completes the lesson
+# ============================================================
+st.markdown("#### Quiz")
+q = slot.get("quiz")
+if slot["completed"]:
+    if q and quiz.passed(q.get("score")):
+        st.caption(f"Passed with {q['score']}%. This lesson is done.")
+        with st.expander("See the quiz"):
+            show_results(q)
+    else:
+        st.caption("This lesson is done.")
+elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
+    if q is not None:               # the last attempt fell short
+        right = sum(1 for item, a in zip(q["questions"], q["answers"]) if a == item["answer"])
+        st.markdown(f"**{q['score']}%** · {right} of {len(q['questions'])} right. "
+                    f"You need {quiz.PASS_MARK}% to move on; a new set of questions is ready when you are.")
+        with st.expander("See what you missed", expanded=True):
+            show_results(q, missed_only=True)
+    else:
+        st.caption(f"{quiz.QUESTIONS} questions on this lesson. Score {quiz.PASS_MARK}% or more "
+                   f"to finish it and move on to the next one.")
+    show_retry(slot)
+    if st.button("Take the quiz" if q is None else "Try a new quiz", type="primary", use_container_width=True):
+        st.session_state.coach_retry = None
+        run_quiz(i)
+else:
+    with st.form(f"quiz_{today.isoformat()}_{topic}_{slot['n']}_{q['id']}"):
+        choices = []
+        for k, item in enumerate(q["questions"]):
+            choices.append(st.radio(
+                f"**{k + 1}.** {item['question']}", range(len(item["options"])),
+                format_func=lambda o, item=item: item["options"][o], index=None,
+                key=f"quiz_{q['id']}_{k}",
+            ))
+        submitted = st.form_submit_button("Submit answers", type="primary", use_container_width=True)
+    if submitted:
+        if None in choices:
+            st.warning(f"Answer all {len(choices)} questions first.")
+        else:
+            score = quiz.grade(q, choices)
+            if quiz.passed(score):
+                slot["completed"] = True
+                entry["completed"] = curriculum.day_complete(entry["lessons"])
+                if i + 1 < len(entry["lessons"]):
+                    st.session_state.lesson_goto = (sel_key, i + 1)   # straight on to the next lesson
+                st.session_state.coach_toast = (f"Passed with {score}%. On to the next lesson."
+                                                if i + 1 < len(entry["lessons"]) else f"Passed with {score}%.")
+            ui.save_entry(log, entry)
+            st.rerun()
+
 if entry["completed"]:
     streak = core.current_streak(log, ui.today())
     st.caption(f"All {len(entry['lessons'])} lessons done for today. Current streak: {streak} {'day' if streak == 1 else 'days'}.")
 else:
     left = sum(1 for s in entry["lessons"] if not s["completed"])
-    st.caption(f"{left} {'lesson' if left == 1 else 'lessons'} to go. Tick them all off to complete the day.")
+    st.caption(f"{left} {'lesson' if left == 1 else 'lessons'} to go. Pass each quiz to complete the day.")
 
 with st.expander("My thoughts on the question to explore (optional, the coach picks it up next time)"):
     reflection = st.text_area(
