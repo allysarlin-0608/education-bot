@@ -1,6 +1,6 @@
 [theme]
 font = '"Inter", "Noto Sans TC", sans-serif'
-headingFont = '"Bodoni Moda", "Noto Serif TC", serif'
+headingFont = '"Newsreader", "Noto Serif TC", serif'
 baseFontSize = 15
 baseRadius = "none"
 buttonRadius = "none"
@@ -8,11 +8,11 @@ showWidgetBorder = true
 showSidebarBorder = true
 
 [theme.light]
-primaryColor = "#111111"
+primaryColor = "#1A1A1A"
 backgroundColor = "#FAFAF7"
 secondaryBackgroundColor = "#F0EFEB"
-textColor = "#141414"
-linkColor = "#141414"
+textColor = "#1A1A1A"
+linkColor = "#1A1A1A"
 borderColor = "#DEDDD8"
 
 [theme.dark]
