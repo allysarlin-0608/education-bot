@@ -300,6 +300,19 @@ CSS = f"""
 [data-testid="stProgress"] [role="progressbar"],
 [data-testid="stProgress"] [role="progressbar"] div {{ height: 2px !important; border-radius: 1px; }}
 
+/* ---------- lesson cards: one per block, its name as the title ---------- */
+[class*="st-key-lcard_"] {{
+  padding: var(--space-4) var(--space-5) var(--space-5); border-radius: var(--radius-medium);
+  background: var(--glass); box-shadow: var(--optic); gap: var(--space-2);
+}}
+[class*="st-key-lcard_"] .lcard-title {{
+  font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3);
+}}
+[class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] {{ margin-bottom: 0 !important; }}
+[class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] > :last-child,
+[class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] p:last-child {{ margin-bottom: 0 !important; }}
+@media (max-width: 640px) {{ [class*="st-key-lcard_"] {{ padding: var(--space-3) var(--space-4); }} }}
+
 /* ---------- lesson diagrams: natural size, centered, never wider than the page ---------- */
 [data-testid="stGraphVizChart"] {{ display: flex; justify-content: center; margin: var(--space-2) 0; }}
 [data-testid="stGraphVizChart"] svg {{ max-width: 100%; height: auto; }}

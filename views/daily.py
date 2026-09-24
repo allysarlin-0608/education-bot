@@ -76,7 +76,7 @@ def run_kickoff(i):
     if error:
         chat.pop()
         failed("kickoff", error, slot, i=i)
-    lesson = core.finalize_reply(lesson, lesson=True)
+    lesson = core.finalize_reply(lesson, lesson=True, topic=topic)
     chat.append({"role": "assistant", "content": lesson})
     slot["kickoff"], slot["lesson"] = kickoff, lesson
     first, last = entry["lessons"][0]["n"], entry["lessons"][-1]["n"]
@@ -101,14 +101,16 @@ def run_followup(i, text):
     if error:
         chat.pop()
         failed("followup", error, slot, i=i, text=text)
-    chat.append({"role": "assistant", "content": core.finalize_reply(reply, lesson=False)})
+    chat.append({"role": "assistant", "content": core.finalize_reply(reply, lesson=False, topic=topic)})
     slot["followups"] = chat[2:]               # everything after the lesson
     ui.save_entry(log, entry)
     st.rerun()                                 # show the checked text, not the raw stream
 
 
 def run_quiz(i):
-    """Write a fresh quiz for lesson i (a new set on every retake)."""
+    """Write a fresh quiz for lesson i (a new set on every retake), have a
+    second call check every keyed answer, and rewrite any question that
+    fails the check, until the whole quiz passes."""
     entry = day_entry()
     slot = entry["lessons"][i]
     if curriculum.blocking(entry["lessons"], i):     # strictly in order
@@ -119,6 +121,25 @@ def run_quiz(i):
     questions = quiz.parse(data) if data else None
     if error or questions is None:
         failed("quiz", error or llm.FAILED, slot, i=i)
+    for attempt in range(quiz.CHECK_ROUNDS + 1):
+        system, messages = quiz.check_request(questions)
+        with st.spinner("Checking every answer…"):
+            data, error = llm.ask_json(system, messages)
+        flagged = quiz.problems(data, len(questions)) if data else None
+        if error or flagged is None:
+            failed("quiz", error or llm.FAILED, slot, i=i)
+        if not flagged:
+            break
+        llm.logger.info("quiz check flagged %s", flagged)
+        if attempt == quiz.CHECK_ROUNDS:
+            failed("quiz", "I couldn't write a quiz whose answers I'm sure of this time. Try again.", slot, i=i)
+        system, messages = quiz.rewrite_request(slot, questions, flagged)
+        with st.spinner(f"Rewriting {len(flagged)} {'question' if len(flagged) == 1 else 'questions'}…"):
+            data, error = llm.ask_json(system, messages, max_tokens=tokens.QUIZ_MAX_TOKENS)
+        fresh = quiz.replace(questions, flagged, quiz.parse_items(data)) if data else None
+        if error or fresh is None:
+            failed("quiz", error or llm.FAILED, slot, i=i)
+        questions = fresh
     slot["quiz"] = quiz.new(questions, slot.get("quiz"))
     ui.save_entry(log, entry)
     st.rerun()
@@ -244,7 +265,7 @@ with st.container(key=f"course_card_{motion}"):
     ) or 0
     st.html(progress_bar.meta_row(
         f"{done_count} / {len(plan)} lessons today",
-        f"Unit {unit['done']} of {unit['total']} · {curriculum.level_for(plan[0]['n'])}",
+        f"Unit lesson {min(unit['done'] + 1, unit['total'])} of {unit['total']} · {curriculum.level_for(plan[0]['n'])}",
     ))
 
 slot = plan[i]
@@ -257,9 +278,12 @@ if not chat:
     show_retry(slot)
     if (before := curriculum.blocking(plan, i)):
         st.caption(f"Pass the quiz for Lesson {before['n']} first, then start this one.")
-    elif st.button("Start this lesson", type="primary", use_container_width=True):
-        st.session_state.coach_retry = None
-        run_kickoff(i)
+    else:
+        start = st.empty()          # the button goes away while the lesson is written
+        if start.button("Start this lesson", type="primary", use_container_width=True):
+            start.empty()
+            st.session_state.coach_retry = None
+            run_kickoff(i)
     st.stop()
 
 # ============================================================
@@ -268,7 +292,7 @@ if not chat:
 for k, message in enumerate(chat[1:]):         # the kickoff line is shown as the heading
     with st.chat_message(message["role"]):
         if k == 0:
-            lesson_view.render(message["content"])  # tables and diagrams
+            lesson_view.render(message["content"], topic)  # cards, tables and diagrams
         else:
             st.markdown(message["content"])
 
@@ -278,37 +302,42 @@ slot = entry["lessons"][i]
 
 
 def show_results(q, missed_only=False):
-    """Each question with her answer and, where she lost points, the right
-    answer and why."""
+    """Each question with her answer, the right answer and why (only the
+    ones she lost points on with missed_only)."""
     for k, item in enumerate(q["questions"]):
         mark, mine = q["marks"][k], q["answers"][k]
         if mark == 1 and missed_only:
             continue
         sign = "✓" if mark == 1 else ("◐" if mark else "✗")
         st.markdown(f"{sign} {k + 1}. {item['question']}")
-        if item["type"] == "choice" and mark != 1:
-            st.caption(f"Your answer: {item['options'][mine]} · Correct: {item['options'][item['answer']]}. {item['why']}")
-        elif item["type"] == "match" and mark != 1:
-            wrong = [f"{left} → {item['right'][key]}" for left, a, key in zip(item["left"], mine, item["key"]) if a != key]
-            st.caption(f"{mark * len(item['key']):g} of {len(item['key'])} pairs right. Correct: " + "; ".join(wrong) + ".")
-        elif item["type"] == "short":
+        if item["type"] == "choice":
+            yours, right = item["options"][mine], item["options"][item["answer"]]
+            lead = f"Your answer: {yours}" + ("" if mark == 1 else f" · Correct: {right}")
+            st.caption(f"{lead}. {item['why']}".strip())
+        elif item["type"] == "match":
+            pairs = "; ".join(f"{left} → {item['right'][key]}" for left, key in zip(item["left"], item["key"]))
+            got = f"{mark * len(item['key']):g} of {len(item['key'])} pairs right. " if mark != 1 else ""
+            st.caption(f"{got}Correct pairs: {pairs}. {item['why']}".strip())
+        else:
+            st.caption(f"Your answer: {mine}")
             note = q["feedback"][k] or item["why"]
-            st.caption(f"Your answer: {mine}" + (f" · {note}" if note else "")
-                       + ("" if mark == 1 else f" · A good answer: {item['answer']}"))
+            if mark == 1:
+                st.caption(note)
+            else:
+                st.caption(f"Why it's marked wrong: {note}")
+                st.caption(f"A good answer: {item['answer']}")
 
 
 def conclude(i):
-    """Every question is marked: score it, and a pass finishes the lesson."""
+    """Every question is marked: score it; a pass finishes the lesson. She
+    stays on the lesson to read the explanations; Next lesson moves on."""
     entry = day_entry()
     slot = entry["lessons"][i]
     score = quiz.finish(slot["quiz"])
     if quiz.passed(score):
         slot["completed"] = True
         entry["completed"] = curriculum.day_complete(entry["lessons"])
-        if i + 1 < len(entry["lessons"]):
-            st.session_state.lesson_goto = (sel_key, i + 1)   # straight on to the next lesson
-        st.session_state.coach_toast = (f"Passed with {score}%. On to the next lesson."
-                                        if i + 1 < len(entry["lessons"]) else f"Passed with {score}%.")
+        st.session_state.coach_toast = f"Passed with {score}%."
     ui.save_entry(log, entry)
     st.rerun()
 
@@ -326,43 +355,75 @@ def run_grading(i):
     conclude(i)
 
 
-def quiz_form(q):
-    """All ten questions in one form; returns her answers once submitted."""
-    answers = []
-    with st.form(f"quiz_{today.isoformat()}_{topic}_{slot['n']}_{q['id']}"):
-        for k, item in enumerate(q["questions"]):
-            key = f"quiz_{q['id']}_{k}"
-            label = f"**{k + 1}.** {item['question']}"
-            if item["type"] == "choice":
-                answers.append(st.radio(label, range(len(item["options"])),
-                                        format_func=lambda o, item=item: item["options"][o],
-                                        index=None, key=key))
-            elif item["type"] == "match":
-                st.markdown(label)
-                answers.append([
-                    st.selectbox(left, range(len(item["right"])), index=None, placeholder="Choose its match",
-                                 format_func=lambda o, item=item: item["right"][o], key=f"{key}_{j}")
-                    for j, left in enumerate(item["left"])
-                ])
-            else:
-                answers.append(st.text_area(label, key=key, height=90,
-                                            placeholder="Answer in a sentence or two, in your own words"))
-        submitted = st.form_submit_button("Submit answers", type="primary", use_container_width=True)
-    return answers if submitted else None
+@st.fragment
+def answer_sheet(i, q):
+    """The quiz questions. Each answer is kept the moment she gives it
+    (widget state, plus a draft saved with the lesson, so answers survive
+    reruns, a dropped connection, page switches and a reload), and only
+    this block reruns while she answers."""
+    if q.get("draft") is None:
+        q["draft"] = quiz.blank_draft(q)
+    draft = q["draft"]
+    saved = [list(a) if isinstance(a, list) else a for a in draft]
+    for k, item in enumerate(q["questions"]):
+        key = f"quiz_{q['id']}_{k}"
+        label = f"**{k + 1}.** {item['question']}"
+        if item["type"] == "choice":
+            draft[k] = st.radio(label, range(len(item["options"])), index=draft[k],
+                                format_func=lambda o, item=item: item["options"][o], key=key)
+        elif item["type"] == "match":
+            st.markdown(label)
+            keys = [f"{key}_{j}" for j in range(len(item["left"]))]
+            chosen = [st.session_state.get(kk, draft[k][j]) for j, kk in enumerate(keys)]
+            for j, left in enumerate(item["left"]):
+                # a meaning already matched to another term isn't offered again
+                taken = {c for m, c in enumerate(chosen) if m != j and c is not None}
+                options = [o for o in range(len(item["right"])) if o not in taken]
+                current = chosen[j] if chosen[j] in options else None
+                draft[k][j] = st.selectbox(
+                    left, options, index=options.index(current) if current is not None else None,
+                    placeholder="Choose its match", format_func=lambda o, item=item: item["right"][o],
+                    key=keys[j])
+        else:
+            draft[k] = st.text_area(label, value=draft[k], key=key, height=90,
+                                    placeholder="Answer in a sentence or two, in your own words")
+    if draft != saved:
+        ui.save_entry(log, day_entry())         # every answer is saved as she gives it
+    submit = st.empty()
+    if not submit.button("Submit answers", type="primary", use_container_width=True, key=f"submit_{q['id']}"):
+        return
+    entry = day_entry()
+    if curriculum.blocking(entry["lessons"], i):    # finished strictly in order
+        st.rerun()
+    answers = [list(a) if isinstance(a, list) else a for a in draft]
+    missing = [k + 1 for k, (item, a) in enumerate(zip(q["questions"], answers)) if not quiz.answered(item, a)]
+    if missing:
+        st.warning("Answer every question first (still open: " + ", ".join(map(str, missing)) + ").")
+        return
+    submit.empty()
+    if quiz.submit(entry["lessons"][i]["quiz"], answers):
+        ui.save_entry(log, entry)
+        run_grading(i)
+    conclude(i)
 
 
 # ============================================================
-# QUIZ: 9 of 10 points (90%) or better completes the lesson
+# QUIZ: 8 of 10 points (80%) or better completes the lesson
 # ============================================================
 st.markdown("#### Quiz")
 q = slot.get("quiz")
 if slot["completed"]:
     if q and quiz.passed(q.get("score")):
-        st.caption(f"Passed with {q['score']}%. This lesson is done.")
-        with st.expander("See the quiz"):
+        st.markdown(f"**Passed with {q['score']}%** · {quiz.points(q)} points.")
+        with st.expander("See the quiz"):     # this attempt's answers and explanations
             show_results(q)
     else:
         st.caption("This lesson is done.")
+    if i + 1 < len(entry["lessons"]):
+        if st.button(f"Next lesson: Lesson {entry['lessons'][i + 1]['n']}", type="primary",
+                     use_container_width=True):
+            st.session_state.lesson_goto = (sel_key, i + 1)
+            st.rerun()
 elif (before := curriculum.blocking(entry["lessons"], i)):
     # e.g. a lesson started under the old tick box before the one ahead of it was finished
     st.caption(f"Pass the quiz for Lesson {before['n']} first; this quiz opens after that.")
@@ -371,8 +432,10 @@ elif q is not None and quiz.needs_grading(q):
     st.caption("Your answers are saved. They just need marking.")
     show_retry(slot)
     pending = st.session_state.get("coach_retry")
-    if (not pending or pending["key"] != chat_key(slot)) and st.button(
+    mark = st.empty()
+    if (not pending or pending["key"] != chat_key(slot)) and mark.button(
             "Mark my answers", type="primary", use_container_width=True):
+        mark.empty()
         run_grading(i)
 elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
     if q is not None:               # the last attempt fell short
@@ -382,24 +445,15 @@ elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
             show_results(q, missed_only=True)
     else:
         st.caption(f"{quiz.QUESTIONS} questions on this lesson: multiple choice, matching and short answers. "
-                   f"Score {quiz.PASS_MARK}% or more to finish it and move on to the next one.")
+                   f"Score {quiz.PASS_MARK}% or more to finish it.")
     show_retry(slot)
-    if st.button("Take the quiz" if q is None else "Try a new quiz", type="primary", use_container_width=True):
+    take = st.empty()               # hidden while the quiz is being written
+    if take.button("Take the quiz" if q is None else "Try a new quiz", type="primary", use_container_width=True):
+        take.empty()
         st.session_state.coach_retry = None
         run_quiz(i)
 else:
-    answers = quiz_form(q)
-    if answers is not None:
-        if curriculum.blocking(entry["lessons"], i):    # finished strictly in order
-            st.rerun()
-        missing = [k + 1 for k, (item, a) in enumerate(zip(q["questions"], answers)) if not quiz.answered(item, a)]
-        if missing:
-            st.warning("Answer every question first (still open: " + ", ".join(map(str, missing)) + ").")
-        elif quiz.submit(q, answers):
-            ui.save_entry(log, entry)
-            run_grading(i)
-        else:
-            conclude(i)
+    answer_sheet(i, q)
 
 if entry["completed"]:
     streak = core.current_streak(log, ui.today())
