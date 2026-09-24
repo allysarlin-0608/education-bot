@@ -217,7 +217,7 @@ unit = curriculum.unit_progress(log, topic)
 # Which lesson is open: the first unfinished one unless she picked another.
 sel_key = f"lesson_{today.isoformat()}_{topic}"
 first_open = next((i for i, s in enumerate(plan) if not s["completed"]), len(plan) - 1)
-goto = st.session_state.pop("lesson_goto", None)     # set after ticking a lesson
+goto = st.session_state.pop("lesson_goto", None)     # set after passing a quiz
 if goto and goto[0] == sel_key:
     st.session_state[sel_key] = goto[1]
 if st.session_state.get(sel_key) is None or st.session_state[sel_key] >= len(plan):

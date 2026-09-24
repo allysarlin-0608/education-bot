@@ -49,7 +49,10 @@ WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", 
 LEVELS = ("Beginner", "Intermediate", "Advanced")
 # Older entries stored the level in Chinese.
 LEGACY_LEVELS = {"入門": "Beginner", "中階": "Intermediate", "進階": "Advanced"}
-CLOSING_LINE = "Tick it off when you're done — consistency beats perfection."
+CLOSING_LINE = "Take the quiz when you're ready — consistency beats perfection."
+# Closing lines of lessons saved before the quiz (and before English), so
+# older lessons still parse.
+OLD_CLOSING_LINES = ("Tick it off when you're done", "完成後記得打勾")
 # Block names: English lessons, and the Chinese titles older lessons used.
 SECTION_ALIASES = {
     "Topic": ("Topic", "今日主題"),
@@ -300,7 +303,8 @@ def extract_section(text: str, name: str) -> str:
     clean = re.sub(r"[*#]+", "", text)
     for alias in SECTION_ALIASES.get(name, (name,)):
         pattern = (rf"【[^】\n]*{re.escape(alias)}[^】\n]*】\s*[:：]?\s*(.+?)"
-                   rf"(?=\n\s*【|{re.escape(CLOSING_LINE[:6])}|完成後記得打勾|\Z)")
+                   rf"(?=\n\s*【|{re.escape(CLOSING_LINE[:6])}|"
+                   + "|".join(re.escape(old) for old in OLD_CLOSING_LINES) + r"|\Z)")
         match = re.search(pattern, clean, flags=re.DOTALL)
         if match:
             return match.group(1).strip()

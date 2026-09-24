@@ -50,3 +50,9 @@ def test_a_long_lesson_quiz_fits_the_budget():
     slot = {"n": 7, "title": "A long lesson", "lesson": "word " * 1400}   # ~7000 characters
     system, messages = quiz.request(slot)
     assert tokens.estimate_request(system, messages, tokens.QUIZ_MAX_TOKENS) <= tokens.REQUEST_BUDGET
+
+
+def test_lessons_saved_with_the_old_closing_line_still_parse():
+    from coach import core
+    for closing in ("Tick it off when you're done — consistency beats perfection.", core.CLOSING_LINE):
+        assert core.extract_section(f"【Note】 Keep going.\n\n{closing}", "Note") == "Keep going."

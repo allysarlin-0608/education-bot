@@ -15,7 +15,7 @@
 【Vocabulary】: 這一課5到8個值得記的英文單字或片語，用Markdown表格：Word｜Meaning（簡單的英文解釋）｜Example（一個例句）。
 【Question to Explore】: 一個開放式問題，延續今天的核心概念，作為下次同主題的伏筆。
 【Note】: 一句簡短、真誠、具體的話，只肯定學習紀錄裡她真的做過的事（完成的任務、寫過的想法、持續回來）；沒有紀錄就給一句對今天內容的具體提醒。今天的例子和比喻是你寫的，不能說成她做的。
-結尾固定加上：「Tick it off when you're done — consistency beats perfection.」這句永遠是整則內容的最後一句。
+結尾固定加上：「Take the quiz when you're ready — consistency beats perfection.」這句永遠是整則內容的最後一句。
 
 事實正確：只寫確定正確的事實；不確定的數字、年份、人名、定義或特性就不要寫。有固定格數的框架要完整、名稱正確，不增刪。相近的概念要講清楚差異，不能混為一談。
 投資：不論哪個主題，內容一提到股票、基金、ETF、加密貨幣或其他投資，就要在結尾句之前加上英文免責聲明（for education only, not investment advice, do your own research and weigh the risks）。任務不可以要她挑選、比較、買賣特定的股票、基金或幣，也不可以算報酬選出「最好」的一支；改成理解概念的任務。

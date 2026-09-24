@@ -44,7 +44,7 @@ st.html(
     f'<span class="cal-range">{first:%b} {first.day} – {today:%b} {today.day}</span></div>'
     f'<div class="cal-grid">{"".join(cells)}</div>'
     '<div class="cal-legend"><span><i style="background:var(--label)"></i>Completed</span>'
-    '<span><i style="border:1px solid var(--label-2)"></i>Studied, not ticked off</span></div>'
+    '<span><i style="border:1px solid var(--label-2)"></i>Studied, not finished</span></div>'
     '</div>'
 )
 
@@ -70,7 +70,7 @@ for key, label in core.TOPICS.items():
         st.markdown(f"**{label}** · not started yet")
         continue
     st.markdown(
-        f"**{label}** · {p['sessions']} sessions ({p['completed']} ticked off) · {p['level']}"
+        f"**{label}** · {p['sessions']} sessions ({p['completed']} finished) · {p['level']}"
     )
     if p["next_level"]:
         st.progress(p["fraction"], text=f"{p['remaining']} more to reach {p['next_level']}")
@@ -142,15 +142,7 @@ for e in entries:
                 st.markdown(f"**Question to explore:** {e['followup_question']}")
             continue
         st.caption(f"{core.TOPICS[e['topic']]} · session {e['session_number']} · {e['level']}")
-        done = st.checkbox(
-            "Done (ticking it off later still counts)",
-            value=e.get("completed", False),
-            key=f"rec_done_{key}",
-        )
-        if done != e.get("completed", False):
-            e["completed"] = done
-            ui.save_entry(log, e)
-            st.rerun()
+        st.caption("Finished" if e.get("completed") else "Not finished")
         if e.get("followup_question"):
             st.markdown(f"**Question to explore:** {e['followup_question']}")
         reflection = st.text_area(
