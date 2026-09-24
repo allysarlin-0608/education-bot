@@ -47,7 +47,7 @@ WEEKDAY_TOPIC = {
 WEEKDAY_ZH = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
 
 LEVELS = ("入門", "中階", "進階")
-CLOSING_LINE = "完成後記得打勾，連續完成比完美更重要。"
+CLOSING_LINE = "Tick it off when you're done — consistency beats perfection. 完成後記得打勾，連續完成比完美更重要。"
 SECTION_NAMES = ("今日主題", "核心概念", "具體例子", "今日任務", "延伸提問", "小提醒")
 
 
@@ -240,16 +240,24 @@ def days_since_last_visit(log: dict, today: date):
 
 INVESTING_WORDS = re.compile(
     r"股票|股價|個股|選股|股市|基金(?!會)|ETF|加密貨幣|虛擬貨幣|比特幣|以太幣|幣價|選幣|"
-    r"殖利率|本益比|報酬率|投資組合|投資建議|進場|出場"
+    r"殖利率|本益比|報酬率|投資組合|投資建議|進場|出場|"
+    # Lessons are mostly in English now.
+    r"\bstocks?\b|\bstock (?:market|price)s?\b|\bmutual funds?\b|\bindex funds?\b|\bcrypto|"
+    r"\bbitcoin\b|\bethereum\b|\bdividends?\b|\bP/E\b|price-to-earnings|investment portfolio|"
+    r"\binvestment advice\b",
+    re.IGNORECASE,
 )
 DISCLAIMER = (
-    "※ 以上是教育性質的知識分享，不構成任何投資建議；"
+    "※ For education only — this is not investment advice; do your own research and weigh "
+    "the risks carefully before any real decision. 以上是教育性質的知識分享，不構成任何投資建議；"
     "實際的投資決策請自己進一步研究，並謹慎評估風險。"
 )
 
 
 def has_disclaimer(text: str) -> bool:
-    return "不構成" in text and "投資建議" in text
+    lowered = text.lower()
+    return ("不構成" in text and "投資建議" in text) or "not investment advice" in lowered \
+        or "not financial advice" in lowered
 
 
 def finalize_reply(text: str, lesson: bool) -> str:
@@ -276,9 +284,12 @@ def finalize_reply(text: str, lesson: bool) -> str:
 
 def extract_section(text: str, name: str) -> str:
     """Pull one 【...】 block's body out of a lesson, tolerating markdown
-    bold/heading markers around the block titles."""
+    bold/heading markers around the block titles. The title only has to
+    contain the name, so 【延伸提問】 and 【Question to Explore｜延伸提問】
+    both match "延伸提問"."""
     clean = re.sub(r"[*#]+", "", text)
-    pattern = rf"【{name}】\s*[:：]?\s*(.+?)(?=\n\s*【|{CLOSING_LINE[:6]}|\Z)"
+    pattern = (rf"【[^】\n]*{name}[^】\n]*】\s*[:：]?\s*(.+?)"
+               rf"(?=\n\s*【|{re.escape(CLOSING_LINE[:6])}|完成後記得打勾|\Z)")
     match = re.search(pattern, clean, flags=re.DOTALL)
     return match.group(1).strip() if match else ""
 
@@ -358,6 +369,7 @@ def build_history_context(log: dict, topic: str, today: date, slot: dict = None)
 FOLLOWUP_NOTE = """【App 補充：今天的課程已經給過了】
 她現在是在今天的課程之後追問、回報進度或聊天。這時候七個區塊的課程格式不適用，也不需要加結尾固定句式：
 - 直接用自然的對話回答，通常幾句話到一小段就好，只回應她這次說的內容。
+- 跟課程一樣以英文為主，新的專有名詞附中文；她用中文問也用英文回答，她看起來卡住時再補一句中文說明。
 - 其他規則照舊：語氣、特殊情境、投資內容結尾的免責聲明。
 - 她回報完成任務（包括只做了一部分）時，具體肯定「完成」這件事本身，並提醒她可以在頁面上打勾。
 - 只有在她明確要求一則新的課程內容時，才重新使用完整的七個區塊與結尾固定句式。"""
