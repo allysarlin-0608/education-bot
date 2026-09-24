@@ -4,7 +4,7 @@ from coach import progress_bar
 
 def test_percent_and_labels():
     html = progress_bar.build("Philosophy: What philosophy is", 5, 7, "Unit lessons 1–7")
-    assert 'aria-valuenow="71"' in html and ">71<span>%" in html
+    assert 'aria-valuenow="71"' in html and ">71<span class=\"unit\">%" in html
     assert "5 / 7 lessons" in html and "Unit lessons 1–7" in html
     assert "flowing" not in html and "empty" not in html
 
@@ -32,7 +32,7 @@ def test_stylesheet_has_no_stray_angle_brackets():
 
 def test_header_only_and_counts():
     html = progress_bar.build("Astronomy: Earth's orbit", 2, 5, bar=False)
-    assert ">40<span>%" in html and "lq-glass" not in html
+    assert ">40<span class=\"unit\">%" in html and "lq-glass" not in html
     assert progress_bar.count(3, 10, "reading day") == "3 / 10 reading days"
 
 
@@ -56,7 +56,7 @@ def test_vertical_tube_for_today():
     html = progress_bar.build_vertical("Friday, September 25", "Jewelry & Craft", 2, 5, previous=0)
     assert 'class="lqv flowing"' in html and "--to:40;--from:0" in html
     assert "Friday, September 25" in html and "Jewelry &amp; Craft" in html
-    assert ">40<span>%" in html and "2 of 5 lessons today" in html
+    assert ">40<span class=\"unit\">%" in html and "2 of 5 lessons today" in html
     empty = progress_bar.build_vertical("Friday", "Jewelry", 0, 5)
     assert "lqv empty" in empty and "flowing" not in empty
     assert "No lessons left to do" in progress_bar.build_vertical("Friday", "Jewelry", 0, 0)
