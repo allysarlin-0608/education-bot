@@ -1,6 +1,6 @@
 import streamlit as st
 
-from coach import style, ui
+from coach import sidebar, style, ui
 
 st.set_page_config(
     page_title="Daily Learning Coach",
@@ -21,4 +21,5 @@ page = st.navigation([
 # Progress bars flow in on arriving at a page, not on every rerun.
 st.session_state.lq_entering = st.session_state.get("lq_page") != page.url_path
 st.session_state.lq_page = page.url_path
+sidebar.render(st.session_state.coach_log)     # today's date, subject and progress, on every page
 page.run()

@@ -1,5 +1,3 @@
-from datetime import date
-
 import streamlit as st
 
 from coach import core, curriculum, lesson_view, llm, progress_bar, quiz, tokens, ui
@@ -7,23 +5,8 @@ from coach import core, curriculum, lesson_view, llm, progress_bar, quiz, tokens
 log = st.session_state.coach_log
 
 
-# ============================================================
-# Which day is on screen (survives page switches and refreshes)
-# ============================================================
-# Widget state is dropped when she visits another page, so the date lives
-# in a plain session key and is copied back into the widget; it is also
-# mirrored into the URL so a refresh keeps it. The topic is always the
-# one scheduled for that day.
-
-def _query_date():
-    try:
-        return date.fromisoformat(st.query_params.get("date", ""))
-    except ValueError:
-        return None
-
-
-if "coach_date" not in st.session_state:
-    st.session_state.coach_date = _query_date() or ui.today()
+# Today is always the real today (past days are in the Progress history).
+today = ui.today()
 
 
 def chat_key(slot):
@@ -170,9 +153,6 @@ def show_retry(slot, kinds):
 # SIDEBAR
 # ============================================================
 with st.sidebar:
-    st.markdown("### Daily Learning Coach")
-    st.caption("A few focused lessons a day, one idea and one small task at a time.")
-
     client_ready = bool(st.session_state.api_key) and llm.GROQ_AVAILABLE
     if not client_ready:
         with st.expander("Set the API key", expanded=not st.session_state.api_key):
@@ -188,35 +168,14 @@ with st.sidebar:
             if not llm.GROQ_AVAILABLE:
                 st.caption("Missing package: run `pip install groq`.")
 
-    # No future dates: lessons "done" in the future would count toward the
-    # real streak and levels (and a date past max_value makes Streamlit error).
-    latest = ui.today()
-    if st.session_state.coach_date > latest:
-        st.session_state.coach_date = latest
-    if "w_date" not in st.session_state or st.session_state.w_date > latest:
-        st.session_state.w_date = st.session_state.coach_date
-    today = st.date_input("Date", key="w_date", max_value=latest)
-    st.session_state.coach_date = today
-
-    st.divider()
-    # Same base date as the Progress page (the real today), whatever date
-    # is picked above.
-    streak = core.current_streak(log, ui.today())
-    col_a, col_b = st.columns(2)
-    col_a.metric("Current streak", f"{streak} {'day' if streak == 1 else 'days'}")
-    done_days = len(core.completed_dates(log))
-    col_b.metric("Days completed", f"{done_days} {'day' if done_days == 1 else 'days'}")
-    st.page_link("views/records.py", label="See full progress")
-
 
 # ============================================================
 # TODAY'S TOPIC: fixed by the weekly schedule (Reading has its own page)
 # ============================================================
 topic = core.scheduled_topic(today)
 st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
-if st.query_params.get("date") != today.isoformat() or "topic" in st.query_params:
+if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
-    st.query_params["date"] = today.isoformat()
 
 if st.session_state.get("coach_toast"):           # set just before a rerun, shown after it
     st.toast(st.session_state.pop("coach_toast"))

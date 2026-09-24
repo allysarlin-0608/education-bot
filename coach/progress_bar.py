@@ -56,13 +56,43 @@ def meta_row(left: str, right: str = "") -> str:
     return f'<div class="lq-meta"><span>{escape(left)}</span>{extra}</div>'
 
 
+def _previous(key: str, pct: int) -> int:
+    """Where the liquid flows from: empty on arriving at the page,
+    otherwise the value last shown."""
+    shown = st.session_state.setdefault("lq_shown", {})
+    previous = 0 if entering() else shown.get(key, 0)
+    shown[key] = pct
+    return previous
+
+
 def render(key: str, title: str, done: int, total: int, meta: str = "", **kwargs):
     """Show the bar. It flows in from empty on arriving at the page, and
     from where it was when the value has changed since."""
-    shown = st.session_state.setdefault("lq_shown", {})
-    previous = 0 if entering() else shown.get(key, 0)
-    shown[key] = percent(done, total)
-    st.html(build(title, done, total, meta, previous=previous, **kwargs))
+    st.html(build(title, done, total, meta, previous=_previous(key, percent(done, total)), **kwargs))
+
+
+def build_vertical(heading: str, subject: str, done: int, total: int, *, previous=None) -> str:
+    """Today in the sidebar: an upright glass tube the liquid rises in, with
+    the date, the subject, the percentage and the lesson count beside it."""
+    pct = percent(done, total)
+    classes = ["lqv"] + (["empty"] if pct == 0 else []) + (
+        ["flowing"] if previous is not None and previous != pct else [])
+    count = f"{done} of {total} {'lesson' if total == 1 else 'lessons'} today" if total else "No lessons left to do"
+    return (
+        f'<section class="{" ".join(classes)}" style="--to:{pct};--from:{previous or 0}" '
+        f'role="group" aria-label="Today">'
+        f'<div class="lqv-tube" role="progressbar" aria-valuemin="0" aria-valuemax="100" '
+        f'aria-valuenow="{pct}" aria-valuetext="{pct}% · {escape(count)}"><div class="lqv-liquid"></div></div>'
+        f'<div class="lqv-info"><div class="lqv-date">{escape(heading)}</div>'
+        f'<div class="lqv-subject">{escape(subject)}</div>'
+        f'<div class="lqv-pct" aria-hidden="true">{pct}<span>%</span></div>'
+        f'<div class="lqv-count">{escape(count)}</div></div>'
+        "</section>"
+    )
+
+
+def render_vertical(key: str, heading: str, subject: str, done: int, total: int, where=st):
+    where.html(build_vertical(heading, subject, done, total, previous=_previous(key, percent(done, total))))
 
 
 def lesson_motion(key: str, done_flags: list) -> str:

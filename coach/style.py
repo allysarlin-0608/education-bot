@@ -522,6 +522,51 @@ LIQUID = """
 }
 @keyframes lq-fill { from { width: 0; } to { width: 100%; } }
 
+/* ---------- today in the sidebar: an upright glass tube ---------- */
+.lqv { --p: var(--to); display: flex; gap: 16px; align-items: stretch; margin: 4px 0 8px; }
+.lqv-tube {
+  position: relative; flex: none; width: 52px; height: 148px; box-sizing: border-box;
+  border-radius: 16px;
+  background: linear-gradient(90deg, var(--lq-glass-top), var(--lq-glass-bottom));
+  box-shadow: inset 1px 0 1px -1px var(--lq-edge-hi), inset -1px 0 1px -1px var(--lq-edge-lo),
+              inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 0 6px -2px var(--lq-edge-near);
+  backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
+}
+/* the liquid rises from the bottom; its surface is a soft meniscus that
+   tilts a little while it moves and levels out as it settles */
+.lqv-liquid {
+  position: absolute; left: 5px; right: 5px; bottom: 5px;
+  height: max(10px, calc((100% - 10px) * var(--p) / 100));
+  border-radius: calc(7px + var(--surge) * 5px) calc(7px - var(--surge) * 3px) 11px 11px /
+                 6px 6px 11px 11px;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--lq-liquid) 94%, var(--lq-deep)), var(--lq-liquid));
+  opacity: 0.92;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--lq-glow) 7%, transparent);
+}
+.lqv-liquid::after {              /* the one light response, barely there */
+  content: ""; position: absolute; top: 4px; bottom: 4px; left: 3px; width: 35%; border-radius: inherit;
+  background: linear-gradient(0deg, transparent 5%,
+    color-mix(in srgb, var(--lq-hi) calc(16% + var(--surge) * 10%), transparent) 60%, transparent 95%);
+}
+.lqv.empty .lqv-liquid { opacity: 0.45; }   /* a drop at the bottom, so the tube is never empty-looking */
+.lqv.flowing .lqv-liquid {
+  animation: lq-front 950ms cubic-bezier(0.3, 0.6, 0.25, 1) both,
+             lq-surge 1100ms cubic-bezier(0.4, 0, 0.3, 1) both;
+}
+.lqv-info { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; padding: 2px 0; }
+.lqv-date {
+  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 400; font-size: 1.1875rem;
+  line-height: 1.2; color: var(--label); font-variant-numeric: lining-nums;
+}
+.lqv-subject { font-size: 0.8125rem; color: var(--label-2); margin-top: 4px; }
+.lqv-pct {
+  font-family: "Newsreader", serif; font-weight: 300; font-size: 2.5rem; line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums; color: var(--label); margin-top: auto;
+}
+.lqv-pct span { font-size: 0.5em; margin-left: 2px; color: var(--label-2); }
+.lqv-count { font-size: 0.75rem; color: var(--label-3); margin-top: 6px; }
+@media (prefers-reduced-motion: reduce) { .lqv.flowing .lqv-liquid { animation: none; } }
+
 @media (max-width: 640px) {
   .lq { --height: 8px; --inset: 2.25px; }
   .lq-title { font-size: 1.375rem; }
