@@ -24,9 +24,9 @@ MODEL_NAME = "openai/gpt-oss-120b"
 MAX_RETRIES = 3            # after the first attempt, on 429 / connection errors (up to ~45s)
 MAX_WAIT_SECONDS = 15.0    # cap on a single backoff wait
 
-NO_KEY = "還沒有設定 Groq API key，請先在側邊欄設定。"
-BUSY = "教練現在有點忙，等幾秒再試一次。"
-FAILED = "教練這次沒有順利回覆，再試一次就好。"
+NO_KEY = "No Groq API key yet. Add one in the sidebar first."
+BUSY = "The coach is busy right now. Wait a few seconds and try again."
+FAILED = "The coach didn't manage to reply this time. Just try again."
 
 logger = logging.getLogger("coach.llm")
 

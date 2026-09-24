@@ -1,10 +1,10 @@
-"""看書 (part 4.3): the book tracker shown on the lesson page on 看書 days."""
+"""Reading (part 4.3): the book tracker on the Reading page."""
 import streamlit as st
 
 from coach import books, core, llm, tokens, ui
 
-SWITCH_MESSAGE = "好，我們來設定新的一本。"
-RESTART_MESSAGE = "好，我們重新開始。"
+SWITCH_MESSAGE = "OK, let's set up a new book. "
+RESTART_MESSAGE = "OK, let's start over. "
 
 
 def render(log, today):
@@ -20,8 +20,8 @@ def render(log, today):
         return
     if book["status"] == "reading" and today.isoformat() < book["started_on"]:
         # A date before the book started: no progress to show for it.
-        st.markdown(f"### 《{book['title']}》")
-        st.info(f"《{book['title']}》是從 {book['started_on']} 開始讀的，這一天還沒有這本書的閱讀進度。")
+        st.markdown(f"### {book['title']}")
+        st.info(f"You started {book['title']} on {book['started_on']}, so there's no reading for this date yet.")
         return
 
     chat = _chat(book, today)
@@ -62,7 +62,7 @@ def _handle_message(log, book, chat, text, today):
 
 def _chat(book, today):
     """This session's conversation about the book, opened with the right
-    greeting (e.g. 我們從第X天繼續 after a few days away)."""
+    greeting (e.g. "Let's pick up from Day X" after a few days away)."""
     key = f"book_chat_{book['id']}"
     if key not in st.session_state:
         st.session_state[key] = [
@@ -97,13 +97,13 @@ def _say(chat, text):
 
 
 def _system(task_prompt):
-    """Shared core + the 看書 module + this call's task."""
+    """Shared core + the reading module + this call's task."""
     return f"{core.load_system_prompt('reading')}\n\n{task_prompt}"
 
 
 def _failed(book, chat, error, text):
     """A model call failed: take back her message, remember it, and show a
-    friendly note with 重試 (the raw error is only in the log)."""
+    friendly note with Retry (the raw error is only in the log)."""
     if chat and chat[-1] == {"role": "user", "content": text}:
         chat.pop()
     st.session_state.book_retry = {"id": book["id"], "text": text, "error": error}
@@ -115,19 +115,19 @@ def _render_retry(log, book, chat, today):
     if not retry or retry["id"] != book["id"]:
         return
     st.warning(retry["error"])
-    if st.button("重試", key=f"book_retry_{book['id']}"):
+    if st.button("Retry", key=f"book_retry_{book['id']}"):
         st.session_state.book_retry = None
         _handle_message(log, book, chat, retry["text"], today)
 
 
 def _placeholder(book):
     if book["status"] == "setup":
-        return "回答教練的問題……"
+        return "Answer the coach's question…"
     if book["status"] == "planning":
-        return "想怎麼調整？或跟我說「可以」……"
+        return "What would you like to change? Or just say \"looks good\"…"
     if _awaiting_day(book):
-        return "用你自己的話說說今天讀到的內容……"
-    return "讀完了跟我說一聲，或聊聊這本書……"
+        return "Tell me in your own words what you read today…"
+    return "Tell me when you've finished, or talk about the book…"
 
 
 # ============================================================
@@ -136,14 +136,14 @@ def _placeholder(book):
 
 def _render_header(book):
     if not book["title"]:
-        st.markdown("### 新的一本書")
+        st.markdown("### A new book")
         return
-    st.markdown(f"### 《{book['title']}》")
+    st.markdown(f"### {book['title']}")
     if book["status"] == "reading":
         reading_days = [d for d in range(1, books.DAYS + 1) if book["plan"][d - 1]]
         done = len([d for d in reading_days if str(d) in book["checks"]])
-        st.progress(done / len(reading_days), text=f"已確認 {done} / {len(reading_days)} 個閱讀日")
-        with st.expander("14 天進度表"):
+        st.progress(done / len(reading_days), text=f"{done} of {len(reading_days)} reading days confirmed")
+        with st.expander("14-day plan"):
             st.markdown(books.plan_table(book))
 
 
@@ -151,22 +151,22 @@ def _render_bookshelf_start(log, today):
     finished = [b for b in log["books"] if b["status"] == "finished"]
     last = finished[-1] if finished else None
     if last:
-        st.markdown(f"### 《{last['title']}》讀完了")
+        st.markdown(f"### You finished {last['title']}")
         if last.get("final_summary"):
             with st.chat_message("assistant"):
                 st.markdown(last["final_summary"])
         else:
             st.warning(st.session_state.get("book_summary_error") or llm.FAILED)
-            if st.button("重試", key=f"summary_retry_{last['id']}"):
+            if st.button("Retry", key=f"summary_retry_{last['id']}"):
                 if _write_final_summary(log, last, today):
                     st.rerun()
-        label = "開始規劃下一本書"
+        label = "Plan the next book"
     else:
         st.markdown(
-            "看書用的是 14 天的進度追蹤：先一起把一本書分成 14 天，"
-            "之後每天讀完指定範圍，回來聊聊讀到的內容。"
+            "Reading works as a 14-day tracker: we split a book into 14 days together, "
+            "then each day you read your section and come back to talk about it."
         )
-        label = "開始一本新書"
+        label = "Start a new book"
     if st.button(label, type="primary", use_container_width=True):
         _start_new_book(log, today, intro=None)
         st.rerun()
@@ -184,42 +184,42 @@ def _start_new_book(log, today, intro):
 
 
 def _render_other_options(log, book, today):
-    with st.expander("其他選項"):
+    with st.expander("More options"):
         if book["chapters"] and book["status"] in ("planning", "reading"):
             _render_title_editor(log, book, today)
             st.divider()
         if book["status"] == "reading":
-            st.caption("想換一本書也完全沒問題，這本的進度會留在書架上，我們直接設定新的一本。")
-            if st.button("放棄這本書，重新開始一本", key=f"switch_{book['id']}"):
+            st.caption("Switching books is completely fine. This one's progress stays on your bookshelf and we set up the new one.")
+            if st.button("Stop this book and start another", key=f"switch_{book['id']}"):
                 book["status"] = "switched"
                 if _save(log, book, today):
                     _start_new_book(log, today, intro=SWITCH_MESSAGE)
                 st.rerun()
         else:
-            st.caption("還沒確認進度表，隨時可以從頭重新設定。")
-            if st.button("重新開始設定", key=f"restart_{book['id']}"):
+            st.caption("The plan isn't confirmed yet, so you can start the setup over at any time.")
+            if st.button("Start the setup over", key=f"restart_{book['id']}"):
                 st.session_state.book_draft = None
                 _start_new_book(log, today, intro=RESTART_MESSAGE)
                 st.rerun()
 
 
 def _render_title_editor(log, book, today):
-    st.markdown("**修改某一章的標題**")
+    st.markdown("**Rename a chapter**")
     number = st.selectbox(
-        "哪一章", list(range(1, len(book["chapters"]) + 1)),
-        format_func=lambda n: f"第{n}章：{book['chapters'][n - 1]}",
+        "Chapter", list(range(1, len(book["chapters"]) + 1)),
+        format_func=lambda n: f"Chapter {n}: {book['chapters'][n - 1]}",
         key=f"edit_ch_{book['id']}",
     )
-    new_title = st.text_input("新的標題", key=f"edit_title_{book['id']}_{number}",
+    new_title = st.text_input("New title", key=f"edit_title_{book['id']}_{number}",
                               value=book["chapters"][number - 1])
-    if st.button("儲存標題", key=f"edit_save_{book['id']}") and new_title.strip():
+    if st.button("Save title", key=f"edit_save_{book['id']}") and new_title.strip():
         book["chapters"][number - 1] = new_title.strip()
         if _save(log, book, today):
             chat = _chat(book, today)
             if book["status"] == "planning":
-                _say(chat, f"改好了，第{number}章是「{new_title.strip()}」。更新後的進度表：\n\n{books.plan_table(book)}")
+                _say(chat, f"Done: Chapter {number} is now \"{new_title.strip()}\". The updated plan:\n\n{books.plan_table(book)}")
             else:
-                _say(chat, f"改好了，第{number}章是「{new_title.strip()}」。")
+                _say(chat, f"Done: Chapter {number} is now \"{new_title.strip()}\".")
         st.rerun()
 
 
@@ -238,28 +238,28 @@ def _handle_setup(log, book, chat, text, today):
 # ============================================================
 
 def _render_plan_controls(log, book, chat, today):
-    with st.expander("自己微調某一天的份量"):
+    with st.expander("Adjust a day yourself"):
         day = st.selectbox(
-            "哪一天", list(range(1, books.DAYS)), format_func=lambda d: f"第{d}天",
+            "Day", list(range(1, books.DAYS)), format_func=lambda d: f"Day {d}",
             key=f"adjust_day_{book['id']}",
         )
         col1, col2 = st.columns(2)
-        if col1.button(f"減輕：最後一章移到第{day + 1}天", use_container_width=True):
+        if col1.button(f"Lighter: move its last chapter to Day {day + 1}", use_container_width=True):
             _apply_manual_move(log, book, chat, today, books.move_last_to_next, day,
-                               f"把第{day}天的最後一章移到第{day + 1}天了。")
-        if col2.button(f"加重：把第{day + 1}天第一章移過來", use_container_width=True):
+                               f"I moved Day {day}'s last chapter to Day {day + 1}.")
+        if col2.button(f"Heavier: bring over Day {day + 1}'s first chapter", use_container_width=True):
             _apply_manual_move(log, book, chat, today, books.move_first_from_next, day,
-                               f"把第{day + 1}天的第一章移到第{day}天了。")
-    if st.button("確認進度表", type="primary", use_container_width=True):
+                               f"I moved Day {day + 1}'s first chapter to Day {day}.")
+    if st.button("Confirm the plan", type="primary", use_container_width=True):
         _confirm_plan(log, book, chat, today)
         st.rerun()
 
 
 def _apply_manual_move(log, book, chat, today, move, day, done_text):
     if not move(book["plan"], day):
-        st.toast("那一天沒有章節可以移動。")
+        st.toast("There's no chapter to move on that day.")
         return
-    _say(chat, f"好，{done_text}更新後的進度表：\n\n{books.plan_table(book)}")
+    _say(chat, f"OK. {done_text} The updated plan:\n\n{books.plan_table(book)}")
     _save(log, book, today)
     st.rerun()
 
@@ -284,14 +284,14 @@ def _handle_planning(log, book, chat, text, today):
     if books.is_yes(text):
         _confirm_plan(log, book, chat, today)
         st.rerun()
-    with st.spinner("調整進度表中……"):
+    with st.spinner("Adjusting the plan…"):
         data, error = llm.ask_json(_system(books.adjust_prompt(book)), [{"role": "user", "content": text}])
     if error:
         _failed(book, chat, error, text)
     applied = books.apply_moves(book["plan"], data.get("moves"))
     reply = str(data.get("reply") or "").strip()
     if applied:
-        reply = f"{reply}\n\n更新後的進度表：\n\n{books.plan_table(book)}".strip()
+        reply = f"{reply}\n\nThe updated plan:\n\n{books.plan_table(book)}".strip()
     if data.get("confirmed") is True:
         if reply:
             _say(chat, reply)
@@ -310,16 +310,16 @@ def _render_reading_controls(log, book, chat, today):
     awaiting = _awaiting_day(book)
     day = books.next_day(book)
     if awaiting:
-        if st.button("先不確認了，晚點再說", key=f"cancel_{book['id']}"):
+        if st.button("Not now, maybe later", key=f"cancel_{book['id']}"):
             _set_awaiting(book, None)
-            _say(chat, "沒問題，準備好了再跟我說。")
+            _say(chat, "No problem. Tell me when you're ready.")
             st.rerun()
     elif day and not books.is_open(book, day, today):
         opens = books.opens_on(book, day)
-        st.caption(f"第{day}天的範圍 {opens.month}月{opens.day}日開放。")
+        st.caption(f"Day {day} opens on {opens:%B} {opens.day}.")
     elif day:
-        if st.button(f"我讀完第{day}天的範圍了", type="primary", use_container_width=True):
-            chat.append({"role": "user", "content": f"我讀完第{day}天的範圍了"})
+        if st.button(f"I've read Day {day}", type="primary", use_container_width=True):
+            chat.append({"role": "user", "content": f"I've read Day {day}."})
             _start_check(book, chat, day)
             st.rerun()
 
@@ -349,7 +349,7 @@ def _handle_reading(log, book, chat, text, today):
         _say(chat, core.finalize_reply(reply, lesson=False))
         st.rerun()
 
-    with st.spinner("教練正在讀你的分享……"):
+    with st.spinner("The coach is reading what you shared…"):
         data, error = llm.ask_json(_system(books.judge_prompt(book, day)),
                                    [{"role": "user", "content": text}])
     if error:
@@ -359,12 +359,12 @@ def _handle_reading(log, book, chat, text, today):
     if data.get("passed") is not True:
         # Not marked, not advanced; her next message is checked again.
         _set_awaiting(book, day)
-        _say(chat, reply or "等你確認過再回來跟我聊聊，我們再確認一次就好。")
+        _say(chat, reply or "Have another look and come back to tell me about it; we'll just check again.")
         st.rerun()
 
     books.record_pass(book, day, text, today)
     _set_awaiting(book, None)
-    _say(chat, reply or "今天算完成了。")
+    _say(chat, reply or "That counts for today.")
     _record_learning_entry(log, book, today)
     _save(log, book, today)
     if book["status"] == "finished":
@@ -375,8 +375,8 @@ def _handle_reading(log, book, chat, text, today):
 def _write_final_summary(log, book, today):
     """Stream the end-of-book wrap-up. Her daily notes are clipped until
     the request fits the token budget. On failure the book stays
-    finished and the bookshelf view offers 重試."""
-    messages = [{"role": "user", "content": f"我把《{book['title']}》全部讀完了。"}]
+    finished and the bookshelf view offers Retry."""
+    messages = [{"role": "user", "content": f"I've finished all of {book['title']}."}]
     for chars in (150, 100, 60, 30, 0):
         system = _system(books.final_summary_prompt(book, summary_chars=chars))
         if tokens.estimate_request(system, messages, tokens.LESSON_MAX_TOKENS) <= tokens.REQUEST_BUDGET:
@@ -395,10 +395,10 @@ def _record_learning_entry(log, book, today):
     """Mirror today's passed days into the learning log, so streaks and the
     record page count reading days like any other topic."""
     days = sorted(int(d) for d, c in book["checks"].items() if c["passed_on"] == today.isoformat())
-    span = f"第{days[0]}天" if len(days) == 1 else f"第{days[0]}–{days[-1]}天"
+    span = f"Day {days[0]}" if len(days) == 1 else f"Days {days[0]}–{days[-1]}"
     chapters = [c for d in days for c in book["plan"][d - 1]]
     entry = core.start_entry(log, today, "reading")
-    entry["title"] = f"《{book['title']}》{span}：{books.chapter_range(chapters)}"
+    entry["title"] = f"{book['title']}, {span}: {books.chapter_range(chapters)}"
     entry["completed"] = True
     entry["reflection"] = "\n\n".join(book["checks"][str(d)]["summary"] for d in days)
     ui.save_entry(log, entry)

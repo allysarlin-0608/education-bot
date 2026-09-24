@@ -21,8 +21,8 @@ def get_setting(name: str) -> str:
 
 
 PASSWORD_MISSING = (
-    "這個 app 還沒有設定密碼，為了保護學習紀錄，先不開放使用。"
-    "請到 Streamlit 的 Settings → Secrets 加上一行 APP_PASSWORD = \"你的密碼\"，儲存後重新整理。"
+    "This app has no password set yet, so it stays closed to protect the records. "
+    "In Streamlit, go to Settings → Secrets, add the line APP_PASSWORD = \"your password\", save and refresh."
 )
 
 
@@ -32,18 +32,18 @@ def require_password():
     if st.session_state.get("coach_authed"):
         return
     expected = get_setting("APP_PASSWORD")
-    st.markdown("### 每日學習教練")
+    st.markdown("### Daily Learning Coach")
     if not expected:
         st.error(PASSWORD_MISSING)
         st.stop()
     with st.form("login"):
-        entered = st.text_input("密碼", type="password")
-        submitted = st.form_submit_button("進入", type="primary")
+        entered = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Enter", type="primary")
     if submitted:
         if hmac.compare_digest(entered.encode(), expected.encode()):
             st.session_state.coach_authed = True
             st.rerun()
-        st.error("密碼不對，再試一次。")
+        st.error("Wrong password. Try again.")
     st.stop()
 
 
@@ -70,7 +70,7 @@ def init_state():
             st.session_state.coach_log = st.session_state.coach_store.load()
         except storage.StorageError as e:
             # Don't cache the failure: the next rerun tries to load again.
-            st.error(f"讀不到學習紀錄（{e}），等一下重新整理頁面再試一次。")
+            st.error(f"Couldn't load your records ({e}). Refresh the page in a moment to try again.")
             st.stop()
     if "coach_chats" not in st.session_state:
         # "date|topic" -> that lesson's chat, so switching pages or topics
@@ -93,7 +93,7 @@ def save_entry(log, entry):
     try:
         st.session_state.coach_store.save_entry(log, entry)
     except storage.StorageError as e:
-        st.session_state.coach_save_error = f"這筆紀錄沒有存成功（{e}），等一下再試一次。"
+        st.session_state.coach_save_error = f"This wasn't saved ({e}). Try again in a moment."
         return False
     return True
 
@@ -103,7 +103,7 @@ def save_book(log, book):
     try:
         st.session_state.coach_store.save_book(log, book)
     except storage.StorageError as e:
-        st.session_state.coach_save_error = f"讀書進度沒有存成功（{e}），等一下再試一次。"
+        st.session_state.coach_save_error = f"Your reading progress wasn't saved ({e}). Try again in a moment."
         return False
     return True
 
@@ -119,7 +119,7 @@ def replace_log(log):
     try:
         st.session_state.coach_store.replace(log)
     except storage.StorageError as e:
-        st.error(f"匯入沒有存成功（{e}），等一下再試一次。")
+        st.error(f"The import wasn't saved ({e}). Try again in a moment.")
         return False
     return True
 

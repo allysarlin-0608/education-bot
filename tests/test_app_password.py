@@ -32,7 +32,7 @@ def test_wrong_password_is_refused_and_loads_nothing(monkeypatch):
     at, db = start(monkeypatch, "correct horse")
     at.text_input[0].input("guess").run()
     at.button[0].click().run()
-    assert at.error[0].value == "密碼不對，再試一次。"
+    assert at.error[0].value == "Wrong password. Try again."
     assert db.calls == [] and not at.selectbox
 
 

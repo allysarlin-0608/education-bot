@@ -24,7 +24,7 @@ def test_pages_for_day_follows_chapters_per_day():
     books.move_first_from_next(book["plan"], 1)                  # day 1 now has 2 chapters
     assert [books.pages_for_day(book, d) for d in (1, 2, 3)] == [40, 0, 20]
     table = books.plan_table(book)
-    assert "| 第1天 | 第1–2章：A；B | 約 40 頁 |" in table
+    assert "| Day 1 | Chapters 1–2: A; B | 40 pages |" in table
 
 
 def test_pages_round_half_up():
@@ -54,10 +54,10 @@ def test_allocate_more_chapters_spreads_remainder_to_first_days():
 def test_plan_table_lists_titles_and_early_finish():
     book, _ = setup_book("原子習慣", "James Clear", "3", "280", "第1章：A\n第2章：B\n第3章：C")
     table = books.plan_table(book)
-    assert "| 第1天 | 第1章：A | 約 93 頁 |" in table     # 280 pages / 3 chapters
-    assert "| 第4天 | 複習／休息 | — |" in table
+    assert "| Day 1 | Chapter 1: A | 93 pages |" in table     # 280 pages / 3 chapters
+    assert "| Day 4 | Review / rest | — |" in table
     assert table.count(books.EARLY_FINISH_NOTE) == 1              # O: explained once, under the table
-    assert f"※ 第4–14天：{books.EARLY_FINISH_NOTE}" in table
+    assert f"※ Days 4–14: {books.EARLY_FINISH_NOTE}" in table
     assert len([l for l in table.splitlines() if l.startswith("|")]) == 16   # header + rule + 14 days
 
 
@@ -76,8 +76,8 @@ def test_empty_middle_day_is_a_rest_day():
     book, _ = setup_book("書", "作者", "3", "90", "第1章：A\n第2章：B\n第3章：C")
     books.move_last_to_next(book["plan"], 2)      # day 2 now empty, day 3 has 2 and 3
     assert books.day_description(book, 2) == books.REVIEW_LABEL
-    assert f"※ 第2天：{books.REST_DAY_NOTE}" in books.plan_table(book)
-    assert books.day_description(book, 3) == "第2–3章：B；C"
+    assert f"※ Day 2: {books.REST_DAY_NOTE}" in books.plan_table(book)
+    assert books.day_description(book, 3) == "Chapters 2–3: B; C"
 
 
 # ---------- parsing ----------
@@ -131,9 +131,9 @@ def test_parse_toc_keeps_numbers_that_belong_to_titles():
 def test_setup_asks_one_question_at_a_time():
     book, replies = setup_book("《原子習慣》", "James Clear", "不確定欸", "3", "280")
     assert book["title"] == "原子習慣"
-    assert replies[0] == "《原子習慣》，好。作者是誰呢？"
+    assert replies[0] == "原子習慣, great. Who's the author?"
     assert replies[1] == books.QUESTIONS["chapter_count"]
-    assert replies[2].startswith("我需要一個明確的數字")
+    assert replies[2].startswith("I need a clear number")
     assert book["chapter_count"] == 3 and book["total_pages"] == 280
     assert replies[-1] == books.QUESTIONS["chapters"]
 
@@ -147,24 +147,24 @@ def test_pasted_one_line_toc_is_listed_for_confirmation_not_stored_as_one_title(
     line = "、".join(f"第{i}章 測試{i}" for i in range(1, 21))
     book, replies = setup_book("人類大歷史", "哈拉瑞", "20", "450", line, confirm=False)
     assert book["step"] == "confirm_toc" and book["chapters"] == []
-    assert "我從目錄整理出 20 章" in replies[-1]
+    assert "I found 20 chapters" in replies[-1]
     assert "1. 測試1" in replies[-1] and "20. 測試20" in replies[-1]
-    assert "第2章的標題是" not in replies[-1]
+    assert "title of Chapter 2" not in replies[-1]
     reply = books.answer_setup(book, "對")
     assert book["chapters"] == [f"測試{i}" for i in range(1, 21)]
-    assert book["status"] == "planning" and "14 天預覽" in reply
+    assert book["status"] == "planning" and "14-day preview" in reply
 
 
 def test_toc_count_mismatch_names_the_missing_chapters():
     toc = "\n".join(f"第{i}章：T{i}" for i in range(1, 21) if i not in (5, 9))
     book, replies = setup_book("書", "作者", "20", "450", toc, confirm=False)
     msg = replies[-1]
-    assert "整理出 18 章" in msg and "20 章不一樣（少了 2 章）" in msg
-    assert "目錄裡沒有找到：第5章、第9章" in msg
+    assert "I found 18 chapters" in msg and "the 20 chapters you mentioned (2 fewer)" in msg
+    assert "Not found in the list: Chapter 5, Chapter 9" in msg
     # She fixes it by pasting again
     full = "\n".join(f"第{i}章：T{i}" for i in range(1, 21))
     msg = books.answer_setup(book, full)
-    assert "整理出 20 章" in msg and "不一樣" not in msg
+    assert "I found 20 chapters" in msg and "different" not in msg
     books.answer_setup(book, "對")
     assert len(book["chapters"]) == 20 and book["status"] == "planning"
 
@@ -174,23 +174,23 @@ def test_missing_chapters_can_be_added_one_at_a_time():
     toc = "\n".join(f"第{i}章：T{i}" for i in range(1, 21) if i not in (5, 19))
     book, _ = setup_book("書", "作者", "20", "450", toc, confirm=False)
     reply = books.answer_setup(book, "第19章：T19")
-    assert reply.startswith("補上第19章了") and "少了 1 章" in reply and "第5章" in reply
+    assert reply.startswith("Added Chapter 19") and "1 fewer" in reply and "Chapter 5" in reply
     reply = books.answer_setup(book, "第五章：T5")
-    assert "整理出 20 章" in reply and "不一樣" not in reply
+    assert "I found 20 chapters" in reply and "different" not in reply
     books.answer_setup(book, "對")
     assert book["chapters"] == [f"T{i}" for i in range(1, 21)]
 
 
 def test_unnumbered_list_can_be_extended_with_the_next_chapter():
     book, _ = setup_book("書", "作者", "4", "90", "A、B、C", confirm=False)
-    assert books.answer_setup(book, "第4章：D").startswith("補上第4章了")
+    assert books.answer_setup(book, "第4章：D").startswith("Added Chapter 4")
     books.answer_setup(book, "對")
     assert book["chapters"] == ["A", "B", "C", "D"]
 
 
 def test_toc_unnumbered_mismatch_and_accepting_the_list():
     book, replies = setup_book("書", "作者", "4", "90", "A、B、C", confirm=False)
-    assert "少了 1 章" in replies[-1] and "以這 3 章為準" in replies[-1]
+    assert "1 fewer" in replies[-1] and "go with these 3 chapters" in replies[-1]
     books.answer_setup(book, "對")
     assert book["chapter_count"] == 3 and book["status"] == "planning"
 
@@ -198,17 +198,17 @@ def test_toc_unnumbered_mismatch_and_accepting_the_list():
 def test_toc_confirmation_edit_one_title_and_correct_count():
     book, _ = setup_book("書", "作者", "3", "90", "第1章：A\n第2章：錯字\n第3章：C", confirm=False)
     reply = books.answer_setup(book, "第2章：B")
-    assert reply.startswith("改好了") and book["pending_toc"] == ["A", "B", "C"]
-    assert "還不能補第9章" in books.answer_setup(book, "第9章：X")
+    assert reply.startswith("Updated") and book["pending_toc"] == ["A", "B", "C"]
+    assert "can't add Chapter 9 yet" in books.answer_setup(book, "第9章：X")
     reply = books.answer_setup(book, "4")
-    assert "少了 1 章" in reply
+    assert "1 fewer" in reply
     books.answer_setup(book, "對")
     assert book["chapters"] == ["A", "B", "C"]
 
 
 def test_setup_chapter_by_chapter():
     book, replies = setup_book("書", "作者", "3", "90", "第1章：開端", "轉折", "第3章：結局")
-    assert replies[-2] == "第3章的標題是？（第3章：___）"
+    assert replies[-2] == "What's the title of Chapter 3? (Chapter 3: ___)"
     assert book["chapters"] == ["開端", "轉折", "結局"]
     assert book["status"] == "planning"
     assert replies[-1].endswith(books.PLAN_QUESTION)
@@ -221,22 +221,22 @@ def test_one_title_containing_a_comma_is_kept_in_chapter_by_chapter_mode():
 
 def test_first_title_with_a_comma_can_be_kept_as_one_chapter():
     book, replies = setup_book("書", "作者", "3", "90", "貨幣、信用與帝國", confirm=False)
-    assert book["step"] == "confirm_toc" and "回答「這是一章」" in replies[-1]
+    assert book["step"] == "confirm_toc" and 'answer "one chapter"' in replies[-1]
     reply = books.answer_setup(book, "這是一章")
-    assert book["chapters"] == ["貨幣、信用與帝國"] and "第2章的標題" in reply
+    assert book["chapters"] == ["貨幣、信用與帝國"] and "title of Chapter 2" in reply
     # A numbered / multi-line paste never offers that option.
     book, replies = setup_book("書", "作者", "3", "90", "第1章 A、第2章 B、第3章 C", confirm=False)
-    assert "這是一章" not in replies[-1]
+    assert "one chapter\"" not in replies[-1]
 
 
 def test_several_chapters_mid_way_are_never_one_title():
     book, replies = setup_book("書", "作者", "3", "90", "第1章：A", "第2章 B、第3章 C", confirm=False)
-    assert book["step"] == "confirm_toc" and "整理出 2 章" in replies[-1]
+    assert book["step"] == "confirm_toc" and "I found 2 chapters" in replies[-1]
 
 
 def test_setup_wrong_chapter_number_is_checked_gently():
     book, replies = setup_book("書", "作者", "3", "90", "第1章：A", "第5章：E")
-    assert "幫你確認一下" in replies[-1] and book["chapters"] == ["A"]
+    assert "Just checking" in replies[-1] and book["chapters"] == ["A"]
     book, replies = setup_book("書", "作者", "3", "90", "第1章：A", "第5章：E", "5", "B", "C", "D", "E")
     assert book["chapter_count"] == 5 and book["status"] == "planning"
 
@@ -303,9 +303,9 @@ def test_resume_message_after_days_away():
     book["started_on"] = "2026-09-18"
     books.record_pass(book, 1, "講了 T1", date(2026, 9, 18))
     msg = books.resume_message(book, date(2026, 9, 23))
-    assert msg.startswith("我們從第2天繼續")
+    assert msg.startswith("Let's pick up from Day 2")
     assert "你去哪" not in msg and "中斷" not in msg
-    assert books.resume_message(book, date(2026, 9, 19)).startswith("《書》今天是第2天")
+    assert books.resume_message(book, date(2026, 9, 19)).startswith("書, Day 2:")
 
 
 def test_days_open_by_calendar_and_can_be_caught_up():
@@ -322,20 +322,20 @@ def test_days_open_by_calendar_and_can_be_caught_up():
         books.record_pass(book, d, f"講了 T{d}", TODAY)
     assert books.next_day(book) == 5 and not books.is_open(book, 5, TODAY)
     msg = books.resume_message(book, TODAY)
-    assert msg.startswith("今天的份量已經完成了") and "9月24日才開放" in msg
-    assert books.resume_message(book, date(2026, 9, 24)).startswith("《書》今天是第5天")
+    assert msg.startswith("Today's reading is done") and "opens on September 24" in msg
+    assert books.resume_message(book, date(2026, 9, 24)).startswith("書, Day 5:")
 
 
 def test_resume_message_mid_setup():
     book, _ = setup_book("書", "作者", "3", "90", "第1章：A")
-    assert "第2章的標題" in books.resume_message(book, TODAY)
+    assert "title of Chapter 2" in books.resume_message(book, TODAY)
 
 
 def test_judge_prompt_knows_today_and_tomorrow():
     book = reading_book()
     prompt = books.judge_prompt(book, 1)
-    assert "第1天的範圍是：第1章：T1" in prompt
-    assert "明天進到第2天" in prompt and "第2章：T2" in prompt
+    assert "第1天的範圍是：Chapter 1: T1" in prompt
+    assert "明天進到 Day 2" in prompt and "Chapter 2: T2" in prompt and "一律用英文" in prompt
     books.record_pass(book, 1, "x", TODAY)
     books.record_pass(book, 2, "y", TODAY)
     assert "最後一個閱讀日" in books.judge_prompt(book, 3)
@@ -346,5 +346,47 @@ def test_final_summary_prompt_quotes_her_words_clipped():
     book = reading_book()
     books.record_pass(book, 1, "習慣像複利" * 100, TODAY)
     prompt = books.final_summary_prompt(book, summary_chars=20)
-    assert "區塊格式" in prompt and "第1天（第1章）她分享：習慣像複利" in prompt
+    assert "區塊格式" in prompt and "第1天（Chapter 1）她分享：習慣像複利" in prompt
     assert "習慣像複利" * 5 not in prompt
+
+
+# ---------- English answers (the app is in English; Chinese still works) ----------
+
+def test_english_yes_and_chapter_edits_work_while_confirming():
+    book, _ = setup_book("Atomic Habits", "James Clear", "3", "300", "Chapter 1: A\nChapter 2: B", confirm=False)
+    assert book["step"] == "confirm_toc"
+    reply = books.answer_setup(book, "Chapter 3: C")
+    assert reply.startswith("Added Chapter 3") and book["pending_toc"] == ["A", "B", "C"]
+    assert books.answer_setup(book, "ch. 2: Better B").startswith("Updated")
+    reply = books.answer_setup(book, "Yes")
+    assert book["status"] == "planning" and book["chapters"] == ["A", "Better B", "C"]
+
+
+def test_english_chapter_counts_and_one_chapter_answers():
+    book, _ = setup_book("Book", "Author", "3", "90", "A, B", confirm=False)
+    assert books.answer_setup(book, "It's just one chapter").startswith("OK, Chapter 1 is")
+    assert book["chapters"] == ["A, B"]
+    book, _ = setup_book("Book", "Author", "3", "90", "Chapter 1: A\nChapter 2: B", confirm=False)
+    books.answer_setup(book, "2 chapters")
+    assert book["chapter_count"] == 2
+
+
+def test_yes_words_in_both_languages():
+    for text in ("yes", "Yes!", "yep", "OK", "looks good", "correct", "對", "好", "沒錯"):
+        assert books.is_yes(text), text
+    for text in ("no", "Chapter 2: X", "不對"):
+        assert not books.is_yes(text), text
+
+
+def test_says_finished_reading_in_english_too():
+    for text in ("I finished today's reading", "I've read day 3", "finished!", "all done", "我讀完了"):
+        assert books.says_finished_reading(text), text
+    for text in ("What is this book about?", "I haven't started yet"):
+        assert not books.says_finished_reading(text), text
+
+
+def test_coach_messages_are_in_english():
+    book, replies = setup_book("Book", "Author", "2", "40", "Chapter 1: A\nChapter 2: B")
+    text = "\n".join(replies) + books.plan_table(book) + books.check_start_message(book, 1)
+    text = text.replace("Book", "").replace("Author", "")
+    assert not any("一" <= c <= "鿿" for c in text), text

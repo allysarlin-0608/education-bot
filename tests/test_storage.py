@@ -145,7 +145,7 @@ def test_errors_become_storage_errors():
         def request(self, *a, **k):
             raise requests.ConnectionError("no route")
 
-    with pytest.raises(storage.StorageError, match="連不到資料庫"):
+    with pytest.raises(storage.StorageError, match="can't reach the database"):
         storage.SupabaseStore(URL, KEY, session=Down()).load()
 
 
@@ -165,7 +165,7 @@ def test_parse_log_fills_missing_fields():
         {"date": "2026-09-03", "topic": "unknown"},
     ]})
     assert [(e["date"], e["session_number"], e["level"]) for e in log["entries"]] == [
-        ("2026-09-01", 1, "入門"), ("2026-09-02", 2, "入門")]
+        ("2026-09-01", 1, "Beginner"), ("2026-09-02", 2, "Beginner")]
     assert all(set(e) == set(core.ENTRY_FIELDS) for e in log["entries"])
     assert log["entries"][0]["title"] == "第一章" and log["entries"][1]["completed"] is True
 
@@ -248,3 +248,11 @@ def test_other_400_errors_are_not_swallowed():
     log = core.empty_log()
     with pytest.raises(storage.StorageError):
         store.save_entry(log, core.start_entry(log, date(2026, 9, 23), "cosmos"))
+
+
+def test_levels_saved_in_chinese_by_older_versions_are_read_in_english():
+    log = core.parse_log({"entries": [
+        {"date": "2026-09-01", "topic": "philosophy", "session_number": 9, "level": "進階"},
+        {"date": "2026-09-02", "topic": "fashion", "session_number": 5, "level": "中階"},
+    ]})
+    assert [e["level"] for e in log["entries"]] == ["Advanced", "Intermediate"]

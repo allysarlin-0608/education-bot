@@ -53,7 +53,7 @@ def test_prompt_has_fact_and_investing_rules_for_every_topic():
     for topic in core.TOPICS:
         prompt = core.load_system_prompt(topic)
         assert "只寫確定正確的事實" in prompt
-        assert "不論哪個主題" in prompt and "不構成投資建議" in prompt
+        assert "不論哪個主題" in prompt and "not investment advice" in prompt
         assert "延續今天的核心概念" in prompt
         assert "送出前逐項檢查" in prompt
 
@@ -61,7 +61,7 @@ def test_prompt_has_fact_and_investing_rules_for_every_topic():
 def test_topic_modules_state_the_facts_that_were_wrong():
     assert "棉吸濕性好，但乾得慢" in core.load_system_prompt("fashion")
     canvas = core.load_system_prompt("business")
-    assert "不公平優勢" in canvas and "沒有「核心假設」" in canvas
+    assert "Unfair Advantage" in canvas and "Customer Segments" in canvas and "Key Assumptions" in canvas
     philosophy = core.load_system_prompt("philosophy")
     assert "最多人" in philosophy and "期望報酬" in philosophy
     jewelry = core.load_system_prompt("jewelry")
@@ -75,34 +75,37 @@ def test_fashion_jewelry_and_general_topics_stay_in_their_lanes():
     assert "4.7 通識" in general and "不要講時尚、珠寶、哲學、天文學、商業、投資本身的內容" in general
 
 
-# ---------- English-first bilingual lessons ----------
+# ---------- English lessons ----------
 
 EN_LESSON = (
-    "【Topic｜今日主題】：What Astronomers Study（天文學在研究什麼）— Beginner 入門\n"
-    "【Key Idea｜核心概念】：Astronomy studies everything beyond Earth's atmosphere（大氣層）.\n"
-    "【Vocabulary｜單字】：\n| English | 中文 | Meaning |\n|---|---|---|\n| orbit | 軌道 | the path around a star |\n"
-    "【Question to Explore｜延伸提問】：How could we measure a star's distance?\n"
-    "【Note｜小提醒】：One idea is enough today.\n" + CLOSE
+    "【Topic】：What Astronomers Study — Beginner\n"
+    "【Key Idea】：Astronomy studies everything beyond Earth's atmosphere.\n"
+    "【Vocabulary】：\n| Word | Meaning | Example |\n|---|---|---|\n| orbit | the path around a star | Earth orbits the Sun. |\n"
+    "【Question to Explore】：How could we measure a star's distance?\n"
+    "【Note】：One idea is enough today.\n" + CLOSE
 )
 
 
-def test_bilingual_titles_are_found_by_their_chinese_name():
-    assert core.extract_section(EN_LESSON, "延伸提問") == "How could we measure a star's distance?"
-    assert core.extract_section(EN_LESSON, "今日主題").startswith("What Astronomers Study")
-    assert "| orbit | 軌道 |" in core.extract_section(EN_LESSON, "單字")
+def test_english_titles_are_found_by_either_name():
+    for name in ("Question to Explore", "延伸提問"):
+        assert core.extract_section(EN_LESSON, name) == "How could we measure a star's distance?"
+    assert core.extract_section(EN_LESSON, "Topic").startswith("What Astronomers Study")
+    assert "| orbit | the path around a star |" in core.extract_section(EN_LESSON, "Vocabulary")
 
 
 def test_old_chinese_lessons_still_parse():
     old = "【延伸提問】：哪些是你能控制的？\n【小提醒】：……\n完成後記得打勾，連續完成比完美更重要。"
-    assert core.extract_section(old, "延伸提問") == "哪些是你能控制的？"
+    for name in ("Question to Explore", "延伸提問"):
+        assert core.extract_section(old, name) == "哪些是你能控制的？"
     assert core.extract_section(old, "小提醒") == "……"
 
 
-def test_english_investing_words_get_the_bilingual_disclaimer():
+def test_english_investing_words_get_the_english_disclaimer():
     lesson = EN_LESSON.replace("Astronomy studies", "A stock is a small piece of a company; astronomy studies")
     out = core.finalize_reply(lesson, lesson=True)
     assert core.DISCLAIMER in out and out.endswith(CLOSE)
-    assert "not investment advice" in core.DISCLAIMER and "不構成任何投資建議" in core.DISCLAIMER
+    assert "not investment advice" in core.DISCLAIMER
+    assert not any("\u4e00" <= c <= "\u9fff" for c in core.DISCLAIMER + CLOSE)   # no Chinese
     assert core.DISCLAIMER in core.finalize_reply("Index funds usually cost less.", lesson=False)
 
 
@@ -117,8 +120,10 @@ def test_everyday_english_is_not_mistaken_for_investing():
         assert core.finalize_reply(text, lesson=False) == text, text
 
 
-def test_prompt_asks_for_english_with_chinese_terms_and_a_vocabulary_table():
+def test_prompt_asks_for_english_only_and_an_english_vocabulary_table():
     prompt = core.load_system_prompt("cosmos")
-    assert "以英文為主" in prompt and "photosynthesis（光合作用）" in prompt
-    assert "【Vocabulary｜單字】" in prompt and "English｜中文｜簡短英文解釋" in prompt
+    assert "課程全部用英文寫，不要出現中文" in prompt and "photosynthesis" not in prompt
+    assert "【Vocabulary】" in prompt and "Word｜Meaning" in prompt and "Example" in prompt
     assert core.CLOSING_LINE in prompt
+    followup = core.build_system_prompt(core.empty_log(), "cosmos", date(2026, 9, 24), followup=True)
+    assert "只用英文" in followup

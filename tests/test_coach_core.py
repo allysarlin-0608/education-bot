@@ -22,12 +22,12 @@ def test_weekly_schedule():
     assert core.scheduled_topic(date(2026, 9, 26)) == "investing"
     assert "reading" not in core.WEEKDAY_TOPIC.values()          # daily, own page
     assert core.scheduled_topic(date(2026, 9, 27)) == "free"
-    assert core.weekday_zh(WED) == "星期三"
+    assert core.weekday_name(WED) == "Wednesday"
 
 
 def test_levels_follow_part_six():
     assert [core.level_for_session(n) for n in (1, 3, 4, 7, 8, 20)] == [
-        "入門", "入門", "中階", "中階", "進階", "進階"]
+        "Beginner", "Beginner", "Intermediate", "Intermediate", "Advanced", "Advanced"]
 
 
 def test_session_number_is_per_topic():
@@ -85,7 +85,7 @@ def test_history_context_mentions_past_and_gap():
     e["followup_question"] = "你最想養成哪個習慣？"
     e["reflection"] = "每天寫商業計劃"
     ctx = core.build_history_context(log, "reading", WED)
-    assert "第 2 次" in ctx and "入門" in ctx
+    assert "第 2 次" in ctx and "Beginner" in ctx
     assert "《原子習慣》" in ctx
     assert "每天寫商業計劃" in ctx
     assert "14 天" in ctx and "情境二" in ctx
@@ -129,14 +129,14 @@ def test_longest_streak_finds_best_run():
 def test_topic_progress_levels():
     assert core.topic_progress(core.empty_log(), "cosmos") == {
         "sessions": 0, "completed": 0, "level": None,
-        "next_level": "中階", "remaining": 3, "fraction": 0.0}
+        "next_level": "Intermediate", "remaining": 3, "fraction": 0.0}
     log = make_log(*[(date(2026, 9, d), "philosophy", d % 2 == 0) for d in range(1, 6)])
     p = core.topic_progress(log, "philosophy")
-    assert (p["sessions"], p["completed"], p["level"]) == (5, 2, "中階")
-    assert (p["next_level"], p["remaining"], p["fraction"]) == ("進階", 2, 0.5)
+    assert (p["sessions"], p["completed"], p["level"]) == (5, 2, "Intermediate")
+    assert (p["next_level"], p["remaining"], p["fraction"]) == ("Advanced", 2, 0.5)
     log = make_log(*[(date(2026, 9, d), "reading", True) for d in range(1, 9)])
     p = core.topic_progress(log, "reading")
-    assert (p["level"], p["next_level"], p["remaining"], p["fraction"]) == ("進階", None, None, 1.0)
+    assert (p["level"], p["next_level"], p["remaining"], p["fraction"]) == ("Advanced", None, None, 1.0)
 
 
 def test_calendar_weeks_statuses():

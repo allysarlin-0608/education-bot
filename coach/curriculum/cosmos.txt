@@ -1,312 +1,312 @@
-# 天文學是什麼
-天文學在研究什麼
-天文學、天文物理學與宇宙學的差別
-天文學家怎麼做研究
-從古代觀星到現代天文學
-天文學的主要分支
-# 天空的座標
-天球的概念
-地平座標：方位角與高度角
-赤道座標：赤經與赤緯
-天極與北極星
-黃道是什麼
-# 地球的自轉與公轉
-自轉帶來晝夜
-為什麼星星會東升西落
-公轉與一年
-四季的成因是地軸傾斜
-春分、夏至、秋分、冬至
-# 月球
-月球的大小與距離
-月球是怎麼形成的
-月球的表面：月海與隕石坑
-為什麼我們總是看到月球的同一面
-人類登月
-# 月相與潮汐
-月相的變化
-新月、上弦、滿月、下弦
-月相與月出時間
-潮汐的成因
-大潮與小潮
-# 日食與月食
-日食的原理
-日全食、日環食與日偏食
-月食的原理
-為什麼不是每個月都有日月食
-安全觀看日食的方法
-# 距離與尺度
-天文單位
-光年
-秒差距
-用視差測量距離
-宇宙的尺度感
-# 光與電磁波
-光是什麼
-電磁波譜
-可見光以外的天文學
-光譜：星光裡的條碼
-都卜勒效應：紅移與藍移
-# 望遠鏡
-折射望遠鏡
-反射望遠鏡
-口徑為什麼最重要
-放大倍率的迷思
-電波望遠鏡
-# 星座
-星座是什麼
-八十八個星座
-黃道十二星座
-四季的代表星座
-亞洲傳統的星官
-# 自己觀測天空
-光害與觀星地點
-星圖與觀星應用程式
-肉眼可見的行星
-用雙筒望遠鏡觀星
-觀測記錄的方法
-# 太陽
-太陽是一顆恆星
-太陽的結構
-太陽的能量來源：核融合
-太陽黑子與太陽週期
-太陽風與極光
-# 太陽系的形成
-星雲假說
-原行星盤
-岩質行星與氣體巨行星為什麼分開
-太陽系的年齡
-太陽系的邊界
-# 水星與金星
-水星：最靠近太陽的行星
-水星的溫差
-金星：最熱的行星
-金星的溫室效應
-金星為什麼是最亮的行星
-# 地球這顆行星
-地球的內部結構
-板塊運動
-大氣層
-磁場的保護
-地球為什麼適合生命
-# 火星
-火星的大小與顏色
-火星的地形：奧林帕斯山與水手號峽谷
-火星上的水
-火星的大氣與氣候
-火星的兩顆衛星
-# 火星探測
-火星探測的歷史
-火星車的任務
-在火星尋找生命的證據
-人類登陸火星的挑戰
-火星殖民的討論
-# 木星
-木星：太陽系最大的行星
-大紅斑
-木星的結構
-木星的磁場
-伽利略衛星
-# 土星
-土星環的組成
-土星環的形成
-土星的密度
-土星的六角形風暴
-卡西尼號任務
-# 天王星與海王星
-冰巨星是什麼
-天王星的躺著自轉
-海王星的發現
-海王星的超強風
-航海家二號
-# 太陽系的衛星
-歐羅巴：冰下海洋
-泰坦：有大氣的衛星
-恩克拉多斯的噴泉
-埃歐：火山最活躍的天體
-衛星為什麼可能有生命
-# 矮行星與冥王星
-冥王星為什麼不再是行星
-行星的定義
-新視野號看到的冥王星
-穀神星與其他矮行星
-古柏帶
-# 小行星
-小行星帶
-小行星的種類
-近地小行星
-小行星撞擊的風險
-小行星探測任務
-# 彗星
-彗星的結構
-彗星的尾巴為什麼背向太陽
-短週期與長週期彗星
-歐特雲
-哈雷彗星
-# 流星與隕石
-流星、流星體與隕石的差別
-流星雨的成因
-著名的流星雨
-隕石的種類
-隕石告訴我們什麼
-# 太陽系探測任務
-探測器怎麼飛到其他行星
-重力助推
-航海家號的旅程
-樣本返回任務
-國際太空站
-# 系外行星是什麼
-系外行星的定義
-第一顆被發現的系外行星
-為什麼系外行星很難直接看到
-目前已知的系外行星數量
-系外行星的命名
-# 尋找系外行星：凌日法
-凌日法的原理
-光變曲線
-克卜勒太空望遠鏡
-TESS 任務
-凌日法能測出什麼
-# 尋找系外行星：其他方法
-徑向速度法
-直接成像
-重力微透鏡
-天體測量法
-不同方法的優缺點
-# 系外行星的種類
-熱木星
-超級地球
-迷你海王星
-岩質行星與海洋行星
-流浪行星
-# 適居帶
-適居帶是什麼
-適居帶的位置取決於恆星
-液態水的重要
-在適居帶不代表有生命
-地球相似指數的限制
-# 著名的系外行星系統
-比鄰星 b
-TRAPPIST-1 的七顆行星
-克卜勒-452b
+# What astronomy is
+What astronomy studies
+Astronomy, astrophysics and cosmology
+How astronomers do research
+From ancient stargazing to modern astronomy
+The main branches of astronomy
+# Coordinates in the sky
+The celestial sphere
+Horizon coordinates: azimuth and altitude
+Equatorial coordinates: right ascension and declination
+The celestial poles and the North Star
+What the ecliptic is
+# Earth's rotation and orbit
+Rotation gives us day and night
+Why stars rise in the east and set in the west
+The orbit and the year
+Seasons come from Earth's tilt
+Equinoxes and solstices
+# The Moon
+The Moon's size and distance
+How the Moon formed
+The Moon's surface: maria and craters
+Why we always see the same side of the Moon
+Humans on the Moon
+# Moon phases and tides
+How the Moon's phases change
+New moon, first quarter, full moon, last quarter
+Moon phases and moonrise times
+What causes tides
+Spring tides and neap tides
+# Eclipses
+How a solar eclipse works
+Total, annular and partial solar eclipses
+How a lunar eclipse works
+Why eclipses don't happen every month
+How to watch a solar eclipse safely
+# Distance and scale
+The astronomical unit
+The light-year
+The parsec
+Measuring distance with parallax
+Getting a feel for the scale of the universe
+# Light and electromagnetic waves
+What light is
+The electromagnetic spectrum
+Astronomy beyond visible light
+Spectra: the barcode in starlight
+The Doppler effect: redshift and blueshift
+# Telescopes
+Refracting telescopes
+Reflecting telescopes
+Why aperture matters most
+The magnification myth
+Radio telescopes
+# Constellations
+What a constellation is
+The 88 constellations
+The zodiac constellations
+Constellations of each season
+Traditional Asian star groupings
+# Observing the sky yourself
+Light pollution and where to stargaze
+Star charts and stargazing apps
+Planets you can see with the naked eye
+Stargazing with binoculars
+Keeping an observing log
+# The Sun
+The Sun is a star
+The Sun's structure
+Where the Sun's energy comes from: nuclear fusion
+Sunspots and the solar cycle
+The solar wind and auroras
+# How the solar system formed
+The nebular hypothesis
+The protoplanetary disc
+Why rocky planets and gas giants ended up apart
+The age of the solar system
+The edge of the solar system
+# Mercury and Venus
+Mercury: the planet closest to the Sun
+Mercury's temperature swings
+Venus: the hottest planet
+The greenhouse effect on Venus
+Why Venus is the brightest planet
+# Earth as a planet
+Earth's internal structure
+Plate tectonics
+The atmosphere
+The protection of the magnetic field
+Why Earth suits life
+# Mars
+Mars: size and colour
+Martian landscapes: Olympus Mons and Valles Marineris
+Water on Mars
+The Martian atmosphere and climate
+The two moons of Mars
+# Exploring Mars
+A history of Mars exploration
+What Mars rovers do
+Searching for signs of life on Mars
+The challenges of landing people on Mars
+The debate over settling Mars
+# Jupiter
+Jupiter: the largest planet
+The Great Red Spot
+Jupiter's structure
+Jupiter's magnetic field
+The Galilean moons
+# Saturn
+What Saturn's rings are made of
+How Saturn's rings formed
+Saturn's low density
+Saturn's hexagon storm
+The Cassini mission
+# Uranus and Neptune
+What an ice giant is
+Uranus spins on its side
+How Neptune was discovered
+Neptune's extreme winds
+Voyager 2
+# Moons of the solar system
+Europa: an ocean under the ice
+Titan: a moon with an atmosphere
+The geysers of Enceladus
+Io: the most volcanic body we know
+Why moons might host life
+# Dwarf planets and Pluto
+Why Pluto is no longer a planet
+The definition of a planet
+Pluto as seen by New Horizons
+Ceres and other dwarf planets
+The Kuiper Belt
+# Asteroids
+The asteroid belt
+Types of asteroid
+Near-Earth asteroids
+The risk of asteroid impacts
+Asteroid missions
+# Comets
+The structure of a comet
+Why a comet's tail points away from the Sun
+Short-period and long-period comets
+The Oort Cloud
+Halley's Comet
+# Meteors and meteorites
+Meteors, meteoroids and meteorites
+What causes meteor showers
+Famous meteor showers
+Types of meteorite
+What meteorites tell us
+# Missions across the solar system
+How probes reach other planets
+Gravity assists
+The Voyager journeys
+Sample-return missions
+The International Space Station
+# What exoplanets are
+The definition of an exoplanet
+The first exoplanets discovered
+Why exoplanets are hard to see directly
+How many exoplanets we know today
+How exoplanets are named
+# Finding exoplanets: the transit method
+How the transit method works
+Light curves
+The Kepler space telescope
+The TESS mission
+What transits can tell us
+# Finding exoplanets: other methods
+The radial velocity method
+Direct imaging
+Gravitational microlensing
+Astrometry
+Strengths and weaknesses of each method
+# Types of exoplanet
+Hot Jupiters
+Super-Earths
+Mini-Neptunes
+Rocky planets and ocean worlds
+Rogue planets
+# The habitable zone
+What the habitable zone is
+The habitable zone depends on the star
+Why liquid water matters
+Being in the habitable zone doesn't mean life
+The limits of the Earth Similarity Index
+# Famous exoplanet systems
+Proxima Centauri b
+The seven planets of TRAPPIST-1
+Kepler-452b
 51 Pegasi b
-多行星系統的排列
-# 系外行星的大氣
-用凌日光譜分析大氣
-韋伯望遠鏡的系外行星觀測
-生物特徵氣體
-系外行星的氣候
-系外行星的顏色
-# 恆星的基本性質
-恆星的亮度與視星等
-絕對星等
-恆星的顏色與溫度
-光譜分類：OBAFGKM
-恆星的大小與質量
-# 赫羅圖
-赫羅圖是什麼
-主序帶
-紅巨星與超巨星
-白矮星在圖上的位置
-從赫羅圖看恆星的一生
-# 恆星的誕生
-分子雲
-星雲的種類
-原恆星
-恆星形成區
-鷹星雲與創生之柱
-# 恆星的一生
-主序星的階段
-質量決定恆星的命運
-太陽的未來
-紅巨星階段
-恆星的元素製造
-# 恆星的死亡：中小質量恆星
-行星狀星雲
-白矮星
-白矮星的密度
-白矮星的冷卻
-新星
-# 超新星
-大質量恆星的終點
-核心塌縮超新星
-Ia 型超新星
-超新星殘骸
-我們身體裡的星塵
-# 中子星與脈衝星
-中子星是什麼
-中子星的密度
-脈衝星的發現
-磁星
-中子星合併
-# 黑洞
-黑洞是什麼
-事件視界
-恆星級黑洞
-超大質量黑洞
-第一張黑洞照片
-# 雙星與星團
-雙星系統
-食雙星
-疏散星團
-球狀星團
-昴宿星團
-# 銀河系
-銀河系的結構
-太陽在銀河系的位置
-銀河系中心的黑洞
-銀河系有多大
-銀河系的鄰居
-# 星系
-星系的分類
-螺旋星系
-橢圓星系
-不規則星系
-仙女座星系
-# 星系團與大尺度結構
-本星系群
-星系團
-超星系團
-宇宙網
-星系碰撞與合併
-# 暗物質
-星系旋轉曲線的謎
-暗物質的證據
-重力透鏡
-暗物質可能是什麼
-暗物質與一般物質的比例
-# 宇宙膨脹
-哈伯的發現
-哈伯定律
-宇宙膨脹的意思
-宇宙學紅移
-可觀測宇宙的大小
-# 大霹靂
-大霹靂理論的核心
-宇宙微波背景輻射
-最早的元素
-宇宙的年齡
-大霹靂之前的問題
-# 暗能量與宇宙的未來
-宇宙在加速膨脹
-暗能量是什麼
-宇宙的組成比例
-宇宙可能的結局
-我們對宇宙還不知道的事
-# 太空望遠鏡
-為什麼要把望遠鏡送上太空
-哈伯太空望遠鏡
-韋伯太空望遠鏡
-紅外線觀測的優勢
-未來的太空望遠鏡
-# 尋找地外生命
-天文生物學
-生命需要的條件
-SETI：聆聽外星訊號
-德雷克方程式
-費米悖論
-# 整合與回顧
-回顧：天空與觀測
-回顧：太陽系
-回顧：系外行星
-回顧：恆星與星系
-規劃一次自己的觀星夜
+How multi-planet systems are arranged
+# Exoplanet atmospheres
+Reading atmospheres with transit spectroscopy
+Exoplanet observations with the Webb telescope
+Biosignature gases
+Exoplanet climates
+The colours of exoplanets
+# Basic properties of stars
+Brightness and apparent magnitude
+Absolute magnitude
+Star colour and temperature
+Spectral classes: OBAFGKM
+The sizes and masses of stars
+# The Hertzsprung–Russell diagram
+What the H–R diagram is
+The main sequence
+Red giants and supergiants
+Where white dwarfs sit
+Reading a star's life from the H–R diagram
+# How stars are born
+Molecular clouds
+Types of nebula
+Protostars
+Star-forming regions
+The Eagle Nebula and the Pillars of Creation
+# The life of a star
+The main-sequence stage
+Mass decides a star's fate
+The Sun's future
+The red giant stage
+How stars make elements
+# How low- and medium-mass stars die
+Planetary nebulae
+White dwarfs
+How dense a white dwarf is
+How white dwarfs cool
+Novae
+# Supernovae
+The end of a massive star
+Core-collapse supernovae
+Type Ia supernovae
+Supernova remnants
+The stardust in our bodies
+# Neutron stars and pulsars
+What a neutron star is
+How dense a neutron star is
+The discovery of pulsars
+Magnetars
+Neutron star mergers
+# Black holes
+What a black hole is
+The event horizon
+Stellar-mass black holes
+Supermassive black holes
+The first image of a black hole
+# Binary stars and clusters
+Binary star systems
+Eclipsing binaries
+Open clusters
+Globular clusters
+The Pleiades
+# The Milky Way
+The structure of the Milky Way
+Where the Sun sits in the galaxy
+The black hole at the galaxy's centre
+How big the Milky Way is
+The Milky Way's neighbours
+# Galaxies
+How galaxies are classified
+Spiral galaxies
+Elliptical galaxies
+Irregular galaxies
+The Andromeda Galaxy
+# Galaxy clusters and large-scale structure
+The Local Group
+Galaxy clusters
+Superclusters
+The cosmic web
+Galaxy collisions and mergers
+# Dark matter
+The puzzle of galaxy rotation curves
+The evidence for dark matter
+Gravitational lensing
+What dark matter might be
+Dark matter versus ordinary matter
+# The expanding universe
+Hubble's discovery
+Hubble's law
+What it means for the universe to expand
+Cosmological redshift
+The size of the observable universe
+# The Big Bang
+The core of the Big Bang theory
+The cosmic microwave background
+The first elements
+The age of the universe
+The question of before the Big Bang
+# Dark energy and the future of the universe
+The universe's expansion is speeding up
+What dark energy is
+What the universe is made of
+How the universe might end
+What we still don't know about the universe
+# Space telescopes
+Why send telescopes into space
+The Hubble Space Telescope
+The James Webb Space Telescope
+The advantages of infrared observation
+Future space telescopes
+# The search for life beyond Earth
+Astrobiology
+What life needs
+SETI: listening for alien signals
+The Drake equation
+The Fermi paradox
+# Review and bringing it together
+Review: the sky and observing
+Review: the solar system
+Review: exoplanets
+Review: stars and galaxies
+Planning your own night of stargazing

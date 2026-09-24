@@ -1,312 +1,312 @@
-# 錢的基本觀念
-錢的時間價值
-通貨膨脹：錢為什麼會變薄
-單利與複利
-七二法則
-名目報酬與實質報酬
-# 儲蓄與預備金
-先存錢再花錢
-緊急預備金的用途
-預備金要準備多少
-儲蓄與投資的差別
-記帳與收支平衡
-# 風險與報酬
-報酬是什麼
-風險是什麼
-風險與報酬的取捨
-波動不等於虧損
-風險承受度
-# 投資、投機與賭博
-投資的定義
-投機的定義
-賭博與投資的根本差別
-短期與長期的思維
-為什麼「穩賺不賠」一定有問題
-# 金融市場的全貌
-金融市場在做什麼
-股票市場
-債券市場
-外匯市場
-市場參與者：散戶與法人
-# 股票是什麼
-股票代表公司所有權的一部分
-股東的權利
-公司為什麼要發行股票
-上市與上櫃
-普通股與特別股
-# 股票市場怎麼運作
-證券交易所
-買方與賣方
-成交價格怎麼決定
-交易時間與漲跌幅限制
-券商的角色
-# 看懂股價資訊
-開盤價、收盤價、最高價、最低價
-漲跌與漲跌幅
-成交量
-股價為什麼會變動
-股價與公司價值的關係
-# 公司怎麼賺錢
-營收是什麼
-成本與費用
-獲利是什麼
-毛利率與營業利益率
-從商業模式看公司的獲利來源
-# 財報：損益表
-損益表的結構
-營業收入到淨利
-每股盈餘
-一次性損益
-比較不同期的損益表
-# 財報：資產負債表
-資產、負債與股東權益
-流動比率
-負債比率
-帳上現金
-資產負債表透露的風險
-# 財報：現金流量表
-營業現金流
-投資現金流
-籌資現金流
-自由現金流
-獲利與現金流不一致的原因
-# 本益比
-本益比在說什麼
-本益比的計算
-本益比高代表什麼
-本益比低代表什麼
-本益比的限制
-# 其他估值指標
-股價淨值比
-股東權益報酬率
-殖利率
-股價營收比
-估值指標要一起看
-# 股利
-現金股利與股票股利
-配息與配股
-除權息
-股利發放率
-高股利不一定好
-# 市值
-市值的計算
-大型股、中型股與小型股
-市值與公司規模
-流通在外股數
-市值排行代表什麼
-# 產業與景氣
-產業分類
-景氣循環
-循環性產業與防禦性產業
-產業鏈的上中下游
-新興產業的風險
-# 基本面分析
-基本面分析的核心思路
-看獲利能力
-看成長性
-看財務體質
-看經營團隊
-# 競爭優勢
-護城河是什麼
-品牌優勢
-網路效應
-轉換成本
-成本優勢
-# 技術分析入門
-技術分析的基本假設
-K 線的讀法
-趨勢線
-支撐與壓力
-技術分析的局限與爭議
-# 技術分析的常見工具
-移動平均線
-成交量與價格
-相對強弱指標的概念
-圖形型態
-為什麼技術分析常常失準
-# 債券
-債券是什麼
-票面利率與殖利率
-債券價格與利率的關係
-政府債與公司債
-信用評等
-# 利率
-利率是什麼
-存款利率與貸款利率
-利率如何影響股市
-利率如何影響債券
-利率與通貨膨脹
-# 基金
-共同基金是什麼
-基金經理人的角色
-基金的費用
-基金的種類
-看懂基金的月報
-# ETF
-ETF 是什麼
-ETF 與共同基金的差別
-追蹤指數的 ETF
-ETF 的費用率
-ETF 的風險
-# 指數
-股價指數是什麼
-加權指數的計算概念
-常見的國際股價指數
-指數代表什麼
-指數化投資的起源
-# 主動與被動投資
-主動投資
-被動投資
-為什麼大多數基金打不敗大盤
-費用對長期報酬的影響
-選擇適合自己的方式
-# 分散投資
-不要把雞蛋放在同一個籃子
-分散的層次：個股、產業、國家
-相關性
-過度分散
-分散不能消除所有風險
-# 資產配置
-資產配置是什麼
-股票與債券的比例
-年齡與資產配置
-現金的角色
-資產配置比挑標的更重要
-# 定期定額
-定期定額的原理
-平均成本
-單筆投入與定期定額的比較
-定期定額的紀律
-什麼時候該停
-# 再平衡
-為什麼資產比例會跑掉
-再平衡的方法
-定期再平衡與門檻再平衡
-再平衡的成本
-再平衡的心理難度
-# 交易成本與稅費
-手續費
-證券交易稅
-股利所得的稅
-管理費用
-成本對複利的侵蝕
-# 下單的基本觀念
-證券帳戶與交割帳戶
-市價單與限價單
-整股與零股
-交割的時間
-模擬交易的用途
-# 投資心理偏誤（一）
-錯失恐懼症（FOMO）
-沉沒成本謬誤
-過度自信偏誤
-從眾效應
-損失趨避
-# 投資心理偏誤（二）
-確認偏誤
-錨定效應
-近因偏誤
-心理帳戶
-事後諸葛
-# 泡沫的歷史
-鬱金香狂熱
-南海泡沫
-網路泡沫
-房地產泡沫
-泡沫的共同特徵
-# 金融危機
-一九二九年大蕭條
-亞洲金融風暴
-二〇〇八年金融海嘯
-危機中的市場表現
-從危機學到的教訓
-# 總體經濟
-國內生產毛額（GDP）
-通貨膨脹率
-失業率
-經濟指標如何影響市場
-經濟成長與股市的關係
-# 央行與貨幣政策
-中央銀行的角色
-升息與降息
-量化寬鬆
-央行政策與市場反應
-財政政策與貨幣政策的差別
-# 匯率
-匯率是什麼
-匯率為什麼會變動
-升值與貶值
-匯率對進出口的影響
-海外投資的匯率風險
-# 貨幣的本質
-貨幣的三種功能
-從黃金到紙幣
-法定貨幣
-數位支付
-去中心化的概念
-# 區塊鏈
-區塊鏈是公開帳本
-區塊與鏈的結構
-雜湊函數的概念
-為什麼區塊鏈難以竄改
-區塊鏈的其他用途
-# 比特幣
-比特幣的誕生
-比特幣的總量上限
-挖礦是什麼
-減半
-比特幣的價格波動
-# 以太坊與智能合約
-以太坊是什麼
-智能合約
-去中心化應用
-代幣的概念
-非同質化代幣（NFT）
-# 共識機制
-共識機制要解決的問題
-工作量證明
-權益證明
-兩種機制的比較
-能源消耗的爭議
-# 錢包與私鑰
-加密貨幣錢包是什麼
-公鑰與私鑰
-助記詞的重要
-熱錢包與冷錢包
-交易所與自己保管的差別
-# 穩定幣與去中心化金融
-穩定幣是什麼
-穩定幣的種類與風險
-去中心化金融（DeFi）
-去中心化交易所
-智能合約的風險
-# 加密貨幣的風險
-價格波動風險
-交易所倒閉風險
-監管風險
-技術與駭客風險
-加密貨幣與傳統資產的差別
-# 辨識投資詐騙
-高報酬保證的警訊
-龐氏騙局
-假投資群組
-假冒名人的詐騙
-遇到可疑投資時該怎麼做
-# 長期投資的思維
-時間是長期投資者的朋友
-市場擇時的困難
-耐心與紀律
-不看盤的智慧
-投資與人生目標
-# 投資計畫與記錄
-設定投資目標
-寫下自己的投資原則
-投資日記
-定期檢視
-知道自己不知道什麼
-# 整合與回顧
-回顧：風險、報酬與複利
-回顧：股票與財報
-回顧：基金、ETF 與資產配置
-回顧：心理偏誤
-回顧：區塊鏈與加密貨幣
+# Money basics
+The time value of money
+Inflation: why money loses value
+Simple and compound interest
+The rule of 72
+Nominal and real returns
+# Saving and emergency funds
+Pay yourself first
+What an emergency fund is for
+How big an emergency fund should be
+Saving versus investing
+Tracking spending and balancing a budget
+# Risk and return
+What return is
+What risk is
+The trade-off between risk and return
+Volatility isn't the same as loss
+Risk tolerance
+# Investing, speculating and gambling
+What investing is
+What speculating is
+How gambling differs from investing
+Short-term and long-term thinking
+Why "can't lose" always means something is wrong
+# The big picture of financial markets
+What financial markets do
+The stock market
+The bond market
+The foreign-exchange market
+Market participants: retail and institutional investors
+# What a stock is
+A share is a small piece of ownership
+Shareholders' rights
+Why companies issue shares
+Listing on an exchange and over-the-counter markets
+Common and preferred shares
+# How the stock market works
+Stock exchanges
+Buyers and sellers
+How a trade price is set
+Trading hours and daily price limits
+What brokers do
+# Reading share-price information
+Open, close, high and low
+Price change and percentage change
+Trading volume
+Why share prices move
+Share price versus company value
+# How companies make money
+What revenue is
+Costs and expenses
+What profit is
+Gross margin and operating margin
+Seeing where profit comes from through the business model
+# Financial statements: the income statement
+The structure of an income statement
+From revenue to net income
+Earnings per share
+One-off gains and losses
+Comparing income statements across periods
+# Financial statements: the balance sheet
+Assets, liabilities and shareholders' equity
+The current ratio
+The debt ratio
+Cash on the books
+Risks a balance sheet can reveal
+# Financial statements: the cash flow statement
+Operating cash flow
+Investing cash flow
+Financing cash flow
+Free cash flow
+Why profit and cash flow can differ
+# The price-to-earnings ratio
+What the P/E ratio tells you
+Calculating P/E
+What a high P/E suggests
+What a low P/E suggests
+The limits of P/E
+# Other valuation measures
+Price-to-book ratio
+Return on equity
+Dividend yield
+Price-to-sales ratio
+Looking at valuation measures together
+# Dividends
+Cash dividends and stock dividends
+Paying out cash versus issuing shares
+Ex-dividend dates
+The payout ratio
+A high dividend isn't always good
+# Market capitalisation
+Calculating market cap
+Large, mid and small caps
+Market cap and company size
+Shares outstanding
+What market-cap rankings mean
+# Industries and the economic cycle
+How industries are classified
+The business cycle
+Cyclical and defensive industries
+Upstream, midstream and downstream
+The risks of emerging industries
+# Fundamental analysis
+The core idea of fundamental analysis
+Looking at profitability
+Looking at growth
+Looking at financial health
+Looking at management
+# Competitive advantage
+What a moat is
+Brand advantage
+Network effects
+Switching costs
+Cost advantage
+# Introduction to technical analysis
+The basic assumptions of technical analysis
+Reading candlestick charts
+Trend lines
+Support and resistance
+The limits and controversies of technical analysis
+# Common technical tools
+Moving averages
+Volume and price
+The idea of the relative strength index
+Chart patterns
+Why technical analysis often misses
+# Bonds
+What a bond is
+Coupon rate and yield
+Bond prices and interest rates
+Government and corporate bonds
+Credit ratings
+# Interest rates
+What an interest rate is
+Deposit rates and loan rates
+How interest rates affect stocks
+How interest rates affect bonds
+Interest rates and inflation
+# Funds
+What a mutual fund is
+The role of a fund manager
+Fund fees
+Types of fund
+Reading a fund factsheet
+# ETFs
+What an ETF is
+ETFs versus mutual funds
+Index-tracking ETFs
+ETF expense ratios
+The risks of ETFs
+# Indices
+What a stock index is
+How a weighted index is calculated
+Common international stock indices
+What an index represents
+The origins of index investing
+# Active and passive investing
+Active investing
+Passive investing
+Why most funds don't beat the market
+How fees affect long-term returns
+Choosing an approach that suits you
+# Diversification
+Don't put all your eggs in one basket
+Levels of diversification: stocks, industries, countries
+Correlation
+Over-diversification
+Diversification can't remove every risk
+# Asset allocation
+What asset allocation is
+The balance of stocks and bonds
+Age and asset allocation
+The role of cash
+Why allocation matters more than picking investments
+# Regular investing
+How regular investing works
+Dollar-cost averaging
+Lump sum versus regular investing
+The discipline of investing regularly
+When to stop
+# Rebalancing
+Why your allocation drifts
+How to rebalance
+Rebalancing on a schedule or at a threshold
+The costs of rebalancing
+Why rebalancing is psychologically hard
+# Trading costs and taxes
+Commissions
+Transaction taxes
+Tax on dividends
+Management fees
+How costs eat into compounding
+# Placing orders: the basics
+Brokerage accounts and settlement accounts
+Market orders and limit orders
+Round lots and odd lots
+Settlement times
+What paper trading is for
+# Investing biases (1)
+Fear of missing out (FOMO)
+The sunk cost fallacy
+Overconfidence
+Herd behaviour
+Loss aversion
+# Investing biases (2)
+Confirmation bias
+Anchoring
+Recency bias
+Mental accounting
+Hindsight bias
+# A history of bubbles
+Tulip mania
+The South Sea Bubble
+The dot-com bubble
+Housing bubbles
+What bubbles have in common
+# Financial crises
+The Great Depression of 1929
+The Asian financial crisis
+The 2008 financial crisis
+How markets behave in a crisis
+Lessons from crises
+# The economy
+Gross domestic product (GDP)
+The inflation rate
+The unemployment rate
+How economic indicators move markets
+Economic growth and the stock market
+# Central banks and monetary policy
+What a central bank does
+Raising and cutting interest rates
+Quantitative easing
+How markets react to central-bank policy
+Fiscal policy versus monetary policy
+# Exchange rates
+What an exchange rate is
+Why exchange rates move
+Appreciation and depreciation
+How exchange rates affect trade
+Currency risk in overseas investing
+# What money is
+The three functions of money
+From gold to paper money
+Fiat money
+Digital payments
+The idea of decentralisation
+# Blockchain
+A blockchain is a public ledger
+How blocks and chains fit together
+The idea of a hash function
+Why a blockchain is hard to tamper with
+Other uses of blockchain
+# Bitcoin
+How Bitcoin began
+Bitcoin's fixed supply
+What mining is
+The halving
+Bitcoin's price swings
+# Ethereum and smart contracts
+What Ethereum is
+Smart contracts
+Decentralised applications
+The idea of tokens
+Non-fungible tokens (NFTs)
+# Consensus mechanisms
+The problem consensus mechanisms solve
+Proof of work
+Proof of stake
+Comparing the two
+The debate over energy use
+# Wallets and private keys
+What a crypto wallet is
+Public and private keys
+Why the seed phrase matters
+Hot wallets and cold wallets
+Exchanges versus holding your own keys
+# Stablecoins and decentralised finance
+What a stablecoin is
+Types of stablecoin and their risks
+Decentralised finance (DeFi)
+Decentralised exchanges
+The risks of smart contracts
+# The risks of crypto
+Price risk
+Exchange failure risk
+Regulatory risk
+Technical and hacking risk
+How crypto differs from traditional assets
+# Spotting investment scams
+Guaranteed high returns as a warning sign
+Ponzi schemes
+Fake investment groups
+Scams that impersonate celebrities
+What to do when an investment looks suspicious
+# Thinking long term
+Time is the long-term investor's friend
+Why timing the market is hard
+Patience and discipline
+The wisdom of not watching prices all day
+Investing and life goals
+# Investment plans and records
+Setting investment goals
+Writing down your own investing principles
+Keeping an investment journal
+Regular reviews
+Knowing what you don't know
+# Review and bringing it together
+Review: risk, return and compounding
+Review: stocks and financial statements
+Review: funds, ETFs and asset allocation
+Review: behavioural biases
+Review: blockchain and crypto
