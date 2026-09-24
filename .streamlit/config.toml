@@ -1,5 +1,4 @@
 [theme]
-base = "dark"
 font = '"Inter", "Noto Sans TC", sans-serif'
 headingFont = '"Newsreader", "Noto Serif TC", serif'
 baseFontSize = 15
@@ -7,6 +6,40 @@ baseRadius = "12px"
 buttonRadius = "12px"
 showWidgetBorder = true
 showSidebarBorder = true
+
+[theme.light]
+primaryColor = "#1A1A1A"
+backgroundColor = "#F5F5F5"
+secondaryBackgroundColor = "#EAEAEA"
+textColor = "#141414"
+linkColor = "#141414"
+borderColor = "#D6D6D6"
+codeTextColor = "#2B2B2B"
+codeBackgroundColor = "#EAEAEA"
+redColor = "#595959"
+redBackgroundColor = "#EDEDED"
+redTextColor = "#2B2B2B"
+orangeColor = "#595959"
+orangeBackgroundColor = "#EDEDED"
+orangeTextColor = "#2B2B2B"
+yellowColor = "#595959"
+yellowBackgroundColor = "#EDEDED"
+yellowTextColor = "#2B2B2B"
+blueColor = "#595959"
+blueBackgroundColor = "#EDEDED"
+blueTextColor = "#2B2B2B"
+greenColor = "#595959"
+greenBackgroundColor = "#EDEDED"
+greenTextColor = "#2B2B2B"
+violetColor = "#595959"
+violetBackgroundColor = "#EDEDED"
+violetTextColor = "#2B2B2B"
+grayColor = "#595959"
+grayBackgroundColor = "#EDEDED"
+grayTextColor = "#2B2B2B"
+chartCategoricalColors = ["#1A1A1A", "#595959", "#8C8C8C", "#BFBFBF"]
+
+[theme.dark]
 primaryColor = "#F2F2F2"
 backgroundColor = "#080808"
 secondaryBackgroundColor = "#141414"
@@ -38,9 +71,5 @@ grayBackgroundColor = "#1A1A1A"
 grayTextColor = "#D9D9D9"
 chartCategoricalColors = ["#F2F2F2", "#BFBFBF", "#8C8C8C", "#595959"]
 
-[theme.sidebar]
-backgroundColor = "#080808"
-secondaryBackgroundColor = "#141414"
-
 [client]
-toolbarMode = "minimal"
+toolbarMode = "viewer"

@@ -1,5 +1,5 @@
-"""Look of the app: monochrome "liquid glass" on a dark, softly lit
-environment.
+"""Look of the app: monochrome "liquid glass" on a softly lit environment,
+light or dark with the system or the theme picked in Settings.
 
 Colors and fonts live in .streamlit/config.toml (every palette color,
 status colors included, is a gray). This adds what the theme can't
@@ -20,20 +20,42 @@ CSS = f"""
 <style>
 @import url("{FONTS}");
 :root {{
-  /* grayscale only */
-  --env: #080808;
-  --label: #EDEDED; --label-2: #9B9B9B; --label-3: #6A6A6A;
-  --hair: rgba(255, 255, 255, 0.08);
-  --field: rgba(255, 255, 255, 0.03); --field-edge: rgba(255, 255, 255, 0.12);
+  /* grayscale only; each token is light-dark(light, dark). Streamlit sets
+     color-scheme on .stApp from the active theme (system or the one picked
+     in Settings), and light-dark() follows it. */
+  --env: light-dark(#F2F2F2, #080808);
+  --light-1: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.06));
+  --light-2: light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.035));
+  --light-3: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.04));
+  --label: light-dark(#141414, #EDEDED); --label-2: light-dark(#5C5C5C, #9B9B9B);
+  --label-3: light-dark(#8C8C8C, #6A6A6A); --strong: light-dark(#000000, #FFFFFF);
+  --hair: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.08));
+  --wash: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
+  --field: light-dark(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.03));
+  --field-edge: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.12));
+  --field-focus: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.5));
+  --chrome: light-dark(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.02));
+  --sidebar: light-dark(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.015));
+  --popover: light-dark(rgba(250, 250, 250, 0.82), rgba(20, 20, 20, 0.72));
+  --popover-edge: light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.18));
+  --outline: light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.7));
+  --selection: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.22));
 
   /* glass */
-  --glass: rgba(255, 255, 255, 0.04);
-  --glass-strong: rgba(255, 255, 255, 0.08);
-  --glass-edge: rgba(255, 255, 255, 0.42);
-  --glass-edge-strong: rgba(255, 255, 255, 0.6);
+  --glass: light-dark(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.04));
+  --glass-strong: light-dark(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.08));
+  --glass-faint: light-dark(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.02));
+  --glass-edge: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.42));
+  --glass-edge-strong: light-dark(rgba(0, 0, 0, 0.28), rgba(255, 255, 255, 0.6));
+  --glass-edge-soft: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.22));
+  --glass-edge-bubble: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.3));
+  --glass-edge-circle: light-dark(rgba(0, 0, 0, 0.35), rgba(255, 255, 255, 0.4));
+  --hilite: light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.5));
+  --hilite-soft: light-dark(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.28));
+  --shadow: light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.12));
   --glass-blur: blur(8px) saturate(100%);
-  --glass-depth: inset 0 1px rgba(255, 255, 255, 0.5), 0 12px 40px rgba(0, 0, 0, 0.12);
-  --glass-depth-soft: inset 0 1px rgba(255, 255, 255, 0.28), 0 8px 24px rgba(0, 0, 0, 0.12);
+  --glass-depth: inset 0 1px var(--hilite), 0 12px 40px var(--shadow);
+  --glass-depth-soft: inset 0 1px var(--hilite-soft), 0 8px 24px var(--shadow);
 
   /* geometry */
   --radius-small: 12px; --radius-medium: 16px; --radius-large: 24px; --radius-pill: 999px;
@@ -51,9 +73,9 @@ CSS = f"""
 .stApp::before {{
   content: ""; position: fixed; inset: -12%; pointer-events: none; z-index: 0;
   background:
-    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.06), transparent 30%),
-    radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.035), transparent 28%),
-    radial-gradient(circle at 55% 105%, rgba(255, 255, 255, 0.04), transparent 38%);
+    radial-gradient(circle at 20% 20%, var(--light-1), transparent 30%),
+    radial-gradient(circle at 80% 30%, var(--light-2), transparent 28%),
+    radial-gradient(circle at 55% 105%, var(--light-3), transparent 38%);
   animation: ambient 90s ease-in-out infinite alternate;
 }}
 @keyframes ambient {{
@@ -61,18 +83,18 @@ CSS = f"""
   to   {{ transform: translate3d(-2.5%, 1.5%, 0); }}
 }}
 [data-testid="stAppViewContainer"], [data-testid="stMain"] {{ position: relative; z-index: 1; background: transparent; }}
-::selection {{ background: rgba(255, 255, 255, 0.22); color: #FFFFFF; }}
+::selection {{ background: var(--selection); color: var(--strong); }}
 
 /* ---------- chrome ---------- */
-[data-testid="stDecoration"], footer, #MainMenu,
+[data-testid="stDecoration"], footer,
 [data-testid="stHeaderActionElements"] {{ display: none !important; }}
 [data-testid="stHeader"] {{
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--chrome);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--hair);
 }}
 [data-testid="stSidebar"] {{
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--sidebar);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   border-right: 1px solid var(--hair);
 }}
@@ -115,26 +137,26 @@ CSS = f"""
 .stButton button, .stFormSubmitButton button, .stDownloadButton button {{
   min-height: var(--control); padding: 0 var(--space-5);
   border-radius: var(--radius-small); font-weight: 500; letter-spacing: 0.01em;
-  background: rgba(255, 255, 255, 0.02); color: var(--label);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--glass-faint); color: var(--label);
+  border: 1px solid var(--glass-edge-soft);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-depth-soft);
   transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease),
               transform var(--t-micro) var(--ease), box-shadow var(--t-micro) var(--ease);
 }}
 .stButton button[kind="primary"], .stFormSubmitButton button[kind="primaryFormSubmit"] {{
-  background: var(--glass-strong); color: #FFFFFF;
+  background: var(--glass-strong); color: var(--strong);
   border-color: var(--glass-edge-strong); box-shadow: var(--glass-depth);
 }}
 .stButton button:hover, .stFormSubmitButton button:hover, .stDownloadButton button:hover {{
-  background: var(--glass-strong); border-color: var(--glass-edge-strong); color: #FFFFFF;
+  background: var(--glass-strong); border-color: var(--glass-edge-strong); color: var(--strong);
 }}
 .stButton button:active, .stFormSubmitButton button:active, .stDownloadButton button:active {{
   transform: scale(0.97);
 }}
 .stButton button:focus-visible, .stFormSubmitButton button:focus-visible,
 .stDownloadButton button:focus-visible {{
-  outline: 1px solid rgba(255, 255, 255, 0.7); outline-offset: 2px; box-shadow: var(--glass-depth);
+  outline: 1px solid var(--outline); outline-offset: 2px; box-shadow: var(--glass-depth);
 }}
 
 /* ---------- fields: quiet wells, not glass ---------- */
@@ -148,30 +170,45 @@ CSS = f"""
 [data-testid="stTextAreaRootElement"] {{ min-height: 0; }}
 [data-testid="stSelectbox"] [role="group"]:focus-within, [data-testid="stDateInputField"]:focus-within,
 [data-testid="stTextInputRootElement"]:focus-within, [data-testid="stTextAreaRootElement"]:focus-within {{
-  border-color: rgba(255, 255, 255, 0.5) !important;
+  border-color: var(--field-focus) !important;
 }}
 [data-testid="stSelectbox"] input, [data-testid="stTextInputRootElement"] input,
 [data-testid="stTextAreaRootElement"] textarea {{ background: transparent !important; }}
 
-/* floating menus and the date picker: glass above the page */
+/* floating menus and the date picker: glass above the page. They are
+   rendered outside .stApp, where color-scheme isn't set, so their colors
+   come from the theme's text color instead: the fill is that color
+   inverted (dark behind light text, light behind dark text). */
 [data-trigger] {{
-  background: rgba(20, 20, 20, 0.72) !important;
+  --strong: currentColor;
+  --wash: rgb(from currentColor r g b / 0.07);
+  --glass-strong: rgb(from currentColor r g b / 0.1);
+  --glass-edge-strong: rgb(from currentColor r g b / 0.5);
+  --hilite: rgba(255, 255, 255, 0.5);
+  background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.82) !important;
   backdrop-filter: blur(10px) saturate(100%); -webkit-backdrop-filter: blur(10px) saturate(100%);
-  border: 1px solid rgba(255, 255, 255, 0.18) !important; border-radius: var(--radius-medium) !important;
+  border: 1px solid rgb(from currentColor r g b / 0.14) !important; border-radius: var(--radius-medium) !important;
   box-shadow: var(--glass-depth-soft) !important; overflow: hidden;
   animation: fade var(--t-space) var(--ease) both;   /* opacity only: the popover is positioned by transform */
 }}
 @keyframes fade {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
+[role="grid"] {{   /* the date picker also renders outside .stApp */
+  --strong: currentColor;
+  --wash: rgb(from currentColor r g b / 0.07);
+  --glass-strong: rgb(from currentColor r g b / 0.1);
+  --glass-edge-strong: rgb(from currentColor r g b / 0.5);
+  --hilite: rgba(255, 255, 255, 0.5);
+}}
 [role="grid"] [role="button"] {{
   border-radius: 50% !important; border: 1px solid transparent;
   transition: background-color 300ms var(--ease), border-color 300ms var(--ease), transform 300ms var(--ease);
 }}
 [role="grid"] [role="button"][data-selected="true"] {{
-  background: var(--glass-strong) !important; color: #FFFFFF !important;
-  border-color: var(--glass-edge-strong) !important; box-shadow: inset 0 1px rgba(255, 255, 255, 0.5);
+  background: var(--glass-strong) !important; color: var(--strong) !important;
+  border-color: var(--glass-edge-strong) !important; box-shadow: inset 0 1px var(--hilite);
   animation: settle 300ms var(--ease) both;
 }}
-[role="grid"] [role="button"][data-hovered="true"]:not([data-selected="true"]) {{ background: rgba(255, 255, 255, 0.06) !important; }}
+[role="grid"] [role="button"][data-hovered="true"]:not([data-selected="true"]) {{ background: var(--wash) !important; }}
 
 /* ---------- checkbox: a glass circle, the tick draws itself ---------- */
 [data-testid="stCheckbox"] label {{ align-items: center; gap: var(--space-3); min-height: var(--control); }}
@@ -179,17 +216,17 @@ CSS = f"""
 [data-testid="stCheckbox"] label > div:has(> svg) {{
   width: 22px; height: 22px; flex: 0 0 22px; margin: 0 !important; border-radius: 50%; box-sizing: border-box;
   display: grid; place-items: center;
-  background: transparent !important; border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  background: transparent !important; border: 1px solid var(--glass-edge-circle) !important;
   transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease),
               box-shadow var(--t-micro) var(--ease);
 }}
 [data-testid="stCheckbox"][data-selected="true"] label > div:has(> svg) {{
   background: var(--glass-strong) !important; border-color: var(--glass-edge-strong) !important;
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px var(--hilite);
 }}
 [data-testid="stCheckbox"] label > div > svg {{ width: 11px; height: 9px; overflow: visible; opacity: 1 !important; }}
 [data-testid="stCheckbox"] label > div > svg polyline {{
-  fill: none; stroke: #FFFFFF !important; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+  fill: none; stroke: var(--strong) !important; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
   stroke-dasharray: 14; stroke-dashoffset: 14;
   transition: stroke-dashoffset 300ms var(--ease);
 }}
@@ -208,7 +245,7 @@ CSS = f"""
   background: var(--glass) !important; border-color: var(--glass-edge);
   box-shadow: var(--glass-depth-soft);
 }}
-[data-testid="stSidebarNav"] a[aria-current="page"] span {{ color: #FFFFFF; font-weight: 500; }}
+[data-testid="stSidebarNav"] a[aria-current="page"] span {{ color: var(--strong); font-weight: 500; }}
 [data-testid="stSidebar"] h3 {{ font-size: 1.125rem; font-weight: 400; }}
 
 /* ---------- disclosure: hairlines only ---------- */
@@ -216,16 +253,16 @@ CSS = f"""
   background: transparent; border: none; border-radius: 0; border-bottom: 1px solid var(--hair);
 }}
 [data-testid="stExpander"] summary {{ min-height: var(--control); transition: color var(--t-micro) var(--ease); }}
-[data-testid="stExpander"] summary:hover {{ color: #FFFFFF; }}
+[data-testid="stExpander"] summary:hover {{ color: var(--strong); }}
 
 /* ---------- notices: gray text on a hairline, no color ---------- */
 [data-testid="stAlertContainer"] {{
   background: transparent !important; color: var(--label) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14); border-radius: var(--radius-small);
+  border: 1px solid var(--field-edge); border-radius: var(--radius-small);
 }}
 [data-testid="stAlertContainer"] [data-testid="stAlertDynamicIcon"] {{ display: none; }}
 [data-testid="stToast"] {{
-  background: rgba(22, 22, 22, 0.72) !important; border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--popover) !important; border: 1px solid var(--popover-edge);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: var(--radius-medium);
 }}
 
@@ -238,7 +275,7 @@ CSS = f"""
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {{
   width: fit-content; max-width: 85%; margin-left: auto;
   padding: var(--space-3) var(--space-4); border-radius: var(--radius-large);
-  background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--glass); border: 1px solid var(--glass-edge-bubble);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-depth-soft);
 }}
@@ -281,7 +318,7 @@ CSS = f"""
 .cal-day.started i {{ border: 1px solid var(--label-2); }}
 .cal-day.future {{ color: var(--label-3); opacity: 0.5; }}
 .cal-day.today {{
-  color: #FFFFFF; background: var(--glass); border-color: var(--glass-edge);
+  color: var(--strong); background: var(--glass); border-color: var(--glass-edge);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   box-shadow: var(--glass-depth-soft);
   animation: settle 300ms var(--ease) both;
