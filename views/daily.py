@@ -2,7 +2,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import core, curriculum, lesson_view, llm, tokens, ui
+from coach import core, curriculum, lesson_view, llm, progress_bar, tokens, ui
 
 log = st.session_state.coach_log
 
@@ -167,7 +167,6 @@ with st.sidebar:
 # ============================================================
 topic = core.scheduled_topic(today)
 st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
-st.markdown(f"### {core.TOPICS[topic]}")
 if st.query_params.get("date") != today.isoformat() or "topic" in st.query_params:
     st.query_params.clear()
     st.query_params["date"] = today.isoformat()
@@ -186,6 +185,12 @@ if not plan:
     st.info(f"You've finished all {curriculum.written(topic)} lessons written so far for "
             f"{core.TOPICS[topic]}. The next ones will appear once they're added.")
     st.stop()
+
+unit = curriculum.unit_progress(log, topic)
+progress_bar.render(
+    f"course_{topic}", f"{core.TOPICS[topic]}: {unit['unit']}", unit["done"], unit["total"],
+    f"Unit lessons {unit['first']}–{unit['last']}",
+)
 
 done_count = sum(1 for s in plan if s["completed"])
 st.caption(
