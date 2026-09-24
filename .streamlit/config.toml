@@ -9,8 +9,8 @@ showSidebarBorder = true
 
 [theme.light]
 primaryColor = "#1A1A1A"
-backgroundColor = "#F5F5F5"
-secondaryBackgroundColor = "#EAEAEA"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F2F2"
 textColor = "#141414"
 linkColor = "#141414"
 borderColor = "#D6D6D6"
@@ -41,8 +41,8 @@ chartCategoricalColors = ["#1A1A1A", "#595959", "#8C8C8C", "#BFBFBF"]
 
 [theme.dark]
 primaryColor = "#F2F2F2"
-backgroundColor = "#080808"
-secondaryBackgroundColor = "#141414"
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#101010"
 textColor = "#EDEDED"
 linkColor = "#EDEDED"
 borderColor = "#2B2B2B"
