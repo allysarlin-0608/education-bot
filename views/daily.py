@@ -292,7 +292,7 @@ if not chat:
 for k, message in enumerate(chat[1:]):         # the kickoff line is shown as the heading
     with st.chat_message(message["role"]):
         if k == 0:
-            lesson_view.render(message["content"], topic)  # cards, tables and diagrams
+            lesson_view.render(message["content"], topic, key=chat_key(slot))  # cards, tables and diagrams
         else:
             st.markdown(message["content"])
 
