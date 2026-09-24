@@ -32,7 +32,7 @@ def require_password():
     if st.session_state.get("coach_authed"):
         return
     expected = get_setting("APP_PASSWORD")
-    st.markdown("### ◎ 每日學習教練")
+    st.markdown("### 每日學習教練")
     if not expected:
         st.error(PASSWORD_MISSING)
         st.stop()

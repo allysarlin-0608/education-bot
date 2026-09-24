@@ -257,7 +257,7 @@ def day_description(book: dict, day: int) -> str:
 def plan_table(book: dict) -> str:
     rows = ["| 天 | 章節範圍與標題 | 約略頁數 |", "| --- | --- | --- |"]
     for day in range(1, DAYS + 1):
-        mark = " ✅" if str(day) in book["checks"] else ""
+        mark = "・已確認" if str(day) in book["checks"] else ""
         page_hint = f"約 {pages_for_day(book, day)} 頁" if book["plan"][day - 1] else "—"
         rows.append(f"| 第{day}天{mark} | {day_description(book, day)} | {page_hint} |")
     table = "\n".join(rows)
