@@ -448,6 +448,19 @@ LIQUID = """
 @keyframes lq-front { from { --p: var(--from); } to { --p: var(--to); } }
 @keyframes lq-surge { 0% { --surge: 0; } 30% { --surge: 1; } 100% { --surge: 0; } }
 
+/* Today's course card: the bar and the day's lessons read as one block */
+.st-key-course_card { gap: 14px; }
+.st-key-course_card [data-testid="stWidgetLabel"] p {
+  font-size: 0.6875rem; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3);
+}
+/* the row spans the card: Streamlit sizes it to fit its content */
+.st-key-course_card .stElementContainer:has(> [data-testid="stButtonGroup"]),
+.st-key-course_card [data-testid="stButtonGroup"] { width: 100% !important; max-width: none; }
+.st-key-course_card [data-testid="stButtonGroup"] > div { display: flex; flex-wrap: nowrap; width: 100%; max-width: none; }
+.st-key-course_card [data-testid="stButtonGroup"] button [data-testid="stMarkdownContainer"] { min-width: max-content; }
+.st-key-course_card [data-testid="stButtonGroup"] button { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; }
+.st-key-course_card [data-testid="stButtonGroup"] button p { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 @media (max-width: 640px) {
   .lq { --height: 8px; --inset: 2.25px; }
   .lq-title { font-size: 1.375rem; }
