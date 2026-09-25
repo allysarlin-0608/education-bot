@@ -15,7 +15,11 @@ import streamlit as st
 SERIF = '"Newsreader", "Noto Serif TC", serif'
 FONTS = ("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600"
          "&family=Noto+Sans+TC:wght@300;400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400"
-         "&family=Noto+Serif+TC:wght@300;400;500&display=swap")
+         "&family=Noto+Serif+TC:wght@300;400;500"
+         "&family=Archivo:wdth,wght@125,500..800&display=swap")
+# The sidebar: Archivo at its widest (Expanded, 125%) and a heavy weight,
+# the free stand-in for Balgin Expanded: wide, solid letterforms.
+WIDE = '"Archivo", "Noto Sans TC", sans-serif'
 
 CSS = f"""
 <style>
@@ -245,13 +249,17 @@ CSS = f"""
   transition: background-color var(--t-space) var(--ease), border-color var(--t-space) var(--ease),
               box-shadow var(--t-space) var(--ease);
 }}
-[data-testid="stSidebarNav"] a span {{ color: var(--label-2); }}
+[data-testid="stSidebarNav"] a {{ justify-content: center; text-align: center; }}   /* centred in its outline */
+[data-testid="stSidebarNav"] a span {{
+  color: var(--label-2); font-family: {WIDE}; font-stretch: 125%; font-weight: 700;
+  font-size: 0.875rem; letter-spacing: 0.01em; width: 100%; text-align: center;
+}}
 [data-testid="stSidebarNav"] a:hover span {{ color: var(--label); }}
 [data-testid="stSidebarNav"] a[aria-current="page"] {{
   background: var(--glass) !important; border-color: var(--glass-edge);
   box-shadow: var(--glass-depth-soft);
 }}
-[data-testid="stSidebarNav"] a[aria-current="page"] span {{ color: var(--strong); font-weight: 500; }}
+[data-testid="stSidebarNav"] a[aria-current="page"] span {{ color: var(--strong); font-weight: 800; }}
 [data-testid="stSidebar"] h3 {{ font-size: 1.125rem; font-weight: 400; }}
 
 /* ---------- disclosure: hairlines only ---------- */
@@ -555,16 +563,23 @@ LIQUID = """
 }
 .lqv-info { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; padding: 2px 0; }
 .lqv-date {
-  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 400; font-size: 1.1875rem;
+  white-space: pre-line;          /* the weekday on one line, the date on the next */
+  font-family: "Archivo", "Noto Sans TC", sans-serif; font-stretch: 125%; font-weight: 700; font-size: 1rem;
   line-height: 1.2; color: var(--label); font-variant-numeric: lining-nums;
 }
-.lqv-subject { font-size: 0.8125rem; color: var(--label-2); margin-top: 4px; }
+.lqv-subject {
+  font-family: "Archivo", "Noto Sans TC", sans-serif; font-stretch: 125%; font-weight: 600;
+  font-size: 0.8125rem; color: var(--label-2); margin-top: 4px;
+}
 .lqv-pct {
-  font-family: "Newsreader", serif; font-weight: 300; font-size: 2.5rem; line-height: 1;
+  font-family: "Archivo", sans-serif; font-stretch: 125%; font-weight: 800; font-size: 2.125rem; line-height: 1;
   font-variant-numeric: lining-nums tabular-nums; color: var(--label); margin-top: auto;
 }
 .lqv-pct .unit { font-size: 0.5em; margin-left: 2px; color: var(--label-2); }
-.lqv-count { font-size: 0.75rem; color: var(--label-3); margin-top: 6px; }
+.lqv-count {
+  font-family: "Archivo", "Noto Sans TC", sans-serif; font-stretch: 125%; font-weight: 600;
+  font-size: 0.75rem; color: var(--label-3); margin-top: 6px;
+}
 @media (prefers-reduced-motion: reduce) { .lqv.flowing .lqv-liquid { animation: none; } }
 
 /* ---------- rolling numbers (coach/rolling.py) ---------- */

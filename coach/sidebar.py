@@ -11,5 +11,5 @@ def render(log: dict) -> None:
     plan = curriculum.day_plan(log, topic, core.find_entry(log, today, topic))
     done = sum(1 for s in plan if s.get("completed"))
     progress_bar.render_vertical(
-        "sidebar_today", f"{core.weekday_name(today)}, {today:%B} {today.day}",
+        "sidebar_today", f"{core.weekday_name(today)}\n{today:%B} {today.day}",   # weekday, then the date
         core.TOPICS[topic], done, len(plan), where=st.sidebar)
