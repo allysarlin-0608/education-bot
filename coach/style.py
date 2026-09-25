@@ -311,6 +311,14 @@ CSS = f"""
   transition: background-color var(--t-micro) var(--ease);
 }}
 .jump:hover {{ background: var(--glass-strong); }}
+/* the same pill when it's a button (reviewing an earlier lesson) */
+.st-key-jump_button button {{
+  min-height: 36px; padding: 0 var(--space-4); border: none !important; border-radius: var(--radius-pill);
+  color: var(--label) !important; background: var(--glass-faint) !important; box-shadow: var(--optic);
+  transition: background-color var(--t-micro) var(--ease);
+}}
+.st-key-jump_button button p {{ font-size: 0.8125rem; font-weight: 500; }}
+.st-key-jump_button button:hover {{ background: var(--glass-strong) !important; }}
 .jump:focus-visible {{ outline: 1px solid var(--outline); outline-offset: 2px; }}
 .jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
 [data-testid="stElementContainer"]:has(.jump-anchor) {{ margin-bottom: calc(-1 * var(--space-5)); }}
