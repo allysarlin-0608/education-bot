@@ -716,21 +716,19 @@ LIQUID = """
 
 PROGRESS = """
 <style>
-/* ---------- Progress: three areas ----------
-   The month | the day picked, with every session under it | the subjects.
-   Wide: side by side, and each area scrolls on its own, so exploring one
-   never loses her place in another and the page itself barely scrolls.
-   Medium: the month and the day side by side, the subjects underneath in
-   two columns. Narrow: one run (month, day, subjects, sessions), with the
-   subjects as a row to swipe through. Sizes follow the page's own width
-   (container queries), so the sidebar being open or not is taken in. */
-.stMainBlockContainer:has(#progress-page) { max-width: 1440px; }
+/* ---------- Progress: two sides ----------
+   The month on the left; on the right one view at a time (the day picked,
+   every session, the subjects), switched at its top, so neither side is
+   ever crowded. Wide: side by side, each scrolling on its own, the switch
+   staying at the top of its side. Narrower than about 860px of page width
+   (container queries: the sidebar is taken in), the view comes under the
+   month and the page scrolls as usual. */
+.stMainBlockContainer:has(#progress-page) { max-width: 1320px; }
 [data-testid="stElementContainer"]:has(#progress-page) { display: none; }
 .st-key-prog_main { container-type: inline-size; margin-top: var(--space-2); }
-.st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { gap: clamp(28px, 3.2cqw, 48px) !important; align-items: flex-start; }
+.st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { gap: clamp(32px, 5cqw, 72px) !important; align-items: flex-start; }
 .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] { min-width: 0; }
-
-@container (min-width: 1000px) {
+@container (min-width: 860px) {
   .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] {
     position: sticky; top: 72px; max-height: calc(100dvh - 92px); overflow-y: auto; overscroll-behavior: contain;
     padding: 6px 8px 40px 6px; margin: -6px -8px 0 -6px;
@@ -738,30 +736,40 @@ PROGRESS = """
     mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
   }
 }
-@container (min-width: 640px) and (max-width: 999.98px) {
-  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { flex-wrap: wrap !important; row-gap: var(--space-7) !important; }
-  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(1) { flex: 1 1 44% !important; width: auto !important; }
-  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(2) { flex: 1 1 48% !important; width: auto !important; }
-  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(3) { flex: 1 1 100% !important; width: 100% !important; }
-  .st-key-subj_list { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-7) !important; }
+@container (max-width: 859.98px) {
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { flex-direction: column; gap: var(--space-6) !important; }
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] { width: 100% !important; flex: 1 1 auto !important; }
 }
-@container (max-width: 639.98px) {
-  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { flex-direction: column; gap: var(--space-4) !important; }
-  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"], .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] > [data-testid="stVerticalBlock"] { display: contents; }
-  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(3) > [data-testid="stVerticalBlock"] > * { order: 1; }
-  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > :is(:has(.st-key-sessions_head), :has([class*="st-key-sessions_list_"]), .st-key-sessions_more) { order: 2; }
-  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(3) > [data-testid="stVerticalBlock"] > :first-child { margin-top: var(--space-5); }
-  /* the subjects: a row of cards to swipe through instead of a long list */
-  .st-key-subj_list {
-    flex-direction: row !important; flex-wrap: nowrap !important; gap: 12px !important; overflow-x: auto;
-    scroll-snap-type: x mandatory; scroll-padding: 0 16px; margin: 0 -16px; padding: 4px 16px 12px;
-    scrollbar-width: none;
-  }
-  .st-key-subj_list::-webkit-scrollbar { display: none; }
-  .st-key-subj_list > * { flex: 0 0 min(80%, 300px) !important; width: auto !important; scroll-snap-align: start; }
-  .st-key-subj_list .lq { margin: 0; padding: 14px 16px 12px; border-radius: 20px; background: var(--glass); box-shadow: var(--optic); }
-  .st-key-subj_list .lq-meta { flex-direction: column; gap: 2px; font-size: 0.75rem; }
+
+/* the switch: three equal segments on a quiet track, the chosen one glass;
+   it stays at the top of its side while the view scrolls under it */
+.st-key-prog_view {
+  position: sticky; top: -6px; z-index: 5; padding: 6px 0 var(--space-3);
+  background: linear-gradient(var(--env) 80%, transparent);
 }
+.st-key-prog_view [data-testid="stButtonGroup"], .st-key-prog_view [data-testid="stButtonGroup"] > div { width: 100%; }
+.st-key-prog_view [data-testid="stButtonGroup"] > div {
+  display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--wash); border: none;
+}
+.st-key-prog_view [data-testid="stButtonGroup"] button {
+  flex: 1 1 0; min-height: 36px; margin: 0 !important; border: none !important; border-radius: 999px !important;
+  background: transparent !important; box-shadow: none !important; color: var(--label-2);
+  transition: background-color 220ms var(--ease), color 220ms var(--ease), box-shadow 220ms var(--ease);
+}
+.st-key-prog_view [data-testid="stButtonGroup"] button p { font-size: 0.875rem; }
+.st-key-prog_view [data-testid="stButtonGroup"] button[aria-checked="true"] {
+  background: var(--env) !important; color: var(--label); box-shadow: var(--optic-strong) !important;
+}
+.st-key-prog_view [data-testid="stButtonGroup"] button[aria-checked="true"] p { font-weight: 600; }
+.st-key-prog_view [data-testid="stButtonGroup"] button:hover:not([aria-checked="true"]) { color: var(--label); }
+/* a view eases in when switched to */
+[class*="st-key-view_"] { gap: var(--space-4) !important; animation: rise-in 240ms var(--ease) backwards; }
+/* the subjects: as many columns as fit, never cramped */
+.st-key-subj_list {
+  display: grid !important; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: var(--space-5) var(--space-6) !important;
+}
+.st-key-subj_list > div { width: 100% !important; min-width: 0; }
 
 /* ---------- the month ---------- */
 .st-key-cal_head { flex-direction: row !important; justify-content: space-between; flex-wrap: nowrap !important; }
@@ -865,6 +873,8 @@ PROGRESS = """
 /* ---------- every session ---------- */
 .st-key-sessions_head { flex-direction: row !important; flex-wrap: wrap !important; justify-content: space-between;
   align-items: center !important; gap: var(--space-3) !important; margin-top: var(--space-6); }
+.st-key-view_sessions .st-key-sessions_head { margin-top: 0; }
+.view-count { font-size: 0.8125rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
 .st-key-sessions_head h4 { padding: 0 !important; margin: 0; }
 .st-key-sessions_head [data-testid="stSelectbox"] { width: min(240px, 100%); }
 .st-key-sessions_head > div:last-child { flex: 0 1 240px !important; width: auto !important; }
@@ -891,6 +901,7 @@ PROGRESS = """
 @keyframes day-pick { from { background-color: transparent; box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) {
   [class*="st-key-calgrid_"], [class*="st-key-prog_day_"], [class*="st-key-reader_"], [class*="st-key-sessions_list_"],
+  [class*="st-key-view_"],
   [class*="st-key-reader_"] [data-baseweb="tab-panel"], [class*="st-key-cal_20"] .stButton button { animation: none !important; }
   [data-testid="stExpander"] details::details-content { transition: none; }
 }
