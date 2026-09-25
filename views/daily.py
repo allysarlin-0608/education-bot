@@ -233,10 +233,15 @@ with st.container(key=f"course_card_{motion}"):
         label_visibility="collapsed",
     ) or 0
     st.html(progress_bar.meta_row(card_left, card_right, old=card_old))
+    # Today opens at the top; this takes her to where she is working: the
+    # quiz once the lesson is written, otherwise the lesson itself.
+    target = "current-quiz" if plan[i].get("lesson") else "current-lesson"
+    st.html(f'<a class="jump" href="#{target}">Jump to current progress<span aria-hidden="true"> ↓</span></a>')
 
 slot = plan[i]
 if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit
     st.markdown(f"#### {slot['unit']}")
+st.html('<div class="jump-anchor" id="current-lesson"></div>')
 st.markdown("### " + progress_bar.rolled(f"lesson_title_{chat_key(slot)}", f"Lesson {slot['n']}: {slot['title']}"),
             unsafe_allow_html=True)
 
@@ -377,6 +382,7 @@ def answer_sheet(i, q):
 # ============================================================
 # QUIZ: 8 of 10 points (80%) or better completes the lesson
 # ============================================================
+st.html('<div class="jump-anchor" id="current-quiz"></div>')
 st.markdown("#### Quiz")
 q = slot.get("quiz")
 if slot["completed"]:
@@ -446,7 +452,11 @@ with st.expander("My thoughts on the question to explore (optional, the coach pi
             ui.show_pending_error()
 
 show_retry(slot, ("followup",))
-prompt = st.chat_input(f"Ask about Lesson {slot['n']}, report your progress, or just talk it through…")
+# The chat box sits in the page, not pinned to the bottom of the screen:
+# a pinned one makes Streamlit keep the page scrolled to the bottom, so
+# coming back to Today would jump to the end instead of the top.
+with st.container():
+    prompt = st.chat_input(f"Ask about Lesson {slot['n']}, report your progress, or just talk it through…")
 if prompt is not None and prompt.strip():
     st.session_state.coach_retry = None
     run_followup(i, prompt)

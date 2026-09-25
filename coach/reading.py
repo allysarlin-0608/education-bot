@@ -37,7 +37,8 @@ def render(log, today):
     _render_other_options(log, book, today)
 
     _render_retry(log, book, chat, today)
-    text = st.chat_input(_placeholder(book))
+    with st.container():                  # in the page, so the page opens at the top
+        text = st.chat_input(_placeholder(book))
     if text is None or not text.strip():
         return
     st.session_state.book_retry = None

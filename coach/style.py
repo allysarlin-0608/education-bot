@@ -303,6 +303,20 @@ CSS = f"""
 [data-testid="stProgress"] [role="progressbar"],
 [data-testid="stProgress"] [role="progressbar"] div {{ height: 2px !important; border-radius: 1px; }}
 
+/* ---------- "Jump to current progress" and where it lands ---------- */
+.jump {{
+  display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 var(--space-4);
+  border-radius: var(--radius-pill); font-size: 0.8125rem; font-weight: 500; text-decoration: none !important;
+  color: var(--label) !important; background: var(--glass-faint); box-shadow: var(--optic);
+  transition: background-color var(--t-micro) var(--ease);
+}}
+.jump:hover {{ background: var(--glass-strong); }}
+.jump:focus-visible {{ outline: 1px solid var(--outline); outline-offset: 2px; }}
+.jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
+[data-testid="stElementContainer"]:has(.jump-anchor) {{ margin-bottom: calc(-1 * var(--space-5)); }}
+html {{ scroll-behavior: smooth; }}
+[data-testid="stAppScrollToBottomContainer"], [data-testid="stMain"] {{ scroll-behavior: smooth; }}
+
 /* ---------- lesson cards: one per block, its name as the title ---------- */
 [class*="st-key-lcard_"] {{
   padding: var(--space-4) var(--space-5) var(--space-5); border-radius: var(--radius-medium);
