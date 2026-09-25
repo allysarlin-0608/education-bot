@@ -106,7 +106,11 @@ CSS = f"""
   --glass-optics: url(#lg-refract);
   --glass-optics-legible: url(#lg-refract) blur(0.6px) contrast(0.45) brightness(1.4);
 }}
-:root[data-refract][data-scheme="dark"] {{ --glass-optics-legible: url(#lg-refract) blur(0.6px) brightness(0.5); }}
+:root[data-refract][data-scheme="dark"] {{
+  /* on black, no gathered light at the rim (lg-refract-dim): it read as a grey slab */
+  --glass-optics: url(#lg-refract-dim);
+  --glass-optics-legible: url(#lg-refract-dim) blur(0.6px) brightness(0.5);
+}}
 
 /* corners: generous and continuous, the curve easing into the straight edge
    (a superellipse where the browser can draw one) */
@@ -316,9 +320,15 @@ CSS = f"""
 [data-testid="stChatInput"] {{
   min-height: 56px; box-sizing: border-box;
   border-radius: var(--radius-large) !important;
-  background: var(--glass) !important; border: none !important;
+  background: light-dark(var(--glass), transparent) !important; border: none !important;
   -webkit-backdrop-filter: var(--glass-optics-legible); backdrop-filter: var(--glass-optics-legible);
-  box-shadow: var(--rim), var(--lift);
+  /* on the dark page the chat box sits in the black with just a whisper of an edge */
+  box-shadow:
+    inset 0 1px 1px -0.5px light-dark(var(--hilite), rgba(255, 255, 255, 0.06)),
+    inset 0 -1px 1px -0.5px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.02)),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.06)),
+    inset 0 0 18px -8px light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.03)),
+    var(--lift);
 }}
 [data-testid="stChatInput"] > div, [data-testid="stChatInput"] textarea {{ background: transparent !important; border: none !important; }}
 [data-testid="stChatInput"] textarea::placeholder {{ color: var(--label-2); opacity: 1; }}

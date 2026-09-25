@@ -4,7 +4,9 @@ from coach import glass, style
 def test_filter_is_there_and_subtle():
     svg = glass.defs()
     assert 'id="lg-refract"' in svg
-    assert svg.count("<feDisplacementMap") == 2            # one pass per axis
+    assert svg.count("<feDisplacementMap") == 4            # one pass per axis, in both filters
+    dim = svg[svg.index('id="lg-refract-dim"'):]
+    assert '<feMergeNode in="rimlight"/>' not in dim       # the dark theme's glass gathers no light
     assert f'scale="{glass.SCALE}"' in svg and glass.SCALE <= 20  # a subtle bend, at the rim only
 
 

@@ -89,8 +89,7 @@ def defs() -> str:
     frosted all over; within the rim band it is diffused a little more and
     a trace of light gathers there, which is what gives the glass its
     rounded, slightly thick edge. No colour is added anywhere."""
-    return (
-        '<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">'
+    body = (
         # the maps cover the whole surface (no x/y/size: the filter region);
         # displacement and blur are in pixels
         '<filter id="lg-refract" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">'
@@ -105,7 +104,15 @@ def defs() -> str:
         f'<feFlood flood-color="#ffffff" flood-opacity="{EDGE_LIGHT}" result="light"/>'
         '<feComposite in="light" in2="band" operator="in" result="rimlight"/>'
         '<feMerge><feMergeNode in="frost"/><feMergeNode in="rimhaze"/><feMergeNode in="rimlight"/></feMerge>'
-        '</filter></svg>'
+        '</filter>'
+    )
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">'
+        + body
+        # the same glass without the gathered light, for the dark theme: on
+        # black even a trace of white turns the glass into a grey slab
+        + body.replace('id="lg-refract"', 'id="lg-refract-dim"').replace('<feMergeNode in="rimlight"/>', '')
+        + '</svg>'
     )
 
 
