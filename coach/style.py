@@ -332,9 +332,10 @@ CSS = f"""
 [data-testid="stChatInput"] {{
   min-height: 56px; box-sizing: border-box;
   border-radius: var(--radius-large) !important; border: none !important;
-  /* frosted, not a slab: what passes behind stays visible as soft shapes */
-  background: light-dark(rgba(255, 255, 255, 0.38), rgba(30, 30, 32, 0.42)) !important;
-  -webkit-backdrop-filter: blur(6px) saturate(1.6); backdrop-filter: blur(6px) saturate(1.6);
+  /* the same clear glass as the header (its fill and its refraction at the
+     rim); what passes behind is only quieted a little, so her text reads */
+  background: var(--glass) !important;
+  -webkit-backdrop-filter: var(--glass-optics-legible); backdrop-filter: var(--glass-optics-legible);
   box-shadow:
     inset 0 0.5px 0 light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1)),
     inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.085), rgba(255, 255, 255, 0.085)),
@@ -343,7 +344,7 @@ CSS = f"""
   transition: box-shadow 220ms var(--ease), background-color 220ms var(--ease);
 }}
 [data-testid="stChatInput"]:focus-within {{
-  background: light-dark(rgba(255, 255, 255, 0.55), rgba(32, 32, 34, 0.58)) !important;
+  background: var(--glass-strong) !important;
   box-shadow:
     inset 0 0.5px 0 light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.12)),
     inset 0 0 0 1px light-dark(rgba(0, 0, 0, 0.16), rgba(255, 255, 255, 0.18)),
