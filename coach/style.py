@@ -60,11 +60,19 @@ CSS = f"""
   --hilite-soft: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.08));
   --shadow: transparent;
   --glass-blur: none;                        /* no frosting anywhere */
-  /* glass over moving content (the chat box, the top bar): the bend near
-     the rim, and what passes behind loses some contrast so the glass's own
-     text stays readable. It stays sharp and visible; there is no fill and
-     no blur. (Dark theme: see [data-scheme="dark"] below.) */
-  --glass-optics: url(#lg-refract) contrast(0.16) brightness(1.8);
+  /* glass over moving content: its rounded rim pulls in and compresses
+     what lies just beyond it, like the edge of a thick clear lens, and the
+     centre stays perfectly clear. The chat box also quiets what passes
+     behind it a little, so what she types stays readable. (Dark theme: see
+     [data-scheme="dark"] below.) */
+  --glass-optics: url(#lg-refract);
+  --glass-optics-legible: url(#lg-refract) contrast(0.25) brightness(1.65);
+  /* floating glass: a thin bright rim where light catches the edge, and the
+     softest shadow beneath */
+  --rim:
+    inset 0 0 0 1px light-dark(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.08)),
+    inset 0 1px 0 light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.16)),
+    inset 0 0 0 1.5px light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.03));
   --optic:
     inset 0 0.5px 0 var(--hilite-soft),
     inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.055)),
@@ -74,7 +82,7 @@ CSS = f"""
     inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.055), rgba(255, 255, 255, 0.075)),
     inset 0 0 10px -5px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.09));
   /* floating glass stands a hair off the page: the softest contact shadow */
-  --lift: 0 2px 10px -6px light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.5));
+  --lift: 0 6px 22px -10px light-dark(rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.7));
   --glass-depth: var(--optic-strong);
   --glass-depth-soft: var(--optic);
 
@@ -95,7 +103,7 @@ CSS = f"""
 ::selection {{ background: var(--selection); color: var(--strong); }}
 
 /* the glass filters for the dark theme (coach/glass.py marks the page) */
-:root[data-scheme="dark"] {{ --glass-optics: url(#lg-refract) brightness(0.3); }}
+:root[data-scheme="dark"] {{ --glass-optics-legible: url(#lg-refract) brightness(0.45); }}
 
 /* ---------- chrome ---------- */
 [data-testid="stDecoration"], footer,
@@ -300,8 +308,8 @@ CSS = f"""
   min-height: 56px; box-sizing: border-box;
   border-radius: var(--radius-large) !important;
   background: var(--glass) !important; border: none !important;
-  backdrop-filter: var(--glass-optics);
-  box-shadow: var(--glass-depth), var(--lift);
+  backdrop-filter: var(--glass-optics-legible);
+  box-shadow: var(--rim), var(--lift);
 }}
 [data-testid="stChatInput"] > div, [data-testid="stChatInput"] textarea {{ background: transparent !important; border: none !important; }}
 [data-testid="stChatInput"] textarea::placeholder {{ color: var(--label-2); opacity: 1; }}

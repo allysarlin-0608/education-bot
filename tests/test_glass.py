@@ -5,7 +5,15 @@ def test_filter_is_there_and_subtle():
     svg = glass.defs()
     assert 'id="lg-refract"' in svg
     assert svg.count("<feDisplacementMap") == 2            # one pass per axis
-    assert f'scale="{glass.SCALE}"' in svg and glass.SCALE <= 4   # at most ±2px at the rim
+    assert f'scale="{glass.SCALE}"' in svg and glass.SCALE <= 32  # at most ±16px, at the rim only
+
+
+def test_centre_stays_clear():
+    from urllib.parse import unquote
+    for axis in ("x", "y"):
+        m = unquote(glass._map(axis))
+        assert '<rect width="100%" height="100%" fill="rgb(128,128,128)"/>' in m   # no shift in the middle
+        assert f'"{glass.EDGE}"' in m                                             # only a band this wide bends
 
 
 def test_script_adds_the_filter_once():

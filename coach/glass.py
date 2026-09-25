@@ -14,39 +14,45 @@ use an SVG filter as a backdrop (Safari, Firefox) simply show clear glass.
 import base64
 from urllib.parse import quote
 
-EDGE = 12          # px: how far in from the rim the glass bends light
-SCALE = 3          # px: the strongest shift, a few px inside the rim, is half this (±1.5px)
+EDGE = 26          # px: how far in from the rim the glass bends light
+SCALE = 30         # px: the shift right at the rim is half this; it eases to nothing EDGE px in
 
 
 def _map(axis: str) -> str:
-    """A displacement map for one axis: neutral grey (no shift) over the
-    whole surface; in the last EDGE px at both ends the shift rises from
-    nothing at the rim to its peak a few px in and eases back, like the
-    rounded bevel of a glass edge, so what's behind stays continuous across
-    the outline and only bends inside it. Red carries x, green carries y;
-    the other stays neutral."""
-    far, near = ("rgb(255,128,128)", "rgb(0,128,128)") if axis == "x" else ("rgb(128,255,128)", "rgb(128,0,128)")
+    """A displacement map for one axis. Neutral grey (no shift) over the
+    centre, so it stays perfectly clear; within EDGE px of the rim each
+    point shows what lies further out, most at the rim and easing to
+    nothing inward, the way the rounded edge of a thick clear lens pulls
+    in and compresses what sits just beyond it. Red carries x, green
+    carries y; the other stays neutral."""
+    grey = "rgb(128,128,128)"
+    back, fwd = ("rgb(0,128,128)", "rgb(255,128,128)") if axis == "x" else ("rgb(128,0,128)", "rgb(128,255,128)")
     size = 'width="{e}" height="100%"' if axis == "x" else 'width="100%" height="{e}"'
     end = 'x="-{e}"' if axis == "x" else 'y="-{e}"'
     at_end = 'x="100%"' if axis == "x" else 'y="100%"'
-    x2 = ('x1="0" y1="0" x2="{e}" y2="0"' if axis == "x" else 'x1="0" y1="0" x2="0" y2="{e}"')
-    x2_end = ('x1="-{e}" y1="0" x2="0" y2="0"' if axis == "x" else 'x1="0" y1="-{e}" x2="0" y2="0"')
+    start_line = 'x1="0" y1="0" x2="{e}" y2="0"' if axis == "x" else 'x1="0" y1="0" x2="0" y2="{e}"'
+    end_line = 'x1="0" y1="0" x2="-{e}" y2="0"' if axis == "x" else 'x1="0" y1="0" x2="0" y2="-{e}"'
+    # a curved falloff (strong at the rim, gentle inside): quarter, then nothing
+    ease = lambda c: (f'<stop offset="0" stop-color="{c}"/><stop offset="0.45" stop-color="{_mix(c, 0.35)}"/>'
+                      f'<stop offset="1" stop-color="{grey}"/>')
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">'
         '<defs>'
-        f'<linearGradient id="a" gradientUnits="userSpaceOnUse" {x2}>'
-        f'<stop offset="0" stop-color="rgb(128,128,128)"/><stop offset="0.35" stop-color="{far}"/>'
-        '<stop offset="1" stop-color="rgb(128,128,128)"/></linearGradient>'
-        f'<linearGradient id="b" gradientUnits="userSpaceOnUse" {x2_end}>'
-        f'<stop offset="0" stop-color="rgb(128,128,128)"/><stop offset="0.65" stop-color="{near}"/>'
-        '<stop offset="1" stop-color="rgb(128,128,128)"/></linearGradient>'
+        f'<linearGradient id="a" gradientUnits="userSpaceOnUse" {start_line}>{ease(back)}</linearGradient>'
+        f'<linearGradient id="b" gradientUnits="userSpaceOnUse" {end_line}>{ease(fwd)}</linearGradient>'
         '</defs>'
-        '<rect width="100%" height="100%" fill="rgb(128,128,128)"/>'
+        f'<rect width="100%" height="100%" fill="{grey}"/>'
         f'<rect {size} fill="url(#a)"/>'
         f'<svg {at_end} overflow="visible"><rect {end} {size} fill="url(#b)"/></svg>'
         '</svg>'
     ).format(e=EDGE)
     return "data:image/svg+xml," + quote(svg)
+
+
+def _mix(color: str, amount: float) -> str:
+    """`amount` of the way from neutral grey to `color`."""
+    r, g, b = (int(v) for v in color[4:-1].split(","))
+    return "rgb({},{},{})".format(*(round(128 + (v - 128) * amount) for v in (r, g, b)))
 
 
 def defs() -> str:
