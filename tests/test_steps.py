@@ -49,3 +49,15 @@ def test_states_follow_the_data_not_positions():
     plan[0]["n"], plan[3]["n"] = 11, 14                 # numbers come from the lessons
     assert [s["state"] for s in steps.states(plan, 2)] == ["completed", "completed", "current", "locked", "locked"]
     assert steps.unlock_message(plan, 4) == "Unlocks after you pass Lesson 14's quiz"
+
+
+def test_just_completed_only_after_a_change():
+    assert steps.just_completed(None, day(True, False)) == set()          # first visit: nothing plays
+    assert steps.just_completed([True, False], day(True, False)) == set()
+    assert steps.just_completed([True, False], day(True, True)) == {1}     # lesson 2 just passed
+
+
+def test_arrow_points_to_the_target():
+    assert steps.arrow(0, 1) == "down"         # reviewing 1, current is 2
+    assert steps.arrow(3, 1) == "up"
+    assert steps.arrow(2, None) == "up"        # back to the summary
