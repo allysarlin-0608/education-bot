@@ -85,8 +85,6 @@ def render(key: str, title: str, done: int, total: int, meta: str = "", **kwargs
     pct = percent(done, total)
     left = kwargs.get("left") or count(done, total, kwargs.get("noun", "lesson"))
     old = seen(key, pct=pct, left=left, right=meta)
-    if kwargs.pop("still_text", False):         # a label like "Lesson 2 of 5": only the % rolls
-        old = {**old, "left": left, "right": meta}
     st.html(build(title, done, total, meta, previous=_previous(key, pct), old=old, **kwargs))
 
 

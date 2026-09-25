@@ -487,47 +487,66 @@ LIQUID = """
 @keyframes lq-front { from { --p: var(--from); } to { --p: var(--to); } }
 @keyframes lq-surge { 0% { --surge: 0; } 30% { --surge: 1; } 100% { --surge: 0; } }
 
-/* Today's course card: the bar, then the day's lessons as steps.
-   completed: a filled circle with a check; current: a ring in the accent
-   colour; locked: grey with a lock; the one open has its number underlined. */
+/* Today's course card: the bar, then the day's lessons as five thin
+   segments. Nothing but lines, numbers and depth of colour:
+   completed: accent line, number with a small check; current: faint
+   accent line, bold number; locked: separator line, faded number;
+   the one open: a short mark under its number. */
 [class*="st-key-course_card"] { gap: 12px; }
-.st-key-lesson_steps { --step-accent: light-dark(#4F86AE, #9CC6E3); gap: 0 !important; flex-wrap: nowrap !important; }
+.st-key-lesson_steps {
+  --step-accent: light-dark(#4F86AE, #9CC6E3);
+  --step-sep: light-dark(rgba(60, 60, 67, 0.18), rgba(235, 235, 245, 0.18));
+  gap: 6px !important; flex-wrap: nowrap !important;
+}
 .st-key-lesson_steps > div { flex: 1 1 0 !important; min-width: 0; width: auto !important; }
 .st-key-lesson_steps [data-testid="stButton"], .st-key-lesson_steps button { width: 100%; }
 .st-key-lesson_steps button {
-  height: auto; min-height: 64px; padding: 4px 0 !important; margin: 0 !important;
-  border: none !important; border-radius: var(--radius-small) !important; background: transparent !important; box-shadow: none !important;
-  color: var(--label-2);
+  --a: 30%;                                   /* how strong the line is */
+  position: relative; display: block; height: 44px; min-height: 44px;   /* a clear, invisible tap area */
+  padding: 0 !important; margin: 0 !important; cursor: pointer;
+  border: none !important; border-radius: 0 !important; background: transparent !important;
+  box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  transform: none !important; transition: none;
 }
-.st-key-lesson_steps button > div, .st-key-lesson_steps button > div > span {
-  display: flex !important; flex-direction: column !important; align-items: center; gap: 6px; overflow: visible !important;
+.st-key-lesson_steps button::before {          /* the line: its track colour, and the fill on top */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 1.5px;
+  background-color: color-mix(in srgb, var(--step-accent) var(--a), transparent);
+  background-image: linear-gradient(var(--step-accent), var(--step-accent));
+  background-repeat: no-repeat; background-size: 0% 100%;
+  transition: background-color 0.3s ease-out;
 }
-.st-key-lesson_steps button [data-testid="stMarkdownContainer"] { overflow: visible !important; }
-.st-key-lesson_steps button span:has(> [data-testid="stIconMaterial"]) {
-  display: grid; place-items: center; width: 28px; height: 28px; margin: 0 !important; border-radius: 50%;
-  box-sizing: border-box; transition: background-color var(--t-micro) var(--ease);
+.st-key-lesson_steps button > div {            /* the number, 8px under the line */
+  position: absolute; top: 11px; left: 0; right: 0; display: flex; justify-content: center; overflow: visible;
 }
-.st-key-lesson_steps button [data-testid="stIconMaterial"] { font-size: 16px; }
+.st-key-lesson_steps button [data-testid="stMarkdownContainer"] { line-height: 16px; }
 .st-key-lesson_steps button p {
-  font-size: 0.8125rem; font-variant-numeric: tabular-nums; line-height: 1.4; color: inherit;
-  padding-bottom: 3px; border-bottom: 2px solid transparent;
+  display: block; margin: 0; font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; color: var(--label-2);
+  transition: color 0.3s ease-out;
 }
-/* completed */
-[class*="st-key-step_"][class*="_completed"] button span:has(> [data-testid="stIconMaterial"]) { background: var(--step-accent); }
-[class*="st-key-step_"][class*="_completed"] button [data-testid="stIconMaterial"] { color: var(--env); font-weight: 700; }
-/* current */
-[class*="st-key-step_"][class*="_current"] button { color: var(--label); }
-[class*="st-key-step_"][class*="_current"] button span:has(> [data-testid="stIconMaterial"]) { border: 2px solid var(--step-accent); }
-[class*="st-key-step_"][class*="_current"] button [data-testid="stIconMaterial"] { font-size: 10px; color: var(--step-accent); }
-[class*="st-key-step_"][class*="_current"] button p { font-weight: 600; }
-/* locked */
-[class*="st-key-step_"][class*="_locked"] button { color: var(--label-3); cursor: default; }
-[class*="st-key-step_"][class*="_locked"] button span:has(> [data-testid="stIconMaterial"]) { background: var(--wash); }
-[class*="st-key-step_"][class*="_locked"] button [data-testid="stIconMaterial"] { color: var(--label-3); font-size: 14px; }
-/* the one open */
-[class*="st-key-step_"][class*="_viewing"] button p { border-bottom-color: currentColor; }
-.st-key-lesson_steps button:not(:disabled):hover span:has(> [data-testid="stIconMaterial"]) { filter: brightness(0.97); }
 .st-key-lesson_steps button:focus-visible { outline: 1px solid var(--outline); outline-offset: 2px; }
+/* completed */
+[class*="st-key-step_"][class*="_completed"] button::before { background-size: 100% 100%; }
+[class*="st-key-step_"][class*="_completed"] button p::after { content: "✓"; font-size: 10px; margin-left: 2px; }
+/* current */
+[class*="st-key-step_"][class*="_current"] button p { color: var(--label); font-weight: 600; }
+/* locked */
+[class*="st-key-step_"][class*="_locked"] button { cursor: default; }
+[class*="st-key-step_"][class*="_locked"] button::before { background-color: var(--step-sep); }
+[class*="st-key-step_"][class*="_locked"] button p { opacity: 0.35; }
+/* the one open */
+[class*="st-key-step_"][class*="_viewing"] button::after {
+  content: ""; position: absolute; top: 30px; left: 50%; width: 12px; height: 1px; margin-left: -6px; background: var(--label);
+}
+/* hover: the line 20% stronger (not on a locked lesson) */
+@media (hover: hover) {
+  [class*="st-key-step_"]:not([class*="_locked"]) button:hover { --a: 50%; }
+}
+/* a lesson just passed: its line fills from left to right */
+[class*="st-key-step_"][class*="_fresh"] button::before { animation: step-fill 0.6s ease-out both; }
+@keyframes step-fill { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  [class*="st-key-step_"][class*="_fresh"] button::before { animation: none; }
+}
 
 /* all of today's lessons done: the summary card */
 .st-key-day_done {
@@ -545,7 +564,20 @@ LIQUID = """
 }
 .st-key-review_bar [data-testid="stMarkdownContainer"] p { font-size: 0.875rem; color: var(--label-2); margin: 0; }
 .st-key-review_bar [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
-.st-key-review_bar [data-testid="stButton"] button { min-height: 36px; white-space: nowrap; }
+/* Back to the current lesson: a plain outlined pill, 36px to the eye, 44px to the finger */
+.st-key-review_bar [data-testid="stButton"] button {
+  position: relative; isolation: isolate; height: 44px; min-height: 44px; padding: 0 14px !important;
+  white-space: nowrap; border: none !important; background: transparent !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+.st-key-review_bar [data-testid="stButton"] button::before {
+  content: ""; position: absolute; inset: 4px 0; z-index: -1; box-sizing: border-box; border-radius: 999px;
+  background: light-dark(#FFFFFF, #1C1C1E);
+  border: 0.5px solid light-dark(rgba(60, 60, 67, 0.18), rgba(235, 235, 245, 0.18));
+}
+.st-key-review_bar [data-testid="stButton"] button p { font-size: 13px; color: var(--label); }
+[class*="st-key-back_to_current_up"] button p::before { content: "↑"; font-size: 12px; margin-right: 6px; }
+[class*="st-key-back_to_current_down"] button p::before { content: "↓"; font-size: 12px; margin-right: 6px; }
 .st-key-review_bar > div:first-child { flex: 1 1 auto; min-width: 0; }
 .st-key-review_bar > div:last-child { flex: 0 0 auto; width: auto !important; }
 

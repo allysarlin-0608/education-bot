@@ -220,18 +220,23 @@ def open_lesson(k, anchor="current-lesson", restore=False):
 
 
 with st.container(key="course_card"):
+    # title and one percentage; the five segments below are the bar itself
     progress_bar.render(f"card_{topic}", f"{core.TOPICS[topic]}: {unit['unit']}", done_count, len(plan),
-                        left=steps.label(plan), still_text=True)
+                        bar=False)
+    # the segment of a lesson just passed fills from left to right, once
+    shown = st.session_state.setdefault("steps_shown", {})
+    fresh = steps.just_completed(shown.get(sel_key), plan)
+    shown[sel_key] = [p["completed"] for p in plan]
     with st.container(key="lesson_steps", horizontal=True):
-        icons = {steps.COMPLETED: ":material/check:", steps.CURRENT: ":material/circle:",
-                 steps.LOCKED: ":material/lock:"}
         for k, step in enumerate(steps.states(plan, i)):
-            name = f"step_{k}_{step['state']}" + ("_viewing" if step["viewing"] else "")
-            if st.button(str(plan[k]["n"]), key=name, icon=icons[step["state"]]):
+            name = (f"step_{k}_{step['state']}" + ("_viewing" if step["viewing"] else "")
+                    + ("_fresh" if k in fresh else ""))
+            if st.button(str(plan[k]["n"]), key=name):
                 if step["state"] == steps.LOCKED:
                     st.toast(steps.unlock_message(plan, k))     # stays on the lesson she has open
                 elif k != i:
                     open_lesson(k, anchor="top")
+    st.html(progress_bar.meta_row(steps.label(plan), old={"left": steps.label(plan)}))    # a label: it doesn't roll
 
 # Remembers where she scrolled to in each lesson, and carries out a move
 # (Back to the current lesson, Next lesson, a new answer) once the page has
@@ -260,11 +265,12 @@ slot = plan[i]
 if i != now:
     with st.container(key="review_bar", horizontal=True, vertical_alignment="center"):
         st.markdown(f"You're reviewing Lesson {slot['n']} · Completed")
+        way = steps.arrow(i, now)               # the arrow (drawn by CSS) points to where it goes
         if now is not None:
-            if st.button(f"Back to Lesson {plan[now]['n']} →", key="back_to_current"):
+            if st.button(f"Back to Lesson {plan[now]['n']}", key=f"back_to_current_{way}"):
                 open_lesson(now, anchor="current-quiz" if plan[now].get("lesson") else "current-lesson",
                             restore=True)
-        elif st.button("Back to today's summary →", key="back_to_current"):
+        elif st.button("Back to today's summary", key=f"back_to_current_{way}"):
             open_lesson(None, anchor="top")
 if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit
     st.markdown(f"#### {slot['unit']}")

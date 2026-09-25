@@ -50,3 +50,17 @@ def label(plan):
 def unlock_message(plan, k):
     """What a locked lesson says when she taps it."""
     return f"Unlocks after you pass Lesson {plan[k - 1]['n']}'s quiz"
+
+
+def just_completed(before, plan):
+    """Lessons completed since `before` (the completed flags shown last
+    time): the segments that fill from left to right this once."""
+    if before is None or len(before) != len(plan):
+        return set()
+    return {k for k, (was, s) in enumerate(zip(before, plan)) if s["completed"] and not was}
+
+
+def arrow(viewing, target):
+    """Which way the lesson "Back to" goes: ↓ to a later lesson, ↑ to an
+    earlier one or to the summary at the top."""
+    return "down" if target is not None and viewing is not None and target > viewing else "up"
