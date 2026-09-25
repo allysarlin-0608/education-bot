@@ -1,6 +1,6 @@
 import streamlit as st
 
-from coach import core, curriculum, lesson_view, llm, place, progress_bar, quiz, tokens, ui
+from coach import core, curriculum, lesson_view, llm, place, progress_bar, quiz, steps, tokens, ui
 
 log = st.session_state.coach_log
 
@@ -89,7 +89,7 @@ def run_followup(i, text):
     chat.append({"role": "assistant", "content": core.finalize_reply(reply, lesson=False, topic=topic)})
     slot["followups"] = chat[2:]               # everything after the lesson
     ui.save_entry(log, entry)
-    st.session_state.coach_scroll = place.LATEST       # and stays on it after the redraw
+    st.session_state.coach_scroll = (place.LATEST, False)      # and stays on it after the redraw
     st.rerun()                                 # show the checked text, not the raw stream
 
 
@@ -176,8 +176,7 @@ with st.sidebar:
 # TODAY'S TOPIC: fixed by the weekly schedule (Reading has its own page)
 # ============================================================
 topic = core.scheduled_topic(today)
-st.markdown("## " + progress_bar.rolled("today_date", f"{core.weekday_name(today)}, {today:%B} {today.day}"),
-            unsafe_allow_html=True)
+st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
 
@@ -200,68 +199,77 @@ if not plan:
     st.stop()
 
 # ============================================================
-# COURSE CARD: the day's lessons are the progress bar
+# COURSE CARD: the bar, and the day's lessons as steps under it
 # ============================================================
-# Each lesson is one stretch of the liquid line, filled once ticked, with
-# its number below to open it. Opening an earlier lesson to review it only
-# changes which number is marked; the bar never empties.
 unit = curriculum.unit_progress(log, topic)
 
-# Which lesson is open: the first unfinished one unless she picked another.
+# Which lesson is open: her pick if it can be opened, otherwise the current
+# one; once all are done nothing is open and the day's summary shows.
 sel_key = f"lesson_{today.isoformat()}_{topic}"
-first_open = next((i for i, s in enumerate(plan) if not s["completed"]), len(plan) - 1)
-goto = st.session_state.pop("lesson_goto", None)     # set after passing a quiz
-if goto and goto[0] == sel_key:
-    st.session_state[sel_key] = goto[1]
-if st.session_state.get(sel_key) is None or st.session_state[sel_key] >= len(plan):
-    st.session_state[sel_key] = first_open
+i = st.session_state[sel_key] = steps.viewing(plan, st.session_state.get(sel_key))
+now = steps.current(plan)
+done_count = steps.done(plan)
 
-done_flags = [s["completed"] for s in plan]
-done_count = sum(done_flags)
-motion = progress_bar.lesson_motion(sel_key, done_flags)
-with st.container(key=f"course_card_{motion}"):
-    card_left = f"{done_count} / {len(plan)} lessons today"
-    card_right = (f"Unit lesson {min(unit['done'] + 1, unit['total'])} of {unit['total']} · "
-                  f"{curriculum.level_for(plan[0]['n'])}")
-    card_old = progress_bar.seen(f"card_{topic}", pct=progress_bar.percent(done_count, len(plan)),
-                                 left=card_left, right=card_right)     # numbers roll when they change
-    st.html(progress_bar.build(f"{core.TOPICS[topic]}: {unit['unit']}", done_count, len(plan), bar=False,
-                               old=card_old))
-    i = st.segmented_control(
-        "Today's lessons",
-        list(range(len(plan))),
-        # the icon marks a ticked lesson (the CSS fills its stretch and hides it)
-        format_func=lambda k: (":material/check: " if plan[k]["completed"] else "") + str(plan[k]["n"]),
-        key=sel_key,
-        label_visibility="collapsed",
-    ) or 0
-    st.html(progress_bar.meta_row(card_left, card_right, old=card_old))
 
-# "Jump to current progress" floats at the side of the screen, so it is
-# there wherever she has scrolled. It opens the current lesson if she is
-# reviewing an earlier one, then goes to where she had scrolled to in it
-# (or, the first time, its quiz, or the lesson itself before it's written).
-with st.container(key="jump_button"):
-    if st.button("Jump to current progress", icon=":material/my_location:", key="jump_to_current"):
-        if i != first_open:
-            st.session_state.lesson_goto = (sel_key, first_open)
-        st.session_state.coach_scroll = "current-quiz" if plan[first_open].get("lesson") else "current-lesson"
-        st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
-        st.rerun()
+def open_lesson(k, anchor="current-lesson", restore=False):
+    """Open lesson k (None: the day's summary) and take the page to it."""
+    st.session_state[sel_key] = k
+    st.session_state.coach_scroll = (anchor, restore)
+    st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
+    st.rerun()
 
-# Remembers where she scrolled to in each lesson, and carries out the jump
-# once the page has redrawn.
-scroll_to = st.session_state.pop("coach_scroll", "")
-st.html(place.html(chat_key(plan[i]), scroll_to, f"Lesson {plan[i]['n']}:" if scroll_to else "",
-                   st.session_state.get("coach_scroll_n", 0), restore=scroll_to != place.LATEST),
+
+with st.container(key="course_card"):
+    progress_bar.render(f"card_{topic}", f"{core.TOPICS[topic]}: {unit['unit']}", done_count, len(plan),
+                        left=steps.label(plan), still_text=True)
+    with st.container(key="lesson_steps", horizontal=True):
+        icons = {steps.COMPLETED: ":material/check:", steps.CURRENT: ":material/circle:",
+                 steps.LOCKED: ":material/lock:"}
+        for k, step in enumerate(steps.states(plan, i)):
+            name = f"step_{k}_{step['state']}" + ("_viewing" if step["viewing"] else "")
+            if st.button(str(plan[k]["n"]), key=name, icon=icons[step["state"]]):
+                if step["state"] == steps.LOCKED:
+                    st.toast(steps.unlock_message(plan, k))     # stays on the lesson she has open
+                elif k != i:
+                    open_lesson(k, anchor="top")
+
+# Remembers where she scrolled to in each lesson, and carries out a move
+# (Back to the current lesson, Next lesson, a new answer) once the page has
+# redrawn.
+scroll_to, restore = st.session_state.pop("coach_scroll", ("", False))
+st.html(place.html(chat_key(plan[i]) if i is not None else f"{today.isoformat()}|{topic}|done",
+                   scroll_to, f"Lesson {plan[i]['n']}:" if scroll_to and i is not None else "",
+                   st.session_state.get("coach_scroll_n", 0), restore=restore),
         unsafe_allow_javascript=True)
 
+# ============================================================
+# ALL DONE: the day's summary
+# ============================================================
+if i is None:
+    with st.container(key="day_done"):
+        st.markdown("### Today's done")
+        streak = core.current_streak(log, ui.today())
+        st.caption(f"All {len(plan)} lessons passed. Current streak: {streak} {'day' if streak == 1 else 'days'}.")
+        for s in plan:
+            score = (s.get("quiz") or {}).get("score")
+            st.markdown(f"✓ **Lesson {s['n']}:** {s['title']}" + (f" · {score}%" if score is not None else ""))
+    st.stop()
+
 slot = plan[i]
+# Reviewing an earlier lesson: say so, with the way back to the current one.
+if i != now:
+    with st.container(key="review_bar", horizontal=True, vertical_alignment="center"):
+        st.markdown(f"You're reviewing Lesson {slot['n']} · Completed")
+        if now is not None:
+            if st.button(f"Back to Lesson {plan[now]['n']} →", key="back_to_current"):
+                open_lesson(now, anchor="current-quiz" if plan[now].get("lesson") else "current-lesson",
+                            restore=True)
+        elif st.button("Back to today's summary →", key="back_to_current"):
+            open_lesson(None, anchor="top")
 if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit
     st.markdown(f"#### {slot['unit']}")
 st.html('<div class="jump-anchor" id="current-lesson"></div>')
-st.markdown("### " + progress_bar.rolled(f"lesson_title_{chat_key(slot)}", f"Lesson {slot['n']}: {slot['title']}"),
-            unsafe_allow_html=True)
+st.markdown(f"### Lesson {slot['n']}: {slot['title']}")
 
 chat = get_chat(slot)
 if not chat:
@@ -415,11 +423,13 @@ if slot["completed"]:
             show_results(q)
     else:
         st.caption("This lesson is done.")
-    if i + 1 < len(entry["lessons"]):
-        if st.button(f"Next lesson: Lesson {entry['lessons'][i + 1]['n']}", type="primary",
-                     use_container_width=True):
-            st.session_state.lesson_goto = (sel_key, i + 1)
-            st.rerun()
+    # just passed: on to the lesson this one unlocked, or the day's summary after the last
+    if now is not None and now == i + 1:
+        if st.button("Next lesson →", type="primary", use_container_width=True, key="next_lesson"):
+            open_lesson(now)
+    elif now is None and i == len(plan) - 1:
+        if st.button("See today's summary →", type="primary", use_container_width=True, key="next_lesson"):
+            open_lesson(None, anchor="top")
 elif (before := curriculum.blocking(entry["lessons"], i)):
     # e.g. a lesson started under the old tick box before the one ahead of it was finished
     st.caption(f"Pass the quiz for Lesson {before['n']} first; this quiz opens after that.")
