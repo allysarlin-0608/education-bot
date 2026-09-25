@@ -304,10 +304,6 @@ CSS = f"""
 [data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock), .st-key-chat_dock {{
   position: sticky; bottom: var(--space-4); z-index: 40;
 }}
-.st-key-chat_dock [data-testid="stChatInput"] {{       /* text scrolling under it mustn't show through */
-  background: color-mix(in srgb, var(--env) 90%, transparent) !important;
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-}}
 /* on a page shorter than the screen it still sits at the bottom, not right under the text */
 .stMainBlockContainer:has(.st-key-chat_dock) {{ min-height: 100dvh; display: flex; flex-direction: column; box-sizing: border-box; }}
 .stMainBlockContainer:has(.st-key-chat_dock) > [data-testid="stVerticalBlock"] {{ flex: 1; }}
@@ -317,19 +313,7 @@ CSS = f"""
 [data-testid="stProgress"] [role="progressbar"],
 [data-testid="stProgress"] [role="progressbar"] div {{ height: 2px !important; border-radius: 1px; }}
 
-/* ---------- "Jump to current progress": floats at the side, and where it lands ---------- */
-.st-key-jump_button {{ position: fixed; right: var(--space-4); top: 50%; z-index: 50; width: auto !important; transform: translateY(-50%); }}
-.st-key-jump_button button {{
-  width: 44px; height: 44px; min-height: 44px; padding: 0; border: none !important; border-radius: 50%;
-  color: var(--label) !important; background: var(--glass-faint) !important; box-shadow: var(--optic);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  transition: background-color var(--t-micro) var(--ease);
-}}
-.st-key-jump_button button:hover {{ background: var(--glass-strong) !important; }}
-.st-key-jump_button button:focus-visible {{ outline: 1px solid var(--outline); outline-offset: 2px; }}
-.st-key-jump_button button [data-testid="stMarkdownContainer"] {{   /* icon only; the name stays for screen readers */
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-}}
+/* ---------- where a move lands (below the header) ---------- */
 .jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
 [data-testid="stElementContainer"]:has(#coach-place) {{ display: none; }}     /* the scroll memory, no box */
 [data-testid="stElementContainer"]:has(.jump-anchor) {{ margin-bottom: calc(-1 * var(--space-5)); }}
@@ -503,57 +487,67 @@ LIQUID = """
 @keyframes lq-front { from { --p: var(--from); } to { --p: var(--to); } }
 @keyframes lq-surge { 0% { --surge: 0; } 30% { --surge: 1; } 100% { --surge: 0; } }
 
-/* Today's course card: the day's lessons are the progress bar. Each
-   lesson is one stretch of the same liquid line, its number below; a
-   ticked lesson is filled. Opening a lesson only marks its number, so
-   going back to review never empties the bar. */
-[class*="st-key-course_card"] { gap: 10px; }
-[class*="st-key-course_card"] .stElementContainer:has(> [data-testid="stButtonGroup"]),
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] { width: 100% !important; max-width: none; }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] > div {
-  display: flex; flex-wrap: nowrap; width: 100%; max-width: none; gap: 0;
-  border: none !important; background: transparent !important; box-shadow: none !important;
+/* Today's course card: the bar, then the day's lessons as steps.
+   completed: a filled circle with a check; current: a ring in the accent
+   colour; locked: grey with a lock; the one open has its number underlined. */
+[class*="st-key-course_card"] { gap: 12px; }
+.st-key-lesson_steps { --step-accent: light-dark(#4F86AE, #9CC6E3); gap: 0 !important; flex-wrap: nowrap !important; }
+.st-key-lesson_steps > div { flex: 1 1 0 !important; min-width: 0; width: auto !important; }
+.st-key-lesson_steps [data-testid="stButton"], .st-key-lesson_steps button { width: 100%; }
+.st-key-lesson_steps button {
+  height: auto; min-height: 64px; padding: 4px 0 !important; margin: 0 !important;
+  border: none !important; border-radius: var(--radius-small) !important; background: transparent !important; box-shadow: none !important;
+  color: var(--label-2);
 }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button {
-  --lh: 2px;
-  position: relative; flex: 1 1 0; min-width: 0; height: auto; min-height: 44px;
-  padding: 20px 0 4px !important; margin: 0 !important;
-  border: none !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important;
-  color: var(--label-3); transition: color var(--t-micro) var(--ease);
+.st-key-lesson_steps button > div, .st-key-lesson_steps button > div > span {
+  display: flex !important; flex-direction: column !important; align-items: center; gap: 6px; overflow: visible !important;
 }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button p {
-  font-size: 0.8125rem; font-variant-numeric: tabular-nums; white-space: nowrap; color: inherit;
+.st-key-lesson_steps button [data-testid="stMarkdownContainer"] { overflow: visible !important; }
+.st-key-lesson_steps button span:has(> [data-testid="stIconMaterial"]) {
+  display: grid; place-items: center; width: 28px; height: 28px; margin: 0 !important; border-radius: 50%;
+  box-sizing: border-box; transition: background-color var(--t-micro) var(--ease);
 }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button [data-testid="stMarkdownContainer"] { min-width: max-content; }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button span:has(> [data-testid="stIconMaterial"]) { display: none; }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:hover { color: var(--label-2); }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button[aria-checked="true"] { color: var(--label); }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button[aria-checked="true"] p { font-weight: 600; }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:focus-visible { outline: none; }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:focus-visible p { outline: 1px solid var(--outline); outline-offset: 3px; border-radius: 4px; }
-/* the glass line, continuous across the lessons */
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button::before {
-  content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 9px;
-  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
-  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo),
-              inset 0 2px 3px -2px var(--lq-edge-near), inset 0 -2px 3px -2px var(--lq-edge-near);
+.st-key-lesson_steps button [data-testid="stIconMaterial"] { font-size: 16px; }
+.st-key-lesson_steps button p {
+  font-size: 0.8125rem; font-variant-numeric: tabular-nums; line-height: 1.4; color: inherit;
+  padding-bottom: 3px; border-bottom: 2px solid transparent;
 }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:first-child::before { border-radius: 999px 0 0 999px; }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:last-child::before { border-radius: 0 999px 999px 0; }
-/* the liquid in a ticked lesson; the last filled one ends in a round meniscus */
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button::after {
-  content: ""; position: absolute; left: 0; top: 6.5px; height: 4px; width: 0;
-  background: var(--lq-liquid); opacity: 0.92;
+/* completed */
+[class*="st-key-step_"][class*="_completed"] button span:has(> [data-testid="stIconMaterial"]) { background: var(--step-accent); }
+[class*="st-key-step_"][class*="_completed"] button [data-testid="stIconMaterial"] { color: var(--env); font-weight: 700; }
+/* current */
+[class*="st-key-step_"][class*="_current"] button { color: var(--label); }
+[class*="st-key-step_"][class*="_current"] button span:has(> [data-testid="stIconMaterial"]) { border: 2px solid var(--step-accent); }
+[class*="st-key-step_"][class*="_current"] button [data-testid="stIconMaterial"] { font-size: 10px; color: var(--step-accent); }
+[class*="st-key-step_"][class*="_current"] button p { font-weight: 600; }
+/* locked */
+[class*="st-key-step_"][class*="_locked"] button { color: var(--label-3); cursor: default; }
+[class*="st-key-step_"][class*="_locked"] button span:has(> [data-testid="stIconMaterial"]) { background: var(--wash); }
+[class*="st-key-step_"][class*="_locked"] button [data-testid="stIconMaterial"] { color: var(--label-3); font-size: 14px; }
+/* the one open */
+[class*="st-key-step_"][class*="_viewing"] button p { border-bottom-color: currentColor; }
+.st-key-lesson_steps button:not(:disabled):hover span:has(> [data-testid="stIconMaterial"]) { filter: brightness(0.97); }
+.st-key-lesson_steps button:focus-visible { outline: 1px solid var(--outline); outline-offset: 2px; }
+
+/* all of today's lessons done: the summary card */
+.st-key-day_done {
+  gap: var(--space-2) !important; padding: var(--space-5); border-radius: var(--radius-large);
+  background: var(--glass); box-shadow: var(--optic-strong);
 }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:first-child::after { left: 0; border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:has([data-testid="stIconMaterial"])::after { width: 100%; }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:has([data-testid="stIconMaterial"]):not(:has(+ button [data-testid="stIconMaterial"]))::after {
-  border-radius: 0 2.6px 2.2px 0 / 0 2px 2px 0;
+.st-key-day_done h3 { padding: 0 0 var(--space-1); line-height: 1.25; }
+.st-key-day_done [data-testid="stCaptionContainer"] { margin-bottom: var(--space-2); }
+.st-key-day_done [data-testid="stMarkdownContainer"] p { margin: 0; }
+
+/* reviewing an earlier lesson: a quiet bar above its title */
+.st-key-review_bar {
+  align-items: center !important; justify-content: space-between; gap: var(--space-3) !important; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: var(--radius-medium); background: var(--wash);
 }
-[class*="st-key-course_card"] [data-testid="stButtonGroup"] button:first-child:has([data-testid="stIconMaterial"]):not(:has(+ button [data-testid="stIconMaterial"]))::after {
-  border-radius: 2px 2.6px 2.2px 2px / 2px 2px 2px 2px;
-}
-@keyframes lq-fill { from { width: 0; } to { width: 100%; } }
+.st-key-review_bar [data-testid="stMarkdownContainer"] p { font-size: 0.875rem; color: var(--label-2); margin: 0; }
+.st-key-review_bar [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
+.st-key-review_bar [data-testid="stButton"] button { min-height: 36px; white-space: nowrap; }
+.st-key-review_bar > div:first-child { flex: 1 1 auto; min-width: 0; }
+.st-key-review_bar > div:last-child { flex: 0 0 auto; width: auto !important; }
 
 /* ---------- today in the sidebar: an upright glass tube ---------- */
 .lqv { --p: var(--to); display: flex; gap: 16px; align-items: stretch; margin: 4px 0 8px; }
@@ -649,27 +643,8 @@ LIQUID = """
 </style>
 """
 
-# Motion for the lesson bar on Today (views/daily.py picks the container
-# key): on arriving the ticked lessons fill one after another, ~1 s in all;
-# when one lesson is ticked only that stretch fills.
-_SEG = '[data-testid="stButtonGroup"] button'
-_DONE = ':has([data-testid="stIconMaterial"])'
-LESSON_MOTION = "".join(
-    f'.st-key-course_card_flow {_SEG}:nth-child({k}){_DONE}::after '
-    f'{{ animation: lq-fill 200ms linear {(k - 1) * 200}ms both; }}\n'
-    for k in range(1, 8)
-) + (
-    f'.st-key-course_card_flow {_SEG}{_DONE}:not(:has(+ button [data-testid="stIconMaterial"]))::after '
-    '{ animation-duration: 420ms; animation-timing-function: cubic-bezier(0.3, 0.6, 0.25, 1); }\n'
-) + "".join(
-    f'.st-key-course_card_tick{k} {_SEG}:nth-child({k})::after '
-    '{ animation: lq-fill 700ms cubic-bezier(0.3, 0.6, 0.25, 1) both; }\n'
-    for k in range(1, 8)
-)
-
-
 def stylesheet() -> str:
-    return CSS.replace("</style>", LIQUID.replace("<style>", "").replace("</style>", LESSON_MOTION + "</style>"))
+    return CSS.replace("</style>", LIQUID.replace("<style>", ""))
 
 
 def inject():

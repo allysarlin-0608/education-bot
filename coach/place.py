@@ -20,7 +20,7 @@ _SCRIPT = """<script>
   const get = (k) => { try { return JSON.parse(w.localStorage.getItem("coach-place:" + k)); } catch (e) { return null; } };
   const put = (k, v) => { try { w.localStorage.setItem("coach-place:" + k, JSON.stringify(v)); } catch (e) {} };
   const scroller = () => {
-    for (let e = doc.getElementById("current-lesson"); e; e = e.parentElement) {
+    for (let e = doc.getElementById("coach-place"); e; e = e.parentElement) {
       const o = getComputedStyle(e).overflowY;
       if ((o === "auto" || o === "scroll") && e.scrollHeight > e.clientHeight) return e;
     }
@@ -63,11 +63,14 @@ _SCRIPT = """<script>
     const want = m.dataset.want;
     let last = "", calm = 0, tries = 0;
     const tick = () => {
-      const a = doc.getElementById(m.dataset.jump);
+      const top = m.dataset.jump === "top", a = top ? doc.body : doc.getElementById(m.dataset.jump);
       const h = [...doc.querySelectorAll("h3")].some((x) => x.innerText.startsWith(want));
       const now = a && h ? a.getBoundingClientRect().top + ":" + doc.body.scrollHeight : "";
       calm = now && now === last ? calm + 1 : 0; last = now;
-      if (calm >= 3) { if (m.dataset.restore === "0" || !s.restore(m.dataset.key)) a.scrollIntoView({ behavior: "smooth", block: "start" }); }
+      if (calm >= 3) {
+        if (top) scroller().scrollTo({ top: 0, behavior: "smooth" });
+        else if (m.dataset.restore === "0" || !s.restore(m.dataset.key)) a.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
       else if (++tries < 60) setTimeout(tick, 100);
     };
     tick();
