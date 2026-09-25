@@ -227,7 +227,8 @@ with st.container(key="course_card"):
     shown = st.session_state.setdefault("steps_shown", {})
     fresh = steps.just_completed(shown.get(sel_key), plan)
     shown[sel_key] = [p["completed"] for p in plan]
-    with st.container(key="lesson_steps", horizontal=True):
+    # arriving on the page, the completed lessons fill one after another
+    with st.container(key="lesson_steps_flow" if progress_bar.entering() else "lesson_steps", horizontal=True):
         for k, step in enumerate(steps.states(plan, i)):
             name = (f"step_{k}_{step['state']}" + ("_viewing" if step["viewing"] else "")
                     + ("_fresh" if k in fresh else ""))
