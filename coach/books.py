@@ -707,7 +707,7 @@ def resume_message(book: dict, today: date) -> str:
         )
     return (
         f"{book['title']}, Day {day}: {day_description(book, day)}, about {pages} pages. "
-        "When you've read it, press the button below or just tell me."
+        "When you've read it, press the button above or just tell me."
     )
 
 

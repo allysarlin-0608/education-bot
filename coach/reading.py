@@ -1,7 +1,7 @@
 """Reading (part 4.3): the book tracker on the Reading page."""
 import streamlit as st
 
-from coach import books, core, llm, place, progress_bar, tokens, ui
+from coach import books, core, llm, place, progress_bar, shelf, tokens, ui
 
 SWITCH_MESSAGE = "OK, let's set up a new book. "
 RESTART_MESSAGE = "OK, let's start over. "
@@ -17,6 +17,7 @@ def render(log, today):
     book = st.session_state.get("book_draft") or books.current_book(log["books"])
     if book is None:
         _render_bookshelf_start(log, today)
+        _render_shelf(log, today)
         return
     if book["status"] == "reading" and today.isoformat() < book["started_on"]:
         # A date before the book started: no progress to show for it.
@@ -25,17 +26,24 @@ def render(log, today):
         return
 
     chat = _chat(book, today)
-    _render_header(book)
+    if book["status"] == "reading":
+        _render_now_reading(log, book, chat, today)
+    else:
+        _render_header(book)
     for message in chat:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     reply_spot = st.container()           # a new message and its answer appear here, under the others
+    if st.session_state.pop("book_follow", False):
+        # pressed "I've finished today's reading" above: go to the coach's question
+        n = st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
+        with reply_spot:
+            st.html(place.follow(n), unsafe_allow_javascript=True)
 
     if book["status"] == "planning":
         _render_plan_controls(log, book, chat, today)
-    elif book["status"] == "reading":
-        _render_reading_controls(log, book, chat, today)
     _render_other_options(log, book, today)
+    _render_shelf(log, today)
 
     _render_retry(log, book, chat, today)
     # stays at the bottom of the screen (sticky, see style.py); not Streamlit's
@@ -145,39 +153,47 @@ def _render_header(book):
     if not book["title"]:
         st.markdown("### A new book")
         return
-    st.markdown(f"### {book['title']}")
-    if book["status"] == "reading":
-        reading_days = [d for d in range(1, books.DAYS + 1) if book["plan"][d - 1]]
-        done = len([d for d in reading_days if str(d) in book["checks"]])
-        progress_bar.render(f"book_{book['id']}", "Reading days confirmed", done, len(reading_days),
-                            label="Reading progress", compact=True, noun="reading day")
+    st.markdown(f"### {book['title']}")        # (a book being read has its own block: _render_now_reading)
+
+
+def _render_now_reading(log, book, chat, today):
+    """Currently reading: the book, its fourteen days as a thin line, today's
+    reading and the button to say it's done."""
+    with st.container(key="now_reading"):
+        st.html('<div class="bk-label">Currently reading</div>'
+                f'<div class="bk-now"><span class="bk-now-title">{shelf._e(book["title"])}</span>'
+                + (f'<span class="bk-now-author">{shelf._e(book["author"])}</span>' if book.get("author") else "")
+                + "</div>" + shelf.line_html(book, flowing=progress_bar.entering()) + shelf.today_html(book, today))
+        _render_reading_controls(log, book, chat, today)
         with st.expander("14-day plan"):
             st.markdown(books.plan_table(book))
 
 
 def _render_bookshelf_start(log, today):
-    finished = [b for b in log["books"] if b["status"] == "finished"]
-    last = finished[-1] if finished else None
-    if last:
-        st.markdown(f"### You finished {last['title']}")
-        if last.get("final_summary"):
-            with st.chat_message("assistant"):
-                st.markdown(last["final_summary"])
-        else:
+    """No book being read: one line and the way to start one."""
+    with st.container(key="now_reading"):
+        st.html('<div class="bk-label">Currently reading</div>')
+        finished = [b for b in log["books"] if b["status"] == "finished"]
+        last = finished[-1] if finished else None
+        if last and not last.get("final_summary"):
+            # the wrap-up of the book just finished didn't come through: offer it again
             st.warning(st.session_state.get("book_summary_error") or llm.FAILED)
             if st.button("Retry", key=f"summary_retry_{last['id']}"):
                 if _write_final_summary(log, last, today):
                     st.rerun()
-        label = "Plan the next book"
-    else:
-        st.markdown(
-            "Reading works as a 14-day tracker: we split a book into 14 days together, "
-            "then each day you read your section and come back to talk about it."
-        )
-        label = "Start a new book"
-    if st.button(label, type="primary", use_container_width=True):
-        _start_new_book(log, today, intro=None)
-        st.rerun()
+        st.markdown("Nothing on the go. We split a book into 14 days together, then each day you read "
+                    "your part and come back to talk about it.")
+        if st.button("Start a new book", type="primary", use_container_width=True):
+            _start_new_book(log, today, intro=None)
+            st.rerun()
+
+
+def _render_shelf(log, today):
+    """Books finished or stopped, most recent first; a book finished today
+    opens on its own, with its wrap-up."""
+    st.markdown("#### Bookshelf")
+    just = next((b["id"] for b in shelf.on_shelf(log["books"]) if b.get("finished_on") == today.isoformat()), "")
+    st.html(shelf.shelf_html(log["books"], open_id=just))
 
 
 def _start_new_book(log, today, intro):
@@ -322,13 +338,11 @@ def _render_reading_controls(log, book, chat, today):
             _set_awaiting(book, None)
             _say(chat, "No problem. Tell me when you're ready.")
             st.rerun()
-    elif day and not books.is_open(book, day, today):
-        opens = books.opens_on(book, day)
-        st.caption(f"Day {day} opens on {opens:%B} {opens.day}.")
-    elif day:
-        if st.button(f"I've read Day {day}", type="primary", use_container_width=True):
+    elif day and books.is_open(book, day, today):      # (otherwise the line above says when it opens)
+        if st.button("I've finished today's reading", type="primary", use_container_width=True):
             chat.append({"role": "user", "content": f"I've read Day {day}."})
             _start_check(book, chat, day)
+            st.session_state.book_follow = True
             st.rerun()
 
 
