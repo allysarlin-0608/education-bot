@@ -75,6 +75,8 @@ def run_followup(i, text):
     slot = entry["lessons"][i]
     chat = get_chat(slot)
     chat.append({"role": "user", "content": text})
+    n = st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
+    st.html(place.follow(n), unsafe_allow_javascript=True)      # the page follows her question
     with st.chat_message("user"):
         st.markdown(text)
     reply, error = llm.stream_reply(
@@ -87,6 +89,7 @@ def run_followup(i, text):
     chat.append({"role": "assistant", "content": core.finalize_reply(reply, lesson=False, topic=topic)})
     slot["followups"] = chat[2:]               # everything after the lesson
     ui.save_entry(log, entry)
+    st.session_state.coach_scroll = place.LATEST       # and stays on it after the redraw
     st.rerun()                                 # show the checked text, not the raw stream
 
 
@@ -250,7 +253,7 @@ with st.container(key="jump_button"):
 # once the page has redrawn.
 scroll_to = st.session_state.pop("coach_scroll", "")
 st.html(place.html(chat_key(plan[i]), scroll_to, f"Lesson {plan[i]['n']}:" if scroll_to else "",
-                   st.session_state.get("coach_scroll_n", 0)),
+                   st.session_state.get("coach_scroll_n", 0), restore=scroll_to != place.LATEST),
         unsafe_allow_javascript=True)
 
 slot = plan[i]
@@ -276,12 +279,16 @@ if not chat:
 # ============================================================
 # LESSON + CHAT
 # ============================================================
-for k, message in enumerate(chat[1:]):         # the kickoff line is shown as the heading
+last_question = max((k for k, m in enumerate(chat) if k > 1 and m["role"] == "user"), default=None)
+for k, message in enumerate(chat[1:], start=1):   # the kickoff line is shown as the heading
+    if k == last_question:
+        st.html(place.latest_anchor())
     with st.chat_message(message["role"]):
-        if k == 0:
+        if k == 1:
             lesson_view.render(message["content"], topic, key=chat_key(slot))  # cards, tables and diagrams
         else:
             st.markdown(message["content"])
+reply_spot = st.container()     # a new question and its answer appear here, under the others
 
 st.divider()
 entry = day_entry()
@@ -467,11 +474,12 @@ with st.expander("My thoughts on the question to explore (optional, the coach pi
             ui.show_pending_error()
 
 show_retry(slot, ("followup",))
-# The chat box sits in the page, not pinned to the bottom of the screen:
-# a pinned one makes Streamlit keep the page scrolled to the bottom, so
-# coming back to Today would jump to the end instead of the top.
-with st.container():
+# The chat box stays at the bottom of the screen wherever she has scrolled
+# (it sticks there with CSS). It isn't Streamlit's own bottom bar: that one
+# keeps the page scrolled to the end, so Today wouldn't open at the top.
+with st.container(key="chat_dock"):
     prompt = st.chat_input(f"Ask about Lesson {slot['n']}, report your progress, or just talk it through…")
 if prompt is not None and prompt.strip():
     st.session_state.coach_retry = None
-    run_followup(i, prompt)
+    with reply_spot:
+        run_followup(i, prompt)

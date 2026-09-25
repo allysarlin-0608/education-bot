@@ -1,7 +1,7 @@
 """Reading (part 4.3): the book tracker on the Reading page."""
 import streamlit as st
 
-from coach import books, core, llm, progress_bar, tokens, ui
+from coach import books, core, llm, place, progress_bar, tokens, ui
 
 SWITCH_MESSAGE = "OK, let's set up a new book. "
 RESTART_MESSAGE = "OK, let's start over. "
@@ -29,6 +29,7 @@ def render(log, today):
     for message in chat:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+    reply_spot = st.container()           # a new message and its answer appear here, under the others
 
     if book["status"] == "planning":
         _render_plan_controls(log, book, chat, today)
@@ -37,16 +38,21 @@ def render(log, today):
     _render_other_options(log, book, today)
 
     _render_retry(log, book, chat, today)
-    with st.container():                  # in the page, so the page opens at the top
+    # stays at the bottom of the screen (sticky, see style.py); not Streamlit's
+    # own bottom bar, which would keep the page scrolled to the end
+    with st.container(key="chat_dock"):
         text = st.chat_input(_placeholder(book))
     if text is None or not text.strip():
         return
     st.session_state.book_retry = None
-    _handle_message(log, book, chat, text.strip(), today)
+    with reply_spot:
+        _handle_message(log, book, chat, text.strip(), today)
 
 
 def _handle_message(log, book, chat, text, today):
     chat.append({"role": "user", "content": text})
+    n = st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
+    st.html(place.follow(n), unsafe_allow_javascript=True)      # the page follows her message
     with st.chat_message("user"):
         st.markdown(text)
     if book["status"] == "setup":
