@@ -41,53 +41,51 @@ CSS = f"""
   --outline: light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.7));
   --selection: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.22));
 
-  /* glass: clear optical glass, not a frosted panel. It has almost no
-     colour of its own and no blur: what's behind it stays sharp and fully
-     visible. It shows itself the way real glass does: where it floats over
-     moving content, that content bends slightly near its rounded rim (the
-     lg-refract filter, coach/glass.py); everywhere, the faintest catch of
-     light on the upper edge and a barely-there change where the glass
-     begins, never a drawn border, a glow or a drop shadow. */
-  --glass: light-dark(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.012));
-  --glass-strong: light-dark(rgba(0, 0, 0, 0.018), rgba(255, 255, 255, 0.035));
-  --glass-faint: transparent;
+  /* glass: thin, lightly frosted, physically curved. What's behind stays
+     clearly visible and recognizable, just softened (a light frost, never
+     milky or cloudy); the rim bends it a little more, diffuses it a little
+     more and gathers a trace of light, which is what gives the glass its
+     rounded, slightly thick edge. Only greys; no colour, no stroke, no glow. */
+  --glass: light-dark(rgba(0, 0, 0, 0.012), rgba(255, 255, 255, 0.028));
+  --glass-strong: light-dark(rgba(0, 0, 0, 0.026), rgba(255, 255, 255, 0.05));
+  --glass-faint: light-dark(rgba(0, 0, 0, 0.006), rgba(255, 255, 255, 0.016));
   --glass-edge: transparent;
   --glass-edge-strong: transparent;
   --glass-edge-soft: transparent;
   --glass-edge-bubble: transparent;
   --glass-edge-circle: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.36));
-  --hilite: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.12));
-  --hilite-soft: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.08));
-  --shadow: transparent;
-  --glass-blur: none;                        /* no frosting anywhere */
-  /* glass over moving content: its rounded rim pulls in and compresses
-     what lies just beyond it, like the edge of a thick clear lens, and the
-     centre stays perfectly clear. The chat box also quiets what passes
-     behind it a little, so what she types stays readable. (Dark theme: see
-     [data-scheme="dark"] below.) */
-  --glass-optics: url(#lg-refract);
-  --glass-optics-legible: url(#lg-refract) contrast(0.25) brightness(1.65);
-  /* floating glass: a thin bright rim where light catches the edge, and the
-     softest shadow beneath */
-  --rim:
-    inset 0 0 0 1px light-dark(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.08)),
-    inset 0 1px 0 light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.16)),
-    inset 0 0 0 1.5px light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.03));
+  --hilite: light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.14));
+  --hilite-soft: light-dark(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.1));
+  --shadow: light-dark(rgba(0, 0, 0, 0.035), rgba(0, 0, 0, 0.5));
+  /* the frost: light, over the whole surface. Where the browser can (Chromium,
+     marked by coach/glass.py) the lg-refract filter does it and adds the rim;
+     elsewhere a plain light blur. The chat box also quiets what passes behind
+     it a little, so what she types stays readable. Dark theme: see below. */
+  --glass-blur: blur(1.3px);
+  --glass-optics: blur(1.4px);
+  --glass-optics-legible: blur(2px) contrast(0.45) brightness(1.4);
+  /* thickness: a faint inner highlight along the top, the lower inner edge a
+     shade deeper, and a soft band just inside the rim; all low contrast */
   --optic:
-    inset 0 0.5px 0 var(--hilite-soft),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.055)),
-    inset 0 0 8px -5px light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.07));
+    inset 0 1px 1px -0.5px var(--hilite-soft),
+    inset 0 -1px 1px -0.5px light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.04)),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.05)),
+    inset 0 0 14px -7px light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.08)),
+    0 1px 2px var(--shadow);
   --optic-strong:
-    inset 0 0.5px 0 var(--hilite),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.055), rgba(255, 255, 255, 0.075)),
-    inset 0 0 10px -5px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.09));
+    inset 0 1px 1px -0.5px var(--hilite),
+    inset 0 -1px 1px -0.5px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.05)),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.065)),
+    inset 0 0 18px -8px light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.1)),
+    0 1px 3px var(--shadow);
+  --rim: var(--optic-strong);
   /* floating glass stands a hair off the page: the softest contact shadow */
-  --lift: 0 6px 22px -10px light-dark(rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.7));
+  --lift: 0 8px 26px -14px light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.8));
   --glass-depth: var(--optic-strong);
   --glass-depth-soft: var(--optic);
 
   /* geometry */
-  --radius-small: 12px; --radius-medium: 16px; --radius-large: 24px; --radius-pill: 999px;
+  --radius-small: 16px; --radius-medium: 24px; --radius-large: 28px; --radius-pill: 999px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
   --control: 44px;
@@ -103,14 +101,25 @@ CSS = f"""
 ::selection {{ background: var(--selection); color: var(--strong); }}
 
 /* the glass filters for the dark theme (coach/glass.py marks the page) */
-:root[data-scheme="dark"] {{ --glass-optics-legible: url(#lg-refract) brightness(0.45); }}
+:root[data-scheme="dark"] {{ --glass-optics-legible: blur(2px) brightness(0.5); }}
+:root[data-refract] {{
+  --glass-optics: url(#lg-refract);
+  --glass-optics-legible: url(#lg-refract) blur(0.6px) contrast(0.45) brightness(1.4);
+}}
+:root[data-refract][data-scheme="dark"] {{ --glass-optics-legible: url(#lg-refract) blur(0.6px) brightness(0.5); }}
+
+/* corners: generous and continuous, the curve easing into the straight edge
+   (a superellipse where the browser can draw one) */
+.stButton button, .stFormSubmitButton button, [data-testid="stChatInput"], [class*="st-key-lcard_"],
+[data-testid="stChatMessage"], .st-key-day_done, [data-testid="stToast"], [data-trigger],
+.cal-day {{ corner-shape: superellipse(1.6); }}
 
 /* ---------- chrome ---------- */
 [data-testid="stDecoration"], footer,
 [data-testid="stHeaderActionElements"] {{ display: none !important; }}
 [data-testid="stHeader"] {{
   background: var(--glass);
-  backdrop-filter: var(--glass-optics);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-optics);
 }}
 [data-testid="stSidebar"] {{
   background: var(--env);                /* a plain surface, so the page links stay readable over the page on a phone */
@@ -308,7 +317,7 @@ CSS = f"""
   min-height: 56px; box-sizing: border-box;
   border-radius: var(--radius-large) !important;
   background: var(--glass) !important; border: none !important;
-  backdrop-filter: var(--glass-optics-legible);
+  -webkit-backdrop-filter: var(--glass-optics-legible); backdrop-filter: var(--glass-optics-legible);
   box-shadow: var(--rim), var(--lift);
 }}
 [data-testid="stChatInput"] > div, [data-testid="stChatInput"] textarea {{ background: transparent !important; border: none !important; }}
