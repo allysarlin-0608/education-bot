@@ -105,7 +105,7 @@ CSS = f"""
 /* ---------- page ---------- */
 .stMainBlockContainer {{
   max-width: 720px; padding: var(--space-8) var(--space-5) var(--space-7);
-  animation: arrive var(--t-space) var(--ease) both;
+  animation: arrive var(--t-space) var(--ease) backwards;   /* not "both": a kept transform would trap the floating button */
 }}
 @keyframes arrive {{
   from {{ opacity: 0; transform: translateY(10px); }}
@@ -305,23 +305,19 @@ CSS = f"""
 [data-testid="stProgress"] [role="progressbar"],
 [data-testid="stProgress"] [role="progressbar"] div {{ height: 2px !important; border-radius: 1px; }}
 
-/* ---------- "Jump to current progress" and where it lands ---------- */
-.jump {{
-  display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 var(--space-4);
-  border-radius: var(--radius-pill); font-size: 0.8125rem; font-weight: 500; text-decoration: none !important;
-  color: var(--label) !important; background: var(--glass-faint); box-shadow: var(--optic);
-  transition: background-color var(--t-micro) var(--ease);
-}}
-.jump:hover {{ background: var(--glass-strong); }}
-/* the same pill when it's a button (reviewing an earlier lesson) */
+/* ---------- "Jump to current progress": floats at the side, and where it lands ---------- */
+.st-key-jump_button {{ position: fixed; right: var(--space-4); top: 50%; z-index: 50; width: auto !important; transform: translateY(-50%); }}
 .st-key-jump_button button {{
-  min-height: 36px; padding: 0 var(--space-4); border: none !important; border-radius: var(--radius-pill);
+  width: 44px; height: 44px; min-height: 44px; padding: 0; border: none !important; border-radius: 50%;
   color: var(--label) !important; background: var(--glass-faint) !important; box-shadow: var(--optic);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   transition: background-color var(--t-micro) var(--ease);
 }}
-.st-key-jump_button button p {{ font-size: 0.8125rem; font-weight: 500; }}
 .st-key-jump_button button:hover {{ background: var(--glass-strong) !important; }}
-.jump:focus-visible {{ outline: 1px solid var(--outline); outline-offset: 2px; }}
+.st-key-jump_button button:focus-visible {{ outline: 1px solid var(--outline); outline-offset: 2px; }}
+.st-key-jump_button button [data-testid="stMarkdownContainer"] {{   /* icon only; the name stays for screen readers */
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}}
 .jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
 [data-testid="stElementContainer"]:has(#coach-place) {{ display: none; }}     /* the scroll memory, no box */
 [data-testid="stElementContainer"]:has(.jump-anchor) {{ margin-bottom: calc(-1 * var(--space-5)); }}
