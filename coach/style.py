@@ -332,24 +332,16 @@ CSS = f"""
 [data-testid="stChatInput"] {{
   min-height: 56px; box-sizing: border-box;
   border-radius: var(--radius-large) !important; border: none !important;
-  /* the same clear glass as the header (its fill and its refraction at the
-     rim); what passes behind is only quieted a little, so her text reads */
+  /* exactly the header's glass: the same fill and the same filter (the
+     refraction where the browser can, the light frost elsewhere), focused
+     or not. Only a hairline outline, so she can see where the box is. */
   background: var(--glass) !important;
-  -webkit-backdrop-filter: var(--glass-optics-legible); backdrop-filter: var(--glass-optics-legible);
-  box-shadow:
-    inset 0 0.5px 0 light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1)),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.085), rgba(255, 255, 255, 0.085)),
-    0 1px 2px light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.5)),
-    0 10px 30px -14px light-dark(rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.9));
-  transition: box-shadow 220ms var(--ease), background-color 220ms var(--ease);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-optics);
+  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
+  transition: box-shadow 220ms var(--ease);
 }}
 [data-testid="stChatInput"]:focus-within {{
-  background: var(--glass-strong) !important;
-  box-shadow:
-    inset 0 0.5px 0 light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.12)),
-    inset 0 0 0 1px light-dark(rgba(0, 0, 0, 0.16), rgba(255, 255, 255, 0.18)),
-    0 1px 2px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.5)),
-    0 14px 36px -14px light-dark(rgba(0, 0, 0, 0.26), rgba(0, 0, 0, 0.95));
+  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.28), rgba(255, 255, 255, 0.28));
 }}
 [data-testid="stChatInput"] > div, [data-testid="stChatInput"] textarea {{ background: transparent !important; border: none !important; }}
 [data-testid="stChatInput"] textarea {{ color: var(--label) !important; caret-color: var(--label); }}
