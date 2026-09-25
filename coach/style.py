@@ -104,7 +104,7 @@ CSS = f"""
 
 /* ---------- page ---------- */
 .stMainBlockContainer {{
-  max-width: 720px; padding: var(--space-8) var(--space-5) 160px;
+  max-width: 720px; padding: var(--space-8) var(--space-5) var(--space-7);
   animation: arrive var(--t-space) var(--ease) both;
 }}
 @keyframes arrive {{
@@ -323,6 +323,7 @@ CSS = f"""
 .st-key-jump_button button:hover {{ background: var(--glass-strong) !important; }}
 .jump:focus-visible {{ outline: 1px solid var(--outline); outline-offset: 2px; }}
 .jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
+[data-testid="stElementContainer"]:has(#coach-place) {{ display: none; }}     /* the scroll memory, no box */
 [data-testid="stElementContainer"]:has(.jump-anchor) {{ margin-bottom: calc(-1 * var(--space-5)); }}
 html {{ scroll-behavior: smooth; }}
 [data-testid="stAppScrollToBottomContainer"], [data-testid="stMain"] {{ scroll-behavior: smooth; }}
@@ -392,7 +393,7 @@ html {{ scroll-behavior: smooth; }}
 
 /* ---------- small screens: recompose ---------- */
 @media (max-width: 640px) {{
-  .stMainBlockContainer {{ padding: 88px var(--space-4) 160px; }}
+  .stMainBlockContainer {{ padding: 88px var(--space-4) var(--space-7); }}
   .stApp h2 {{ font-size: 1.875rem; }}
   .stApp h3 {{ font-size: 1.4375rem; }}
   .stApp h4, [class*="st-key-lcard_"] .lcard-title {{ font-size: 1.1875rem; }}
