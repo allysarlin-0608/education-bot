@@ -5,7 +5,7 @@ def test_filter_is_there_and_subtle():
     svg = glass.defs()
     assert 'id="lg-refract"' in svg
     assert svg.count("<feDisplacementMap") == 2            # one pass per axis
-    assert f'scale="{glass.SCALE}"' in svg and glass.SCALE <= 32  # at most ±16px, at the rim only
+    assert f'scale="{glass.SCALE}"' in svg and glass.SCALE <= 20  # a subtle bend, at the rim only
 
 
 def test_centre_stays_clear():
@@ -23,7 +23,10 @@ def test_script_adds_the_filter_once():
     assert "<svg" not in script and "<filter" not in script  # Streamlit drops a script with tags in it
 
 
-def test_no_frosting_left_in_the_stylesheet():
+def test_frost_stays_light():
+    import re
     css = style.stylesheet()
-    assert "blur(" not in css
     assert "url(#lg-refract)" in css
+    blurs = [float(v) for v in re.findall(r"blur\(([\d.]+)px\)", css)]
+    assert blurs and max(blurs) <= 2.5                     # lightly frosted, never heavy
+    assert glass.FROST <= 2 and glass.HAZE <= 4
