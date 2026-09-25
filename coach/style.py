@@ -587,7 +587,9 @@ LIQUID = """
   -webkit-mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
           mask-image: linear-gradient(180deg, transparent, #000 9%, #000 91%, transparent);
 }
-.rd.rolling .rd-d::before { animation: rd-roll 600ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* all reels start together; each has its own duration (--t, by distance),
+   so they come to rest one after another; smooth ease-out, no overshoot */
+.rd.rolling .rd-d::before { animation: rd-roll var(--t, 600ms) cubic-bezier(0.25, 0.75, 0.3, 1) both; }
 @keyframes rd-roll {
   from { transform: translateY(calc(var(--a) * -1.1em)); }
   to   { transform: translateY(calc(var(--b) * -1.1em)); }

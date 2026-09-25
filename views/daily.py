@@ -173,7 +173,8 @@ with st.sidebar:
 # TODAY'S TOPIC: fixed by the weekly schedule (Reading has its own page)
 # ============================================================
 topic = core.scheduled_topic(today)
-st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
+st.markdown("## " + progress_bar.rolled("today_date", f"{core.weekday_name(today)}, {today:%B} {today.day}"),
+            unsafe_allow_html=True)
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
 
@@ -236,7 +237,8 @@ with st.container(key=f"course_card_{motion}"):
 slot = plan[i]
 if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit
     st.markdown(f"#### {slot['unit']}")
-st.markdown(f"### Lesson {slot['n']}: {slot['title']}")
+st.markdown("### " + progress_bar.rolled(f"lesson_title_{chat_key(slot)}", f"Lesson {slot['n']}: {slot['title']}"),
+            unsafe_allow_html=True)
 
 chat = get_chat(slot)
 if not chat:
@@ -379,7 +381,8 @@ st.markdown("#### Quiz")
 q = slot.get("quiz")
 if slot["completed"]:
     if q and quiz.passed(q.get("score")):
-        st.markdown(f"**Passed with {q['score']}%** · {quiz.points(q)} points.")
+        st.markdown("**" + progress_bar.rolled(f"quiz_pass_{q['id']}", f"Passed with {q['score']}%") + "** · "
+                    + progress_bar.rolled(f"quiz_points_{q['id']}", f"{quiz.points(q)} points."), unsafe_allow_html=True)
         with st.expander("See the quiz"):     # this attempt's answers and explanations
             show_results(q)
     else:
@@ -403,8 +406,10 @@ elif q is not None and quiz.needs_grading(q):
         run_grading(i)
 elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
     if q is not None:               # the last attempt fell short
-        st.markdown(f"**{q['score']}%** · {quiz.points(q)} points. "
-                    f"You need {quiz.PASS_MARK}% to move on; a new set of questions is ready when you are.")
+        st.markdown("**" + progress_bar.rolled(f"quiz_score_{q['id']}", f"{q['score']}%") + "** · "
+                    + progress_bar.rolled(f"quiz_points_{q['id']}", f"{quiz.points(q)} points.")
+                    + f" You need {quiz.PASS_MARK}% to move on; a new set of questions is ready when you are.",
+                    unsafe_allow_html=True)
         with st.expander("See what you missed", expanded=True):
             show_results(q, missed_only=True)
     else:

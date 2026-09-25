@@ -105,7 +105,7 @@ def build_vertical(heading: str, subject: str, done: int, total: int, *, previou
         f'role="group" aria-label="Today">'
         f'<div class="lqv-tube" role="progressbar" aria-valuemin="0" aria-valuemax="100" '
         f'aria-valuenow="{pct}" aria-valuetext="{pct}% · {escape(count)}"><div class="lqv-liquid"></div></div>'
-        f'<div class="lqv-info"><div class="lqv-date">{escape(heading)}</div>'
+        f'<div class="lqv-info"><div class="lqv-date">{rolling.html(heading, old.get("date"))}</div>'
         f'<div class="lqv-subject">{escape(subject)}</div>'
         f'<div class="lqv-pct" aria-hidden="true">{rolling.html(pct, old.get("pct"))}<span class="unit">%</span></div>'
         f'<div class="lqv-count">{rolling.html(count, old.get("count"))}</div></div>'
@@ -115,7 +115,7 @@ def build_vertical(heading: str, subject: str, done: int, total: int, *, previou
 
 def render_vertical(key: str, heading: str, subject: str, done: int, total: int, where=st):
     pct = percent(done, total)
-    old = seen(key, pct=pct, count=today_count(done, total))
+    old = seen(key, pct=pct, count=today_count(done, total), date=heading)
     where.html(build_vertical(heading, subject, done, total, previous=_previous(key, pct), old=old))
 
 
@@ -130,3 +130,11 @@ def lesson_motion(key: str, done_flags: list) -> str:
         return "flow"
     new = [k for k, (was, now) in enumerate(zip(before, done_flags), 1) if now and not was]
     return f"tick{new[0]}" if len(new) == 1 else ("flow" if new else "still")
+
+
+def rolled(key: str, text: str) -> str:
+    """`text` as HTML whose numbers roll: up from 0 on arriving at the page
+    or when they first appear (a new quiz score), and from their last value
+    when they change."""
+    old = seen(key, t=text).get("t")
+    return rolling.html(text, rolling.zeroed(text) if old is None else old)
