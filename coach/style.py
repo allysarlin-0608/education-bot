@@ -487,65 +487,82 @@ LIQUID = """
 @keyframes lq-front { from { --p: var(--from); } to { --p: var(--to); } }
 @keyframes lq-surge { 0% { --surge: 0; } 30% { --surge: 1; } 100% { --surge: 0; } }
 
-/* Today's course card: the bar, then the day's lessons as five thin
-   segments. Nothing but lines, numbers and depth of colour:
-   completed: accent line, number with a small check; current: faint
-   accent line, bold number; locked: separator line, faded number;
-   the one open: a short mark under its number. */
+/* Today's course card: the day's lessons are the liquid line, as it
+   always was: one glass tube across the lessons, the liquid filling each
+   completed stretch and ending in a round meniscus. Under each stretch its
+   number: completed with a small check, current bold, locked faded, and a
+   short mark under the one open. */
 [class*="st-key-course_card"] { gap: 12px; }
-.st-key-lesson_steps {
-  --step-accent: light-dark(#4F86AE, #9CC6E3);
-  --step-sep: light-dark(rgba(60, 60, 67, 0.18), rgba(235, 235, 245, 0.18));
-  gap: 6px !important; flex-wrap: nowrap !important;
-}
-.st-key-lesson_steps > div { flex: 1 1 0 !important; min-width: 0; width: auto !important; }
-.st-key-lesson_steps [data-testid="stButton"], .st-key-lesson_steps button { width: 100%; }
-.st-key-lesson_steps button {
-  --a: 30%;                                   /* how strong the line is */
+[class*="st-key-lesson_steps"] { gap: 0 !important; flex-wrap: nowrap !important; }
+[class*="st-key-lesson_steps"] > div { flex: 1 1 0 !important; min-width: 0; width: auto !important; }
+[class*="st-key-lesson_steps"] [data-testid="stButton"], [class*="st-key-lesson_steps"] button { width: 100%; }
+[class*="st-key-lesson_steps"] button {
   position: relative; display: block; height: 44px; min-height: 44px;   /* a clear, invisible tap area */
   padding: 0 !important; margin: 0 !important; cursor: pointer;
   border: none !important; border-radius: 0 !important; background: transparent !important;
   box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
   transform: none !important; transition: none;
 }
-.st-key-lesson_steps button::before {          /* the line: its track colour, and the fill on top */
-  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 1.5px;
-  background-color: color-mix(in srgb, var(--step-accent) var(--a), transparent);
-  background-image: linear-gradient(var(--step-accent), var(--step-accent));
-  background-repeat: no-repeat; background-size: 0% 100%;
-  transition: background-color 0.3s ease-out;
+/* the glass, continuous across the lessons */
+[class*="st-key-lesson_steps"] button::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 9px;
+  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
+  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo),
+              inset 0 2px 3px -2px var(--lq-edge-near), inset 0 -2px 3px -2px var(--lq-edge-near);
 }
-.st-key-lesson_steps button > div {            /* the number, 8px under the line */
-  position: absolute; top: 11px; left: 0; right: 0; display: flex; justify-content: center; overflow: visible;
+[class*="st-key-lesson_steps"] > :first-child button::before { border-radius: 999px 0 0 999px; }
+[class*="st-key-lesson_steps"] > :last-child button::before { border-radius: 0 999px 999px 0; }
+/* the liquid in a completed lesson; the last completed one ends in a round meniscus */
+[class*="st-key-step_"] button::after {
+  content: ""; position: absolute; left: 0; top: 6.5px; height: 4px; width: 0;
+  background: var(--lq-liquid); opacity: 0.92; transition: opacity 0.3s ease-out;
 }
-.st-key-lesson_steps button [data-testid="stMarkdownContainer"] { line-height: 16px; }
-.st-key-lesson_steps button p {
-  display: block; margin: 0; font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; color: var(--label-2);
-  transition: color 0.3s ease-out;
+[class*="st-key-lesson_steps"] > :first-child button::after { border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
+[class*="st-key-step_"][class*="_completed"] button::after { width: 100%; }
+[class*="st-key-step_"][class*="_completed"]:not(:has(+ [class*="_completed"])) button::after {
+  border-radius: 0 2.6px 2.2px 0 / 0 2px 2px 0;
 }
-.st-key-lesson_steps button:focus-visible { outline: 1px solid var(--outline); outline-offset: 2px; }
-/* completed */
-[class*="st-key-step_"][class*="_completed"] button::before { background-size: 100% 100%; }
-[class*="st-key-step_"][class*="_completed"] button p::after { content: "✓"; font-size: 10px; margin-left: 2px; }
-/* current */
-[class*="st-key-step_"][class*="_current"] button p { color: var(--label); font-weight: 600; }
-/* locked */
-[class*="st-key-step_"][class*="_locked"] button { cursor: default; }
-[class*="st-key-step_"][class*="_locked"] button::before { background-color: var(--step-sep); }
-[class*="st-key-step_"][class*="_locked"] button p { opacity: 0.35; }
-/* the one open */
-[class*="st-key-step_"][class*="_viewing"] button::after {
-  content: ""; position: absolute; top: 30px; left: 50%; width: 12px; height: 1px; margin-left: -6px; background: var(--label);
+[class*="st-key-lesson_steps"] > [class*="_completed"]:first-child:not(:has(+ [class*="_completed"])) button::after {
+  border-radius: 2px 2.6px 2.2px 2px / 2px 2px 2px 2px;
 }
-/* hover: the line 20% stronger (not on a locked lesson) */
 @media (hover: hover) {
-  [class*="st-key-step_"]:not([class*="_locked"]) button:hover { --a: 50%; }
+  [class*="st-key-step_"][class*="_completed"] button:hover::after { opacity: 1; }
 }
-/* a lesson just passed: its line fills from left to right */
-[class*="st-key-step_"][class*="_fresh"] button::before { animation: step-fill 0.6s ease-out both; }
-@keyframes step-fill { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+/* the number, 8px under the glass */
+[class*="st-key-lesson_steps"] button > div {
+  position: absolute; top: 21px; left: 0; right: 0; display: flex; justify-content: center; overflow: visible;
+}
+[class*="st-key-lesson_steps"] button [data-testid="stMarkdownContainer"] { line-height: 16px; }
+[class*="st-key-lesson_steps"] button p {
+  display: block; margin: 0; font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums;
+  color: var(--label-2); transition: color 0.3s ease-out;
+}
+[class*="st-key-lesson_steps"] button:focus-visible { outline: 1px solid var(--outline); outline-offset: 2px; }
+[class*="st-key-step_"][class*="_completed"] button p::after { content: "✓"; font-size: 10px; margin-left: 2px; }
+[class*="st-key-step_"][class*="_current"] button p { color: var(--label); font-weight: 600; }
+[class*="st-key-step_"][class*="_locked"] button { cursor: default; }
+[class*="st-key-step_"][class*="_locked"] button p { opacity: 0.35; }
+[class*="st-key-lesson_steps"] button [data-testid="stMarkdownContainer"] { overflow: visible !important; }
+[class*="st-key-lesson_steps"] button p { position: relative; }
+[class*="st-key-step_"][class*="_viewing"] button p::before {      /* 3px under the number */
+  content: ""; position: absolute; top: 19px; left: 50%; width: 12px; height: 1px; margin-left: -6px; background: var(--label);
+}
+/* motion: arriving on the page, the completed lessons fill one after another
+   (about a second in all); a lesson just passed fills on its own */
+@keyframes lq-fill { from { width: 0; } to { width: 100%; } }
+.st-key-lesson_steps_flow > :nth-child(1)[class*="_completed"] button::after { animation: lq-fill 200ms linear 0ms both; }
+.st-key-lesson_steps_flow > :nth-child(2)[class*="_completed"] button::after { animation: lq-fill 200ms linear 200ms both; }
+.st-key-lesson_steps_flow > :nth-child(3)[class*="_completed"] button::after { animation: lq-fill 200ms linear 400ms both; }
+.st-key-lesson_steps_flow > :nth-child(4)[class*="_completed"] button::after { animation: lq-fill 200ms linear 600ms both; }
+.st-key-lesson_steps_flow > :nth-child(5)[class*="_completed"] button::after { animation: lq-fill 200ms linear 800ms both; }
+.st-key-lesson_steps_flow > :nth-child(6)[class*="_completed"] button::after { animation: lq-fill 200ms linear 1000ms both; }
+.st-key-lesson_steps_flow > :nth-child(7)[class*="_completed"] button::after { animation: lq-fill 200ms linear 1200ms both; }
+.st-key-lesson_steps_flow > [class*="_completed"]:not(:has(+ [class*="_completed"])) button::after {
+  animation-duration: 420ms; animation-timing-function: cubic-bezier(0.3, 0.6, 0.25, 1);
+}
+[class*="st-key-step_"][class*="_fresh"] button::after { animation: lq-fill 700ms cubic-bezier(0.3, 0.6, 0.25, 1) both; }
 @media (prefers-reduced-motion: reduce) {
-  [class*="st-key-step_"][class*="_fresh"] button::before { animation: none; }
+  [class*="st-key-step_"] button::after { animation: none !important; }
 }
 
 /* all of today's lessons done: the summary card */
