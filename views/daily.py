@@ -1,6 +1,6 @@
 import streamlit as st
 
-from coach import core, curriculum, lesson_view, llm, progress_bar, quiz, tokens, ui
+from coach import core, curriculum, lesson_view, llm, place, progress_bar, quiz, tokens, ui
 
 log = st.session_state.coach_log
 
@@ -247,24 +247,11 @@ with st.container(key=f"course_card_{motion}"):
                 st.session_state.coach_scroll = target
                 st.rerun()
 
-if (scroll_to := st.session_state.pop("coach_scroll", None)):
-    # After "Jump to current progress" switched lessons: wait until this
-    # lesson is drawn and the page has stopped growing, then scroll there.
-    st.html(f"""<script>
-    (function () {{
-      const doc = window.parent.document, want = "Lesson {plan[i]['n']}:";
-      let last = "", calm = 0, tries = 0;
-      const tick = () => {{
-        const a = doc.getElementById("{scroll_to}");
-        const h = [...doc.querySelectorAll("h3")].some(x => x.innerText.startsWith(want));
-        const now = a && h ? a.getBoundingClientRect().top + ":" + doc.body.scrollHeight : "";
-        calm = now && now === last ? calm + 1 : 0; last = now;
-        if (calm >= 3) a.scrollIntoView({{behavior: "smooth", block: "start"}});
-        else if (++tries < 60) setTimeout(tick, 100);
-      }};
-      tick();
-    }})();
-    </script>""", unsafe_allow_javascript=True)
+# Remembers where she scrolled to in each lesson; right after the button
+# switched lessons it also takes her back there.
+scroll_to = st.session_state.pop("coach_scroll", "")
+st.html(place.html(chat_key(plan[i]), scroll_to, f"Lesson {plan[i]['n']}:" if scroll_to else ""),
+        unsafe_allow_javascript=True)
 
 slot = plan[i]
 if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit
