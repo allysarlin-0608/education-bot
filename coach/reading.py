@@ -12,18 +12,43 @@ def render(log, today):
     if store.books_error:
         st.warning(store.books_error)
         return
+    # Two parts of one page: the book she is reading on the left, the
+    # bookshelf on the right (one column on narrower screens, see style.py)
+    with st.container(key="read_main"):
+        now_col, shelf_col = st.columns([6, 5], gap="large")
+    with shelf_col:
+        _render_shelf(log, today)
+    with now_col:
+        talk = _render_current(log, today)
+    if talk is None:
+        return
+    book, chat, reply_spot = talk
+    # under both parts, so on a phone it stays at the bottom of the screen
+    # past the bookshelf too (sticky, see style.py); not Streamlit's own
+    # bottom bar, which would keep the page scrolled to the end
+    with st.container(key="chat_dock"):
+        text = st.chat_input(_placeholder(book))
+    if text is None or not text.strip():
+        return
+    st.session_state.book_retry = None
+    with reply_spot:
+        _handle_message(log, book, chat, text.strip(), today)
+
+
+def _render_current(log, today):
+    """The book she is reading (or setting up) and the talk about it.
+    Returns what the chat box below needs, or None when there is no talk."""
     # A book being set up or previewed lives only in this session; it is
     # written to the database when she presses 確認進度表.
     book = st.session_state.get("book_draft") or books.current_book(log["books"])
     if book is None:
         _render_bookshelf_start(log, today)
-        _render_shelf(log, today)
-        return
+        return None
     if book["status"] == "reading" and today.isoformat() < book["started_on"]:
         # A date before the book started: no progress to show for it.
         st.markdown(f"### {book['title']}")
         st.info(f"You started {book['title']} on {book['started_on']}, so there's no reading for this date yet.")
-        return
+        return None
 
     chat = _chat(book, today)
     if book["status"] == "reading":
@@ -43,18 +68,9 @@ def render(log, today):
     if book["status"] == "planning":
         _render_plan_controls(log, book, chat, today)
     _render_other_options(log, book, today)
-    _render_shelf(log, today)
 
     _render_retry(log, book, chat, today)
-    # stays at the bottom of the screen (sticky, see style.py); not Streamlit's
-    # own bottom bar, which would keep the page scrolled to the end
-    with st.container(key="chat_dock"):
-        text = st.chat_input(_placeholder(book))
-    if text is None or not text.strip():
-        return
-    st.session_state.book_retry = None
-    with reply_spot:
-        _handle_message(log, book, chat, text.strip(), today)
+    return book, chat, reply_spot
 
 
 def _handle_message(log, book, chat, text, today):
@@ -181,9 +197,9 @@ def _render_bookshelf_start(log, today):
             if st.button("Retry", key=f"summary_retry_{last['id']}"):
                 if _write_final_summary(log, last, today):
                     st.rerun()
-        st.markdown("Nothing on the go. We split a book into 14 days together, then each day you read "
-                    "your part and come back to talk about it.")
-        if st.button("Start a new book", type="primary", use_container_width=True):
+        st.markdown("No book in progress. We'll split a book into 14 days, then each day you read your part "
+                    "and come back to talk about it.")
+        if st.button("Start a new book", key="start_book"):
             _start_new_book(log, today, intro=None)
             st.rerun()
 
@@ -191,7 +207,7 @@ def _render_bookshelf_start(log, today):
 def _render_shelf(log, today):
     """Books finished or stopped, most recent first; a book finished today
     opens on its own, with its wrap-up."""
-    st.markdown("#### Bookshelf")
+    st.html('<div class="bk-label">Bookshelf</div>')    # the same quiet label as Currently reading
     just = next((b["id"] for b in shelf.on_shelf(log["books"]) if b.get("finished_on") == today.isoformat()), "")
     st.html(shelf.shelf_html(log["books"], open_id=just))
 

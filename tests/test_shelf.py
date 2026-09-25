@@ -70,3 +70,15 @@ def test_wrap_up_italics_and_rest_days_without_a_tick():
     assert "<em>simplicity</em>" in shelf._text("kept *simplicity* close")
     plan = [[1], [], [2]] + [[i] for i in range(3, 14)]
     assert 'class="bk-seg done rest"' in shelf.line_html(book(checks=(1, 3), plan=plan))
+
+
+def test_a_stopped_book_shows_the_days_read_and_folds_the_rest():
+    b = book("switched", checks=(1, 2, 3, 4, 5))
+    html = shelf.shelf_html([b])
+    assert html.count("<li class=") == 14 and html.count(" later") == 9
+    assert "9 days not read" in html and 'class="bk-close">Close<' in html
+
+
+def test_a_finished_book_folds_nothing():
+    html = shelf.shelf_html([book("finished", checks=range(1, 14), finished_on="2026-09-13")])
+    assert " later" not in html and "not read</span>" not in html

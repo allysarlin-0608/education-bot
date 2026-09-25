@@ -1077,18 +1077,84 @@ BOOKS = """
 /* a book opened: its fourteen days, what she wrote, whether it passed */
 .bk-open { padding: 0 16px 14px; }
 .bk-days { list-style: none; margin: 0 !important; padding: 0 !important; }
+/* a day: number, chapters and when it passed on one line; what she wrote
+   under them, as wide as the row. In a narrow shelf the date drops under
+   the chapters. */
+.bk-shelf { container-type: inline-size; }
 .bk-days li {
-  display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto; column-gap: 10px; align-items: baseline;
-  padding: 8px 0; font-size: 0.8125rem; line-height: 1.45; border-top: 0.5px solid var(--bk-sep); margin: 0;
+  display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto; grid-template-areas: "d r s" ". w w";
+  column-gap: 12px; align-items: baseline;
+  padding: 10px 0; font-size: 0.8125rem; line-height: 1.45; border-top: 0.5px solid var(--bk-sep); margin: 0;
+}
+.bk-d { grid-area: d; } .bk-r { grid-area: r; } .bk-s { grid-area: s; } .bk-days .bk-words { grid-area: w; }
+@container (max-width: 380px) {
+  .bk-days li { grid-template-columns: 3.4em minmax(0, 1fr); grid-template-areas: "d r" ". s" ". w"; }
+  .bk-days .bk-s { margin-top: 1px; }
 }
 .bk-d { color: var(--label-3); font-variant-numeric: tabular-nums; }
 .bk-r { color: var(--label); min-width: 0; }
 .bk-s { color: var(--label-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .bk-days li.rest .bk-r, .bk-days li.rest .bk-s, .bk-days li.unread .bk-s { color: var(--label-3); }
-.bk-words { margin: 3px 0 0 !important; color: var(--label-2); font-size: 0.8125rem; line-height: 1.5; }
+.bk-words { margin: 4px 0 0 !important; color: var(--label-2); font-size: 0.8125rem; line-height: 1.55; }
 .bk-wrap { border-top: 0.5px solid var(--bk-sep); padding-top: 10px; display: grid; gap: 4px; }
 .bk-wrap p, .bk-wrap li { font-size: 0.875rem; line-height: 1.6; margin: 0 0 6px; color: var(--label); }
 .bk-wrap ul { margin: 0 0 6px; padding-left: 1.2em; }
+
+/* ---------- the Reading page: one page in two parts ---------- */
+.stMainBlockContainer:has(.reading-page) { max-width: 1400px; }
+.page-sub {
+  margin: 0; font-size: 0.875rem; line-height: 1.5;
+  color: light-dark(rgba(60, 60, 67, 0.78), rgba(235, 235, 245, 0.6));   /* secondary, 4.5:1 or more on either ground */
+}
+.st-key-read_main { margin-top: var(--space-5); }
+.st-key-read_main [data-testid="stHorizontalBlock"] { gap: 72px !important; align-items: flex-start; }
+/* wide: the chat box belongs to the book, so it keeps to the left part's width */
+@media (min-width: 1024px) {
+  .stMainBlockContainer:has(.reading-page) [data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock) { width: calc((100% - 72px) * 6 / 11); }
+}
+.st-key-read_main [data-testid="stColumn"] { min-width: 0; }
+.st-key-read_main h4 { padding-top: 0 !important; }
+.st-key-read_main [data-testid="stColumn"]:last-child > [data-testid="stVerticalBlock"] { gap: 14px; }
+@media (max-width: 1023.98px) {       /* one column: the book, then the shelf */
+  .st-key-read_main [data-testid="stHorizontalBlock"] { flex-direction: column !important; gap: var(--space-7) !important; }
+  .st-key-read_main [data-testid="stColumn"] { width: 100% !important; flex: 1 1 auto !important; }
+}
+@media (max-width: 640px) {
+  .st-key-read_main { margin-top: var(--space-3); }
+  .st-key-read_main [data-testid="stHorizontalBlock"] { gap: var(--space-6) !important; }
+}
+
+/* no book: a quiet outlined action the size of its words (36px to the eye, 44px to the finger) */
+.st-key-start_book button {
+  position: relative; width: auto; min-height: 36px; height: 36px; padding: 0 16px !important;
+  border-radius: 999px; background: transparent !important; box-shadow: none !important;
+  border: 0.5px solid light-dark(rgba(60, 60, 67, 0.36), rgba(235, 235, 245, 0.3)) !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+.st-key-start_book button::after { content: ""; position: absolute; inset: -4px -2px; }
+.st-key-start_book button p { font-size: 0.875rem; color: var(--label); }
+.st-key-start_book button:active { background: var(--wash) !important; }
+
+/* an open book: its title row offers Close (the whole row closes it) */
+.bk-side { flex: none; display: flex; align-items: baseline; gap: 14px; }
+.bk-close { display: none; font-size: 13px; color: var(--label-2); }
+.bk-book[open] > summary .bk-close { display: inline; }
+/* the days not read wait behind one quiet line; opened, the whole fortnight shows in place */
+.bk-open:not(:has(> .bk-more[open])) .bk-days li.later { display: none; }
+.bk-days li.later { transition: opacity 240ms var(--ease), display 240ms allow-discrete; }
+@starting-style { .bk-open:has(> .bk-more[open]) .bk-days li.later { opacity: 0; } }
+.bk-more > summary {
+  display: flex; align-items: center; min-height: 44px; cursor: pointer; list-style: none;
+  font-size: 0.8125rem; color: var(--label-2); border-top: 0.5px solid var(--bk-sep);
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.bk-more > summary::-webkit-details-marker { display: none; }
+.bk-more > summary::marker { content: ""; }
+.bk-more > summary:active { color: var(--label); }
+@media (hover: hover) { .bk-more > summary:hover { color: var(--label); } }
+.bk-more-hide, .bk-more[open] .bk-more-show { display: none; }
+.bk-more[open] .bk-more-hide { display: inline; }
+@media (prefers-reduced-motion: reduce) { .bk-days li.later { transition: none; } }
 
 /* Progress, Subjects: Reading is one line leading to its page */
 .st-key-subj_list [data-testid="stPageLink"] a {

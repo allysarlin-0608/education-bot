@@ -8,5 +8,6 @@ log = st.session_state.coach_log
 today = ui.today()
 
 st.markdown("## Reading")
-st.caption(f"{core.weekday_name(today)}, {today:%B} {today.day} · Read a little every day, then come back and talk about it.")
+st.markdown(f'<p class="page-sub reading-page">{core.weekday_name(today)}, {today:%B} {today.day} · '
+            "Read a little every day, then come back and talk about it.</p>", unsafe_allow_html=True)
 reading.render(log, today)
