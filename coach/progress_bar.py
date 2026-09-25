@@ -24,9 +24,10 @@ def entering() -> bool:
 
 def build(title: str, done: int, total: int, meta: str = "", *, previous=None,
           label: str = "Course progress", compact: bool = False, noun: str = "lesson",
-          bar: bool = True, left: str = None, old: dict = None) -> str:
+          bar: bool = True, left: str = None, old: dict = None, topic: str = None) -> str:
     """The block: label, title and percentage, then (with bar=True) the
-    liquid line and a count."""
+    liquid line and a count. For a subject, the title is the subject and
+    `topic` (the unit she is in) sits underneath it as the detail."""
     pct = percent(done, total)
     classes = ["lq"]
     if compact:
@@ -37,11 +38,16 @@ def build(title: str, done: int, total: int, meta: str = "", *, previous=None,
         classes.append("flowing")
     parts = [
         f'<section class="{" ".join(classes)}" style="--to:{pct};--from:{previous or 0}" '
-        f'role="group" aria-label="{escape(label)}">',
+        f'role="group" aria-label="{escape(label or title)}">',
         f'<div class="lq-label">{escape(label)}</div>',
         f'<div class="lq-head"><div class="lq-title">{escape(title)}</div>'
         f'<div class="lq-pct" aria-hidden="true">{rolling.html(pct, (old or {}).get("pct"))}<span class="unit">%</span></div></div>',
     ]
+    if not label:
+        parts.pop(1)
+    if topic:
+        parts.append(f'<div class="lq-topic"><span class="lq-topic-label">Topic</span>'
+                     f'<span class="lq-topic-name">{escape(topic)}</span></div>')
     if bar:
         parts += [
             f'<div class="lq-glass" role="progressbar" aria-valuemin="0" aria-valuemax="100" '

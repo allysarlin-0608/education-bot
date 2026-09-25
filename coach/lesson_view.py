@@ -97,3 +97,23 @@ def render(text: str, topic: str = None, key: str = "") -> None:
             _body(body, dark)
     for line in footer:
         st.caption(line)
+
+
+def render_tabs(text: str, topic: str = None, key: str = "") -> None:
+    """The same lesson, one section at a time: a tab per block (Topic, Key
+    Idea, ...), so reading an old lesson takes the height of one card, not
+    the whole lesson. Switching tabs doesn't rerun the page."""
+    dark = getattr(getattr(st.context, "theme", None), "type", "dark") != "light"
+    if topic and topic != "investing" and core.has_disclaimer(text):
+        text = core.DISCLAIMER_LINE.sub("", text)
+    footer = [line for line in (core.DISCLAIMER, core.CLOSING_LINE) if line in text]
+    for line in footer:
+        text = text.replace(line, "")
+    parts = [(title or "Intro", body) for title, body in blocks(text.strip()) if title or body.strip()]
+    if not parts:
+        return
+    for (title, body), tab in zip(parts, st.tabs([title for title, _ in parts])):
+        with tab:
+            _body(body, dark)
+    for line in footer:
+        st.caption(line)

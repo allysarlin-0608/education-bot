@@ -116,7 +116,7 @@ CSS = f"""
    (a superellipse where the browser can draw one) */
 .stButton button, .stFormSubmitButton button, [data-testid="stChatInput"], [class*="st-key-lcard_"],
 [data-testid="stChatMessage"], .st-key-day_done, [data-testid="stToast"], [data-trigger],
-.st-key-prog_day, [class*="st-key-cal_20"] button {{ corner-shape: superellipse(1.6); }}
+[class*="st-key-prog_day_"], [class*="st-key-reader_"], [class*="st-key-cal_20"] button {{ corner-shape: superellipse(1.6); }}
 
 /* ---------- chrome ---------- */
 [data-testid="stDecoration"], footer,
@@ -317,25 +317,44 @@ CSS = f"""
 [data-testid="stBottom"], [data-testid="stBottom"] > div, [data-testid="stBottomBlockContainer"] {{
   background: transparent !important;
 }}
+/* the chat box: a physical control resting just above the page. Readable
+   first: enough of a surface behind the text for clear contrast (still a
+   little see-through, with a controlled blur), a fine edge that catches the
+   light, and a soft shadow to lift it off the page. It answers her: a
+   touch firmer when focused, the send button fills once there is text,
+   and presses in a little when tapped. */
 [data-testid="stChatInput"] {{
   min-height: 56px; box-sizing: border-box;
-  border-radius: var(--radius-large) !important;
-  background: light-dark(var(--glass), transparent) !important; border: none !important;
-  -webkit-backdrop-filter: var(--glass-optics-legible); backdrop-filter: var(--glass-optics-legible);
-  /* on the dark page the chat box sits in the black with just a whisper of an edge */
+  border-radius: var(--radius-large) !important; border: none !important;
+  background: light-dark(rgba(255, 255, 255, 0.8), rgba(24, 24, 26, 0.8)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15); backdrop-filter: blur(18px) saturate(1.15);
   box-shadow:
-    inset 0 1px 1px -0.5px light-dark(var(--hilite), rgba(255, 255, 255, 0.06)),
-    inset 0 -1px 1px -0.5px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.02)),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.06)),
-    inset 0 0 18px -8px light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.03)),
-    var(--lift);
+    inset 0 0.5px 0 light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1)),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.085), rgba(255, 255, 255, 0.085)),
+    0 1px 2px light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.5)),
+    0 10px 30px -14px light-dark(rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.9));
+  transition: box-shadow 220ms var(--ease), background-color 220ms var(--ease);
+}}
+[data-testid="stChatInput"]:focus-within {{
+  background: light-dark(rgba(255, 255, 255, 0.9), rgba(28, 28, 30, 0.88)) !important;
+  box-shadow:
+    inset 0 0.5px 0 light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.12)),
+    inset 0 0 0 1px light-dark(rgba(0, 0, 0, 0.16), rgba(255, 255, 255, 0.18)),
+    0 1px 2px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.5)),
+    0 14px 36px -14px light-dark(rgba(0, 0, 0, 0.26), rgba(0, 0, 0, 0.95));
 }}
 [data-testid="stChatInput"] > div, [data-testid="stChatInput"] textarea {{ background: transparent !important; border: none !important; }}
+[data-testid="stChatInput"] textarea {{ color: var(--label) !important; caret-color: var(--label); }}
 [data-testid="stChatInput"] textarea::placeholder {{ color: var(--label-2); opacity: 1; }}
-[data-testid="stChatInputSubmitButton"] {{ border-radius: 50% !important; background: transparent !important; }}
+[data-testid="stChatInputSubmitButton"] {{
+  border-radius: 50% !important; background: transparent !important; color: var(--label-3) !important;
+  transition: background-color 180ms var(--ease), color 180ms var(--ease), transform 120ms var(--ease);
+}}
+[data-testid="stChatInputSubmitButton"]:not(:disabled) {{ background: var(--label) !important; color: var(--env) !important; }}
+[data-testid="stChatInputSubmitButton"]:not(:disabled):active {{ transform: scale(0.92); }}
 /* the chat box stays at the bottom of the screen while she scrolls; at the end of the page it sits in its place */
 [data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock), .st-key-chat_dock {{
-  position: sticky; bottom: var(--space-4); z-index: 40;
+  position: sticky; bottom: max(var(--space-4), env(safe-area-inset-bottom)); z-index: 40;   /* clear of the iPhone's home bar */
 }}
 /* on a page shorter than the screen it still sits at the bottom, not right under the text */
 .stMainBlockContainer:has(.st-key-chat_dock) {{ min-height: 100dvh; display: flex; flex-direction: column; box-sizing: border-box; }}
@@ -445,7 +464,13 @@ LIQUID = """
 }
 .lq-pct .unit { font-size: 0.55em; margin-left: 2px; color: var(--label-2); }
 .lq-meta { display: flex; justify-content: space-between; gap: 16px; font-size: 0.8125rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
+/* a subject's topic, under the subject: the unit she is in now */
+.lq-topic { display: flex; align-items: baseline; gap: 8px; min-width: 0; margin-top: -8px; }
+.lq-topic-label { flex: none; font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label-3); }
+.lq-topic-name { font-size: 0.875rem; color: var(--label-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lq.compact { gap: 10px; }
+.lq.compact .lq-topic { margin-top: -6px; }
+.lq:not(.compact) .lq-topic-name { white-space: normal; }
 .lq.compact .lq-title { font-size: 1.1875rem; }
 .lq.compact .lq-pct { font-size: 1.5rem; }
 
@@ -691,81 +716,107 @@ LIQUID = """
 
 PROGRESS = """
 <style>
-/* ---------- Progress: a wide page in two areas ----------
-   History (the month and the day picked) takes the wider left area, where
-   she is now (subjects, books) the right; the full list of sessions runs
-   below in as many columns as fit. The areas stack once the page is
-   narrower than about 760px, whatever the screen and sidebar. */
-.stMainBlockContainer:has(#progress-page) { max-width: 1240px; }
+/* ---------- Progress: three areas ----------
+   The month | the day picked, with every session under it | the subjects.
+   Wide: side by side, and each area scrolls on its own, so exploring one
+   never loses her place in another and the page itself barely scrolls.
+   Medium: the month and the day side by side, the subjects underneath in
+   two columns. Narrow: one run (month, day, subjects, sessions), with the
+   subjects as a row to swipe through. Sizes follow the page's own width
+   (container queries), so the sidebar being open or not is taken in. */
+.stMainBlockContainer:has(#progress-page) { max-width: 1440px; }
 [data-testid="stElementContainer"]:has(#progress-page) { display: none; }
-.st-key-prog_main { container-type: inline-size; margin-top: var(--space-3); }
-.st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { gap: clamp(32px, 5cqw, 64px) !important; align-items: flex-start; }
-/* one area under the other: the two columns open up into a single run so
-   where she is now (subjects, books) comes before the long list of sessions */
-@container (max-width: 760px) {
+.st-key-prog_main { container-type: inline-size; margin-top: var(--space-2); }
+.st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { gap: clamp(28px, 3.2cqw, 48px) !important; align-items: flex-start; }
+.st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] { min-width: 0; }
+
+@container (min-width: 1000px) {
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] {
+    position: sticky; top: 72px; max-height: calc(100dvh - 92px); overflow-y: auto; overscroll-behavior: contain;
+    padding: 6px 8px 40px 6px; margin: -6px -8px 0 -6px;
+    scrollbar-width: thin; scrollbar-color: var(--hair) transparent;
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
+  }
+}
+@container (min-width: 640px) and (max-width: 999.98px) {
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { flex-wrap: wrap !important; row-gap: var(--space-7) !important; }
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(1) { flex: 1 1 44% !important; width: auto !important; }
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(2) { flex: 1 1 48% !important; width: auto !important; }
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(3) { flex: 1 1 100% !important; width: 100% !important; }
+  .st-key-subj_list { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-7) !important; }
+}
+@container (max-width: 639.98px) {
   .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { flex-direction: column; gap: var(--space-4) !important; }
-  .st-key-prog_main [data-testid="stColumn"],
-  .st-key-prog_main [data-testid="stColumn"] > [data-testid="stVerticalBlock"] { display: contents; }
-  .st-key-prog_main [data-testid="stColumn"]:last-child > [data-testid="stVerticalBlock"] > * { order: 1; }
-  .st-key-prog_main [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > :is(
-    :has(.st-key-sessions_head), :has(.st-key-sessions_list), .st-key-sessions_more) { order: 2; }
-  .st-key-prog_main [data-testid="stColumn"]:last-child > [data-testid="stVerticalBlock"] > :first-child { margin-top: var(--space-5); }
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"], .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] > [data-testid="stVerticalBlock"] { display: contents; }
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(3) > [data-testid="stVerticalBlock"] > * { order: 1; }
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > :is(:has(.st-key-sessions_head), :has([class*="st-key-sessions_list_"]), .st-key-sessions_more) { order: 2; }
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"]:nth-child(3) > [data-testid="stVerticalBlock"] > :first-child { margin-top: var(--space-5); }
+  /* the subjects: a row of cards to swipe through instead of a long list */
+  .st-key-subj_list {
+    flex-direction: row !important; flex-wrap: nowrap !important; gap: 12px !important; overflow-x: auto;
+    scroll-snap-type: x mandatory; scroll-padding: 0 16px; margin: 0 -16px; padding: 4px 16px 12px;
+    scrollbar-width: none;
+  }
+  .st-key-subj_list::-webkit-scrollbar { display: none; }
+  .st-key-subj_list > * { flex: 0 0 min(80%, 300px) !important; width: auto !important; scroll-snap-align: start; }
+  .st-key-subj_list .lq { margin: 0; padding: 14px 16px 12px; border-radius: 20px; background: var(--glass); box-shadow: var(--optic); }
+  .st-key-subj_list .lq-meta { flex-direction: column; gap: 2px; font-size: 0.75rem; }
 }
 
-/* the month: header with its summary and the way to other months */
+/* ---------- the month ---------- */
 .st-key-cal_head { flex-direction: row !important; justify-content: space-between; flex-wrap: nowrap !important; }
 .st-key-cal_head > div:first-child { flex: 1 1 auto !important; min-width: 0; }
 .st-key-cal_head h4 { padding: 0 !important; margin: 0; }
 .st-key-cal_nav { flex: 0 0 auto !important; width: auto !important; gap: 4px !important; flex-direction: row !important; }
 .st-key-cal_nav > div { flex: 0 0 auto !important; width: auto !important; }
 .st-key-cal_nav button { min-height: 36px; height: 36px; padding: 0 14px !important; }
-@container (max-width: 520px) { .st-key-cal_nav button { padding: 0 10px !important; } }
 .st-key-cal_nav button p { font-size: 0.9375rem; }
+@container (max-width: 520px) { .st-key-cal_nav button { padding: 0 10px !important; } }
+.cal-summary { font-size: 0.8125rem; color: var(--label-3); }
 
-/* weekday names, each with its subject */
 .cal-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: -8px; }
 .cal-week span { display: grid; justify-items: center; gap: 1px; min-width: 0; }
 .cal-week b { font-size: 0.75rem; font-weight: 500; color: var(--label-2); }
 .cal-week i { font-style: normal; font-size: 0.6875rem; color: var(--label-3); max-width: 100%;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* the days: each one a button; the line under the number grows with the
-   lessons passed that day (full when all were), dark once completed */
-.st-key-cal_month { gap: 4px !important; }
+/* the days: each a button; the line under the number grows with the
+   lessons passed that day, dark once the day is completed */
+[class*="st-key-calgrid_"] { gap: 4px !important; }
 [class*="st-key-calw_"] { gap: 4px !important; flex-direction: row !important; flex-wrap: nowrap !important; }
 [class*="st-key-calw_"] > div { flex: 1 1 0 !important; min-width: 0; width: auto !important; }
 [class*="st-key-calw_"] [data-testid="stButton"], [class*="st-key-calw_"] button { width: 100%; }
-[class*="st-key-cal_20"] button {
+[class*="st-key-cal_20"] .stButton button {
   position: relative; height: 56px; min-height: 44px; padding: 0 0 12px !important;
-  border: none !important; border-radius: 14px !important; background: transparent !important;
-  box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-  color: var(--label-3) !important; transition: background-color var(--t-micro) var(--ease);
+  border: none; border-radius: 14px; background: transparent; box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none; color: var(--label-3);
+  transition: background-color 200ms var(--ease), box-shadow 200ms var(--ease), color 200ms var(--ease);
 }
-[class*="st-key-cal_20"] button > div, [class*="st-key-cal_20"] button [data-testid="stMarkdownContainer"] {
-  overflow: visible !important; min-width: 0; }
-[class*="st-key-cal_20"] button p { font-size: 0.9375rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: visible; }
-[class*="st-key-cal_20"] button::before, [class*="st-key-cal_20"] button::after {
+[class*="st-key-cal_20"] .stButton button > div, [class*="st-key-cal_20"] .stButton button [data-testid="stMarkdownContainer"] { overflow: visible !important; min-width: 0; }
+[class*="st-key-cal_20"] .stButton button p { font-size: 0.9375rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: visible; }
+[class*="st-key-cal_20"] .stButton button::before, [class*="st-key-cal_20"] .stButton button::after {
   content: ""; position: absolute; bottom: 12px; left: calc(50% - 12px); height: 3px; border-radius: 1.5px;
 }
-[class*="st-key-cal_20"][class*="_done_"] button::before, [class*="st-key-cal_20"][class*="_partial_"] button::before {
-  width: 24px; background: var(--hair);
+[class*="st-key-cal_20"][class*="_done_"] .stButton button::before,
+[class*="st-key-cal_20"][class*="_partial_"] .stButton button::before { width: 24px; background: var(--hair); }
+[class*="st-key-cal_20"] .stButton button::after { width: 0; background: var(--label-2); transition: width 300ms var(--ease); }
+[class*="st-key-cal_20"][class*="_a1"] .stButton button::after { width: 4.8px; }
+[class*="st-key-cal_20"][class*="_a2"] .stButton button::after { width: 9.6px; }
+[class*="st-key-cal_20"][class*="_a3"] .stButton button::after { width: 14.4px; }
+[class*="st-key-cal_20"][class*="_a4"] .stButton button::after { width: 19.2px; }
+[class*="st-key-cal_20"][class*="_a5"] .stButton button::after { width: 24px; }
+[class*="st-key-cal_20"][class*="_done_"] .stButton button { color: var(--label); }
+[class*="st-key-cal_20"][class*="_done_"] .stButton button::after { background: var(--label); }
+[class*="st-key-cal_20"][class*="_partial_"] .stButton button { color: var(--label-2); }
+[class*="st-key-cal_20"][class*="_out"] .stButton button { opacity: 0.4; }
+[class*="st-key-cal_20"][class*="_future_"] .stButton button { opacity: 0.35; cursor: default; background: transparent; }
+[class*="st-key-cal_20"][class*="_today"] .stButton button p { font-weight: 700; color: var(--strong); }
+[class*="st-key-cal_20"] .stButton button:not(:disabled):hover { background: var(--glass); border: none; box-shadow: none; }
+[class*="st-key-cal_20"][class*="_sel"] .stButton button {
+  background: var(--glass-strong); box-shadow: var(--optic); animation: day-pick 220ms var(--ease) backwards;
 }
-[class*="st-key-cal_20"] button::after { width: 0; background: var(--label-2); }
-[class*="st-key-cal_20"][class*="_a1"] button::after { width: 4.8px; }
-[class*="st-key-cal_20"][class*="_a2"] button::after { width: 9.6px; }
-[class*="st-key-cal_20"][class*="_a3"] button::after { width: 14.4px; }
-[class*="st-key-cal_20"][class*="_a4"] button::after { width: 19.2px; }
-[class*="st-key-cal_20"][class*="_a5"] button::after { width: 24px; }
-[class*="st-key-cal_20"][class*="_done_"] button { color: var(--label) !important; }
-[class*="st-key-cal_20"][class*="_done_"] button::after { background: var(--label); }
-[class*="st-key-cal_20"][class*="_partial_"] button { color: var(--label-2) !important; }
-[class*="st-key-cal_20"][class*="_out"] button { opacity: 0.4; }
-[class*="st-key-cal_20"][class*="_future_"] button { opacity: 0.35; cursor: default; }
-[class*="st-key-cal_20"][class*="_today"] button p { font-weight: 700; color: var(--strong); }
-[class*="st-key-cal_20"] button:not(:disabled):hover { background: var(--glass) !important; }
-[class*="st-key-cal_20"][class*="_sel"] button { background: var(--glass-strong) !important; box-shadow: var(--optic) !important; }
-[class*="st-key-cal_20"] button:focus-visible { outline: 1px solid var(--outline); outline-offset: 1px; }
-@container (max-width: 520px) { [class*="st-key-cal_20"] button { height: 48px; } }
+[class*="st-key-cal_20"] .stButton button:focus-visible { outline: 1px solid var(--outline); outline-offset: 1px; }
+@container (max-width: 520px) { [class*="st-key-cal_20"] .stButton button { height: 48px; } }
 
 .cal-key { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 0.75rem; color: var(--label-3); }
 .cal-key span { display: inline-flex; align-items: center; gap: 8px; }
@@ -773,25 +824,76 @@ PROGRESS = """
 .cal-key .k-done { background: var(--label); }
 .cal-key .k-part { background: linear-gradient(90deg, var(--label-2) 50%, var(--hair) 50%); }
 
-/* the day picked: a quiet glass card under the month */
-.st-key-prog_day {
-  gap: var(--space-2) !important; margin-top: var(--space-2); padding: var(--space-5);
+/* ---------- the day picked ---------- */
+[class*="st-key-prog_day_"] {
+  gap: var(--space-2) !important; padding: var(--space-5);
   border-radius: var(--radius-medium); background: var(--glass); box-shadow: var(--optic);
+  animation: rise-in 260ms var(--ease) backwards; scroll-margin: 88px 0 16px;
 }
-.st-key-prog_day h4 { padding: 0 0 var(--space-1) !important; }
-.st-key-prog_day [data-testid="stMarkdownContainer"] p { margin-bottom: 0; }
+[class*="st-key-prog_day_"] h4 { padding: 0 0 2px !important; }
+[class*="st-key-prog_day_"] [data-testid="stMarkdownContainer"] p { margin-bottom: 0; }
+.day-status { font-size: 0.8125rem; color: var(--label-2); }
 
-/* every session: a heading with its filter, then as many columns as fit */
+/* a day's lessons: one line each */
+.lesson-rows { list-style: none; margin: 2px 0 0 !important; padding: 0 !important; display: grid; gap: 0; }
+.lesson-rows li {
+  display: grid; grid-template-columns: 8px 2.5em minmax(0, 1fr) auto; align-items: center; column-gap: 8px;
+  padding: 5px 0; font-size: 0.875rem; line-height: 1.35; color: var(--label); border-bottom: 1px solid var(--hair);
+}
+.lesson-rows li:last-child { border-bottom: none; }
+.lesson-rows li::before { content: ""; width: 6px; height: 6px; border-radius: 50%; box-sizing: border-box; background: var(--label); }
+.lesson-rows li.open { color: var(--label-2); }
+.lesson-rows li.open::before { background: transparent; border: 1px solid var(--label-3); }
+.lesson-rows .n { color: var(--label-3); font-variant-numeric: tabular-nums; }
+.lesson-rows .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lesson-rows .q { font-size: 0.8125rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
+
+/* one lesson to read, a section at a time */
+[class*="st-key-reader_"] {
+  gap: var(--space-2) !important; padding: var(--space-4) var(--space-4) var(--space-3);
+  border-radius: 18px; background: var(--glass); box-shadow: var(--optic);
+  animation: rise-in 240ms var(--ease) backwards;
+}
+[class*="st-key-reader_"] [data-baseweb="tab-panel"] {
+  max-height: 340px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px;
+  scrollbar-width: thin; scrollbar-color: var(--hair) transparent;
+  animation: fade-in 200ms var(--ease) backwards;
+}
+[class*="st-key-reader_"] [data-baseweb="tab-list"] { gap: 2px; overflow-x: auto; scrollbar-width: none; }
+[class*="st-key-reader_"] [data-baseweb="tab"] p { font-size: 0.8125rem; white-space: nowrap; }
+
+/* ---------- every session ---------- */
 .st-key-sessions_head { flex-direction: row !important; flex-wrap: wrap !important; justify-content: space-between;
   align-items: center !important; gap: var(--space-3) !important; margin-top: var(--space-6); }
 .st-key-sessions_head h4 { padding: 0 !important; margin: 0; }
-.st-key-sessions_head [data-testid="stSelectbox"] { width: min(260px, 100%); }
-.st-key-sessions_head > div:last-child { flex: 0 1 260px !important; width: auto !important; }
-.st-key-sessions_list {
-  display: grid !important; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
-  gap: 0 var(--space-6) !important; align-items: start;
+.st-key-sessions_head [data-testid="stSelectbox"] { width: min(240px, 100%); }
+.st-key-sessions_head > div:last-child { flex: 0 1 240px !important; width: auto !important; }
+[class*="st-key-sessions_list_"] { gap: 0 !important; animation: fade-in 240ms var(--ease) backwards; }
+[class*="st-key-sessions_list_"] > div { width: 100% !important; min-width: 0; }
+[class*="st-key-oncal_"] button { min-height: 32px; padding: 0 !important; }
+[class*="st-key-oncal_"] button p { font-size: 0.8125rem; color: var(--label-2); }
+
+/* ---------- motion ---------- */
+/* expanders open and close smoothly (where the browser can size to auto) */
+:root { interpolate-size: allow-keywords; }
+[data-testid="stExpander"] details::details-content {
+  block-size: 0; overflow-y: clip;
+  transition: block-size 280ms var(--ease), content-visibility 280ms allow-discrete;
 }
-.st-key-sessions_list > div { width: 100% !important; min-width: 0; }
+[data-testid="stExpander"] details[open]::details-content { block-size: auto; }
+[class*="st-key-calgrid_"][class*="_next"] { animation: from-right 320ms var(--ease) backwards; }
+[class*="st-key-calgrid_"][class*="_prev"] { animation: from-left 320ms var(--ease) backwards; }
+[class*="st-key-calgrid_"][class*="_none"] { animation: fade-in 220ms var(--ease) backwards; }
+@keyframes from-right { from { opacity: 0; transform: translateX(16px); } }
+@keyframes from-left { from { opacity: 0; transform: translateX(-16px); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes day-pick { from { background-color: transparent; box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) {
+  [class*="st-key-calgrid_"], [class*="st-key-prog_day_"], [class*="st-key-reader_"], [class*="st-key-sessions_list_"],
+  [class*="st-key-reader_"] [data-baseweb="tab-panel"], [class*="st-key-cal_20"] .stButton button { animation: none !important; }
+  [data-testid="stExpander"] details::details-content { transition: none; }
+}
 </style>
 """
 
