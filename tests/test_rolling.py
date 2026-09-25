@@ -56,3 +56,43 @@ def test_on_arrival_numbers_count_up_from_zero(monkeypatch):
     assert windows(rolling.html("40", old["pct"])) == [(0, 5)]                 # blank → 4, the 0 stays still
     state["lq_entering"] = False
     assert progress_bar.seen("card", pct=40, left="2 / 5 lessons today") == {"pct": 40, "left": "2 / 5 lessons today"}
+
+
+def reels(html):
+    """(from, to, duration ms) for each rolling digit, left to right."""
+    return [(int(a), int(b), int(t)) for a, b, t in re.findall(r'--a:(\d+);--b:(\d+);--t:(\d+)ms', html)]
+
+
+def digit(i):
+    """Strip index → digit (blank is None)."""
+    return None if i == 0 else (i - 1) % 10
+
+
+def test_every_digit_has_its_own_reel_and_they_start_together():
+    r = reels(rolling.html("37", "15"))
+    assert [(digit(a), digit(b)) for a, b, _ in r] == [(1, 3), (5, 7)]           # 1→2→3 and 5→6→7
+    assert "delay" not in rolling.html("37", "15")                               # no sequential start
+
+
+def test_duration_follows_distance_same_start_different_end():
+    r = reels(rolling.html("384", "127"))
+    steps = [abs(b - a) for a, b, _ in r]
+    assert steps == [2, 6, 7]                                                     # 1→3, 2→8, 7→(8,9,0,1,2,3,)4
+    assert [t for *_, t in r] == [rolling.duration(s) for s in steps] == [500, 700, 750]
+    assert rolling.duration(1) == 450 and rolling.duration(20) == 900
+
+
+def test_up_rolls_up_through_zero_and_down_rolls_down_through_nine():
+    up = reels(rolling.html("52", "37"))                   # 3→4→5 ; 7→8→9→0→1→2
+    assert [(digit(a), digit(b), b - a) for a, b, _ in up] == [(3, 5, 2), (7, 2, 5)]
+    down = reels(rolling.html("37", "52"))                 # 5→4→3 ; 2→1→0→9→8→7
+    assert [(digit(a), digit(b), b - a) for a, b, _ in down] == [(5, 3, -2), (2, 7, -5)]
+
+
+def test_999_to_1000_and_static_symbols():
+    r = reels(rolling.html("1000", "999"))
+    assert [digit(a) for a, _, _ in r] == [None, 9, 9, 9]                         # the new digit rolls in from blank
+    assert [digit(b) for _, b, _ in r] == [1, 0, 0, 0]
+    html = rolling.html("$1,250", "$1,190")
+    assert html.startswith("$") and '<span class="rd-sep">,</span>' in html
+    assert rolling.html("37%", "15%").endswith("%")

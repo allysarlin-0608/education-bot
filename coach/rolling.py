@@ -26,6 +26,12 @@ def _value(token: str) -> float:
         return 0.0
 
 
+def duration(steps: int) -> int:
+    """Milliseconds for a reel that travels `steps` digit positions:
+    450 ms for one step, up to 900 ms for a long roll."""
+    return min(900, 450 + 50 * max(steps - 1, 0))
+
+
 def _digits(new: str, old: str) -> str:
     """One number, digit by digit, right-aligned against the old one."""
     width = max(len(new), len(old))
@@ -49,7 +55,9 @@ def _digits(new: str, old: str) -> str:
             a += 10                          # going down rolls back the other way
         # the real digit is the text (it's what gets read and copied); the
         # strip is drawn by CSS (.rd-d::before), so it adds nothing to the page text
-        out.append(f'<span class="rd-d" style="--a:{a};--b:{b}">{n}</span>')
+        # every reel starts at once; its own duration grows with the distance
+        # it travels, so reels come to rest one by one
+        out.append(f'<span class="rd-d" style="--a:{a};--b:{b};--t:{duration(abs(b - a))}ms">{n}</span>')
     return "".join(out)
 
 
