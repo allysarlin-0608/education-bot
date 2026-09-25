@@ -13,7 +13,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import books, core, curriculum, history, lesson_view, progress_bar, rolling, ui
+from coach import core, curriculum, history, lesson_view, progress_bar, rolling, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -196,10 +196,10 @@ def view_sessions():
 
 
 def view_subjects():
-    """Each subject and the topic (unit) she is in now, then the bookshelf."""
+    """Each subject and the topic (unit) she is in now; Reading links to its page."""
     st.caption(f"Each subject has {curriculum.TOTAL:,} lessons taken in order: 1–{curriculum.LEVEL_SIZE:,} "
                f"Beginner, {curriculum.LEVEL_SIZE + 1:,}–{2 * curriculum.LEVEL_SIZE:,} Intermediate, the rest "
-               f"Advanced. The bar is the topic you're in now; Reading follows your book.")
+               f"Advanced. The bar is the topic you're in now.")
     with st.container(key="subj_list"):
         for key, label in core.TOPICS.items():
             if curriculum.has_syllabus(key):
@@ -211,42 +211,9 @@ def view_subjects():
                     label="", compact=True, topic=unit["unit"],
                 )
                 continue
-            # Reading has no syllabus: its bar is the book she is reading now.
-            book = books.current_book(log["books"])
+            # Reading has no syllabus: one line, the books finished, and the way to the shelf
             finished = sum(1 for b in log["books"] if b["status"] == "finished")
-            shelf_note = f"{finished} {'book' if finished == 1 else 'books'} finished"
-            if book and book["status"] == "reading":
-                reading_days = [d for d in range(1, books.DAYS + 1) if book["plan"][d - 1]]
-                done = len([d for d in reading_days if str(d) in book["checks"]])
-                progress_bar.render(f"course_{key}", label, done, len(reading_days), shelf_note,
-                                    label="", compact=True, noun="reading day", topic=book["title"] or "(untitled)")
-            else:
-                progress_bar.render(f"course_{key}", label, 0, 1, shelf_note, label="", compact=True,
-                                    left="Start one on the Reading page", topic="No book in progress")
-
-    # ---- bookshelf ----
-    shelf = [b for b in log["books"] if b["status"] in ("reading", "finished", "switched")]
-    if shelf:
-        st.markdown("#### Bookshelf")
-        for b in reversed(shelf):
-            passed = len(b["checks"])
-            reading_days = len([d for d in b["plan"] if d])
-            status = {
-                "setup": "setting up",
-                "planning": "planning",
-                "reading": f"reading · {passed} of {reading_days} reading days confirmed",
-                "finished": f"finished {b['finished_on']}",
-                "switched": f"switched to another book after day {passed}",
-            }[b["status"]]
-            author = f" by {b['author']}" if b["author"] else ""
-            with st.expander(f"{b['title'] or '(untitled)'}{author} · {status}"):
-                if b["plan"]:
-                    st.markdown(books.plan_table(b))
-                for day, check in sorted(b["checks"].items(), key=lambda kv: int(kv[0])):
-                    st.markdown(f"**Day {day}** ({check['passed_on']}): {check['summary']}")
-                if b.get("final_summary"):
-                    with st.container(border=True):
-                        st.markdown(b["final_summary"])
+            st.page_link("views/reading.py", label=f"{label} · {finished} {'book' if finished == 1 else 'books'} finished")
 
 
 # ============================================================

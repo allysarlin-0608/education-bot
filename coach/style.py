@@ -999,8 +999,114 @@ button, a, summary, label, input, textarea, [role="tab"], [role="option"], [data
 """
 
 
+# The Reading page (coach/shelf.py): the book being read as the same thin
+# liquid line as Today's lessons, and the bookshelf as a quiet grouped list.
+BOOKS = """
+<style>
+.st-key-now_reading { container-type: inline-size; gap: var(--space-3) !important; }
+.bk-label { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
+.bk-now { display: grid; gap: 2px; margin: 2px 0 10px; }
+.bk-now-title {
+  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.625rem; line-height: 1.2;
+  font-variant-numeric: lining-nums; color: var(--label);
+}
+.bk-now-author { font-size: 0.875rem; color: var(--label-2); }
+
+/* fourteen stretches of one glass tube; the liquid fills the days done */
+.bk-line { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); height: 40px; }
+.bk-seg { position: relative; }
+.bk-seg::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 9px;
+  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
+  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo),
+              inset 0 2px 3px -2px var(--lq-edge-near), inset 0 -2px 3px -2px var(--lq-edge-near);
+}
+.bk-seg:first-child::before { border-radius: 999px 0 0 999px; }
+.bk-seg:last-child::before { border-radius: 0 999px 999px 0; }
+.bk-seg::after { content: ""; position: absolute; left: 0; top: 6.5px; height: 4px; width: 0; background: var(--lq-liquid); opacity: 0.92; }
+.bk-seg:first-child::after { border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
+.bk-seg.done::after { width: 100%; }
+.bk-seg.done.end::after { border-radius: 0 2.6px 2.2px 0 / 0 2px 2px 0; }
+.bk-seg.done.end:first-child::after { border-radius: 2px 2.6px 2.2px 2px / 2px 2px 2px 2px; }
+.bk-seg i {
+  position: absolute; top: 21px; left: 0; right: 0; text-align: center; font-style: normal;
+  font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; color: var(--label-2); white-space: nowrap;
+}
+.bk-seg.current i { color: var(--label); font-weight: 600; }
+.bk-seg.ahead i { opacity: 0.35; }
+@container (min-width: 560px) { .bk-seg.done:not(.rest) i::after { content: "✓"; font-size: 10px; margin-left: 2px; } }
+.bk-line.flowing .bk-seg.done::after { animation: lq-fill 140ms linear calc(var(--i) * 140ms) both; }
+.bk-line.flowing .bk-seg.done.end::after { animation-duration: 380ms; animation-timing-function: cubic-bezier(0.3, 0.6, 0.25, 1); }
+.bk-line + .lq-meta { margin-top: 6px; }
+
+/* today's part of the book */
+.bk-today { display: grid; gap: 2px; margin-top: 14px; }
+.bk-k { font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label-3); }
+.bk-v { font-size: 0.9375rem; line-height: 1.5; color: var(--label); }
+
+/* the bookshelf: one light surface, a row per book, 0.5px lines between */
+.bk-empty { margin: 0; font-size: 0.875rem; color: var(--label-3); }
+.bk-shelf {
+  --bk-sep: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.14));
+  border-radius: var(--radius-small); background: light-dark(rgba(0, 0, 0, 0.028), rgba(255, 255, 255, 0.05));
+  overflow: hidden; corner-shape: superellipse(1.6);
+}
+.bk-book > summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  min-height: 56px; box-sizing: border-box; padding: 10px 16px; cursor: pointer; list-style: none;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  transition: background-color 200ms var(--ease);
+}
+.bk-book > summary::-webkit-details-marker { display: none; }
+.bk-book > summary::marker { content: ""; }
+.bk-book + .bk-book > summary {       /* the line starts where the text does */
+  background: linear-gradient(var(--bk-sep), var(--bk-sep)) 16px 0 / calc(100% - 16px) 0.5px no-repeat;
+}
+.bk-book > summary:active { background-color: var(--wash); }
+@media (hover: hover) { .bk-book > summary:hover { background-color: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.03)); } }
+.bk-book > summary:focus-visible { outline: 1px solid var(--outline); outline-offset: -2px; }
+.bk-name { display: grid; gap: 1px; min-width: 0; }
+.bk-title { font-size: 0.9375rem; font-weight: 500; color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-author { font-size: 0.8125rem; color: var(--label-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-state { flex: none; font-size: 0.8125rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
+.bk-book::details-content { block-size: 0; overflow-y: clip; transition: block-size 280ms var(--ease), content-visibility 280ms allow-discrete; }
+.bk-book[open]::details-content { block-size: auto; }
+
+/* a book opened: its fourteen days, what she wrote, whether it passed */
+.bk-open { padding: 0 16px 14px; }
+.bk-days { list-style: none; margin: 0 !important; padding: 0 !important; }
+.bk-days li {
+  display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto; column-gap: 10px; align-items: baseline;
+  padding: 8px 0; font-size: 0.8125rem; line-height: 1.45; border-top: 0.5px solid var(--bk-sep); margin: 0;
+}
+.bk-d { color: var(--label-3); font-variant-numeric: tabular-nums; }
+.bk-r { color: var(--label); min-width: 0; }
+.bk-s { color: var(--label-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bk-days li.rest .bk-r, .bk-days li.rest .bk-s, .bk-days li.unread .bk-s { color: var(--label-3); }
+.bk-words { margin: 3px 0 0 !important; color: var(--label-2); font-size: 0.8125rem; line-height: 1.5; }
+.bk-wrap { border-top: 0.5px solid var(--bk-sep); padding-top: 10px; display: grid; gap: 4px; }
+.bk-wrap p, .bk-wrap li { font-size: 0.875rem; line-height: 1.6; margin: 0 0 6px; color: var(--label); }
+.bk-wrap ul { margin: 0 0 6px; padding-left: 1.2em; }
+
+/* Progress, Subjects: Reading is one line leading to its page */
+.st-key-subj_list [data-testid="stPageLink"] a {
+  padding: 0; min-height: 44px; background: transparent !important; border-radius: 0;
+}
+.st-key-subj_list [data-testid="stPageLink"] p {
+  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.1875rem; color: var(--label);
+  text-decoration: underline; text-decoration-color: var(--label-3); text-underline-offset: 0.2em; text-decoration-thickness: 0.5px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bk-line.flowing .bk-seg.done::after { animation: none; }
+  .bk-book::details-content { transition: none; }
+}
+</style>
+"""
+
+
 def stylesheet() -> str:
-    return CSS.replace("</style>", LIQUID.replace("<style>", "").replace("</style>", (PROGRESS + TOUCH).replace("<style>", "").replace("</style>", "", 1)))
+    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, TOUCH))
+    return CSS.replace("</style>", rest + "</style>")
 
 
 def inject():
