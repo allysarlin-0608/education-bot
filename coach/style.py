@@ -300,6 +300,18 @@ CSS = f"""
 }}
 [data-testid="stChatInput"] > div, [data-testid="stChatInput"] textarea {{ background: transparent !important; border: none !important; }}
 [data-testid="stChatInputSubmitButton"] {{ border-radius: 50% !important; background: transparent !important; }}
+/* the chat box stays at the bottom of the screen while she scrolls; at the end of the page it sits in its place */
+[data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock), .st-key-chat_dock {{
+  position: sticky; bottom: var(--space-4); z-index: 40;
+}}
+.st-key-chat_dock [data-testid="stChatInput"] {{       /* text scrolling under it mustn't show through */
+  background: color-mix(in srgb, var(--env) 90%, transparent) !important;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}}
+/* on a page shorter than the screen it still sits at the bottom, not right under the text */
+.stMainBlockContainer:has(.st-key-chat_dock) {{ min-height: 100dvh; display: flex; flex-direction: column; box-sizing: border-box; }}
+.stMainBlockContainer:has(.st-key-chat_dock) > [data-testid="stVerticalBlock"] {{ flex: 1; }}
+[data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock) {{ margin-top: auto; }}
 
 /* ---------- progress: a hairline filling with light ---------- */
 [data-testid="stProgress"] [role="progressbar"],

@@ -67,7 +67,7 @@ _SCRIPT = """<script>
       const h = [...doc.querySelectorAll("h3")].some((x) => x.innerText.startsWith(want));
       const now = a && h ? a.getBoundingClientRect().top + ":" + doc.body.scrollHeight : "";
       calm = now && now === last ? calm + 1 : 0; last = now;
-      if (calm >= 3) { if (!s.restore(m.dataset.key)) a.scrollIntoView({ behavior: "smooth", block: "start" }); }
+      if (calm >= 3) { if (m.dataset.restore === "0" || !s.restore(m.dataset.key)) a.scrollIntoView({ behavior: "smooth", block: "start" }); }
       else if (++tries < 60) setTimeout(tick, 100);
     };
     tick();
@@ -76,10 +76,33 @@ _SCRIPT = """<script>
 </script>"""
 
 
-def html(key, jump="", want="", n=0):
+def html(key, jump="", want="", n=0, restore=True):
     """The marker for the lesson on screen, plus the script. `jump` is the
     anchor to fall back on and `want` the lesson heading to wait for, both
     set only right after the button was pressed; `n` counts presses, so a
-    second press on the same lesson still redraws (and reruns) the script."""
+    second press on the same lesson still redraws (and reruns) the script.
+    With restore=False it goes straight to `jump` (her newest question)
+    instead of the place she had scrolled to."""
     return (f'<div id="coach-place" hidden data-key="{escape(key)}" data-jump="{escape(jump)}" '
-            f'data-want="{escape(want)}" data-n="{n}"></div>' + _SCRIPT)
+            f'data-want="{escape(want)}" data-n="{n}" data-restore="{int(restore)}"></div>' + _SCRIPT)
+
+
+LATEST = "latest-question"
+
+
+def latest_anchor():
+    """Marks her newest question, which the page goes to after a reply."""
+    return f'<div class="jump-anchor" id="{LATEST}"></div>'
+
+
+def follow(n=0):
+    """While a reply is being written: an anchor where her question starts,
+    and a script that takes the page there, so she sees the answer arrive
+    right under it. `n` makes each one new, so the script runs every time."""
+    return f"""<div class="jump-anchor" id="reply-start-{n}"></div><script>
+    (function go(tries) {{
+      const a = window.parent.document.getElementById("reply-start-{n}");
+      if (a) a.scrollIntoView({{behavior: "smooth", block: "start"}});
+      else if (tries > 0) setTimeout(() => go(tries - 1), 50);
+    }})(40);
+    </script>"""
