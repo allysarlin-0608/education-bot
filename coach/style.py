@@ -112,6 +112,8 @@ CSS = f"""
   to   {{ opacity: 1; transform: none; }}
 }}
 @media (min-width: 768px) {{ .stMainBlockContainer {{ padding-top: 96px; }} }}
+/* the lesson page (Today) is wider, for the lesson cards, tables and quiz */
+.stMainBlockContainer:has([class*="st-key-course_card"]) {{ max-width: 900px; }}
 [data-testid="stVerticalBlock"] {{ gap: var(--space-5); }}
 
 /* ---------- type ---------- */
