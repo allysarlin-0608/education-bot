@@ -221,8 +221,8 @@ def open_lesson(k, anchor="current-lesson", restore=False):
 
 with st.container(key="course_card"):
     # title and one percentage; the five segments below are the bar itself
-    progress_bar.render(f"card_{topic}", f"{core.TOPICS[topic]}: {unit['unit']}", done_count, len(plan),
-                        bar=False)
+    progress_bar.render(f"card_{topic}", core.TOPICS[topic], done_count, len(plan),
+                        bar=False, label="Subject", topic=unit["unit"])
     # the segment of a lesson just passed fills from left to right, once
     shown = st.session_state.setdefault("steps_shown", {})
     fresh = steps.just_completed(shown.get(sel_key), plan)
