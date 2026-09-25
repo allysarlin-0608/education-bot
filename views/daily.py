@@ -235,8 +235,36 @@ with st.container(key=f"course_card_{motion}"):
     st.html(progress_bar.meta_row(card_left, card_right, old=card_old))
     # Today opens at the top; this takes her to where she is working: the
     # quiz once the lesson is written, otherwise the lesson itself.
-    target = "current-quiz" if plan[i].get("lesson") else "current-lesson"
-    st.html(f'<a class="jump" href="#{target}">Jump to current progress<span aria-hidden="true"> ↓</span></a>')
+    # Reviewing an earlier lesson, the button first switches to the current
+    # one, then scrolls there once the page has redrawn.
+    target = "current-quiz" if plan[first_open].get("lesson") else "current-lesson"
+    if i == first_open:
+        st.html(f'<a class="jump" href="#{target}">Jump to current progress<span aria-hidden="true"> ↓</span></a>')
+    else:
+        with st.container(key="jump_button"):
+            if st.button("Jump to current progress ↓", key="jump_to_current"):
+                st.session_state.lesson_goto = (sel_key, first_open)
+                st.session_state.coach_scroll = target
+                st.rerun()
+
+if (scroll_to := st.session_state.pop("coach_scroll", None)):
+    # After "Jump to current progress" switched lessons: wait until this
+    # lesson is drawn and the page has stopped growing, then scroll there.
+    st.html(f"""<script>
+    (function () {{
+      const doc = window.parent.document, want = "Lesson {plan[i]['n']}:";
+      let last = "", calm = 0, tries = 0;
+      const tick = () => {{
+        const a = doc.getElementById("{scroll_to}");
+        const h = [...doc.querySelectorAll("h3")].some(x => x.innerText.startsWith(want));
+        const now = a && h ? a.getBoundingClientRect().top + ":" + doc.body.scrollHeight : "";
+        calm = now && now === last ? calm + 1 : 0; last = now;
+        if (calm >= 3) a.scrollIntoView({{behavior: "smooth", block: "start"}});
+        else if (++tries < 60) setTimeout(tick, 100);
+      }};
+      tick();
+    }})();
+    </script>""", unsafe_allow_javascript=True)
 
 slot = plan[i]
 if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit
