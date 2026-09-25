@@ -233,24 +233,24 @@ with st.container(key=f"course_card_{motion}"):
         label_visibility="collapsed",
     ) or 0
     st.html(progress_bar.meta_row(card_left, card_right, old=card_old))
-    # Today opens at the top; this takes her to where she is working: the
-    # quiz once the lesson is written, otherwise the lesson itself.
-    # Reviewing an earlier lesson, the button first switches to the current
-    # one, then scrolls there once the page has redrawn.
-    target = "current-quiz" if plan[first_open].get("lesson") else "current-lesson"
-    if i == first_open:
-        st.html(f'<a class="jump" href="#{target}">Jump to current progress<span aria-hidden="true"> ↓</span></a>')
-    else:
-        with st.container(key="jump_button"):
-            if st.button("Jump to current progress ↓", key="jump_to_current"):
-                st.session_state.lesson_goto = (sel_key, first_open)
-                st.session_state.coach_scroll = target
-                st.rerun()
 
-# Remembers where she scrolled to in each lesson; right after the button
-# switched lessons it also takes her back there.
+# "Jump to current progress" floats at the side of the screen, so it is
+# there wherever she has scrolled. It opens the current lesson if she is
+# reviewing an earlier one, then goes to where she had scrolled to in it
+# (or, the first time, its quiz, or the lesson itself before it's written).
+with st.container(key="jump_button"):
+    if st.button("Jump to current progress", icon=":material/my_location:", key="jump_to_current"):
+        if i != first_open:
+            st.session_state.lesson_goto = (sel_key, first_open)
+        st.session_state.coach_scroll = "current-quiz" if plan[first_open].get("lesson") else "current-lesson"
+        st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
+        st.rerun()
+
+# Remembers where she scrolled to in each lesson, and carries out the jump
+# once the page has redrawn.
 scroll_to = st.session_state.pop("coach_scroll", "")
-st.html(place.html(chat_key(plan[i]), scroll_to, f"Lesson {plan[i]['n']}:" if scroll_to else ""),
+st.html(place.html(chat_key(plan[i]), scroll_to, f"Lesson {plan[i]['n']}:" if scroll_to else "",
+                   st.session_state.get("coach_scroll_n", 0)),
         unsafe_allow_javascript=True)
 
 slot = plan[i]
