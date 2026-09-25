@@ -139,5 +139,8 @@ def script() -> str:
         "const ua = window.parent.navigator.userAgentData;"
         "if (ua && ua.brands.some((b) => /Chromium/.test(b.brand))) doc.documentElement.dataset.refract = '1';"
         "window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', sync);"
+        # Safari on iPhone and iPad shows :active (the pressed look) only
+        # once the page listens for touches; passive, so scrolling is untouched
+        "doc.addEventListener('touchstart', () => {}, { passive: true });"
         "})();</script>"
     )
