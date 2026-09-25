@@ -29,11 +29,12 @@ def test_frost_stays_light():
     import re
     css = style.stylesheet()
     assert "url(#lg-refract)" in css
-    chat = css[css.index('[data-testid="stChatInput"] {'):]
-    chat = chat[:chat.index("}")]
-    glass_only = css.replace(chat, "")
+    # every rule for a chat box (the Reading page gives its own a material to write on)
+    rules = re.findall(r"[^{}]*\{[^{}]*\}", css)
+    chat = "".join(r for r in rules if "stChatInput" in r.split("{")[0])
+    glass_only = "".join(r for r in rules if "stChatInput" not in r.split("{")[0])
     blurs = [float(v) for v in re.findall(r"blur\(([\d.]+)px\)", glass_only)]
     assert blurs and max(blurs) <= 2.5                     # the glass: lightly frosted, never heavy
-    # the chat box carries text, so it gets a surface and a controlled blur, not a heavy one
+    # the chat box carries text, so it may get a surface and a controlled blur, not a heavy one
     assert all(float(v) <= 24 for v in re.findall(r"blur\(([\d.]+)px\)", chat))
     assert glass.FROST <= 2 and glass.HAZE <= 4
