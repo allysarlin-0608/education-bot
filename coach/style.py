@@ -10,6 +10,8 @@ today in the calendar, her own messages and the chat bar. The one hue is
 the pale air-blue liquid of the course progress bar (LIQUID below)."""
 import streamlit as st
 
+from coach import glass
+
 # Headings and numbers: Newsreader (light) with Noto Serif TC for Chinese;
 # body text: Inter with Noto Sans TC.
 SERIF = '"Newsreader", "Noto Serif TC", serif'
@@ -39,36 +41,40 @@ CSS = f"""
   --outline: light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.7));
   --selection: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.22));
 
-  /* glass: an ultra-thin optical sheet. Almost no fill, no drawn border;
-     the edge is suggested optically instead of stroked: light catching the
-     upper edge (fading toward the sides), the lower edge a shade deeper,
-     a barely-there boundary, and a narrow band just inside the edge that
-     is a touch brighter (dark) or darker (light) than the clear center,
-     the way thin glass bends light near its rim. */
-  --glass: light-dark(rgba(0, 0, 0, 0.006), rgba(255, 255, 255, 0.018));
-  --glass-strong: light-dark(rgba(0, 0, 0, 0.012), rgba(255, 255, 255, 0.03));
-  --glass-faint: light-dark(rgba(0, 0, 0, 0.003), rgba(255, 255, 255, 0.01));
+  /* glass: clear optical glass, not a frosted panel. It has almost no
+     colour of its own and no blur: what's behind it stays sharp and fully
+     visible. It shows itself the way real glass does: where it floats over
+     moving content, that content bends slightly near its rounded rim (the
+     lg-refract filter, coach/glass.py); everywhere, the faintest catch of
+     light on the upper edge and a barely-there change where the glass
+     begins, never a drawn border, a glow or a drop shadow. */
+  --glass: light-dark(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.012));
+  --glass-strong: light-dark(rgba(0, 0, 0, 0.018), rgba(255, 255, 255, 0.035));
+  --glass-faint: transparent;
   --glass-edge: transparent;
   --glass-edge-strong: transparent;
   --glass-edge-soft: transparent;
   --glass-edge-bubble: transparent;
   --glass-edge-circle: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.36));
-  --hilite: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34));
-  --hilite-soft: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.22));
-  --shadow: light-dark(rgba(0, 0, 0, 0.03), transparent);
-  --glass-blur: blur(2px);
+  --hilite: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.12));
+  --hilite-soft: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.08));
+  --shadow: transparent;
+  --glass-blur: none;                        /* no frosting anywhere */
+  /* glass over moving content (the chat box, the top bar): the bend near
+     the rim, and what passes behind loses some contrast so the glass's own
+     text stays readable. It stays sharp and visible; there is no fill and
+     no blur. (Dark theme: see [data-scheme="dark"] below.) */
+  --glass-optics: url(#lg-refract) contrast(0.16) brightness(1.8);
   --optic:
-    inset 0 1px 1px -1px var(--hilite-soft),
-    inset 0 -1px 1px -1px light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.1)),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.06)),
-    inset 0 0 10px -4px light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.09)),
-    0 1px 2px var(--shadow);
+    inset 0 0.5px 0 var(--hilite-soft),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.055)),
+    inset 0 0 8px -5px light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.07));
   --optic-strong:
-    inset 0 1px 1px -1px var(--hilite),
-    inset 0 -1px 1px -1px light-dark(rgba(0, 0, 0, 0.16), rgba(255, 255, 255, 0.14)),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
-    inset 0 0 12px -4px light-dark(rgba(0, 0, 0, 0.09), rgba(255, 255, 255, 0.13)),
-    0 1px 3px var(--shadow);
+    inset 0 0.5px 0 var(--hilite),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.055), rgba(255, 255, 255, 0.075)),
+    inset 0 0 10px -5px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.09));
+  /* floating glass stands a hair off the page: the softest contact shadow */
+  --lift: 0 2px 10px -6px light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.5));
   --glass-depth: var(--optic-strong);
   --glass-depth-soft: var(--optic);
 
@@ -88,17 +94,18 @@ CSS = f"""
 [data-testid="stAppViewContainer"], [data-testid="stMain"] {{ position: relative; z-index: 1; background: transparent; }}
 ::selection {{ background: var(--selection); color: var(--strong); }}
 
+/* the glass filters for the dark theme (coach/glass.py marks the page) */
+:root[data-scheme="dark"] {{ --glass-optics: url(#lg-refract) brightness(0.3); }}
+
 /* ---------- chrome ---------- */
 [data-testid="stDecoration"], footer,
 [data-testid="stHeaderActionElements"] {{ display: none !important; }}
 [data-testid="stHeader"] {{
-  background: var(--chrome);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--hair);
+  background: var(--glass);
+  backdrop-filter: var(--glass-optics);
 }}
 [data-testid="stSidebar"] {{
-  background: var(--sidebar);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--env);                /* a plain surface, so the page links stay readable over the page on a phone */
   border-right: 1px solid var(--hair);
 }}
 
@@ -193,8 +200,7 @@ CSS = f"""
   --glass-strong: rgb(from currentColor r g b / 0.1);
   --glass-edge-strong: rgb(from currentColor r g b / 0.5);
   --hilite: rgba(255, 255, 255, 0.3);
-  background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.82) !important;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.97) !important;
   border: 1px solid rgb(from currentColor r g b / 0.08) !important; border-radius: var(--radius-medium) !important;
   box-shadow: var(--glass-depth-soft) !important; overflow: hidden;
   animation: fade var(--t-space) var(--ease) both;   /* opacity only: the popover is positioned by transform */
@@ -270,9 +276,8 @@ CSS = f"""
 }}
 [data-testid="stAlertContainer"] [data-testid="stAlertDynamicIcon"] {{ display: none; }}
 [data-testid="stToast"] {{
-  background: var(--popover) !important; border: 1px solid var(--popover-edge);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: var(--radius-medium);
-  box-shadow: var(--optic);
+  background: color-mix(in srgb, var(--env) 97%, transparent) !important; border: none;
+  border-radius: var(--radius-medium); box-shadow: var(--optic), var(--lift);
 }}
 
 /* ---------- conversation ---------- */
@@ -294,11 +299,12 @@ CSS = f"""
 [data-testid="stChatInput"] {{
   min-height: 56px; box-sizing: border-box;
   border-radius: var(--radius-large) !important;
-  background: var(--glass) !important; border: 1px solid var(--glass-edge) !important;
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-depth);
+  background: var(--glass) !important; border: none !important;
+  backdrop-filter: var(--glass-optics);
+  box-shadow: var(--glass-depth), var(--lift);
 }}
 [data-testid="stChatInput"] > div, [data-testid="stChatInput"] textarea {{ background: transparent !important; border: none !important; }}
+[data-testid="stChatInput"] textarea::placeholder {{ color: var(--label-2); opacity: 1; }}
 [data-testid="stChatInputSubmitButton"] {{ border-radius: 50% !important; background: transparent !important; }}
 /* the chat box stays at the bottom of the screen while she scrolls; at the end of the page it sits in its place */
 [data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock), .st-key-chat_dock {{
@@ -315,7 +321,8 @@ CSS = f"""
 
 /* ---------- where a move lands (below the header) ---------- */
 .jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
-[data-testid="stElementContainer"]:has(#coach-place) {{ display: none; }}     /* the scroll memory, no box */
+[data-testid="stElementContainer"]:has(#coach-place) {{ display: none; }}
+[data-testid="stElementContainer"]:has(#lg-hook) {{ display: none; }}     /* the scroll memory, no box */
 [data-testid="stElementContainer"]:has(.jump-anchor) {{ margin-bottom: calc(-1 * var(--space-5)); }}
 html {{ scroll-behavior: smooth; }}
 [data-testid="stAppScrollToBottomContainer"], [data-testid="stMain"] {{ scroll-behavior: smooth; }}
@@ -456,7 +463,6 @@ LIQUID = """
   background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
   box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo),
               inset 0 2px 3px -2px var(--lq-edge-near), inset 0 -2px 3px -2px var(--lq-edge-near);
-  backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
 }
 /* the liquid: full colour to a soft round end, a touch lighter there so no
    colour gathers; while flowing the end draws out a little */
@@ -606,7 +612,6 @@ LIQUID = """
   background: linear-gradient(90deg, var(--lq-glass-top), var(--lq-glass-bottom));
   box-shadow: inset 1px 0 1px -1px var(--lq-edge-hi), inset -1px 0 1px -1px var(--lq-edge-lo),
               inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 0 6px -2px var(--lq-edge-near);
-  backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
 }
 /* the liquid rises from the bottom; its surface is a soft meniscus that
    tilts a little while it moves and levels out as it settles */
@@ -698,3 +703,4 @@ def stylesheet() -> str:
 
 def inject():
     st.html(stylesheet())
+    st.html(glass.script(), unsafe_allow_javascript=True)      # the refraction filter the glass uses
