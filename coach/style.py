@@ -398,7 +398,7 @@ html {{ scroll-behavior: smooth; }}
   background: transparent !important; padding: var(--space-2) var(--space-3); text-align: left;
   word-break: keep-all;   /* short Chinese terms stay on one line on phones */
 }}
-.stApp [data-testid="stMarkdownContainer"]:has(> table) {{ overflow-x: auto; }}   /* a wide table scrolls, not the page */
+.stApp [data-testid="stMarkdownContainer"]:has(> table) {{ overflow-x: auto; overscroll-behavior-x: contain; }}   /* a wide table scrolls, not the page */
 
 .stApp [data-testid="stMarkdownContainer"] th {{ color: var(--label-2); font-weight: 500; }}
 
@@ -1063,8 +1063,11 @@ BOOKS = """
 .bk-title { font-size: 0.9375rem; font-weight: 500; color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bk-author { font-size: 0.8125rem; color: var(--label-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bk-state { flex: none; font-size: 0.8125rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
-.bk-book::details-content { block-size: 0; overflow-y: clip; transition: block-size 280ms var(--ease), content-visibility 280ms allow-discrete; }
-.bk-book[open]::details-content { block-size: auto; }
+.bk-book::details-content {
+  block-size: 0; opacity: 0; overflow-y: clip;
+  transition: block-size 280ms var(--ease), opacity 220ms var(--ease), content-visibility 280ms allow-discrete;
+}
+.bk-book[open]::details-content { block-size: auto; opacity: 1; }
 
 /* a book opened: its fourteen days, what she wrote, whether it passed */
 .bk-open { padding: 0 16px 14px; }
@@ -1123,7 +1126,11 @@ BOOKS = """
   border: 0.5px solid light-dark(rgba(60, 60, 67, 0.36), rgba(235, 235, 245, 0.3)) !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
-.st-key-start_book button::after { content: ""; position: absolute; inset: -4px -2px; }
+.st-key-start_book button::after { content: ""; position: absolute; inset: -5px -2px; }
+.st-key-start_book button { transition: background-color 160ms var(--ease), border-color 160ms var(--ease), transform 120ms var(--ease) !important; }
+@media (hover: hover) {
+  .st-key-start_book button:hover { border-color: light-dark(rgba(60, 60, 67, 0.6), rgba(235, 235, 245, 0.5)) !important; }
+}
 .st-key-start_book button p { font-size: 0.875rem; color: var(--label); }
 .st-key-start_book button:active { background: var(--wash) !important; }
 
@@ -1148,6 +1155,29 @@ BOOKS = """
 .bk-more[open] .bk-more-hide { display: inline; }
 @media (prefers-reduced-motion: reduce) { .bk-days li.later { transition: none; } }
 
+/* Reading: its disclosures (14-day plan, More options) open with height and a soft fade */
+.stMainBlockContainer:has(.reading-page) [data-testid="stExpander"] details::details-content {
+  opacity: 0; transition: block-size 280ms var(--ease), opacity 220ms var(--ease), content-visibility 280ms allow-discrete;
+}
+.stMainBlockContainer:has(.reading-page) [data-testid="stExpander"] details[open]::details-content { opacity: 1; }
+/* Reading's chat box: a translucent material, clearly a surface to write
+   on (what passes behind is blurred well away from the text), with a
+   quiet ring when focused */
+.stMainBlockContainer:has(.reading-page) [data-testid="stChatInput"] {
+  background: light-dark(rgba(255, 255, 255, 0.64), rgba(30, 30, 32, 0.64)) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
+  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12)),
+              0 6px 20px -14px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.9));
+  transition: box-shadow 200ms var(--ease), background-color 200ms var(--ease);
+}
+.stMainBlockContainer:has(.reading-page) [data-testid="stChatInput"]:focus-within {
+  background: light-dark(rgba(255, 255, 255, 0.74), rgba(34, 34, 36, 0.74)) !important;
+  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.3)),
+              0 0 0 3px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.06)),
+              0 6px 20px -14px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.9));
+}
+.stMainBlockContainer:has(.reading-page) [data-testid="stChatInput"] textarea::placeholder { color: var(--label-2); }
+
 /* Progress, Subjects: Reading is one line leading to its page */
 .st-key-subj_list [data-testid="stPageLink"] a {
   padding: 0; min-height: 44px; background: transparent !important; border-radius: 0;
@@ -1158,7 +1188,8 @@ BOOKS = """
 }
 @media (prefers-reduced-motion: reduce) {
   .bk-line.flowing .bk-seg.done::after { animation: none; }
-  .bk-book::details-content { transition: none; }
+  .bk-book::details-content, .stMainBlockContainer:has(.reading-page) [data-testid="stExpander"] details::details-content { transition: none; }
+  .st-key-start_book button, .stMainBlockContainer:has(.reading-page) [data-testid="stChatInput"] { transition: none !important; }
 }
 </style>
 """
