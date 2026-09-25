@@ -97,7 +97,10 @@ CSS = f"""
 
 /* ---------- environment: pure black or pure white, no ambient light ---------- */
 .stApp {{ background: var(--env); }}
-[data-testid="stAppViewContainer"], [data-testid="stMain"] {{ position: relative; z-index: 1; background: transparent; }}
+/* no position or z-index here: on a phone Streamlit lays the page out
+   absolutely so the sidebar slides over it; overriding that squeezed the
+   page into a strip beside the open sidebar */
+[data-testid="stAppViewContainer"], [data-testid="stMain"] {{ background: transparent; }}
 ::selection {{ background: var(--selection); color: var(--strong); }}
 
 /* the glass filters for the dark theme (coach/glass.py marks the page) */
@@ -184,8 +187,11 @@ CSS = f"""
   background: var(--glass-strong); color: var(--strong);
   border-color: var(--glass-edge-strong); box-shadow: var(--glass-depth);
 }}
-.stButton button:hover, .stFormSubmitButton button:hover, .stDownloadButton button:hover {{
-  background: var(--glass-strong); border-color: var(--glass-edge-strong); color: var(--strong);
+/* hover only where there is a real pointer: on a touch screen a tap leaves :hover stuck on */
+@media (hover: hover) {{
+  .stButton button:hover, .stFormSubmitButton button:hover, .stDownloadButton button:hover {{
+    background: var(--glass-strong); border-color: var(--glass-edge-strong); color: var(--strong);
+  }}
 }}
 .stButton button:active, .stFormSubmitButton button:active, .stDownloadButton button:active {{
   transform: scale(0.97);
@@ -275,7 +281,7 @@ CSS = f"""
               box-shadow var(--t-space) var(--ease);
 }}
 [data-testid="stSidebarNav"] a span {{ color: var(--label-2); }}
-[data-testid="stSidebarNav"] a:hover span {{ color: var(--label); }}
+@media (hover: hover) {{ [data-testid="stSidebarNav"] a:hover span {{ color: var(--label); }} }}
 [data-testid="stSidebarNav"] a[aria-current="page"] {{
   background: var(--glass) !important; border-color: var(--glass-edge);
   box-shadow: var(--glass-depth-soft);
@@ -288,7 +294,7 @@ CSS = f"""
   background: transparent; border: none; border-radius: 0; border-bottom: 1px solid var(--hair);
 }}
 [data-testid="stExpander"] summary {{ min-height: var(--control); transition: color var(--t-micro) var(--ease); }}
-[data-testid="stExpander"] summary:hover {{ color: var(--strong); }}
+@media (hover: hover) {{ [data-testid="stExpander"] summary:hover {{ color: var(--strong); }} }}
 
 /* ---------- notices: gray text on a hairline, no color ---------- */
 [data-testid="stAlertContainer"] {{
@@ -357,7 +363,7 @@ CSS = f"""
   position: sticky; bottom: max(var(--space-4), env(safe-area-inset-bottom)); z-index: 40;   /* clear of the iPhone's home bar */
 }}
 /* on a page shorter than the screen it still sits at the bottom, not right under the text */
-.stMainBlockContainer:has(.st-key-chat_dock) {{ min-height: 100dvh; display: flex; flex-direction: column; box-sizing: border-box; }}
+.stMainBlockContainer:has(.st-key-chat_dock) {{ min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; box-sizing: border-box; }}
 .stMainBlockContainer:has(.st-key-chat_dock) > [data-testid="stVerticalBlock"] {{ flex: 1; }}
 [data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock) {{ margin-top: auto; }}
 
@@ -730,7 +736,7 @@ PROGRESS = """
 .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] { min-width: 0; }
 @container (min-width: 860px) {
   .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] {
-    position: sticky; top: 72px; max-height: calc(100dvh - 92px); overflow-y: auto; overscroll-behavior: contain;
+    position: sticky; top: 72px; max-height: calc(100vh - 92px); max-height: calc(100dvh - 92px); overflow-y: auto; overscroll-behavior: contain;
     padding: 6px 8px 40px 6px; margin: -6px -8px 0 -6px;
     scrollbar-width: thin; scrollbar-color: var(--hair) transparent;
     mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
@@ -761,7 +767,7 @@ PROGRESS = """
   background: var(--env) !important; color: var(--label); box-shadow: var(--optic-strong) !important;
 }
 .st-key-prog_view [data-testid="stButtonGroup"] button[aria-checked="true"] p { font-weight: 600; }
-.st-key-prog_view [data-testid="stButtonGroup"] button:hover:not([aria-checked="true"]) { color: var(--label); }
+@media (hover: hover) { .st-key-prog_view [data-testid="stButtonGroup"] button:hover:not([aria-checked="true"]) { color: var(--label); } }
 /* a view eases in when switched to */
 [class*="st-key-view_"] { gap: var(--space-4) !important; animation: rise-in 240ms var(--ease) backwards; }
 /* the subjects: as many columns as fit, never cramped */
@@ -819,7 +825,7 @@ PROGRESS = """
 [class*="st-key-cal_20"][class*="_out"] .stButton button { opacity: 0.4; }
 [class*="st-key-cal_20"][class*="_future_"] .stButton button { opacity: 0.35; cursor: default; background: transparent; }
 [class*="st-key-cal_20"][class*="_today"] .stButton button p { font-weight: 700; color: var(--strong); }
-[class*="st-key-cal_20"] .stButton button:not(:disabled):hover { background: var(--glass); border: none; box-shadow: none; }
+@media (hover: hover) { [class*="st-key-cal_20"] .stButton button:not(:disabled):hover { background: var(--glass); border: none; box-shadow: none; } }
 [class*="st-key-cal_20"][class*="_sel"] .stButton button {
   background: var(--glass-strong); box-shadow: var(--optic); animation: day-pick 220ms var(--ease) backwards;
 }
@@ -862,13 +868,10 @@ PROGRESS = """
   border-radius: 18px; background: var(--glass); box-shadow: var(--optic);
   animation: rise-in 240ms var(--ease) backwards;
 }
-[class*="st-key-reader_"] [data-baseweb="tab-panel"] {
-  max-height: 340px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px;
-  scrollbar-width: thin; scrollbar-color: var(--hair) transparent;
-  animation: fade-in 200ms var(--ease) backwards;
-}
-[class*="st-key-reader_"] [data-baseweb="tab-list"] { gap: 2px; overflow-x: auto; scrollbar-width: none; }
-[class*="st-key-reader_"] [data-baseweb="tab"] p { font-size: 0.8125rem; white-space: nowrap; }
+/* the section grows with its text: the page is the one thing that scrolls */
+[class*="st-key-reader_"] [role="tabpanel"] { animation: fade-in 200ms var(--ease) backwards; }
+[class*="st-key-reader_"] [role="tablist"] { gap: 2px; }
+[class*="st-key-reader_"] [role="tab"] p { font-size: 0.8125rem; white-space: nowrap; }
 
 /* ---------- every session ---------- */
 .st-key-sessions_head { flex-direction: row !important; flex-wrap: wrap !important; justify-content: space-between;
@@ -902,15 +905,92 @@ PROGRESS = """
 @media (prefers-reduced-motion: reduce) {
   [class*="st-key-calgrid_"], [class*="st-key-prog_day_"], [class*="st-key-reader_"], [class*="st-key-sessions_list_"],
   [class*="st-key-view_"],
-  [class*="st-key-reader_"] [data-baseweb="tab-panel"], [class*="st-key-cal_20"] .stButton button { animation: none !important; }
+  [class*="st-key-reader_"] [role="tabpanel"], [class*="st-key-cal_20"] .stButton button { animation: none !important; }
   [data-testid="stExpander"] details::details-content { transition: none; }
 }
 </style>
 """
 
 
+# Touch screens (iPhone, iPad, touch tablets). What looks compact stays
+# compact; only the area a finger can hit grows, invisibly, to about 44px.
+# Kept apart from the rest so a mouse sees exactly what it did before.
+TOUCH = """
+<style>
+/* no grey flash on tap (each control shows its own pressed state instead),
+   and no double-tap-to-zoom wait on anything tappable */
+.stApp, [data-trigger] { -webkit-tap-highlight-color: transparent; }
+button, a, summary, label, input, textarea, [role="tab"], [role="option"], [data-baseweb="select"] { touch-action: manipulation; }
+/* scrolling a focused field into view (or moving to a lesson) stops clear
+   of the header above and the chat box below */
+[data-testid="stMain"] { scroll-padding: 72px 0 112px; }
+
+/* pressed: a quiet answer under the finger (and the mouse) */
+[data-testid="stSidebarNav"] a:active { background: var(--wash) !important; }
+[data-testid="stExpander"] summary:active { color: var(--strong); }
+.st-key-prog_view [data-testid="stButtonGroup"] button:not([aria-checked="true"]):active { background: var(--wash) !important; }
+[class*="st-key-cal_20"] .stButton button:not(:disabled):active { background: var(--wash); }
+[data-testid="stButtonGroup"] button:active, [role="tab"]:active { opacity: 0.6; }
+[class*="st-key-oncal_"] button:active p, .st-key-cal_nav button:active p { color: var(--strong); }
+
+/* Streamlit shows the sidebar's close button only while the sidebar is
+   hovered, which never happens on a touch screen (an iPad could open the
+   sidebar and not close it again) */
+@media (hover: none) { [data-testid="stSidebarCollapseButton"] { visibility: visible !important; } }
+@media (pointer: coarse) {
+  /* 16px text in every field: below that Safari zooms the page in on focus */
+  .stApp input, .stApp textarea, [data-testid="stChatInput"] textarea, [data-trigger] input { font-size: 16px !important; }
+
+  /* the finger's reach, larger than what shows: an invisible margin around
+     the small controls (the calendar days and the lesson line are already
+     44px and draw their own marks with ::before and ::after, so they are
+     left alone) */
+  .st-key-prog_view [data-testid="stButtonGroup"] button,
+  [data-testid="stButtonGroup"] button,
+  .st-key-cal_nav button, [class*="st-key-oncal_"] button,
+  [data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapseButton"] button,
+  [data-testid="stMainMenu"] button { position: relative; }
+  .st-key-prog_view [data-testid="stButtonGroup"] button::after,
+  [data-testid="stButtonGroup"] button::after,
+  .st-key-cal_nav button::after, [class*="st-key-oncal_"] button::after {
+    content: ""; position: absolute; inset: -8px -3px;
+  }
+  [data-testid="stButtonGroup"] button { overflow: visible; }   /* it clipped the reach */
+  [class*="st-key-read_"] [data-testid="stButtonGroup"] > div { row-gap: 12px; }   /* each row keeps its own reach */
+  /* the switch: a little taller to the eye, and its reach fills the track */
+  .st-key-prog_view [data-testid="stButtonGroup"] > div { overflow: visible; }
+  .st-key-prog_view [data-testid="stButtonGroup"] button { min-height: 40px; }
+  .st-key-prog_view [data-testid="stButtonGroup"] button::after { inset: -3px -1px; }
+  .st-key-cal_nav button { min-width: 44px; }
+  [data-testid="stExpandSidebarButton"]::after, [data-testid="stSidebarCollapseButton"] button::after,
+  [data-testid="stMainMenu"] button::after { content: ""; position: absolute; inset: -9px; }
+  [data-testid="stSidebarNav"] a { min-height: 44px; }
+  [role="tab"] { min-height: 44px; min-width: 44px; justify-content: center; }
+  [role="option"] { min-height: 44px; }
+
+  /* one scroll, the page's: on a touch screen the two sides of Progress and
+     a lesson being read don't scroll on their own inside it (a swipe would
+     move the inner box one moment and the page the next) */
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] {
+    position: static !important; max-height: none !important; overflow: visible !important;
+    padding: 0 !important; margin: 0 !important; mask-image: none !important;
+  }
+  /* the sections' names: swiped sideways; the arrow buttons (made for a
+     mouse) sat over the last name in view and took its taps */
+  [data-testid="stTabs"] [role="tablist"] { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  [data-testid="stTabs"] button[aria-label^="Scroll tabs"] { display: none; }
+}
+/* the switch stays in sight while the view scrolls: under the header when
+   the page itself scrolls (the sides stacked, or on a touch screen), where
+   the header would otherwise sit over it and take its taps */
+@container (max-width: 859.98px) { .st-key-prog_view { top: 52px; } }
+@media (pointer: coarse) { .st-key-prog_view { top: 52px; } }
+</style>
+"""
+
+
 def stylesheet() -> str:
-    return CSS.replace("</style>", LIQUID.replace("<style>", "").replace("</style>", PROGRESS.replace("<style>", "")))
+    return CSS.replace("</style>", LIQUID.replace("<style>", "").replace("</style>", (PROGRESS + TOUCH).replace("<style>", "").replace("</style>", "", 1)))
 
 
 def inject():
