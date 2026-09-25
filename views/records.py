@@ -1,11 +1,10 @@
 """Progress: how she's doing overall, her history day by day, and where she
 is now in each subject.
 
-Three areas side by side on a wide page, each scrolling on its own so
-looking through one never loses her place in another: the month, the day
-picked with every session below it, and the subjects. Narrower, the
-subjects move under the first two; on a phone it becomes one run (month,
-day, subjects, sessions). Lessons are read one at a time, a section at a
+Two sides: the month on the left, and on the right one view at a time,
+switched at its top: the day picked, every session, or the subjects. On a
+wide page each side scrolls on its own; on a phone the month comes first
+and the view under it. Lessons are read one at a time, a section at a
 time, so opening them never makes the page long."""
 import calendar
 import json
@@ -37,6 +36,7 @@ def go(ym, day=None, way="none"):
     st.session_state.prog_way = way
     if day is not None:
         st.session_state.prog_day = day.isoformat()
+        st.session_state.prog_view_next = "Day"      # a picked day is shown right away
     st.rerun()
 
 
@@ -131,51 +131,8 @@ def toward(ym):
     return "none" if ym == (year, month) else "next" if ym > (year, month) else "prev"
 
 
-# ============================================================
-# THREE AREAS: the month | the day and every session | the subjects
-# ============================================================
-with st.container(key="prog_main"):
-    month_col, day_col, subject_col = st.columns([4.2, 4.8, 3.6], gap="large")
-
-with month_col:
-    summary = history.month_summary(log, year, month, today)
-    with st.container(key="cal_head", horizontal=True, vertical_alignment="center"):
-        st.markdown(f"#### {calendar.month_name[month]} {year}")
-        with st.container(key="cal_nav", horizontal=True, horizontal_alignment="right", gap="small"):
-            if st.button("‹", key="cal_prev", disabled=(year, month) <= earliest):
-                go(history.shift(year, month, -1), way="prev")
-            if st.button("Today", key="cal_today", disabled=(year, month) == now and picked == today):
-                go(now, today, way=toward(now))
-            if st.button("›", key="cal_next", disabled=(year, month) >= now):
-                go(history.shift(year, month, 1), way="next")
-    st.markdown('<span class="cal-summary">' + progress_bar.rolled(   # the month's numbers roll when it changes
-        "cal_summary", f"{days(summary['studied'])} studied · {days(summary['completed'])} completed · "
-                       f"{summary['lessons']} {'lesson' if summary['lessons'] == 1 else 'lessons'} passed")
-                + "</span>", unsafe_allow_html=True)
-
-    # weekday names, each with the subject that day of the week is for
-    st.html('<div class="cal-week">' + "".join(
-        f'<span><b>{name[:3]}</b><i>{history.short_topic(core.WEEKDAY_TOPIC[k])}</i></span>'
-        for k, name in enumerate(core.WEEKDAYS)) + "</div>")
-    # the grid is new for each month (its key names the month), so it slides in
-    with st.container(key=f"calgrid_{year}_{month}_{way}"):
-        for w, week in enumerate(history.month_grid(log, year, month, today)):
-            with st.container(key=f"calw_{w}", horizontal=True):
-                for d in week:
-                    name = (f"cal_{d['date'].isoformat()}_{d['status']}_a{history.amount(d)}"
-                            + ("" if d["in_month"] else "_out") + ("_today" if d["date"] == today else "")
-                            + ("_sel" if d["date"] == picked else ""))
-                    # (no hover tip: Streamlit draws a second button for it; the day
-                    # card says it all once the day is picked)
-                    if st.button(str(d["date"].day), key=name, disabled=d["status"] == "future"):
-                        ym = (d["date"].year, d["date"].month)
-                        go(ym, d["date"], way=toward(ym))
-    st.html('<div class="cal-key"><span><i class="k-done"></i>Completed</span>'
-            '<span><i class="k-part"></i>Partly done</span>'
-            '<span>The line under a day grows with the lessons passed</span></div>')
-
-with day_col:
-    # ---- the day picked: new for each day, so it eases in ----
+def view_day():
+    """The day picked: new for each day, so it eases in."""
     with st.container(key=f"prog_day_{picked.isoformat()}"):
         stats = history.day_stats(log, picked, today)
         st.markdown(f"#### {core.weekday_name(picked)}, {picked:%B} {picked.day}"
@@ -196,11 +153,14 @@ with day_col:
                 ' if (e) e.scrollIntoView({behavior: "smooth", block: "nearest"}); else if (n) setTimeout(() => go(n - 1), 80);'
                 ' })(20);</script>', unsafe_allow_javascript=True)
 
-    # ---- every session, newest first, a page at a time ----
+
+
+def view_sessions():
+    """Every session, newest first, a page at a time."""
     PAGE = 10
     if log["entries"]:
         with st.container(key="sessions_head", horizontal=True, vertical_alignment="center"):
-            st.markdown("#### Every session")
+            count_spot = st.empty()          # (the switch above already names the view)
             topic_filter = st.selectbox(
                 "Subject",
                 ["all", *core.TOPICS],
@@ -210,6 +170,8 @@ with day_col:
             )
         entries = [e for e in reversed(log["entries"])
                    if topic_filter == "all" or e["topic"] == topic_filter]
+        count_spot.markdown(f'<span class="view-count">{len(entries)} {"session" if len(entries) == 1 else "sessions"}</span>',
+                            unsafe_allow_html=True)
         if not entries:
             st.caption("Nothing recorded for this subject yet.")
         shown = st.session_state.setdefault("sessions_shown", PAGE)
@@ -229,9 +191,10 @@ with day_col:
                 st.session_state.sessions_shown = shown + PAGE
                 st.rerun()
 
-with subject_col:
-    # ---- each subject, and the topic (unit) she is in now ----
-    st.markdown("#### By subject")
+
+
+def view_subjects():
+    """Each subject and the topic (unit) she is in now, then the bookshelf."""
     st.caption(f"Each subject has {curriculum.TOTAL:,} lessons taken in order: 1–{curriculum.LEVEL_SIZE:,} "
                f"Beginner, {curriculum.LEVEL_SIZE + 1:,}–{2 * curriculum.LEVEL_SIZE:,} Intermediate, the rest "
                f"Advanced. The bar is the topic you're in now; Reading follows your book.")
@@ -282,6 +245,63 @@ with subject_col:
                 if b.get("final_summary"):
                     with st.container(border=True):
                         st.markdown(b["final_summary"])
+
+
+# ============================================================
+# TWO SIDES: the month | one view at a time (the day, every session, the subjects)
+# ============================================================
+VIEWS = ["Day", "Sessions", "Subjects"]
+with st.container(key="prog_main"):
+    month_col, panel_col = st.columns([5, 6], gap="large")
+
+with month_col:
+    summary = history.month_summary(log, year, month, today)
+    with st.container(key="cal_head", horizontal=True, vertical_alignment="center"):
+        st.markdown(f"#### {calendar.month_name[month]} {year}")
+        with st.container(key="cal_nav", horizontal=True, horizontal_alignment="right", gap="small"):
+            if st.button("‹", key="cal_prev", disabled=(year, month) <= earliest):
+                go(history.shift(year, month, -1), way="prev")
+            if st.button("Today", key="cal_today", disabled=(year, month) == now and picked == today):
+                go(now, today, way=toward(now))
+            if st.button("›", key="cal_next", disabled=(year, month) >= now):
+                go(history.shift(year, month, 1), way="next")
+    st.markdown('<span class="cal-summary">' + progress_bar.rolled(   # the month's numbers roll when it changes
+        "cal_summary", f"{days(summary['studied'])} studied · {days(summary['completed'])} completed · "
+                       f"{summary['lessons']} {'lesson' if summary['lessons'] == 1 else 'lessons'} passed")
+                + "</span>", unsafe_allow_html=True)
+
+    # weekday names, each with the subject that day of the week is for
+    st.html('<div class="cal-week">' + "".join(
+        f'<span><b>{name[:3]}</b><i>{history.short_topic(core.WEEKDAY_TOPIC[k])}</i></span>'
+        for k, name in enumerate(core.WEEKDAYS)) + "</div>")
+    # the grid is new for each month (its key names the month), so it slides in
+    with st.container(key=f"calgrid_{year}_{month}_{way}"):
+        for w, week in enumerate(history.month_grid(log, year, month, today)):
+            with st.container(key=f"calw_{w}", horizontal=True):
+                for d in week:
+                    name = (f"cal_{d['date'].isoformat()}_{d['status']}_a{history.amount(d)}"
+                            + ("" if d["in_month"] else "_out") + ("_today" if d["date"] == today else "")
+                            + ("_sel" if d["date"] == picked else ""))
+                    # (no hover tip: Streamlit draws a second button for it; the day
+                    # card says it all once the day is picked)
+                    if st.button(str(d["date"].day), key=name, disabled=d["status"] == "future"):
+                        ym = (d["date"].year, d["date"].month)
+                        go(ym, d["date"], way=toward(ym))
+    st.html('<div class="cal-key"><span><i class="k-done"></i>Completed</span>'
+            '<span><i class="k-part"></i>Partly done</span>'
+            '<span>The line under a day grows with the lessons passed</span></div>')
+
+with panel_col:
+    # one view at a time, so the right side stays calm: the day picked on the
+    # calendar, every session, or the subjects. Each eases in when switched to.
+    st.session_state.setdefault("prog_view", "Day")
+    if (pending := st.session_state.pop("prog_view_next", None)):
+        st.session_state.prog_view = pending
+    view = st.segmented_control("Show", VIEWS, key="prog_view", required=True,
+                                label_visibility="collapsed", width="stretch") or "Day"
+    with st.container(key=f"view_{view.lower()}"):
+        {"Day": view_day, "Sessions": view_sessions, "Subjects": view_subjects}[view]()
+
 
 # ============================================================
 # BACKUP: tucked away, one click to open
