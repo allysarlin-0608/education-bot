@@ -120,7 +120,11 @@ def _text(md: str) -> str:
 
 
 def _days(book: dict) -> str:
-    rows = []
+    """The days of a book on the shelf. A finished book shows all fourteen.
+    A stopped one shows the days she read; the rest wait behind one quiet
+    line ("9 days not read") that opens the whole fortnight in place."""
+    finished = book["status"] == "finished"
+    rows, later = [], 0
     for d in range(1, books.DAYS + 1):
         check = book["checks"].get(str(d))
         if not book["plan"][d - 1]:
@@ -129,17 +133,22 @@ def _days(book: dict) -> str:
             state, cls = f"Passed · {_day(check['passed_on'])}", "passed"
         else:
             state, cls = "Not read", "unread"
+        if not check and not finished:
+            cls += " later"
+            later += 1
         words = f'<p class="bk-words">{_e(check["summary"])}</p>' if check and check.get("summary") else ""
         rows.append(f'<li class="{cls}"><span class="bk-d">Day {d}</span>'
-                    f'<span class="bk-r">{_e(books.day_description(book, d))}{words}</span>'
-                    f'<span class="bk-s">{state}</span></li>')
-    return '<ol class="bk-days">' + "".join(rows) + "</ol>"
+                    f'<span class="bk-r">{_e(books.day_description(book, d))}</span>'
+                    f'<span class="bk-s">{state}</span>{words}</li>')
+    more = (f'<details class="bk-more"><summary><span class="bk-more-show">{later} {"day" if later == 1 else "days"} not read</span>'
+            '<span class="bk-more-hide">Show only the days read</span></summary></details>') if later else ""
+    return '<ol class="bk-days">' + "".join(rows) + "</ol>" + more
 
 
 def shelf_html(all_books: list, open_id: str = "") -> str:
     """One row per book; a tap opens it in place (native details: no
-    reload) to its fourteen days, what she wrote each day and whether it
-    passed, and the wrap-up for a finished book."""
+    reload) to its days, what she wrote each day and whether it passed,
+    and the wrap-up for a finished book. Open, the row offers Close."""
     shelf = on_shelf(all_books)
     if not shelf:
         return '<p class="bk-empty">Books you finish will appear here.</p>'
@@ -151,6 +160,6 @@ def shelf_html(all_books: list, open_id: str = "") -> str:
         rows.append(
             f'<details class="bk-book"{" open" if b["id"] == open_id else ""}>'
             f'<summary><span class="bk-name"><span class="bk-title">{_e(b["title"] or "(untitled)")}</span>{author}</span>'
-            f'<span class="bk-state">{_e(status(b))}</span></summary>'
+            f'<span class="bk-side"><span class="bk-state">{_e(status(b))}</span><span class="bk-close">Close</span></span></summary>'
             f'<div class="bk-open">{_days(b)}{wrap}</div></details>')
     return '<div class="bk-shelf">' + "".join(rows) + "</div>"
