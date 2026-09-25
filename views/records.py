@@ -148,9 +148,12 @@ def view_day():
             for e in on_day:
                 show_entry(e, "day")
     if st.session_state.pop("prog_reveal", False):
-        # picked from the list below: bring the day into view within its area
-        st.html('<script>(function go(n) { const e = window.parent.document.querySelector(\'[class*="st-key-prog_day_"]\');'
-                ' if (e) e.scrollIntoView({behavior: "smooth", block: "nearest"}); else if (n) setTimeout(() => go(n - 1), 80);'
+        # a day just picked: if its card is out of sight (on a phone it sits
+        # below the month), bring it up; beside the month it stays put
+        st.html('<script>(function go(n) { const w = window.parent; const e = w.document.querySelector(\'[class*="st-key-prog_day_"]\');'
+                ' if (!e) { if (n) setTimeout(() => go(n - 1), 80); return; }'
+                ' const r = e.getBoundingClientRect();'
+                ' if (r.top > w.innerHeight - 140 || r.bottom < 80) e.scrollIntoView({behavior: "smooth", block: "start"});'
                 ' })(20);</script>', unsafe_allow_javascript=True)
 
 
@@ -285,6 +288,7 @@ with month_col:
                     # (no hover tip: Streamlit draws a second button for it; the day
                     # card says it all once the day is picked)
                     if st.button(str(d["date"].day), key=name, disabled=d["status"] == "future"):
+                        st.session_state.prog_reveal = True     # on a phone the day shows below: bring it up
                         ym = (d["date"].year, d["date"].month)
                         go(ym, d["date"], way=toward(ym))
     st.html('<div class="cal-key"><span><i class="k-done"></i>Completed</span>'

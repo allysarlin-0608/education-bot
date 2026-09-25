@@ -825,9 +825,17 @@ PROGRESS = """
 [class*="st-key-cal_20"][class*="_out"] .stButton button { opacity: 0.4; }
 [class*="st-key-cal_20"][class*="_future_"] .stButton button { opacity: 0.35; cursor: default; background: transparent; }
 [class*="st-key-cal_20"][class*="_today"] .stButton button p { font-weight: 700; color: var(--strong); }
-@media (hover: hover) { [class*="st-key-cal_20"] .stButton button:not(:disabled):hover { background: var(--glass); border: none; box-shadow: none; } }
-[class*="st-key-cal_20"][class*="_sel"] .stButton button {
-  background: var(--glass-strong); box-shadow: var(--optic); animation: day-pick 220ms var(--ease) backwards;
+@media (hover: hover) { [class*="st-key-cal_20"]:not([class*="_sel"]) .stButton button:not(:disabled):not([data-picking]):hover { background: var(--glass); border: none; box-shadow: none; } }
+/* the day picked: glass with a fine ink ring, so it reads at a glance. A
+   tap shows it at once (data-picking, set by coach/glass.py) while the page
+   redraws, and the old pick lets go */
+[class*="st-key-cal_20"][class*="_sel"] .stButton button, [class*="st-key-cal_20"] .stButton button[data-picking] {
+  background: var(--glass-strong); color: var(--label);
+  box-shadow: var(--optic), inset 0 0 0 1px light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.34));
+}
+[class*="st-key-cal_20"][class*="_sel"] .stButton button { animation: day-pick 220ms var(--ease) backwards; }
+[class*="st-key-calgrid_"]:has(button[data-picking]) [class*="_sel"] .stButton button:not([data-picking]) {
+  background: transparent; box-shadow: none;
 }
 [class*="st-key-cal_20"] .stButton button:focus-visible { outline: 1px solid var(--outline); outline-offset: 1px; }
 @container (max-width: 520px) { [class*="st-key-cal_20"] .stButton button { height: 48px; } }
