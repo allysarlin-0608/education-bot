@@ -112,7 +112,7 @@ CSS = f"""
    (a superellipse where the browser can draw one) */
 .stButton button, .stFormSubmitButton button, [data-testid="stChatInput"], [class*="st-key-lcard_"],
 [data-testid="stChatMessage"], .st-key-day_done, [data-testid="stToast"], [data-trigger],
-.cal-day {{ corner-shape: superellipse(1.6); }}
+.st-key-prog_day, [class*="st-key-cal_20"] button {{ corner-shape: superellipse(1.6); }}
 
 /* ---------- chrome ---------- */
 [data-testid="stDecoration"], footer,
@@ -372,40 +372,6 @@ html {{ scroll-behavior: smooth; }}
 .stApp [data-testid="stMarkdownContainer"]:has(> table) {{ overflow-x: auto; }}   /* a wide table scrolls, not the page */
 
 .stApp [data-testid="stMarkdownContainer"] th {{ color: var(--label-2); font-weight: 500; }}
-
-/* ---------- calendar (Progress page) ---------- */
-.cal {{ display: grid; gap: var(--space-4); }}
-.cal-head {{ display: flex; align-items: baseline; justify-content: space-between; }}
-.cal-month {{ font-family: {SERIF}; font-size: 1.125rem; font-weight: 300; font-variant-numeric: lining-nums; color: var(--label); }}
-.cal-range {{ font-size: 0.8125rem; color: var(--label-3); }}
-.cal-grid {{ display: grid; grid-template-columns: repeat(7, 1fr); row-gap: var(--space-2); }}
-.cal-wd {{ text-align: center; font-size: 0.75rem; color: var(--label-3); padding-bottom: var(--space-2); }}
-.cal-day {{
-  position: relative; display: grid; place-items: center; justify-self: center;
-  width: 40px; height: 48px; border-radius: var(--radius-small); border: 1px solid transparent;
-  font-size: 0.9375rem; font-variant-numeric: tabular-nums; color: var(--label-2);
-}}
-.cal-day b {{ font-weight: 400; line-height: 1; transform: translateY(-3px); }}
-.cal-day i {{
-  position: absolute; bottom: 9px; left: 50%; width: 4px; height: 4px; margin-left: -2px;
-  border-radius: 50%; box-sizing: border-box;
-}}
-.cal-day.done {{ color: var(--label); }}
-.cal-day.done i {{ background: var(--label); }}
-.cal-day.started i {{ border: 1px solid var(--label-2); }}
-.cal-day.future {{ color: var(--label-3); opacity: 0.5; }}
-.cal-day.today {{
-  color: var(--strong); background: var(--glass); border-color: var(--glass-edge);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-depth-soft);
-  animation: settle 300ms var(--ease) both;
-}}
-.cal-day.today b {{ font-weight: 600; }}
-@keyframes settle {{ from {{ opacity: 0; transform: scale(0.98); }} to {{ opacity: 1; transform: none; }} }}
-.cal-legend {{ display: flex; gap: var(--space-5); font-size: 0.75rem; color: var(--label-3); }}
-.cal-legend span {{ display: inline-flex; align-items: center; gap: var(--space-2); }}
-.cal-legend i {{ width: 6px; height: 6px; border-radius: 50%; box-sizing: border-box; }}
-@media (max-width: 360px) {{ .cal-day {{ width: 36px; }} }}
 
 /* ---------- small screens: recompose ---------- */
 @media (max-width: 640px) {{
@@ -694,14 +660,13 @@ LIQUID = """
 }
 @media (prefers-reduced-motion: reduce) { .rd.rolling .rd-d::before { animation: none; } }
 
-/* ---------- the four figures at the top of Progress ---------- */
-.figures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+/* ---------- the figures at the top of Progress: one row, as many as fit ---------- */
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 24px 16px; }
 .figure-label { font-size: 0.75rem; color: var(--label-3); margin-bottom: 4px; }
 .figure-value {
   font-family: "Newsreader", "Noto Serif TC", serif; font-size: 1.875rem; font-weight: 300; line-height: 1.2;
   color: var(--label); font-variant-numeric: lining-nums tabular-nums;
 }
-@media (max-width: 640px) { .figures { grid-template-columns: repeat(2, 1fr); row-gap: 24px; } }
 
 @media (max-width: 640px) {
   .lq { --height: 8px; --inset: 2.25px; }
@@ -714,8 +679,115 @@ LIQUID = """
 </style>
 """
 
+PROGRESS = """
+<style>
+/* ---------- Progress: a wide page in two areas ----------
+   History (the month and the day picked) takes the wider left area, where
+   she is now (subjects, books) the right; the full list of sessions runs
+   below in as many columns as fit. The areas stack once the page is
+   narrower than about 760px, whatever the screen and sidebar. */
+.stMainBlockContainer:has(#progress-page) { max-width: 1240px; }
+[data-testid="stElementContainer"]:has(#progress-page) { display: none; }
+.st-key-prog_main { container-type: inline-size; margin-top: var(--space-3); }
+.st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { gap: clamp(32px, 5cqw, 64px) !important; align-items: flex-start; }
+/* one area under the other: the two columns open up into a single run so
+   where she is now (subjects, books) comes before the long list of sessions */
+@container (max-width: 760px) {
+  .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) { flex-direction: column; gap: var(--space-4) !important; }
+  .st-key-prog_main [data-testid="stColumn"],
+  .st-key-prog_main [data-testid="stColumn"] > [data-testid="stVerticalBlock"] { display: contents; }
+  .st-key-prog_main [data-testid="stColumn"]:last-child > [data-testid="stVerticalBlock"] > * { order: 1; }
+  .st-key-prog_main [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > :is(
+    :has(.st-key-sessions_head), :has(.st-key-sessions_list), .st-key-sessions_more) { order: 2; }
+  .st-key-prog_main [data-testid="stColumn"]:last-child > [data-testid="stVerticalBlock"] > :first-child { margin-top: var(--space-5); }
+}
+
+/* the month: header with its summary and the way to other months */
+.st-key-cal_head { flex-direction: row !important; justify-content: space-between; flex-wrap: nowrap !important; }
+.st-key-cal_head > div:first-child { flex: 1 1 auto !important; min-width: 0; }
+.st-key-cal_head h4 { padding: 0 !important; margin: 0; }
+.st-key-cal_nav { flex: 0 0 auto !important; width: auto !important; gap: 4px !important; flex-direction: row !important; }
+.st-key-cal_nav > div { flex: 0 0 auto !important; width: auto !important; }
+.st-key-cal_nav button { min-height: 36px; height: 36px; padding: 0 14px !important; }
+@container (max-width: 520px) { .st-key-cal_nav button { padding: 0 10px !important; } }
+.st-key-cal_nav button p { font-size: 0.9375rem; }
+
+/* weekday names, each with its subject */
+.cal-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: -8px; }
+.cal-week span { display: grid; justify-items: center; gap: 1px; min-width: 0; }
+.cal-week b { font-size: 0.75rem; font-weight: 500; color: var(--label-2); }
+.cal-week i { font-style: normal; font-size: 0.6875rem; color: var(--label-3); max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* the days: each one a button; the line under the number grows with the
+   lessons passed that day (full when all were), dark once completed */
+.st-key-cal_month { gap: 4px !important; }
+[class*="st-key-calw_"] { gap: 4px !important; flex-direction: row !important; flex-wrap: nowrap !important; }
+[class*="st-key-calw_"] > div { flex: 1 1 0 !important; min-width: 0; width: auto !important; }
+[class*="st-key-calw_"] [data-testid="stButton"], [class*="st-key-calw_"] button { width: 100%; }
+[class*="st-key-cal_20"] button {
+  position: relative; height: 56px; min-height: 44px; padding: 0 0 12px !important;
+  border: none !important; border-radius: 14px !important; background: transparent !important;
+  box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  color: var(--label-3) !important; transition: background-color var(--t-micro) var(--ease);
+}
+[class*="st-key-cal_20"] button > div, [class*="st-key-cal_20"] button [data-testid="stMarkdownContainer"] {
+  overflow: visible !important; min-width: 0; }
+[class*="st-key-cal_20"] button p { font-size: 0.9375rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: visible; }
+[class*="st-key-cal_20"] button::before, [class*="st-key-cal_20"] button::after {
+  content: ""; position: absolute; bottom: 12px; left: calc(50% - 12px); height: 3px; border-radius: 1.5px;
+}
+[class*="st-key-cal_20"][class*="_done_"] button::before, [class*="st-key-cal_20"][class*="_partial_"] button::before {
+  width: 24px; background: var(--hair);
+}
+[class*="st-key-cal_20"] button::after { width: 0; background: var(--label-2); }
+[class*="st-key-cal_20"][class*="_a1"] button::after { width: 4.8px; }
+[class*="st-key-cal_20"][class*="_a2"] button::after { width: 9.6px; }
+[class*="st-key-cal_20"][class*="_a3"] button::after { width: 14.4px; }
+[class*="st-key-cal_20"][class*="_a4"] button::after { width: 19.2px; }
+[class*="st-key-cal_20"][class*="_a5"] button::after { width: 24px; }
+[class*="st-key-cal_20"][class*="_done_"] button { color: var(--label) !important; }
+[class*="st-key-cal_20"][class*="_done_"] button::after { background: var(--label); }
+[class*="st-key-cal_20"][class*="_partial_"] button { color: var(--label-2) !important; }
+[class*="st-key-cal_20"][class*="_out"] button { opacity: 0.4; }
+[class*="st-key-cal_20"][class*="_future_"] button { opacity: 0.35; cursor: default; }
+[class*="st-key-cal_20"][class*="_today"] button p { font-weight: 700; color: var(--strong); }
+[class*="st-key-cal_20"] button:not(:disabled):hover { background: var(--glass) !important; }
+[class*="st-key-cal_20"][class*="_sel"] button { background: var(--glass-strong) !important; box-shadow: var(--optic) !important; }
+[class*="st-key-cal_20"] button:focus-visible { outline: 1px solid var(--outline); outline-offset: 1px; }
+@container (max-width: 520px) { [class*="st-key-cal_20"] button { height: 48px; } }
+
+.cal-key { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 0.75rem; color: var(--label-3); }
+.cal-key span { display: inline-flex; align-items: center; gap: 8px; }
+.cal-key i { display: inline-block; width: 16px; height: 3px; border-radius: 1.5px; }
+.cal-key .k-done { background: var(--label); }
+.cal-key .k-part { background: linear-gradient(90deg, var(--label-2) 50%, var(--hair) 50%); }
+
+/* the day picked: a quiet glass card under the month */
+.st-key-prog_day {
+  gap: var(--space-2) !important; margin-top: var(--space-2); padding: var(--space-5);
+  border-radius: var(--radius-medium); background: var(--glass); box-shadow: var(--optic);
+}
+.st-key-prog_day h4 { padding: 0 0 var(--space-1) !important; }
+.st-key-prog_day [data-testid="stMarkdownContainer"] p { margin-bottom: 0; }
+
+/* every session: a heading with its filter, then as many columns as fit */
+.st-key-sessions_head { flex-direction: row !important; flex-wrap: wrap !important; justify-content: space-between;
+  align-items: center !important; gap: var(--space-3) !important; margin-top: var(--space-6); }
+.st-key-sessions_head h4 { padding: 0 !important; margin: 0; }
+.st-key-sessions_head [data-testid="stSelectbox"] { width: min(260px, 100%); }
+.st-key-sessions_head > div:last-child { flex: 0 1 260px !important; width: auto !important; }
+.st-key-sessions_list {
+  display: grid !important; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+  gap: 0 var(--space-6) !important; align-items: start;
+}
+.st-key-sessions_list > div { width: 100% !important; min-width: 0; }
+</style>
+"""
+
+
 def stylesheet() -> str:
-    return CSS.replace("</style>", LIQUID.replace("<style>", ""))
+    return CSS.replace("</style>", LIQUID.replace("<style>", "").replace("</style>", PROGRESS.replace("<style>", "")))
 
 
 def inject():
