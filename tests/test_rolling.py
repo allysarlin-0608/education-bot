@@ -78,8 +78,8 @@ def test_duration_follows_distance_same_start_different_end():
     r = reels(rolling.html("384", "127"))
     steps = [abs(b - a) for a, b, _ in r]
     assert steps == [2, 6, 7]                                                     # 1→3, 2→8, 7→(8,9,0,1,2,3,)4
-    assert [t for *_, t in r] == [rolling.duration(s) for s in steps] == [775, 1075, 1150]
-    assert rolling.duration(1) == 700 and rolling.duration(20) == 1400
+    assert [t for *_, t in r] == [rolling.duration(s) for s in steps] == [975, 1275, 1350]
+    assert rolling.duration(1) == 900 and rolling.duration(20) == 1600
 
 
 def test_up_rolls_up_through_zero_and_down_rolls_down_through_nine():

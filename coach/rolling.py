@@ -28,8 +28,8 @@ def _value(token: str) -> float:
 
 def duration(steps: int) -> int:
     """Milliseconds for a reel that travels `steps` digit positions:
-    700 ms for one step, up to 1400 ms for a long roll."""
-    return min(1400, 700 + 75 * max(steps - 1, 0))
+    900 ms for one step, up to 1600 ms for a long roll."""
+    return min(1600, 900 + 75 * max(steps - 1, 0))
 
 
 def _digits(new: str, old: str) -> str:

@@ -589,7 +589,7 @@ LIQUID = """
 }
 /* all reels start together; each has its own duration (--t, by distance),
    so they come to rest one after another; smooth ease-out, no overshoot */
-.rd.rolling .rd-d::before { animation: rd-roll var(--t, 900ms) cubic-bezier(0.3, 0.6, 0.3, 1) both; }
+.rd.rolling .rd-d::before { animation: rd-roll var(--t, 1100ms) cubic-bezier(0.3, 0.6, 0.3, 1) both; }
 @keyframes rd-roll {
   from { transform: translateY(calc(var(--a) * -1.1em)); }
   to   { transform: translateY(calc(var(--b) * -1.1em)); }
