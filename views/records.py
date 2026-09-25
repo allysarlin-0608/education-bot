@@ -43,8 +43,7 @@ for week in weeks:
     for day, status in week:
         label = f"{day.month}/{day.day}" if day.day == 1 else str(day.day)
         classes = f"cal-day {status}" + (" today" if day == today else "")
-        cells.append(f'<span class="{classes}" title="{day.isoformat()}">'
-                     f'<b>{progress_bar.rolled(f"cal_{len(cells)}", label)}</b><i></i></span>')
+        cells.append(f'<span class="{classes}" title="{day.isoformat()}"><b>{label}</b><i></i></span>')
 st.html(
     '<div class="cal">'
     f'<div class="cal-head"><span class="cal-month">{progress_bar.rolled("cal_month", f"{today:%B %Y}")}</span>'
