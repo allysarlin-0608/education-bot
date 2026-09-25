@@ -142,5 +142,11 @@ def script() -> str:
         # Safari on iPhone and iPad shows :active (the pressed look) only
         # once the page listens for touches; passive, so scrolling is untouched
         "doc.addEventListener('touchstart', () => {}, { passive: true });"
+        # a day tapped on the Progress calendar shows as picked at once,
+        # before the page has redrawn (the redraw replaces the button)
+        "doc.addEventListener('click', (ev) => { if (!ev.target.closest || !ev.target.closest('button')) return;"
+        "  doc.querySelectorAll('[data-picking]').forEach((x) => x.removeAttribute('data-picking'));"
+        "  const b = ev.target.closest('[class*=\"st-key-cal_20\"] button');"
+        "  if (b && !b.disabled) b.setAttribute('data-picking', ''); }, true);"
         "})();</script>"
     )
