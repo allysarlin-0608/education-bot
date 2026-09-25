@@ -53,16 +53,12 @@ _SCRIPT = """<script>
                                 : { top: box.scrollTop });
       }, 150);
     }, true);
-    doc.addEventListener("click", (e) => {       // the link, when the current lesson is already open
-      const m = marker();
-      if (m && e.target.closest("a.jump") && s.restore(m.dataset.key)) e.preventDefault();
-    }, true);
   }
   const m = marker();
   if (m && m !== s.marker) { s.marker = m; s.quiet = Date.now() + 1000; }   // the page just (re)drew
 
-  // After the button switched lessons: wait until that lesson is drawn and
-  // the page stops growing, then go to her place in it (or its anchor).
+  // After the button: wait until that lesson is drawn and the page stops
+  // growing, then go to her place in it (or its anchor).
   if (m && m.dataset.jump) {
     const want = m.dataset.want;
     let last = "", calm = 0, tries = 0;
@@ -80,9 +76,10 @@ _SCRIPT = """<script>
 </script>"""
 
 
-def html(key, jump="", want=""):
+def html(key, jump="", want="", n=0):
     """The marker for the lesson on screen, plus the script. `jump` is the
     anchor to fall back on and `want` the lesson heading to wait for, both
-    set only right after the button switched lessons."""
+    set only right after the button was pressed; `n` counts presses, so a
+    second press on the same lesson still redraws (and reruns) the script."""
     return (f'<div id="coach-place" hidden data-key="{escape(key)}" data-jump="{escape(jump)}" '
-            f'data-want="{escape(want)}"></div>' + _SCRIPT)
+            f'data-want="{escape(want)}" data-n="{n}"></div>' + _SCRIPT)
