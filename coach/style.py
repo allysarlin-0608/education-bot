@@ -823,7 +823,9 @@ PROGRESS = """
 [class*="st-key-cal_20"][class*="_done_"] .stButton button::after { background: var(--label); }
 [class*="st-key-cal_20"][class*="_partial_"] .stButton button { color: var(--label-2); }
 [class*="st-key-cal_20"][class*="_out"] .stButton button { opacity: 0.4; }
-[class*="st-key-cal_20"][class*="_future_"] .stButton button { opacity: 0.35; cursor: default; background: transparent; }
+/* days to come: faint, but open to a tap (the day says what's planned) */
+[class*="st-key-cal_20"][class*="_future_"] .stButton button { opacity: 0.45; }
+[class*="st-key-cal_20"][class*="_future_"][class*="_sel"] .stButton button { opacity: 0.8; }
 [class*="st-key-cal_20"][class*="_today"] .stButton button p { font-weight: 700; color: var(--strong); }
 @media (hover: hover) { [class*="st-key-cal_20"]:not([class*="_sel"]) .stButton button:not(:disabled):not([data-picking]):hover { background: var(--glass); border: none; box-shadow: none; } }
 /* the day picked: glass with a fine ink ring, so it reads at a glance. A

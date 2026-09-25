@@ -115,7 +115,6 @@ st.html('<div class="figures">' + "".join(          # numbers roll when they cha
     for label, value in figures.items()) + "</div>")
 
 # the month and day shown: today if she has studied today, otherwise the last day she did
-earliest = history.first_month(log, today)
 now = (today.year, today.month)
 last = max((e["date"] for e in log["entries"] if e["date"] <= today.isoformat()), default=today.isoformat())
 start = today.isoformat() if history.entries_on(log, today) else last
@@ -262,11 +261,11 @@ with month_col:
     with st.container(key="cal_head", horizontal=True, vertical_alignment="center"):
         st.markdown(f"#### {calendar.month_name[month]} {year}")
         with st.container(key="cal_nav", horizontal=True, horizontal_alignment="right", gap="small"):
-            if st.button("‹", key="cal_prev", disabled=(year, month) <= earliest):
+            if st.button("‹", key="cal_prev"):
                 go(history.shift(year, month, -1), way="prev")
             if st.button("Today", key="cal_today", disabled=(year, month) == now and picked == today):
                 go(now, today, way=toward(now))
-            if st.button("›", key="cal_next", disabled=(year, month) >= now):
+            if st.button("›", key="cal_next"):
                 go(history.shift(year, month, 1), way="next")
     st.markdown('<span class="cal-summary">' + progress_bar.rolled(   # the month's numbers roll when it changes
         "cal_summary", f"{days(summary['studied'])} studied · {days(summary['completed'])} completed · "
@@ -287,7 +286,7 @@ with month_col:
                             + ("_sel" if d["date"] == picked else ""))
                     # (no hover tip: Streamlit draws a second button for it; the day
                     # card says it all once the day is picked)
-                    if st.button(str(d["date"].day), key=name, disabled=d["status"] == "future"):
+                    if st.button(str(d["date"].day), key=name):
                         st.session_state.prog_reveal = True     # on a phone the day shows below: bring it up
                         ym = (d["date"].year, d["date"].month)
                         go(ym, d["date"], way=toward(ym))
