@@ -103,7 +103,7 @@ def stage_html() -> str:
         art = visuals.object_html(t, "sg-art", k)
         credit = visuals.credit(t)
         layers.append(
-            f'<div class="sg-layer" data-t="{t}">{art}<div class="sg-copy">'
+            f'<div class="sg-layer" data-t="{t}">{art}<div class="sg-copy sg-title-{visuals.WORLD[t]["title"]}">'
             f'<p class="sg-kicker">{k:02d} · {escape(kicker)}</p>'
             f'<p class="sg-title">{escape(core.TOPICS[t])}</p>'
             f'<p class="sg-desc">{escape(settings.DESCRIPTIONS[t])}</p>'

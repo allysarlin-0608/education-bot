@@ -1672,11 +1672,14 @@ LENS = """
 .st-key-ob_lead [data-testid="stMarkdownContainer"]:has(h2), .st-key-ob_hero [data-testid="stMarkdownContainer"]:has(h1) { margin-bottom: 0 !important; }
 .st-key-ob_lead h2 { font-size: clamp(2.25rem, 3.4vw, 3.125rem); line-height: 1.06; letter-spacing: -0.005em; }
 .st-key-ob_body { gap: var(--space-5) !important; padding-top: 6px; }
-/* Subjects: the question and the index on the left, the stage on the right */
-.st-key-ob_grid_subjects { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); grid-template-areas: "lead stage" "body stage"; }
-.st-key-ob_grid_subjects > :has(> .st-key-ob_lead) { grid-area: lead; position: static; }
-.st-key-ob_grid_subjects > :has(> .st-key-ob_body) { grid-area: body; }
-.st-key-ob_grid_subjects > :has(> .st-key-ob_stage) { grid-area: stage; position: sticky; top: 80px; align-self: start; }
+/* Subjects: the question, then the subject in focus set as its world (its
+   name large at the left, its object at the right), held at the top while
+   the index scrolls under it */
+.st-key-ob_grid_subjects { display: flex !important; flex-direction: column; align-items: stretch !important; row-gap: var(--space-5); }
+.st-key-ob_grid_subjects > * { width: 100% !important; }
+.st-key-ob_grid_subjects > :has(> .st-key-ob_lead) { position: static; }
+.st-key-ob_grid_subjects > :has(> .st-key-ob_stage) { position: sticky; top: 56px; z-index: 4; background: var(--env); }
+.st-key-ob_grid_subjects .st-key-ob_body { max-width: 760px; }
 @media (max-width: 899px) {
   [class*="st-key-ob_grid"] { display: flex !important; flex-direction: column; align-items: stretch !important; }
   [class*="st-key-ob_grid"] > * { width: 100% !important; }
@@ -1924,6 +1927,27 @@ WORLDS = """
 }
 @media (prefers-reduced-motion: reduce) {
   .w-kicker, .stApp .w-title, .w-about, .w-meta, .st-key-w_actions { animation: none; }
+}
+
+/* ---------- the Subjects stage on a wide page: the world's own composition ---------- */
+@media (min-width: 900px) {
+  .sg-stage { height: clamp(380px, 58vh, 580px); min-height: 0; border-radius: 0; }
+  .sg-copy { max-width: 50%; padding: 0 0 clamp(12px, 3vh, 28px); gap: 10px; }
+  .sg-stage .sg-title { font-size: clamp(3.25rem, 6vw, 6rem); line-height: 0.98 !important; letter-spacing: -0.02em; }
+  .sg-stage .sg-title-tracked .sg-title { font-family: "Inter", "Noto Sans TC", sans-serif; font-weight: 300; text-transform: uppercase;
+    font-size: clamp(1.75rem, 3.4vw, 2.875rem); letter-spacing: 0.3em; line-height: 1.25 !important; }
+  .sg-desc { font-size: 1.1875rem; }
+  /* the object at the right half, as in its world */
+  .sg-art { inset: 0 0 0 46%; background-position: center 30%;
+    -webkit-mask-image: linear-gradient(to left, #000 55%, transparent 100%), linear-gradient(to bottom, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to left, #000 55%, transparent 100%), linear-gradient(to bottom, #000 62%, transparent 100%);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+  :root:not([data-scheme="dark"]) .sg-art:not(.no-art) {
+    -webkit-mask-image: linear-gradient(to left, #000 50%, transparent 100%), linear-gradient(to bottom, #000 55%, transparent 100%);
+    mask-image: linear-gradient(to left, #000 50%, transparent 100%), linear-gradient(to bottom, #000 55%, transparent 100%); }
+  .sg-art.is-cut { inset: 12px 0 12px 50%; background-position: center !important; }
+  .sg-art.is-cut[data-layout="pendant"] { inset: 0 0 8px 50%; background-position: center top !important; }
+  .sg-art.no-art { inset: 0 0 0 50%; }
 }
 </style>
 """
