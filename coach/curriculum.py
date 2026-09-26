@@ -123,12 +123,30 @@ def refresh_titles(topic: str, slots: list) -> list:
     return slots
 
 
-def day_plan(log: dict, topic: str, entry) -> list:
+def day_plan(log: dict, topic: str, entry, count: int = PER_DAY) -> list:
     """The day's lessons: the saved ones if the day has started, otherwise
-    the next PER_DAY lessons (not saved until one is started)."""
+    the next `count` lessons (not saved until one is started). `count` is
+    her daily pace (settings)."""
     if entry is not None and entry.get("lessons"):
-        return refresh_titles(topic, entry["lessons"])
-    return [new_slot(topic, n) for n in next_numbers(log, topic)]
+        return fit(log, topic, refresh_titles(topic, entry["lessons"]), count)
+    return [new_slot(topic, n) for n in next_numbers(log, topic, count)]
+
+
+def _touched(slot: dict) -> bool:
+    return bool(slot.get("completed") or slot.get("lesson") or slot.get("quiz"))
+
+
+def fit(log: dict, topic: str, slots: list, count: int) -> list:
+    """A day already started, after her pace changed: the lessons she has
+    begun or finished stay; untouched ones past the new count go, and new
+    ones are added up to it. A finished day stays exactly as it was."""
+    if len(slots) == count or day_complete(slots):
+        return slots
+    kept = [s for k, s in enumerate(slots) if k < count or _touched(s)]
+    have = {s["n"] for s in kept}
+    extra = [n for n in next_numbers(log, topic, count + len(have)) if n not in have]
+    kept += [new_slot(topic, n) for n in extra[:max(0, count - len(kept))]]
+    return sorted(kept, key=lambda s: s["n"])
 
 
 def blocking(slots: list, i: int):

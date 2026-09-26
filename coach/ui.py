@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 import streamlit as st
 
-from coach import storage
+from coach import settings, storage
 
 TIMEZONE = ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))
 
@@ -51,12 +51,12 @@ def require_password():
 # before an update keep the old objects in st.session_state (e.g. a store
 # without save_book, a log without "books"), so on a mismatch those are
 # dropped and reloaded from storage, which is always up to date.
-STATE_VERSION = 3
+STATE_VERSION = 4
 
 
 def init_state():
     if st.session_state.get("coach_state_version") != STATE_VERSION:
-        for key in ("coach_store", "coach_log", "coach_chats"):
+        for key in ("coach_store", "coach_log", "coach_chats", "coach_settings"):
             st.session_state.pop(key, None)
         st.session_state.coach_state_version = STATE_VERSION
     if "api_key" not in st.session_state:
@@ -72,10 +72,55 @@ def init_state():
             # Don't cache the failure: the next rerun tries to load again.
             st.error(f"Couldn't load your records ({e}). Refresh the page in a moment to try again.")
             st.stop()
+    if "coach_settings" not in st.session_state:
+        load_settings()
     if "coach_chats" not in st.session_state:
         # "date|topic" -> that lesson's chat, so switching pages or topics
         # never loses it (restored from the saved entry when missing).
         st.session_state.coach_chats = {}
+
+
+def user_id() -> str:
+    """Whose settings these are. One user for now (a fixed id, which can be
+    set with COACH_USER_ID); every read and write of settings goes by it."""
+    return get_setting("COACH_USER_ID") or settings.DEFAULT_USER_ID
+
+
+def load_settings():
+    """This user's settings. Where the settings table doesn't exist yet the
+    app keeps its old fixed setup, unchanged (settings.legacy)."""
+    store, uid = st.session_state.coach_store, user_id()
+    try:
+        row = store.load_settings(uid)
+    except storage.StorageError as e:
+        st.error(f"Couldn't load your settings ({e}). Refresh the page in a moment to try again.")
+        st.stop()
+    st.session_state.coach_settings = (settings.legacy(uid) if store.settings_missing
+                                       else settings.normalize(row, uid))
+
+
+def config() -> dict:
+    return st.session_state.coach_settings
+
+
+def save_settings(new: dict) -> bool:
+    """Save her settings (the whole row, found by her user_id) and use
+    them from now on. On failure nothing changes and the error is shown
+    after the rerun."""
+    if settings.is_legacy(new):
+        return False
+    try:
+        st.session_state.coach_store.save_settings(user_id(), new)
+    except storage.StorageError as e:
+        st.session_state.coach_save_error = f"Your settings weren't saved ({e}). Try again in a moment."
+        return False
+    st.session_state.coach_settings = new
+    return True
+
+
+def topic_for(day):
+    """The subject for a day, from her settings."""
+    return settings.topic_for(config(), day, TIMEZONE)
 
 
 def today():

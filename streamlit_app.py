@@ -1,6 +1,6 @@
 import streamlit as st
 
-from coach import sidebar, style, topnav, ui
+from coach import settings, sidebar, style, topnav, ui
 
 st.set_page_config(
     page_title="Daily Learning Coach",
@@ -13,10 +13,18 @@ ui.require_password()      # before any data is loaded
 ui.init_state()
 ui.show_pending_error()
 
-pages = [
-    st.Page("views/daily.py", title="Today", default=True),
-    st.Page("views/reading.py", title="Reading"),
+config = ui.config()
+if not settings.onboarded(config):
+    # first time: the setup, on its own, until she presses Start learning
+    st.navigation([st.Page("views/setup.py", title="Welcome", default=True)], position="hidden").run()
+    st.stop()
+
+pages = [st.Page("views/daily.py", title="Today", default=True)]
+if settings.reading_on(config):             # no reading plan: no Reading page at all
+    pages.append(st.Page("views/reading.py", title="Reading"))
+pages += [
     st.Page("views/records.py", title="Progress"),
+    st.Page("views/settings.py", title="Settings"),
 ]
 # Streamlit does the routing; the pages are shown by the connected control
 # at the top of every page (coach/topnav.py), not as a list in the sidebar

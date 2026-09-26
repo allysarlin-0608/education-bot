@@ -1340,9 +1340,10 @@ NAV = """
   [data-testid="stToolbarActions"] { display: none; }
 }
 @media (max-width: 360px) {
-  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 8px; }
+  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 6px; }
   .st-key-topnav [data-testid="stPageLink-NavLink"] p { font-size: 0.8125rem; }
-  .st-key-nav_search button { width: 34px; min-width: 34px; }
+  .st-key-nav_search { margin-left: 4px; }
+  .st-key-nav_search button { width: 32px; min-width: 32px; }
 }
 
 /* moving between pages: the content quietens as the surface sets off, and
@@ -1397,8 +1398,183 @@ NAV = """
 """
 
 
+SETUP = """
+<style>
+/* ---------- Settings in the bar: its name on a wide page; where the bar is
+   narrow, a gear (like Search beside it), its name kept for screen readers ---------- */
+.st-key-topnav [data-testid="stPageLink-NavLink"] > span:has([data-testid="stIconMaterial"]) { display: none; }
+.st-key-topnav [data-testid="stPageLink-NavLink"] [data-testid="stIconMaterial"] {
+  font-size: 18px; color: var(--label-2) !important; transition: color var(--cx-dur, 360ms) var(--ease);
+  font-variation-settings: "FILL" 0, "wght" 300;     /* as light as the search glass beside it */
+}
+.st-key-topnav [data-testid="stPageLink-NavLink"][data-cx-on] [data-testid="stIconMaterial"] { color: var(--label) !important; }
+@media (max-width: 640px) {
+  .st-key-topnav [data-testid="stPageLink-NavLink"] > span:has([data-testid="stIconMaterial"]) { display: inline-flex; align-items: center; margin: 0; }
+  .st-key-topnav [data-testid="stPageLink-NavLink"]:has([data-testid="stIconMaterial"]) > span:not(:has([data-testid="stIconMaterial"])) {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
+
+/* ---------- setup and Settings: the same product, one decision at a time ---------- */
+.stMainBlockContainer:has(#setup-page) { max-width: 600px; }
+.stMainBlockContainer:has(#settings-page) { max-width: 760px; }
+@media (min-width: 768px) { .stMainBlockContainer:has(#setup-page) { padding-top: max(96px, 14vh); } }
+
+/* where she is in the setup: one hairline filling step by step, and its name */
+.ob-progress { display: grid; gap: 10px; }
+.ob-track { position: relative; height: 1px; background: var(--field-edge); overflow: hidden; }
+.ob-track i {
+  position: absolute; inset: 0; background: var(--label); transform-origin: 0 50%;
+  transform: scaleX(var(--to)); animation: ob-fill var(--t-layout) var(--ease-layout) both;
+}
+@keyframes ob-fill { from { transform: scaleX(var(--from)); } to { transform: scaleX(var(--to)); } }
+.ob-where { display: flex; justify-content: space-between; font-size: 0.6875rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--label-3); font-variant-numeric: tabular-nums; }
+
+/* a step comes in from the side she is heading to, and settles */
+[class*="st-key-ob_step_"][class*="_fwd"] { animation: ob-from-right var(--t-space) var(--ease) both; }
+[class*="st-key-ob_step_"][class*="_back"] { animation: ob-from-left var(--t-space) var(--ease) both; }
+@keyframes ob-from-right { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+@keyframes ob-from-left { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
+[class*="st-key-ob_step_"] { gap: var(--space-5) !important; }
+[class*="st-key-ob_step_"] h2 { padding-bottom: 0; }
+[class*="st-key-ob_step_"] [data-testid="stElementContainer"]:has(h2) + [data-testid="stElementContainer"] { margin-top: calc(-1 * var(--space-2)); }
+.ob-lede { margin: 0; max-width: 32rem; font-size: 1.0625rem; line-height: 1.5; color: var(--label-2); }
+.ob-note { margin: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--label-3); }
+
+/* Back (quiet words) and Continue */
+.st-key-ob_nav { margin-top: var(--space-2); gap: var(--space-3) !important; }
+.st-key-ob_nav .stButton button[kind="primary"] { min-width: 148px; }
+/* each button keeps its own width, however narrow the page */
+.st-key-ob_nav > [data-testid="stElementContainer"], [class*="st-key-pqnav_"] > [data-testid="stElementContainer"],
+[class*="st-key-pqdone_"] > [data-testid="stElementContainer"]:has(.stButton), [class*="st-key-setlvl_"] > [data-testid="stElementContainer"]:has(.stButton) {
+  flex: 0 0 auto !important; width: auto !important; min-width: 0;
+}
+.st-key-ob_nav button, [class*="st-key-pqnav_"] button, [class*="st-key-pqdone_"] button, [class*="st-key-setlvl_"] button { white-space: nowrap; width: auto !important; }
+.st-key-ob_nav button p, [class*="st-key-pqnav_"] button p, [class*="st-key-setlvl_"] button p { overflow: visible !important; text-overflow: clip !important; }
+.st-key-ob_nav [data-testid="stElementContainer"]:has(+ [data-testid="stElementContainer"] .ob-note) { margin: 0; }
+[data-testid="stElementContainer"]:has(.ob-note) + [data-testid="stLayoutWrapper"]:has(> .st-key-ob_nav) { margin-top: calc(-1 * var(--space-2)); }
+.pq-gap { display: block; width: 1px; height: 1px; }
+/* Back, Previous, Retake: words, not boxes */
+.stMainBlockContainer:is(:has(#setup-page), :has(#settings-page)) .stButton button[kind="tertiary"] {
+  color: var(--label-2); min-height: 44px; padding: 0 var(--space-2); background: transparent !important;
+  border-color: transparent !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+.st-key-ob_nav .stButton button[kind="tertiary"] { margin-left: calc(-1 * var(--space-2)); }
+@media (hover: hover) { .stMainBlockContainer:is(:has(#setup-page), :has(#settings-page)) .stButton button[kind="tertiary"]:hover { color: var(--label); } }
+
+/* ---------- a list of options: one row each; the whole row is the button ---------- */
+[class*="st-key-optlist_"] { gap: 0 !important; border-bottom: 0.5px solid var(--field-edge); }
+[class*="st-key-opt_"] {
+  position: relative; gap: 0 !important; border-top: 0.5px solid var(--field-edge);
+  transition: background-color var(--t-micro) var(--ease);
+}
+.opt { display: grid; grid-template-columns: minmax(0, 1fr) 20px; column-gap: var(--space-4); row-gap: 2px;
+  align-items: center; min-height: 52px; padding: 13px 14px 13px 18px; box-sizing: border-box; }
+.opt-t { grid-column: 1; font-size: 0.9375rem; line-height: 1.35; font-weight: 500; color: var(--label);
+  transition: color var(--t-micro) var(--ease); }
+.opt-s { grid-column: 1; font-size: 0.8125rem; line-height: 1.45; color: var(--label-2); }
+.opt-mark { grid-column: 2; grid-row: 1 / span 2; position: relative; width: 20px; height: 20px; }
+/* the check: drawn when chosen, gone when not */
+.opt-mark::after {
+  content: ""; position: absolute; left: 7px; top: 3px; width: 5px; height: 10px;
+  border: solid var(--label); border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg) scale(0.6); opacity: 0;
+  transition: opacity var(--t-micro) var(--ease), transform var(--t-state) var(--ease);
+}
+/* the short rule at the row's left */
+[class*="st-key-opt_"]::before {
+  content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 1.5px; background: var(--label);
+  transform: scaleY(0); transition: transform var(--t-state) var(--ease); z-index: 1;
+}
+/* chosen: the check, the rule and a heavier name (a tap shows it at once: motion.py) */
+[class*="st-key-opt_"][class*="__sel"]:not([data-on="0"]) .opt-t, [class*="st-key-opt_"][data-on="1"] .opt-t { font-weight: 600; }
+[class*="st-key-opt_"][class*="__sel"]:not([data-on="0"]) .opt-mark::after,
+[class*="st-key-opt_"][data-on="1"] .opt-mark::after { opacity: 1; transform: rotate(45deg) scale(1); }
+[class*="st-key-opt_"][class*="__sel"]:not([data-on="0"])::before, [class*="st-key-opt_"][data-on="1"]::before { transform: scaleY(1); }
+/* a row that can't be chosen now (three already chosen) */
+[class*="st-key-opt_"][class*="__dis"] .opt { opacity: 0.4; }
+[class*="st-key-opt_"] [data-testid="stElementContainer"]:has(.opt) { pointer-events: none; }
+[class*="st-key-opt_"] [data-testid="stElementContainer"]:has(.stButton),
+[class*="st-key-opt_"] [data-testid="stElementContainer"]:has(.stButton) *:not(button) { position: static !important; }
+[class*="st-key-opt_"] .stButton button {
+  position: absolute !important; inset: 0; width: 100%; height: 100%; min-height: 0; z-index: 2; opacity: 0;
+  cursor: pointer; transform: none !important;
+}
+[class*="st-key-opt_"] .stButton button:disabled { cursor: default; }
+@media (hover: hover) { [class*="st-key-opt_"]:not([class*="__dis"]):hover { background: var(--wash); } }
+[class*="st-key-opt_"]:not([class*="__dis"]):has(button:active) { background: var(--wash); transition-duration: var(--t-press); }
+[class*="st-key-opt_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -1px; }
+
+/* ---------- Level: a subject at a time ---------- */
+[class*="st-key-ob_subject_"] { gap: var(--space-3) !important; padding-top: var(--space-4); border-top: 0.5px solid var(--field-edge); }
+.ob-subject { margin: 0; font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.375rem; line-height: 1.25; color: var(--label); }
+/* the two ways to start: the same switch as Progress's */
+[class*="st-key-sw_"] [data-testid="stButtonGroup"], [class*="st-key-sw_"] [data-testid="stButtonGroup"] > div { width: 100%; }
+[class*="st-key-sw_"] [data-testid="stButtonGroup"] > div { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--wash); border: none; }
+[class*="st-key-sw_"] [data-testid="stButtonGroup"] button {
+  flex: 1 1 0; min-height: 36px; margin: 0 !important; border: none !important; border-radius: 999px !important;
+  background: transparent !important; box-shadow: none !important; color: var(--label-2);
+  transition: background-color var(--t-state) var(--ease), color var(--t-state) var(--ease), box-shadow var(--t-state) var(--ease);
+}
+[class*="st-key-sw_"] [data-testid="stButtonGroup"] button p { font-size: 0.875rem; white-space: nowrap; }
+[class*="st-key-sw_"] [data-testid="stButtonGroup"] button[aria-checked="true"] { background: var(--env) !important; color: var(--label); box-shadow: var(--optic-strong) !important; }
+[class*="st-key-sw_"] [data-cx] button[aria-checked="true"] { background: transparent !important; box-shadow: none !important; }
+[class*="st-key-sw_"] [data-cx] button { color: var(--label-2); }
+[class*="st-key-sw_"] [data-cx] button p { font-weight: 500 !important; transition: color var(--cx-dur, 360ms) var(--ease); }
+[class*="st-key-sw_"] [data-cx] button[data-cx-on] { color: var(--label); }
+@media (hover: hover) { [class*="st-key-sw_"] [data-testid="stButtonGroup"] button:hover:not([data-cx-on]) { color: var(--label); } }
+@media (pointer: coarse) { [class*="st-key-sw_"] [data-testid="stButtonGroup"] button { min-height: 40px; } [class*="st-key-sw_"] [data-testid="stButtonGroup"] button::after { inset: -3px -1px; } }
+
+/* the placement check: a question at a time, each coming in on its own */
+[class*="st-key-pq_"] { gap: var(--space-3) !important; animation: ob-from-right var(--t-state) var(--ease) both; }
+.pq-count { margin: var(--space-2) 0 0; font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label-3); font-variant-numeric: tabular-nums; }
+.pq-q { margin: 6px 0 var(--space-1); font-size: 1rem; line-height: 1.45; font-weight: 500; color: var(--label); max-width: 34rem; }
+[class*="st-key-pqnav_"] { margin-top: var(--space-1); }
+[class*="st-key-pqdone_"] { gap: var(--space-3) !important; animation: ob-from-right var(--t-state) var(--ease) both; }
+.pq-result { margin: 0; display: flex; align-items: baseline; gap: 10px; font-size: 0.9375rem; color: var(--label); }
+.pq-result b { font-weight: 600; }
+.pq-result span { font-size: 0.8125rem; color: var(--label-2); }
+
+/* ---------- Reading: the toggle on a hairline ---------- */
+.st-key-ob_toggle { border-top: 0.5px solid var(--field-edge); border-bottom: 0.5px solid var(--field-edge); padding: 6px 0 6px 2px; }
+
+/* ---------- Summary: a quiet list of what she chose ---------- */
+.ob-summary { margin: 0 !important; padding: 0 !important; border-top: 0.5px solid var(--field-edge); }
+.ob-summary dd, .ob-summary dt { margin: 0 !important; padding-left: 0 !important; }
+.ob-summary > div { margin: 0 !important; display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: var(--space-4); padding: 16px 0; border-bottom: 0.5px solid var(--field-edge); }
+.ob-summary dt { font-size: 0.8125rem; line-height: 1.5; color: var(--label-2); padding-top: 1px; }
+.ob-summary dd { margin: 0; display: grid; gap: 4px; font-size: 0.9375rem; line-height: 1.45; color: var(--label); }
+.ob-summary small { font-size: 0.8125rem; color: var(--label-2); }
+.ob-pair { display: flex; justify-content: space-between; gap: var(--space-3); }
+.ob-pair small { font-size: 0.8125rem; }
+@media (max-width: 520px) {
+  .ob-summary > div { grid-template-columns: 1fr; gap: 4px; padding: 14px 0; }
+  .ob-lede { font-size: 1rem; }
+}
+
+/* ---------- Settings: sections on hairlines; wide, the name beside its controls ---------- */
+[class*="st-key-set_sec_"] { gap: var(--space-4) !important; padding-top: var(--space-5); border-top: 0.5px solid var(--field-edge); }
+[class*="st-key-set_sec_"] h4 { padding-top: 0 !important; }
+/* the section's hairline is the list's top edge: no second line under it */
+[class*="st-key-set_sec_"] [class*="st-key-optlist_"] [class*="st-key-opt_"]:first-child,
+[class*="st-key-set_sec_"] [class*="st-key-optlist_"] > :first-child [class*="st-key-opt_"] { border-top: none; }
+[class*="st-key-set_sec_"] .st-key-ob_toggle { border-top: none; padding-top: 0; }
+@media (min-width: 900px) { [class*="st-key-set_sec_"] .st-key-ob_toggle { margin-top: -6px; } }
+@media (min-width: 900px) {
+  [class*="st-key-set_sec_"] { display: grid !important; grid-template-columns: 10rem minmax(0, 1fr); column-gap: var(--space-6); align-items: start; }
+  [class*="st-key-set_sec_"] > * { grid-column: 2; }
+  [class*="st-key-set_sec_"] > :first-child { grid-column: 1; grid-row: 1; }
+}
+[class*="st-key-setlvl_"] { justify-content: space-between; gap: var(--space-3) !important; min-height: 44px; }
+.set-level { margin: 0; display: flex; align-items: baseline; gap: 10px; font-size: 0.9375rem; color: var(--label); }
+.set-level b { font-weight: 500; color: var(--label-2); font-size: 0.8125rem; }
+.set-kept { color: var(--label-2); }
+</style>
+"""
+
 def stylesheet() -> str:
-    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, TOUCH))
+    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, TOUCH))
     return CSS.replace("</style>", rest + "</style>")
 
 

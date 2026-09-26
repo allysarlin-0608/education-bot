@@ -9,8 +9,8 @@ from test_storage import FakePostgrest
 APP = str(Path(__file__).resolve().parent.parent / "streamlit_app.py")
 
 
-def start(monkeypatch, password):
-    db = FakePostgrest()
+def start(monkeypatch, password, **db_options):
+    db = FakePostgrest(**db_options)
     monkeypatch.setattr(requests, "Session", lambda: db)
     monkeypatch.setenv("SUPABASE_URL", "https://abc.supabase.co")
     monkeypatch.setenv("SUPABASE_KEY", "sb_secret_test")
@@ -44,3 +44,12 @@ def test_right_password_opens_the_app(monkeypatch):
     assert not at.selectbox                                      # no topic picker: the day decides
     assert any(m.value.startswith("### ") for m in at.markdown)  # today's topic heading
     assert any(method == "GET" for method, *_ in db.calls)
+
+
+def test_with_the_settings_table_a_new_user_sets_up_first(monkeypatch):
+    at, db = start(monkeypatch, "correct horse", settings_table=True)
+    at.text_input[0].input("correct horse").run()
+    at.button[0].click().run()
+    assert not at.exception
+    assert any("Learn a little every day" in m.value for m in at.markdown)
+    assert db.settings == {}                      # nothing saved just by looking
