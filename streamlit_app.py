@@ -32,8 +32,12 @@ world = st.Page("views/world.py", title="Subject", url_path="subject")
 # at the top of every page (coach/topnav.py), not as a list in the sidebar
 page = st.navigation(pages + [world], position="hidden")
 if (entering := st.session_state.pop("enter_world", None)):     # setup just finished: into the first day's subject
-    st.session_state.world_topic = entering
-    st.switch_page(world)
+    st.switch_page(world, query_params={"subject": entering})
+# just signed in after a refresh or a link: back to the page the address named, with its subject
+asked = st.session_state.pop("coach_asked_path", None)
+target = next((p for p in pages + [world] if asked and p.url_path == asked), None)
+if target is not None and target.url_path != page.url_path:
+    st.switch_page(target, query_params=st.query_params.to_dict())
 topnav.render(pages, st.session_state.coach_log)
 # Progress bars flow in on arriving at a page, not on every rerun.
 st.session_state.lq_entering = st.session_state.get("lq_page") != page.url_path

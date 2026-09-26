@@ -6,7 +6,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import choices, core, settings, storage, ui
+from coach import choices, core, settings, stage, storage, ui, visuals
 
 config = ui.config()
 
@@ -74,28 +74,33 @@ def check_move(k: int) -> None:
 problem = st.session_state.pop("set_problem", "")
 
 # ---------- Subjects ----------
+# the same stage as the setup's: the subject in focus, and the way into its world
 with st.container(key="set_sec_subjects"):
     st.markdown("#### Subjects")
     chosen = config["subjects"]
-    focus = st.session_state.get("set_focus")
-    choices.rows("setsubj", [(t, core.TOPICS[t], settings.DESCRIPTIONS[t], {"n": k})
-                             for k, t in enumerate(settings.SUBJECTS, start=1)],
-                 chosen, pick_subject, multi=True, full=len(chosen) >= settings.MAX_SUBJECTS,
-                 focus=focus if focus in settings.SUBJECTS else (chosen[0] if chosen else None), style="index")
-    order = " → ".join(core.TOPICS[t] for t in chosen)
-    st.html(f'<p class="ob-note">{len(chosen)} of {settings.MAX_SUBJECTS} · one a day, in this order: {escape(order)}</p>'
-            + (f'<p class="ob-note">{escape(problem)}</p>' if problem else "")
-            + ('<p class="ob-note set-kept">Your existing learning history will be preserved.</p>'
-               if st.session_state.get("set_subjects_changed") else ""))
-
-    # each chosen subject is a world of its own
-    with st.container(key="set_worlds", horizontal=True):
-        for t in chosen:
-            with st.container(key=f"enter_{t}"):
-                if st.button(f"Enter {core.TOPICS[t]}", type="tertiary", key=f"set_world_{t}",
+    # the subject in focus: the one she touched last, else the one the address
+    # names (a refresh, Back from a world); the address is kept saying the same
+    asked = st.query_params.get("subject")
+    looked = st.session_state.get("set_focus")
+    focus = stage.focus_of(looked if looked in settings.SUBJECTS else asked, chosen)
+    st.session_state.set_focus = focus
+    if asked != focus:
+        st.query_params["subject"] = focus
+    with st.container(key="set_grid_subjects"):
+        with st.container(key="set_stage"):
+            st.html(stage.html(focus, "setsubj"))
+            with st.container(key=f"enter_{focus}", horizontal=True):
+                if st.button(f"Enter {visuals.subject(focus)['title']}", type="tertiary", key="set_world",
                              icon=":material/arrow_outward:"):
-                    st.session_state.world_topic = t
-                    st.switch_page("views/world.py")
+                    ui.enter_world(focus)
+        with st.container(key="set_body"):
+            choices.rows("setsubj", stage.rows(), chosen, pick_subject, multi=True,
+                         full=len(chosen) >= settings.MAX_SUBJECTS, focus=focus, style="index")
+            order = " → ".join(visuals.subject(t)["title"] for t in chosen)
+            st.html(f'<p class="ob-note">{len(chosen)} of {settings.MAX_SUBJECTS} · one a day, in this order: {escape(order)}</p>'
+                    + (f'<p class="ob-note">{escape(problem)}</p>' if problem else "")
+                    + ('<p class="ob-note set-kept">Your existing learning history will be preserved.</p>'
+                       if st.session_state.get("set_subjects_changed") else ""))
 
 # ---------- Daily pace ----------
 with st.container(key="set_sec_pace"):

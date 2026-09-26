@@ -107,7 +107,8 @@ SCRIPT = r"""
       doc.querySelectorAll(c.root).forEach((root) => {
         const items = [...root.querySelectorAll(c.item)];
         const on = items.length && c.on(items);
-        if (!on) { const p = root.querySelector(':scope > .cx-pill'); if (p) p.style.opacity = '0'; return; }   // nothing on: the surface bows out
+        // nothing on (a page not in the bar, a subject's world): the surface bows out and no item claims to be here
+        if (!on) { const p = root.querySelector(':scope > .cx-pill'); if (p) p.style.opacity = '0'; items.forEach((i) => i.hasAttribute('data-cx-on') && i.removeAttribute('data-cx-on')); const s0 = state.get(root); if (s0) { s0.on = null; state.set(root, s0); } return; }
         const s = state.get(root) || {};
         // the page redrew the control as a new element (a key changed): if
         // that happened just now, the surface carries on from where it was
@@ -134,30 +135,42 @@ SCRIPT = r"""
       if ((sawStale && !stale && here() !== leftFrom) || performance.now() - leftAt > 1500) doc.documentElement.removeAttribute('data-cx-leaving');
     }
   }
-  // the subjects' stage (setup): it shows the subject in focus (the row the
-  // lens lies over) and whether it is chosen; it is drawn once and only its
-  // marks change, so one subject gives way to the next without a redraw
+  // the subjects' stage (the setup, Settings): it shows the subject in focus
+  // (the row the lens lies over) and whether it is chosen. The page draws it
+  // with its subject already in focus; a touch moves the focus at once (the
+  // row the lens is going to), so name, words, object and state change
+  // together, as one; nothing here falls back to another subject. A way
+  // into a world drawn beside the stage for one subject stands aside while
+  // the stage shows another (the page redraws it for the new one)
   function stage() {
-    const st = doc.querySelector('.sg-stage');
-    if (!st) return;
-    const rows = [...doc.querySelectorAll('[class*="st-key-opt_subj_"]')];
-    const topic = (r) => (r.className.match(/st-key-opt_subj_([a-z]+)__/) || [])[1];
-    const chosen = (r) => (r.dataset.on ? r.dataset.on === '1' : /__sel/.test(r.className));
-    const f = rows.find((r) => r.hasAttribute('data-cx-on'))
-      || rows.find((r) => (r.className.match(/st-key-opt_subj_\S+/) || [''])[0].endsWith('_f')) || rows.find((r) => chosen(r));
-    const t = f ? topic(f) : (st.dataset.first || '');
-    if (st.dataset.focus !== t) st.dataset.focus = t;
-    const layer = st.querySelector('.sg-layer[data-t="' + t + '"]');
-    const state = layer && layer.querySelector('.sg-state');
-    if (!state || !f) return;
-    let text = /__dis/.test(f.className) ? 'Not chosen · three are chosen already, so take one out to add this' : 'Not chosen';
-    if (chosen(f)) {
-      const o = f.querySelector('.opt');
-      const day = o && o.dataset.day ? +o.dataset.day : rows.filter((r) => chosen(r) && r !== f).length + 1;
-      text = 'Chosen · day ' + day + ' of the rotation';
-    }
-    if (state.textContent !== text) state.textContent = text;
-    state.dataset.on = chosen(f) ? '1' : '0';
+    doc.querySelectorAll('.sg-stage').forEach((st) => {
+      const g = st.dataset.group || 'subj';
+      const rows = [...doc.querySelectorAll('[class*="st-key-opt_' + g + '_"]')];
+      const re = new RegExp('st-key-opt_' + g + '_([a-z]+)__');
+      const topic = (r) => (r.className.match(re) || [])[1];
+      const chosen = (r) => (r.dataset.on ? r.dataset.on === '1' : /__sel/.test(r.className));
+      const f = rows.find((r) => r.hasAttribute('data-cx-on'))
+        || rows.find((r) => (r.className.match(new RegExp('st-key-opt_' + g + '_\\S+')) || [''])[0].endsWith('_f'));
+      const t = f ? topic(f) : st.dataset.focus;
+      if (t && st.dataset.focus !== t) st.dataset.focus = t;
+      st.querySelectorAll('.sg-layer').forEach((l) => { const h = l.dataset.t === st.dataset.focus ? 'false' : 'true'; if (l.getAttribute('aria-hidden') !== h) l.setAttribute('aria-hidden', h); });
+      const holder = st.closest('[class*="st-key-"][class*="_stage"]');
+      if (holder) holder.querySelectorAll('[class*="st-key-enter_"]').forEach((e) => {
+        const mine = (e.className.match(/st-key-enter_([a-z]+)/) || [])[1];
+        if (mine === st.dataset.focus) e.removeAttribute('data-other'); else e.setAttribute('data-other', '');
+      });
+      const layer = st.querySelector('.sg-layer[data-t="' + st.dataset.focus + '"]');
+      const state = layer && layer.querySelector('.sg-state');
+      if (!state || !f) return;
+      let text = /__dis/.test(f.className) ? 'Not chosen · three are chosen already, so take one out to add this' : 'Not chosen';
+      if (chosen(f)) {
+        const o = f.querySelector('.opt');
+        const day = o && o.dataset.day ? +o.dataset.day : rows.filter((r) => chosen(r) && r !== f).length + 1;
+        text = 'Chosen · day ' + day + ' of the rotation';
+      }
+      if (state.textContent !== text) state.textContent = text;
+      state.dataset.on = chosen(f) ? '1' : '0';
+    });
   }
   let queued = false, leftFrom = null, leftAt = 0, sawStale = false;
   const soon = () => { if (!queued) { queued = true; w.requestAnimationFrame(() => { queued = false; sync(); }); } };

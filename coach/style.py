@@ -1717,6 +1717,8 @@ LENS = """
 .sg-art.no-art { -webkit-mask-image: none; mask-image: none; display: flex; align-items: flex-start; justify-content: flex-end; padding: 8px 24px 0 0; }
 .sg-art.no-art::before { content: attr(data-n); font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300;
   font-size: clamp(9rem, 17vw, 15rem); line-height: 1; color: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07)); font-variant-numeric: lining-nums; }
+.sg-head { position: relative; display: grid; gap: 4px; padding: 0 clamp(20px, 3vw, 36px); }
+.sg-head p { margin: 0; }
 .sg-copy { position: relative; display: grid; gap: 6px; padding: 0 clamp(20px, 3vw, 36px) clamp(20px, 3vw, 32px); }
 .sg-copy p { margin: 0; }
 .sg-kicker { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-2); font-variant-numeric: tabular-nums; }
@@ -1752,6 +1754,7 @@ LENS = """
 @media (max-width: 899px) {
   .sg-stage { height: 232px; min-height: 0; border-radius: 0; background: var(--env); }
   .sg-art { -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent 100%); mask-image: linear-gradient(to bottom, #000 20%, transparent 100%); }
+  .sg-head { padding: 0 16px; }
   .sg-copy { padding: 0 16px 14px; gap: 2px; }
   .sg-title { font-size: 2.5rem; }
   .sg-desc, .sg-meta, .sg-credit { display: none; }
@@ -1785,10 +1788,17 @@ WORLDS = """
    ========================================================================== */
 .stMainBlockContainer:has(#world-page) { max-width: 1180px; }
 [class*="st-key-world_"] {
-  display: grid !important; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-  column-gap: clamp(24px, 5vw, 80px); align-items: end; min-height: min(76vh, 740px);
+  display: grid !important; grid-template-columns: minmax(0, 11fr) minmax(0, 9fr); grid-template-rows: auto auto;
+  grid-template-areas: "head head" "object copy"; column-gap: clamp(24px, 5vw, 72px); row-gap: 0; align-items: end;
 }
 [class*="st-key-world_"] > * { min-width: 0; width: auto !important; }
+[class*="st-key-world_"] > :has(> .st-key-w_head) { grid-area: head; position: relative; z-index: 2; }
+[class*="st-key-world_"] > :has(> .st-key-w_object) { grid-area: object; margin-top: calc(-1 * var(--lap)); position: relative; z-index: 1; }
+[class*="st-key-world_"] > :has(> .st-key-w_copy) { grid-area: copy; }
+.st-key-w_back { margin-bottom: var(--space-3); }
+.st-key-w_back .stButton button[kind="tertiary"] { color: var(--label-2); padding: 0 2px; min-height: 36px; background: transparent !important;
+  border-color: transparent !important; box-shadow: none !important; backdrop-filter: none !important; }
+@media (hover: hover) { .st-key-w_back .stButton button[kind="tertiary"]:hover { color: var(--label); } }
 .st-key-w_copy { gap: var(--space-5) !important; padding-bottom: clamp(8px, 4vh, 40px); position: relative; z-index: 2; }
 .w-copy p { margin: 0; }
 .w-kicker { font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--label-2); font-variant-numeric: tabular-nums; }
@@ -1801,7 +1811,7 @@ WORLDS = """
   font-family: "Inter", "Noto Sans TC", sans-serif; font-weight: 300; text-transform: uppercase;
   font-size: clamp(1.75rem, 3.6vw, 3rem); letter-spacing: 0.3em; line-height: 1.25;
 }
-.w-about { margin-top: 22px !important; font-size: 1.1875rem; line-height: 1.5; color: var(--label-2); max-width: 27rem; }
+.w-about { margin-top: 0 !important; font-size: 1.1875rem; line-height: 1.5; color: var(--label-2); max-width: 27rem; }
 .w-meta { margin-top: 12px !important; font-size: 0.75rem; color: var(--label-3); }
 .st-key-w_actions { gap: var(--space-5) !important; flex-wrap: wrap; justify-content: flex-start !important; }
 .st-key-w_actions > * { flex: 0 0 auto !important; width: auto !important; }
@@ -1811,35 +1821,18 @@ WORLDS = """
 /* the object */
 .st-key-w_object { position: relative; align-self: stretch; gap: 0 !important; }
 .w-object {
-  position: relative; height: min(76vh, 740px); background: center / cover no-repeat; transform-origin: center;
+  position: relative; height: min(62vh, 620px); background: center / cover no-repeat; transform-origin: center;
   filter: grayscale(1) contrast(1.06); border-radius: 22px; corner-shape: superellipse(1.6);
-  -webkit-mask-image: linear-gradient(to left, #000 55%, transparent 100%), linear-gradient(to bottom, #000 58%, transparent 100%);
-  mask-image: linear-gradient(to left, #000 55%, transparent 100%), linear-gradient(to bottom, #000 58%, transparent 100%);
-  -webkit-mask-composite: source-in; mask-composite: intersect;
+  -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
 }
 :root[data-scheme="dark"] .w-object:not(.no-art) { filter: grayscale(1) contrast(1.06) brightness(0.84); }
 :root:not([data-scheme="dark"]) .w-object:not(.no-art) { filter: grayscale(1) contrast(1.04) brightness(1.08); }
-/* the work's credit: small, at the object's upper corner, out of the words' way */
-.w-credit { position: absolute; right: 14px; top: 12px; margin: 0; font-size: 0.6875rem; line-height: 1.4; color: var(--label-2);
-  text-align: right; max-width: min(60%, 26rem); text-shadow: 0 0 10px var(--env), 0 0 2px var(--env); z-index: 1; }
+/* the work's credit: small, under the object */
+.w-credit { margin: 10px 0 0; font-size: 0.6875rem; line-height: 1.4; color: var(--label-3); max-width: 30rem; }
 .w-object.no-art { -webkit-mask-image: none; mask-image: none; display: flex; align-items: flex-start; justify-content: flex-end; }
 .w-object.no-art::before { content: attr(data-n); font-family: "Newsreader", serif; font-weight: 300; font-size: clamp(10rem, 22vw, 20rem); line-height: 1;
   color: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07)); }
-/* an instrument: held whole in the middle of its space, its edges falling away */
-.st-key-world_instrument .w-object { background-size: contain;
-  -webkit-mask-image: radial-gradient(ellipse 58% 60% at 50% 48%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 58% 60% at 50% 48%, #000 45%, transparent 100%); }
-/* a painting: a scene laid wide above, the name set where it fades */
-.st-key-world_painting { grid-template-columns: minmax(0, 1fr); min-height: 0; }
-.st-key-world_painting > :has(> .st-key-w_object) { grid-row: 1; }
-.st-key-world_painting > :has(> .st-key-w_copy) { grid-row: 2; margin-top: clamp(-200px, -16vh, -80px); }
-.st-key-world_painting .w-object { height: min(58vh, 560px);
-  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%), radial-gradient(ellipse 80% 90% at 50% 40%, #000 55%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 40%, transparent 100%), radial-gradient(ellipse 80% 90% at 50% 40%, #000 55%, transparent 100%); }
-
-/* a pendant: hung from the top of the page, the stone in the open space;
-   the chain starts at the header's lower edge (the page's top space is 96px, the header 56px) */
-.st-key-world_pendant .w-object { height: calc(min(76vh, 740px) + 40px); margin-top: -40px; background-position: center top; }
-
 /* arriving: the object is carried in (motion.py); the words follow it, one after another */
 @keyframes w-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .w-kicker { animation: w-rise var(--t-space) var(--ease) 180ms backwards; }
@@ -1886,20 +1879,26 @@ WORLDS = """
 [class*="st-key-enter_"] .stButton button[kind="tertiary"] { color: var(--label-2); background: transparent !important; border-color: transparent !important;
   box-shadow: none !important; backdrop-filter: none !important; padding: 0 2px; min-height: 36px; }
 @media (hover: hover) { [class*="st-key-enter_"] .stButton button[kind="tertiary"]:hover { color: var(--label); } }
-.st-key-set_worlds { gap: var(--space-4) !important; flex-wrap: wrap; }
+/* Settings' subjects: the same stage, held at the top while the list scrolls under it */
+.st-key-set_grid_subjects { display: flex !important; flex-direction: column; align-items: stretch !important; row-gap: var(--space-4); }
+.st-key-set_grid_subjects > * { width: 100% !important; }
+.st-key-set_grid_subjects > :has(> .st-key-set_stage) { position: sticky; top: 56px; z-index: 4; background: var(--env); }
+.st-key-set_stage { gap: var(--space-2) !important; }
+.st-key-set_body { max-width: 760px; }
+/* a way in drawn for one subject stands aside while the stage shows another (motion.py) */
+[class*="st-key-enter_"][data-other] { opacity: 0; pointer-events: none; }
+@media (max-width: 899px) {
+  .st-key-set_grid_subjects > :has(> .st-key-set_stage) { width: calc(100% + 32px) !important; max-width: none !important; margin: 0 -16px; }
+  .st-key-set_stage [class*="st-key-enter_"] { padding: 0 16px 6px; }
+}
 
 /* ---------- an object that stands free: no frame, no backdrop, no fade ----------
    (a cut-out or a render on nothing): it sits in the page itself, whole */
 .is-cut { background-size: contain !important; background-repeat: no-repeat !important; border-radius: 0 !important;
   -webkit-mask-image: none !important; mask-image: none !important; filter: none !important; }
 :root[data-scheme="dark"] .is-cut { filter: brightness(0.92) !important; }
-/* on the stage it keeps to the space above the words (they take about 320px), never under them */
-.sg-art.is-cut { inset: 28px 24px 330px 24px; background-position: center bottom !important; }
-.sg-art.is-cut[data-layout="pendant"] { inset: 0 24px 320px 24px; background-position: center top !important; }
-.w-object.is-cut { background-position: center !important; }
-/* a free-standing object fills its space to the edges: its credit goes under it, not over it */
-.st-key-w_object:has(.is-cut) .w-credit { position: static; margin: 10px 0 0 auto; }
-.st-key-world_pendant .w-object.is-cut { background-position: center top !important; }
+
+.w-object.is-cut { background-position: 35% bottom !important; }
 .w-thumb.is-cut, .ob-obj.is-cut { background-color: var(--wash) !important; background-size: auto 86% !important; background-position: center !important; }
 .w-thumb.is-cut[data-layout="pendant"] { background-size: auto 190% !important; background-position: center 100% !important; }
 .ob-obj.is-cut[data-layout="pendant"] { background-size: auto 210% !important; background-position: center 100% !important; }
@@ -1908,18 +1907,13 @@ WORLDS = """
 .ob-obj.no-art { background: var(--wash); }
 
 @media (max-width: 899px) {
-  [class*="st-key-world_"] { display: flex !important; flex-direction: column-reverse; min-height: 0; align-items: stretch !important; }
-  .st-key-world_painting { flex-direction: column; }
+  /* one column: the name, the object (rising less into it), the words */
+  [class*="st-key-world_"] { display: flex !important; flex-direction: column; align-items: stretch !important; }
   [class*="st-key-world_"] > * { width: 100% !important; }
-  .st-key-world_painting > :has(> .st-key-w_copy) { margin-top: -12vh; }
-  .w-object { height: 46vh; border-radius: 0; margin: 0 -16px; width: calc(100% + 32px); }
-  .st-key-world_pendant .w-object { height: calc(46vh + 32px); margin-top: -32px; }
-  .st-key-w_copy { margin-top: -10vh; }
-  [class*="st-key-world_"]:has(.is-cut) .st-key-w_copy { margin-top: var(--space-4); }
-  .w-object.is-cut { height: 42vh; margin: 0; width: 100%; }
-  .st-key-world_pendant .w-object.is-cut { height: calc(42vh + 32px); margin-top: -32px; }
-  .st-key-world_painting .st-key-w_copy { margin-top: 0; }
-  .w-credit { right: 16px; top: 10px; }
+  [class*="st-key-world_"] > :has(> .st-key-w_object) { margin-top: var(--space-2); }
+  .w-object { height: 44vh; }
+  .w-object.is-cut { background-position: center bottom !important; }
+  .st-key-w_copy { margin-top: var(--space-4); }
   [class*="st-key-w_sec_"] { display: flex !important; flex-direction: column; }
   /* on a narrow page the object stands to the right of the words */
   .sg-art.is-cut { inset: 12px 16px 12px 48%; background-position: right center !important; }
@@ -1929,25 +1923,31 @@ WORLDS = """
   .w-kicker, .stApp .w-title, .w-about, .w-meta, .st-key-w_actions { animation: none; }
 }
 
-/* ---------- the Subjects stage on a wide page: the world's own composition ---------- */
+/* ---------- one composition for a subject, on the stage and in its world ----------
+   Its name at the top; its object below at the left, rising a little into
+   the name (--lap: about a tenth of the name's block), behind it so the name
+   stays whole; its words at the lower right. The object keeps its own
+   proportions (contain), however tall or wide it is. */
+:root { --lap: clamp(14px, 2.4vh, 26px); }
 @media (min-width: 900px) {
-  .sg-stage { height: clamp(380px, 58vh, 580px); min-height: 0; border-radius: 0; }
-  .sg-copy { max-width: 50%; padding: 0 0 clamp(12px, 3vh, 28px); gap: 10px; }
+  .sg-stage { height: clamp(460px, 64vh, 640px); min-height: 0; border-radius: 0; }
+  .sg-layer { display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 9fr); grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "head head" "art copy"; column-gap: clamp(24px, 4vw, 56px); }
+  .sg-head { grid-area: head; z-index: 2; padding: 0; }
   .sg-stage .sg-title { font-size: clamp(3.25rem, 6vw, 6rem); line-height: 0.98 !important; letter-spacing: -0.02em; }
   .sg-stage .sg-title-tracked .sg-title { font-family: "Inter", "Noto Sans TC", sans-serif; font-weight: 300; text-transform: uppercase;
     font-size: clamp(1.75rem, 3.4vw, 2.875rem); letter-spacing: 0.3em; line-height: 1.25 !important; }
+  .sg-art, .sg-art.is-cut, .sg-art.no-art { grid-area: art; position: relative; inset: auto; min-height: 0; z-index: 1;
+    margin-top: calc(-1 * var(--lap)); background-position: center; }
+  .sg-art.is-cut { background-position: 35% bottom !important; }
+  .sg-art:not(.is-cut):not(.no-art) {
+    -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
+    mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%); }
+  :root:not([data-scheme="dark"]) .sg-art:not(.is-cut):not(.no-art) {
+    -webkit-mask-image: radial-gradient(ellipse 68% 66% at 50% 50%, #000 48%, transparent 100%);
+    mask-image: radial-gradient(ellipse 68% 66% at 50% 50%, #000 48%, transparent 100%); }
+  .sg-copy { grid-area: copy; align-self: end; max-width: 28rem; padding: 0 0 clamp(12px, 3vh, 28px); gap: 10px; z-index: 2; }
   .sg-desc { font-size: 1.1875rem; }
-  /* the object at the right half, as in its world */
-  .sg-art { inset: 0 0 0 46%; background-position: center 30%;
-    -webkit-mask-image: linear-gradient(to left, #000 55%, transparent 100%), linear-gradient(to bottom, #000 62%, transparent 100%);
-    mask-image: linear-gradient(to left, #000 55%, transparent 100%), linear-gradient(to bottom, #000 62%, transparent 100%);
-    -webkit-mask-composite: source-in; mask-composite: intersect; }
-  :root:not([data-scheme="dark"]) .sg-art:not(.no-art) {
-    -webkit-mask-image: linear-gradient(to left, #000 50%, transparent 100%), linear-gradient(to bottom, #000 55%, transparent 100%);
-    mask-image: linear-gradient(to left, #000 50%, transparent 100%), linear-gradient(to bottom, #000 55%, transparent 100%); }
-  .sg-art.is-cut { inset: 12px 0 12px 50%; background-position: center !important; }
-  .sg-art.is-cut[data-layout="pendant"] { inset: 0 0 8px 50%; background-position: center top !important; }
-  .sg-art.no-art { inset: 0 0 0 50%; }
 }
 </style>
 """

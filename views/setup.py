@@ -9,7 +9,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import choices, core, settings, ui, visuals
+from coach import choices, core, settings, stage, ui, visuals
 
 STEP_NAMES = ("Welcome", "Subjects", "Daily pace", "Level", "Reading", "Summary")
 WELCOME, SUBJECTS, PACE, LEVEL, READING, SUMMARY = range(6)
@@ -92,28 +92,6 @@ def nav(back: bool = True, label: str = "Continue", ready: bool = True, note: st
                   on_click=on or go, args=() if on else (step + 1,))
 
 
-def stage_html() -> str:
-    """The subjects' stage: every subject drawn once, one layer each; the
-    page shows the one in focus (motion.py sets it), so moving between
-    them is a crossfade, never a redraw."""
-    layers = []
-    for k, t in enumerate(settings.SUBJECTS, start=1):
-        kicker = visuals.WORLD[t]["kicker"]
-        f = visuals.facts(t)
-        art = visuals.object_html(t, "sg-art", k)
-        credit = visuals.credit(t)
-        layers.append(
-            f'<div class="sg-layer" data-t="{t}">{art}<div class="sg-copy sg-title-{visuals.WORLD[t]["title"]}">'
-            f'<p class="sg-kicker">{k:02d} · {escape(kicker)}</p>'
-            f'<p class="sg-title">{escape(core.TOPICS[t])}</p>'
-            f'<p class="sg-desc">{escape(settings.DESCRIPTIONS[t])}</p>'
-            f'<p class="sg-meta">{f["units"]} topics · {f["lessons"]} lessons · begins with {escape(f["first"])}</p>'
-            f'<p class="sg-state" data-on="0">Not chosen</p>'
-            + (f'<p class="sg-credit">{escape(credit)}</p>' if credit else "")
-            + "</div></div>")
-    return f'<div class="sg-stage" data-first="{settings.SUBJECTS[0]}">{"".join(layers)}</div>'
-
-
 def lead(title: str, lede: str) -> None:
     st.markdown(f"## {title}")
     st.html(f'<p class="ob-lede">{escape(lede)}</p>')
@@ -148,15 +126,13 @@ with st.container(key=f"ob_step_{step}_{came}"):
             with st.container(key="ob_lead"):
                 lead("What would you like to learn?",
                      "Choose up to three. They take turns, one a day, in the order you choose them.")
+            # one subject in focus, for the stage and the lens alike
+            focus = stage.focus_of(st.session_state.get("ob_focus"), d["subjects"])
             with st.container(key="ob_stage"):
-                st.html(stage_html())
+                st.html(stage.html(focus, "subj"))
             with st.container(key="ob_body"):
                 full = len(d["subjects"]) >= settings.MAX_SUBJECTS
-                focus = st.session_state.get("ob_focus")
-                if focus not in settings.SUBJECTS:
-                    focus = d["subjects"][-1] if d["subjects"] else None
-                choices.rows("subj", [(t, core.TOPICS[t], settings.DESCRIPTIONS[t], {"n": k})
-                                      for k, t in enumerate(settings.SUBJECTS, start=1)],
+                choices.rows("subj", stage.rows(),
                              d["subjects"], pick_subject, multi=True, full=full, focus=focus, style="index")
                 n = len(d["subjects"])
                 nav(ready=n >= settings.MIN_SUBJECTS,
