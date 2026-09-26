@@ -209,7 +209,8 @@ def _render_shelf(log, today):
     opens on its own, with its wrap-up."""
     st.html('<div class="bk-label">Bookshelf</div>')    # the same quiet label as Currently reading
     just = next((b["id"] for b in shelf.on_shelf(log["books"]) if b.get("finished_on") == today.isoformat()), "")
-    st.html(shelf.shelf_html(log["books"], open_id=just))
+    # a book picked in Search opens on the shelf
+    st.html(shelf.shelf_html(log["books"], open_id=st.session_state.pop("shelf_open", None) or just))
 
 
 def _start_new_book(log, today, intro):

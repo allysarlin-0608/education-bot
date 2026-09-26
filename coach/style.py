@@ -10,7 +10,7 @@ today in the calendar, her own messages and the chat bar. The one hue is
 the pale air-blue liquid of the course progress bar (LIQUID below)."""
 import streamlit as st
 
-from coach import glass
+from coach import glass, motion
 
 # Headings and numbers: Newsreader (light) with Noto Serif TC for Chinese;
 # body text: Inter with Noto Sans TC.
@@ -98,6 +98,7 @@ CSS = f"""
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-layout: cubic-bezier(0.45, 0, 0.25, 1);
   --t-press: 120ms; --t-micro: 240ms; --t-state: 420ms; --t-space: 480ms; --t-layout: 560ms;
+  --ease-nav: cubic-bezier(0.32, 0.72, 0, 1);   /* a surface travelling between places: sets off promptly, arrives slowly */
 }}
 
 /* ---------- environment: pure black or pure white, no ambient light ---------- */
@@ -139,8 +140,10 @@ CSS = f"""
 }}
 
 /* ---------- page ---------- */
-.stMainBlockContainer {{
-  max-width: 720px; padding: var(--space-8) var(--space-5) var(--space-7);
+.stMainBlockContainer {{ max-width: 720px; padding: var(--space-8) var(--space-5) var(--space-7); }}
+/* a page arrives as its content, each block rising a little as it comes
+   in; the navigation at the top is not part of it and stays still */
+.stMainBlockContainer > [data-testid="stVerticalBlock"] > :not(:has(> .st-key-topnav)) {{
   animation: arrive var(--t-space) var(--ease) backwards;   /* not "both": a kept transform would trap the floating button */
 }}
 @keyframes arrive {{
@@ -373,7 +376,7 @@ CSS = f"""
 /* ---------- where a move lands (below the header) ---------- */
 .jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
 [data-testid="stElementContainer"]:has(#coach-place) {{ display: none; }}
-[data-testid="stElementContainer"]:has(#lg-hook) {{ display: none; }}     /* the scroll memory, no box */
+[data-testid="stElementContainer"]:has(#lg-hook), [data-testid="stElementContainer"]:has(#cx-hook) {{ display: none; }}     /* the scroll memory, no box */
 [data-testid="stElementContainer"]:has(.jump-anchor) {{ margin-bottom: calc(-1 * var(--space-5)); }}
 html {{ scroll-behavior: smooth; }}
 [data-testid="stAppScrollToBottomContainer"], [data-testid="stMain"] {{ scroll-behavior: smooth; }}
@@ -1218,11 +1221,119 @@ BOOKS = """
 """
 
 
+# Connected controls (coach/motion.py) and the page navigation at the top
+# (coach/topnav.py): one object with one active surface that travels.
+NAV = """
+<style>
+/* the travelling surface: the same material as a chosen segment */
+.cx-pill {
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; border-radius: 999px;
+  background: light-dark(#FFFFFF, rgba(255, 255, 255, 0.13)); box-shadow: var(--optic-strong);
+  will-change: transform, width;
+}
+[data-cx] { position: relative; isolation: isolate; }
+[data-cx] > :not(.cx-pill) { position: relative; z-index: 1; }
+
+/* ---------- the pages: one control, fixed in the middle of the header ---------- */
+[data-testid="stLayoutWrapper"]:has(> .st-key-topnav) {
+  position: fixed; top: 9px; left: var(--cx-main, 50%); transform: translateX(-50%); z-index: 999990; width: auto !important;
+  transition: left var(--t-layout) var(--ease-layout);    /* follows the page as the sidebar opens and closes */
+}
+.st-key-topnav {
+  width: auto !important; flex-wrap: nowrap !important; gap: 2px !important; padding: 3px; border-radius: 999px;
+  background: light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.075));
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-optics);   /* the header's own glass */
+  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.08));
+  corner-shape: superellipse(1.6);
+}
+.st-key-topnav_items { width: auto !important; flex-wrap: nowrap !important; gap: 0 !important; }
+.st-key-topnav > div, .st-key-topnav_items > div { width: auto !important; flex: 0 0 auto !important; min-width: 0; }
+.st-key-topnav [data-testid="stPageLink"] { margin: 0; }
+.st-key-topnav [data-testid="stPageLink-NavLink"] {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  height: 34px; min-height: 34px; padding: 0 16px; margin: 0; border-radius: 999px;
+  background: transparent !important; text-decoration: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.st-key-topnav [data-testid="stPageLink-NavLink"]::after { content: ""; position: absolute; inset: -5px 0; }   /* a 44px reach */
+.st-key-topnav [data-testid="stPageLink-NavLink"] p {
+  margin: 0; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; white-space: nowrap;
+  color: var(--label-2); transition: color var(--cx-dur, 360ms) var(--ease);
+}
+.st-key-topnav [data-testid="stPageLink-NavLink"][data-cx-on] p { color: var(--label); }
+@media (hover: hover) { .st-key-topnav [data-testid="stPageLink-NavLink"]:not([data-cx-on]):hover p { color: var(--label); } }
+.st-key-topnav [data-testid="stPageLink-NavLink"]:focus-visible { outline: 1px solid var(--outline); outline-offset: 1px; }
+/* Search: part of the same object, apart from the pages */
+.st-key-nav_search { position: relative; margin-left: 5px; }
+.st-key-nav_search::before {
+  content: ""; position: absolute; left: -4px; top: 10px; bottom: 10px; width: 0.5px; background: var(--field-edge);
+}
+.st-key-nav_search button {
+  position: relative; width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0 !important;
+  border-radius: 50%; border: none !important; background: transparent !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; color: var(--label-2);
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.st-key-nav_search button::after { content: ""; position: absolute; inset: -5px -3px; }
+.st-key-nav_search button p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.st-key-nav_search button:active { background: var(--wash) !important; }
+@media (hover: hover) { .st-key-nav_search button:hover { color: var(--label); } }
+@media (max-width: 640px) {
+  [data-testid="stLayoutWrapper"]:has(> .st-key-topnav) { top: 8px; }
+  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 12px; }
+}
+@media (max-width: 360px) {        /* the narrowest phones: the same control, a little tighter, clear of the header's buttons */
+  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 8px; }
+  .st-key-topnav [data-testid="stPageLink-NavLink"] p { font-size: 0.8125rem; }
+  .st-key-nav_search { margin-left: 3px; }
+  .st-key-nav_search button { width: 30px; min-width: 30px; }
+}
+
+/* moving between pages: the content quietens as the surface sets off, and
+   the new page's blocks come in as it arrives (arrive, above) */
+:root[data-cx-leaving] .stMainBlockContainer > [data-testid="stVerticalBlock"] > :not(:has(> .st-key-topnav)) {
+  opacity: 0.35; transition: opacity 260ms var(--ease);
+}
+
+/* ---------- Progress: Day / Sessions / Subjects share the one surface ---------- */
+.st-key-prog_view [data-cx] button[aria-checked="true"] { background: transparent !important; box-shadow: none !important; }
+.st-key-prog_view [data-cx] button p { font-weight: 500 !important; transition: color var(--cx-dur, 360ms) var(--ease); }
+.st-key-prog_view [data-cx] button { color: var(--label-2); }
+.st-key-prog_view [data-cx] button[data-cx-on] { color: var(--label); }
+
+/* ---------- tabs: Streamlit's own sliding mark, on the same clock ---------- */
+[data-testid="stTab"] > [data-rac]:not([data-testid]) {
+  transition: translate var(--t-state) var(--ease-nav), width var(--t-state) var(--ease-nav), background-color var(--t-micro) var(--ease) !important;
+}
+
+/* ---------- Search ---------- */
+.st-key-search_results { gap: 0 !important; }
+[class*="st-key-sres_"] { position: relative; gap: 0 !important; border-top: 0.5px solid var(--hair); border-radius: 10px; transition: background-color var(--t-micro) var(--ease); }
+.sr { display: grid; gap: 2px; padding: 12px 8px; }
+.sr-t { font-size: 0.9375rem; font-weight: 500; color: var(--label); }
+.sr-m { font-size: 0.75rem; color: var(--label-3); }
+.sr-s { font-size: 0.8125rem; line-height: 1.5; color: var(--label-2); }
+/* the whole row is the button: it lies over the row, unseen, and the
+   text beneath lets the tap through to it */
+[class*="st-key-sres_"] [data-testid="stElementContainer"]:has(.sr) { pointer-events: none; }
+[class*="st-key-sres_"] [data-testid="stElementContainer"]:has(.stButton),
+[class*="st-key-sres_"] [data-testid="stElementContainer"]:has(.stButton) *:not(button) { position: static !important; }
+[class*="st-key-sres_"] .stButton button {
+  position: absolute !important; inset: 0; width: 100%; height: 100%; min-height: 0; z-index: 2; opacity: 0; cursor: pointer;
+}
+[class*="st-key-sres_"]:has(button:active) { background: var(--wash); }
+@media (hover: hover) { [class*="st-key-sres_"]:hover { background: var(--wash); } }
+[class*="st-key-sres_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -1px; }
+@media (pointer: coarse) { [role="dialog"] input { font-size: 16px !important; } }
+</style>
+"""
+
+
 def stylesheet() -> str:
-    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, TOUCH))
+    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, TOUCH))
     return CSS.replace("</style>", rest + "</style>")
 
 
 def inject():
     st.html(stylesheet())
     st.html(glass.script(), unsafe_allow_javascript=True)      # the refraction filter the glass uses
+    st.html(motion.script(), unsafe_allow_javascript=True)     # connected controls: one surface travelling between items
