@@ -1486,7 +1486,6 @@ SETUP = """
 [class*="st-key-opt_"][class*="__sel"]:not([data-on="0"]) .opt-mark::after,
 [class*="st-key-opt_"][data-on="1"] .opt-mark::after { opacity: 1; transform: rotate(45deg) scale(1); }
 /* a row that can't be chosen now (three already chosen) */
-[class*="st-key-opt_"][class*="__dis"] .opt { opacity: 0.4; }
 [class*="st-key-opt_"] [data-testid="stElementContainer"]:has(.opt) { pointer-events: none; }
 [class*="st-key-opt_"] [data-testid="stElementContainer"]:has(.stButton),
 [class*="st-key-opt_"] [data-testid="stElementContainer"]:has(.stButton) *:not(button) { position: static !important; }
@@ -1495,6 +1494,9 @@ SETUP = """
   cursor: pointer; transform: none !important;
 }
 [class*="st-key-opt_"] .stButton button:disabled { cursor: default; }
+/* past the limit: quieter, but it can still be looked at */
+[class*="st-key-opt_"][class*="__dis"] .opt { opacity: 0.5; transition: opacity var(--cx-dur, 360ms) var(--ease); }
+[class*="st-key-optlist_"] [class*="__dis"][data-cx-on] .opt { opacity: 0.85; }
 @media (hover: hover) { [class*="st-key-opt_"]:not([class*="__dis"]):hover { background: var(--wash); } }
 [class*="st-key-opt_"]:not([class*="__dis"]):has(button:active) { background: var(--wash); transition-duration: var(--t-press); }
 [class*="st-key-opt_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -1px; }
@@ -1680,7 +1682,7 @@ LENS = """
   [class*="st-key-ob_grid"] > * { width: 100% !important; }
   [class*="st-key-ob_grid"] > :has(> .st-key-ob_lead) { position: static; }
   /* on a narrow page the stage is a band that stays at the top while the index scrolls under it */
-  .st-key-ob_grid_subjects > :has(> .st-key-ob_stage) { position: sticky; top: 56px; z-index: 4; width: calc(100% + 32px) !important; margin: 0 -16px; }
+  [class*="st-key-ob_grid"].st-key-ob_grid_subjects > :has(> .st-key-ob_stage) { position: sticky; top: 56px; z-index: 4; width: calc(100% + 32px) !important; max-width: none !important; margin: 0 -16px; }
 }
 
 /* ---------- the stage: the subject in focus, large ---------- */
@@ -1691,18 +1693,32 @@ LENS = """
   position: absolute; inset: 0; background: center 30% / cover no-repeat;
   filter: grayscale(1) contrast(1.06);
   /* the picture sinks into the page: fully there above, gone below the words */
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 88%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 88%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 76%),
+                      radial-gradient(ellipse 74% 66% at 50% 34%, #000 42%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 76%),
+              radial-gradient(ellipse 74% 66% at 50% 34%, #000 42%, transparent 100%);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
   transform: scale(1.035); transition: transform 1100ms var(--ease);
 }
-:root[data-scheme="dark"] .sg-art { filter: grayscale(1) contrast(1.06) brightness(0.84); }
+:root[data-scheme="dark"] .sg-art:not(.no-art) { filter: grayscale(1) contrast(1.06) brightness(0.84); }
+/* on white, a studio backdrop would read as a grey slab: the picture lifts
+   toward the page and its edges fall away sooner */
+:root:not([data-scheme="dark"]) .sg-art:not(.no-art) {
+  filter: grayscale(1) contrast(1.04) brightness(1.1);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 72%),
+                      radial-gradient(ellipse 62% 58% at 50% 34%, #000 30%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 72%),
+              radial-gradient(ellipse 62% 58% at 50% 34%, #000 30%, transparent 100%);
+}
 /* no picture yet: the subject's number, large and faint, stands in its place */
 .sg-art.no-art { -webkit-mask-image: none; mask-image: none; display: flex; align-items: flex-start; justify-content: flex-end; padding: 8px 24px 0 0; }
 .sg-art.no-art::before { content: attr(data-n); font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300;
   font-size: clamp(9rem, 17vw, 15rem); line-height: 1; color: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07)); font-variant-numeric: lining-nums; }
 .sg-copy { position: relative; display: grid; gap: 6px; padding: 0 clamp(20px, 3vw, 36px) clamp(20px, 3vw, 32px); }
 .sg-copy p { margin: 0; }
-.sg-kicker { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); font-variant-numeric: tabular-nums; }
+.sg-kicker { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-2); font-variant-numeric: tabular-nums; }
+/* the words over the picture keep a breath of the page's own colour around them */
+.sg-kicker, .sg-title, .sg-desc { text-shadow: 0 0 18px var(--env), 0 0 2px var(--env); }
 .sg-title { font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; color: var(--label);
   font-size: clamp(2.75rem, 5vw, 4.5rem); line-height: 1; letter-spacing: -0.01em; margin-top: 4px !important; }
 .sg-desc { font-size: 1.0625rem; line-height: 1.5; color: var(--label-2); max-width: 30rem; margin-top: 6px !important; }
