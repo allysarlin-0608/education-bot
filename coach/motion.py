@@ -36,11 +36,19 @@ SCRIPT = r"""
     { root: '.st-key-topnav_items', item: '[data-testid="stPageLink-NavLink"]', pages: true, target: 'p, [data-testid="stIconMaterial"]', cls: 'cx-line',
       shape: (b, r) => ({ x: b.x - 2, y: r.h - 1.5, w: b.w + 4, h: 1.5 }),
       on: (items) => items.find((a) => a.getAttribute('href') && pathOf(a) === here()) || items.find((a) => !a.getAttribute('href')) },
-    { root: '.st-key-prog_view [data-testid="stButtonGroup"] > div', item: 'button',
+    // switches (Progress's Day | Sessions | Subjects, a subject's starting
+    // point): the lens slides along the track, over the words chosen
+    { root: '.st-key-prog_view [data-testid="stButtonGroup"] > div', item: 'button', cls: 'cx-lens',
       on: (items) => items.find((b) => b.getAttribute('aria-checked') === 'true') },
-    // the setup's "Start from the basics | I know some already", one per subject
-    { root: '[class*="st-key-sw_"] [data-testid="stButtonGroup"] > div', item: 'button',
+    { root: '[class*="st-key-sw_"] [data-testid="stButtonGroup"] > div', item: 'button', cls: 'cx-lens',
       on: (items) => items.find((b) => b.getAttribute('aria-checked') === 'true') },
+    // lists of options (setup, Settings, the placement check): the lens lies
+    // over the row in focus: the one chosen, or in a list of several choices,
+    // the one she last touched (what is chosen shows in each row, choices.py)
+    { root: '[class*="st-key-optlist_"]', item: '[class*="st-key-opt_"]', cls: 'cx-lens',
+      shape: (b) => ({ x: b.x - 8, y: b.y + 3, w: b.w + 16, h: b.h - 6 }),
+      on: (items) => items.find((r) => (r.className.split(' ').find((k) => k.startsWith('st-key-opt_')) || '').endsWith('_f'))
+        || items.find((r) => r.querySelector('.opt[data-multi="0"]') && r.className.includes('__sel')) },
     // Today's lessons: the short mark under the lesson open travels to the
     // next one opened (it moves once the page has opened it: a locked lesson
     // only says so, so it must not set off on the tap)
@@ -67,10 +75,14 @@ SCRIPT = r"""
   function draw(root, b, ms) {
     const p = pill(root, (state.get(root) || {}).c);
     p.style.opacity = '';
-    p.style.transition = ms ? 'transform ' + ms + 'ms var(--ease-nav), width ' + ms + 'ms var(--ease-nav), height ' + ms + 'ms var(--ease-nav)' : 'none';
+    // the edge light and fill change on their own gentler clock (moving, then settling)
+    p.style.transition = (ms ? 'transform ' + ms + 'ms var(--ease-nav), width ' + ms + 'ms var(--ease-nav), height ' + ms + 'ms var(--ease-nav), ' : '')
+      + 'box-shadow 360ms var(--ease), background-color 360ms var(--ease), opacity 240ms var(--ease)';
     p.style.width = b.w + 'px'; p.style.height = b.h + 'px';
     p.style.transform = 'translate(' + b.x + 'px, ' + b.y + 'px)';
     root.style.setProperty('--cx-dur', (ms || 1) + 'ms');
+    // moving, the glass shows its material a little more; settled, it calms
+    if (ms) { p.classList.add('cx-live'); clearTimeout(p._live); p._live = setTimeout(() => p.classList.remove('cx-live'), ms + 120); }
   }
   // move the surface to `to`: the time grows a little with the distance
   function go(root, items, to, animate, c) {
@@ -79,7 +91,7 @@ SCRIPT = r"""
     state.set(root, s);
     const b = box(root, to, s.c);
     let ms = 0;
-    if (animate && s.b) ms = reduced() ? 0 : Math.round(Math.min(560, Math.max(300, 280 + Math.abs(b.x - s.b.x) * 0.9)));
+    if (animate && s.b) ms = reduced() ? 0 : Math.round(Math.min(620, Math.max(340, 300 + Math.hypot(b.x - s.b.x, b.y - s.b.y) * 0.8)));
     if (ms === 0 && animate && reduced()) pill(root).animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 160 });
     draw(root, b, ms);
     mark(items, to);
@@ -103,13 +115,16 @@ SCRIPT = r"""
           s.c = c; s.b = c.last.b; state.set(root, s); draw(root, s.b, 0); root.getBoundingClientRect();
         }
         if (s.pending && performance.now() - s.pendingAt > 3000) s.pending = null;
-        if (s.pending && s.pending !== on) return;
+        // (the tapped item redrawn as a new element: the page has caught up)
+        if (s.pending && s.pending !== on && s.pending.isConnected) return;
         s.pending = null; state.set(root, s);
         const b = box(root, on, c);
         const p = root.querySelector(':scope > .cx-pill');
-        if (s.on !== on || !s.b || Math.abs(b.x - s.b.x) + Math.abs(b.w - s.b.w) > 0.5 || !p || p.style.opacity === '0') go(root, items, on, !!s.b && (s.on !== on || Math.abs(b.x - s.b.x) > 0.5), c);
+        const moved = s.b && Math.abs(b.x - s.b.x) + Math.abs(b.y - s.b.y) > 0.5;
+        if (s.on !== on || !s.b || moved || Math.abs(b.w - s.b.w) + Math.abs(b.h - s.b.h) > 0.5 || !p || p.style.opacity === '0') go(root, items, on, !!s.b && (s.on !== on || moved), c);
       });
     }
+    stage();
     // a new page has come in (Streamlit has redrawn: its stale marks have
     // come and gone): let the content settle back
     if (doc.documentElement.hasAttribute('data-cx-leaving')) {
@@ -117,6 +132,31 @@ SCRIPT = r"""
       if (stale) sawStale = true;
       if ((sawStale && !stale && here() !== leftFrom) || performance.now() - leftAt > 1500) doc.documentElement.removeAttribute('data-cx-leaving');
     }
+  }
+  // the subjects' stage (setup): it shows the subject in focus (the row the
+  // lens lies over) and whether it is chosen; it is drawn once and only its
+  // marks change, so one subject gives way to the next without a redraw
+  function stage() {
+    const st = doc.querySelector('.sg-stage');
+    if (!st) return;
+    const rows = [...doc.querySelectorAll('[class*="st-key-opt_subj_"]')];
+    const topic = (r) => (r.className.match(/st-key-opt_subj_([a-z]+)__/) || [])[1];
+    const chosen = (r) => (r.dataset.on ? r.dataset.on === '1' : /__sel/.test(r.className));
+    const f = rows.find((r) => r.hasAttribute('data-cx-on'))
+      || rows.find((r) => (r.className.match(/st-key-opt_subj_\S+/) || [''])[0].endsWith('_f')) || rows.find((r) => chosen(r));
+    const t = f ? topic(f) : (st.dataset.first || '');
+    if (st.dataset.focus !== t) st.dataset.focus = t;
+    const layer = st.querySelector('.sg-layer[data-t="' + t + '"]');
+    const state = layer && layer.querySelector('.sg-state');
+    if (!state || !f) return;
+    let text = 'Not chosen';
+    if (chosen(f)) {
+      const o = f.querySelector('.opt');
+      const day = o && o.dataset.day ? +o.dataset.day : rows.filter((r) => chosen(r) && r !== f).length + 1;
+      text = 'Chosen · day ' + day + ' of the rotation';
+    }
+    if (state.textContent !== text) state.textContent = text;
+    state.dataset.on = chosen(f) ? '1' : '0';
   }
   let queued = false, leftFrom = null, leftAt = 0, sawStale = false;
   const soon = () => { if (!queued) { queued = true; w.requestAnimationFrame(() => { queued = false; sync(); }); } };
@@ -147,6 +187,19 @@ SCRIPT = r"""
     }
   }, true);
 
+  // the setup: pressing Continue or Back, the step leaves toward where she
+  // came from while the next one is drawn (style.py)
+  doc.addEventListener('click', (ev) => {
+    const b = ev.target.closest && ev.target.closest('.st-key-ob_nav button');
+    if (!b || b.disabled) return;
+    const step = b.closest('[class*="st-key-ob_step_"]');
+    if (step && !reduced()) {
+      step.dataset.leaving = b.closest('.st-key-ob_back') ? 'back' : 'fwd';
+      // the same step drawn again (nothing to move on to): it comes back
+      setTimeout(() => { if (step.isConnected) step.removeAttribute('data-leaving'); }, 1400);
+    }
+  }, true);
+
   // a list of options (setup, Settings): a tap shows the row chosen (or not)
   // at once; the page redraws it the same way a moment later, and the marks
   // set here are cleared once it has
@@ -159,6 +212,7 @@ SCRIPT = r"""
     if (o && o.dataset.multi === '1') row.dataset.on = on ? '0' : '1';
     else if (list) { list.querySelectorAll('[class*="st-key-opt_"]').forEach((r) => { r.dataset.on = '0'; }); row.dataset.on = '1'; }
     pickAt = performance.now(); pickSaw = false;
+    stage();
   }, true);
   new w.MutationObserver(() => {
     if (!pickAt) return;

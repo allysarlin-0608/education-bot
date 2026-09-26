@@ -26,20 +26,40 @@ def _e(text) -> str:
 
 
 def rows(group: str, items: list, chosen, on_pick, *, multi: bool = False, full: bool = False,
-         args: tuple = ()) -> None:
-    """items: [(key, name, line under it)]. `chosen`: the keys chosen.
-    With `full`, the rows not chosen can't be picked (a limit is reached).
-    A tap calls on_pick(*args, key)."""
+         args: tuple = (), focus=None, style: str = "") -> None:
+    """items: [(key, name, line under it)] or [(key, name, line, extra)],
+    extra = {"n": index shown before the name, "thumb": picture address,
+    "bars": how many of five segments to draw}. `chosen`: the keys chosen,
+    in the order chosen (a list of several shows each one's day). With
+    `full`, the rows not chosen can't be picked (a limit is reached).
+    `focus`: the row the lens lies over (a list of one choice: the chosen
+    one). A tap calls on_pick(*args, key)."""
+    chosen = list(chosen)
+    if focus is None and not multi and chosen:
+        focus = chosen[0]
     with st.container(key=f"optlist_{group}", gap=None):
-        for key, name, sub in items:
+        for item in items:
+            key, name, sub = item[:3]
+            extra = item[3] if len(item) > 3 else {}
             on = key in chosen
             state = "sel" if on else "dis" if full else "unsel"
-            with st.container(key=f"opt_{group}_{key}__{state}", gap=None):
-                st.html(f'<div class="opt" data-multi="{int(multi)}"><span class="opt-t">{_e(name)}</span>'
+            day = chosen.index(key) + 1 if multi and on else ""
+            with st.container(key=f"opt_{group}_{key}__{state}" + ("_f" if key == focus else ""), gap=None):
+                st.html(f'<div class="opt{" opt-" + style if style else ""}" data-multi="{int(multi)}" data-day="{day}">'
+                        + (f'<span class="opt-n">{extra["n"]:02d}</span>' if "n" in extra else "")
+                        + (f'<span class="opt-thumb" style="background-image:url(\'{_e(extra["thumb"])}\')"></span>'
+                           if extra.get("thumb") else "")
+                        + f'<span class="opt-t">{_e(name)}</span>'
                         + (f'<span class="opt-s">{_e(sub)}</span>' if sub else "")
-                        + '<span class="opt-mark" aria-hidden="true"></span></div>')
+                        + ('<span class="opt-bars" aria-hidden="true">'
+                           + "".join(f'<i class="{"on" if k < extra["bars"] else ""}"></i>' for k in range(5))
+                           + "</span>" if "bars" in extra else "")
+                        + '<span class="opt-mark" aria-hidden="true">'
+                        + (f'<small class="opt-day">Day {day}</small>' if day else "")
+                        + "</span></div>")
                 # the row's button, stretched over it; its words are for screen readers
-                st.button(f"{name}, selected" if on else name, key=f"pick_{group}_{key}",
+                label = f"{name}, selected" if on else name
+                st.button(label + (f", day {day}" if day else ""), key=f"pick_{group}_{key}",
                           disabled=state == "dis", on_click=on_pick, args=(*args, key))
 
 

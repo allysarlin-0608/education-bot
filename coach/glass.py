@@ -21,7 +21,7 @@ HAZE = 3.2         # px: the stronger diffusion within the rim band
 EDGE_LIGHT = 0.035 # how much light gathers in the rim band (white, so it reads on light and dark)
 
 
-def _map(axis: str) -> str:
+def _map(axis: str, edge: int = EDGE) -> str:
     """A displacement map for one axis. Neutral grey (no shift) over the
     centre; within EDGE px of the rim each point shows what lies a little
     further in, most at the rim and easing to nothing inward, so the rounded
@@ -50,7 +50,7 @@ def _map(axis: str) -> str:
         f'<rect {size} fill="url(#a)"/>'
         f'<svg {at_end} overflow="visible"><rect {end} {size} fill="url(#b)"/></svg>'
         '</svg>'
-    ).format(e=EDGE)
+    ).format(e=edge)
     return "data:image/svg+xml," + quote(svg)
 
 
@@ -60,7 +60,7 @@ def _mix(color: str, amount: float) -> str:
     return "rgb({},{},{})".format(*(round(128 + (v - 128) * amount) for v in (r, g, b)))
 
 
-def _band() -> str:
+def _band(edge: int = EDGE) -> str:
     """A mask of the rim band: opaque at the edge, fading to clear EDGE px
     in, on all four sides. Where two sides meet (the corners) the bands
     overlap, so the corners diffuse and gather light a little more."""
@@ -77,8 +77,34 @@ def _band() -> str:
         '<svg x="100%" overflow="visible"><rect x="-{e}" width="{e}" height="100%" fill="url(#r)"/></svg>'
         '<svg y="100%" overflow="visible"><rect y="-{e}" width="100%" height="{e}" fill="url(#b)"/></svg>'
         '</svg>'
-    ).format(e=EDGE)
+    ).format(e=edge)
     return "data:image/svg+xml," + quote(svg)
+
+
+# The lens: the one surface that travels between choices (motion.py). It
+# lies over the chosen words, so it has no frost at all: the middle is
+# perfectly clear and only a narrow rim bends what passes under it, like
+# the rounded edge of a thin sheet of glass. Settled, the bend is slight;
+# moving ("live") it bends a little more, so the material shows as it goes.
+LENS_EDGE = 10
+LENS_SCALE, LENS_LIVE_SCALE = 3, 14
+
+
+def _lens(fid: str, scale: int, light: bool) -> str:
+    return (
+        f'<filter id="{fid}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">'
+        f'<feImage href="{_map("x", LENS_EDGE)}" preserveAspectRatio="none" result="mx"/>'
+        f'<feDisplacementMap in="SourceGraphic" in2="mx" scale="{scale}" xChannelSelector="R" yChannelSelector="G" result="dx"/>'
+        f'<feImage href="{_map("y", LENS_EDGE)}" preserveAspectRatio="none" result="my"/>'
+        f'<feDisplacementMap in="dx" in2="my" scale="{scale}" xChannelSelector="R" yChannelSelector="G" result="bent"/>'
+        f'<feImage href="{_band(LENS_EDGE)}" preserveAspectRatio="none" result="band"/>'
+        '<feGaussianBlur in="bent" stdDeviation="0.8" edgeMode="duplicate" result="haze"/>'
+        '<feComposite in="haze" in2="band" operator="in" result="rimhaze"/>'
+        + (f'<feFlood flood-color="#ffffff" flood-opacity="{EDGE_LIGHT}" result="light"/>'
+           '<feComposite in="light" in2="band" operator="in" result="rimlight"/>' if light else "")
+        + '<feMerge><feMergeNode in="bent"/><feMergeNode in="rimhaze"/>'
+        + ('<feMergeNode in="rimlight"/>' if light else "") + '</feMerge></filter>'
+    )
 
 
 def defs() -> str:
@@ -112,6 +138,8 @@ def defs() -> str:
         # the same glass without the gathered light, for the dark theme: on
         # black even a trace of white turns the glass into a grey slab
         + body.replace('id="lg-refract"', 'id="lg-refract-dim"').replace('<feMergeNode in="rimlight"/>', '')
+        + _lens("lg-lens", LENS_SCALE, True) + _lens("lg-lens-live", LENS_LIVE_SCALE, True)
+        + _lens("lg-lens-dim", LENS_SCALE, False) + _lens("lg-lens-live-dim", LENS_LIVE_SCALE, False)
         + '</svg>'
     )
 
