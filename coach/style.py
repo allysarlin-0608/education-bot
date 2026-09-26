@@ -1416,9 +1416,8 @@ SETUP = """
 }
 
 /* ---------- setup and Settings: the same product, one decision at a time ---------- */
-.stMainBlockContainer:has(#setup-page) { max-width: 600px; }
-.stMainBlockContainer:has(#settings-page) { max-width: 760px; }
-@media (min-width: 768px) { .stMainBlockContainer:has(#setup-page) { padding-top: max(96px, 14vh); } }
+.stMainBlockContainer:has(#setup-page) { max-width: 1120px; }
+.stMainBlockContainer:has(#settings-page) { max-width: 820px; }
 
 /* where she is in the setup: one hairline filling step by step, and its name */
 .ob-progress { display: grid; gap: 10px; }
@@ -1482,16 +1481,10 @@ SETUP = """
   transform: rotate(45deg) scale(0.6); opacity: 0;
   transition: opacity var(--t-micro) var(--ease), transform var(--t-state) var(--ease);
 }
-/* the short rule at the row's left */
-[class*="st-key-opt_"]::before {
-  content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 1.5px; background: var(--label);
-  transform: scaleY(0); transition: transform var(--t-state) var(--ease); z-index: 1;
-}
 /* chosen: the check, the rule and a heavier name (a tap shows it at once: motion.py) */
 [class*="st-key-opt_"][class*="__sel"]:not([data-on="0"]) .opt-t, [class*="st-key-opt_"][data-on="1"] .opt-t { font-weight: 600; }
 [class*="st-key-opt_"][class*="__sel"]:not([data-on="0"]) .opt-mark::after,
 [class*="st-key-opt_"][data-on="1"] .opt-mark::after { opacity: 1; transform: rotate(45deg) scale(1); }
-[class*="st-key-opt_"][class*="__sel"]:not([data-on="0"])::before, [class*="st-key-opt_"][data-on="1"]::before { transform: scaleY(1); }
 /* a row that can't be chosen now (three already chosen) */
 [class*="st-key-opt_"][class*="__dis"] .opt { opacity: 0.4; }
 [class*="st-key-opt_"] [data-testid="stElementContainer"]:has(.opt) { pointer-events: none; }
@@ -1573,8 +1566,198 @@ SETUP = """
 </style>
 """
 
+LENS = """
+<style>
+/* ==========================================================================
+   THE LENS: one piece of clear glass per control, travelling between choices
+   --------------------------------------------------------------------------
+   It lies over the words chosen. Its middle is perfectly clear (no frost:
+   the words stay sharp); only a narrow rim bends what passes under it
+   (glass.py: lg-lens), and a hairline of light marks its upper edge.
+   Settled it is nearly invisible; while it travels (cx-live, motion.py) the
+   rim bends a little more and its edge light gathers, then calms. Where the
+   browser can't bend light, the same shape and edge light alone.
+   ========================================================================== */
+:root {
+  --lens-fill: light-dark(rgba(0, 0, 0, 0.014), rgba(255, 255, 255, 0.03));
+  --lens-fill-live: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.045));
+  --lens-rim:
+    inset 0 0.5px 0 0 light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.2)),
+    inset 0 -0.5px 0 0 light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.05)),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.09)),
+    inset 0 0 18px -8px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07)),
+    0 8px 22px -16px light-dark(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.9));
+  --lens-rim-live:
+    inset 0 1px 0 0 light-dark(rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.34)),
+    inset 0 -0.5px 0 0 light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.08)),
+    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.14)),
+    inset 0 0 22px -8px light-dark(rgba(0, 0, 0, 0.09), rgba(255, 255, 255, 0.11)),
+    0 12px 26px -16px light-dark(rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.95));
+  --lens-optics: none; --lens-optics-live: none;
+}
+:root[data-refract] { --lens-optics: url(#lg-lens); --lens-optics-live: url(#lg-lens-live); }
+:root[data-refract][data-scheme="dark"] { --lens-optics: url(#lg-lens-dim); --lens-optics-live: url(#lg-lens-live-dim); }
+.cx-pill.cx-lens {
+  z-index: 3; pointer-events: none; border-radius: 14px; corner-shape: superellipse(1.6);
+  background: var(--lens-fill); box-shadow: var(--lens-rim);
+  backdrop-filter: var(--lens-optics); -webkit-backdrop-filter: none;
+}
+.cx-pill.cx-lens.cx-live { background: var(--lens-fill-live); box-shadow: var(--lens-rim-live); backdrop-filter: var(--lens-optics-live); }
+/* in a switch the track is a pill, and so is the lens riding in it */
+.st-key-prog_view .cx-pill.cx-lens, [class*="st-key-sw_"] .cx-pill.cx-lens { border-radius: 999px; }
+.st-key-prog_view [data-testid="stButtonGroup"] > div, [class*="st-key-sw_"] [data-testid="stButtonGroup"] > div {
+  background: light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.045)) !important;
+  box-shadow: inset 0 0 0 0.5px var(--hair);
+}
+
+/* ---------- a list of options, under the lens ---------- */
+/* the words: quieter where not chosen, full where chosen or under the lens,
+   changing on the lens's own clock */
+[class*="st-key-optlist_"] .opt-t { color: var(--label-2); transition: color var(--cx-dur, 360ms) var(--ease); }
+[class*="st-key-opt_"][class*="__sel"]:not([data-on="0"]) .opt-t, [class*="st-key-opt_"][data-on="1"] .opt-t,
+[class*="st-key-optlist_"] [data-cx-on] .opt-t { color: var(--label); }
+[class*="st-key-optlist_"] .opt-s { transition: color var(--cx-dur, 360ms) var(--ease); }
+[class*="st-key-optlist_"] [data-cx-on] .opt-s { color: var(--label); opacity: 0.72; }
+[class*="st-key-opt_"][class*="__sel"]:not([data-on="0"]) .opt-t, [class*="st-key-opt_"][data-on="1"] .opt-t { font-weight: 500; }
+/* hover: the faintest wash, never where the lens is */
+@media (hover: hover) { [class*="st-key-opt_"]:not([class*="__dis"]):hover { background: transparent; }
+  [class*="st-key-optlist_"] [class*="st-key-opt_"]:not([class*="__dis"]):not([data-cx-on]):hover .opt-t { color: var(--label); } }
+[class*="st-key-opt_"]:not([class*="__dis"]):has(button:active) { background: transparent; }
+[class*="st-key-opt_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -3px; border-radius: 12px; }
+/* chosen, in a list of several: the check, and under it the day in the rotation */
+.opt-mark { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: auto; min-width: 32px; height: auto; min-height: 20px; }
+.opt-mark::after { left: 50%; margin-left: -3px; top: 2px; }
+.opt-day { margin-top: 20px; font-size: 0.6875rem; letter-spacing: 0.02em; color: var(--label-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* the index (Subjects): a number, a name in the serif, a line under it */
+.opt-index { grid-template-columns: 2.5rem minmax(0, 1fr) auto; padding: 18px 16px 18px 14px; row-gap: 4px; }
+.opt-index .opt-n { grid-column: 1; grid-row: 1 / span 2; align-self: start; padding-top: 9px;
+  font-size: 0.6875rem; letter-spacing: 0.1em; color: var(--label-3); font-variant-numeric: tabular-nums; }
+.opt-index .opt-t { grid-column: 2; font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300 !important;
+  font-size: 1.625rem; line-height: 1.12; letter-spacing: 0; }
+.opt-index .opt-s { grid-column: 2; }
+.opt-index .opt-mark { grid-column: 3; grid-row: 1 / span 2; }
+@media (max-width: 520px) { .opt-index .opt-t { font-size: 1.375rem; } .opt-index { grid-template-columns: 2rem minmax(0, 1fr) auto; } }
+
+/* the daily pace: its lessons as the day's line will draw them */
+.opt-pace { grid-template-columns: minmax(0, 1fr) auto 32px; }
+.opt-pace .opt-t { grid-column: 1; font-size: 1.0625rem; }
+.opt-pace .opt-s { grid-column: 1; }
+.opt-bars { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 3px; }
+.opt-bars i { width: 12px; height: 3px; border-radius: 2px; background: var(--field-edge); transition: background-color var(--cx-dur, 360ms) var(--ease); }
+.opt-bars i.on { background: var(--label-2); }
+[class*="st-key-optlist_"] [data-cx-on] .opt-bars i.on, [class*="st-key-opt_"][class*="__sel"] .opt-bars i.on { background: var(--label); }
+.opt-pace .opt-mark { grid-column: 3; grid-row: 1 / span 2; }
+
+/* ==========================================================================
+   SETUP: one editorial grid; the question on the left, the decision on the right
+   ========================================================================== */
+.st-key-ob_hero { gap: var(--space-5) !important; padding: clamp(24px, 9vh, 120px) 0 var(--space-7); }
+.st-key-ob_hero h1 {
+  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; color: var(--label);
+  font-size: clamp(3.25rem, 6.6vw, 6rem); line-height: 1; letter-spacing: -0.012em; max-width: 13.5ch; padding: 0;
+}
+.st-key-ob_hero .ob-lede { font-size: 1.125rem; max-width: 30rem; }
+[class*="st-key-ob_grid"] {
+  display: grid !important; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  column-gap: clamp(32px, 6vw, 96px); row-gap: var(--space-5); align-items: start;
+}
+[class*="st-key-ob_grid"] > * { min-width: 0; width: auto !important; }
+[class*="st-key-ob_grid"] > :has(> .st-key-ob_lead) { position: sticky; top: 96px; }
+.st-key-ob_lead { gap: var(--space-4) !important; }
+.st-key-ob_lead [data-testid="stElementContainer"]:has(h2) + [data-testid="stElementContainer"] { margin-top: 0 !important; }
+/* Streamlit pulls the text after a heading up under it; at these sizes that overlaps */
+.st-key-ob_lead [data-testid="stMarkdownContainer"]:has(h2), .st-key-ob_hero [data-testid="stMarkdownContainer"]:has(h1) { margin-bottom: 0 !important; }
+.st-key-ob_lead h2 { font-size: clamp(2.25rem, 3.4vw, 3.125rem); line-height: 1.06; letter-spacing: -0.005em; }
+.st-key-ob_body { gap: var(--space-5) !important; padding-top: 6px; }
+/* Subjects: the question and the index on the left, the stage on the right */
+.st-key-ob_grid_subjects { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); grid-template-areas: "lead stage" "body stage"; }
+.st-key-ob_grid_subjects > :has(> .st-key-ob_lead) { grid-area: lead; position: static; }
+.st-key-ob_grid_subjects > :has(> .st-key-ob_body) { grid-area: body; }
+.st-key-ob_grid_subjects > :has(> .st-key-ob_stage) { grid-area: stage; position: sticky; top: 80px; align-self: start; }
+@media (max-width: 899px) {
+  [class*="st-key-ob_grid"] { display: flex !important; flex-direction: column; align-items: stretch !important; }
+  [class*="st-key-ob_grid"] > * { width: 100% !important; }
+  [class*="st-key-ob_grid"] > :has(> .st-key-ob_lead) { position: static; }
+  /* on a narrow page the stage is a band that stays at the top while the index scrolls under it */
+  .st-key-ob_grid_subjects > :has(> .st-key-ob_stage) { position: sticky; top: 56px; z-index: 4; width: calc(100% + 32px) !important; margin: 0 -16px; }
+}
+
+/* ---------- the stage: the subject in focus, large ---------- */
+.sg-stage { position: relative; height: min(76vh, 700px); min-height: 460px; overflow: hidden; border-radius: 22px; corner-shape: superellipse(1.6); isolation: isolate; }
+.sg-layer { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+  opacity: 0; visibility: hidden; transition: opacity var(--t-layout) var(--ease), visibility 0s linear var(--t-layout); }
+.sg-art {
+  position: absolute; inset: 0; background: center 30% / cover no-repeat;
+  filter: grayscale(1) contrast(1.06);
+  /* the picture sinks into the page: fully there above, gone below the words */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 88%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 88%);
+  transform: scale(1.035); transition: transform 1100ms var(--ease);
+}
+:root[data-scheme="dark"] .sg-art { filter: grayscale(1) contrast(1.06) brightness(0.84); }
+/* no picture yet: the subject's number, large and faint, stands in its place */
+.sg-art.no-art { -webkit-mask-image: none; mask-image: none; display: flex; align-items: flex-start; justify-content: flex-end; padding: 8px 24px 0 0; }
+.sg-art.no-art::before { content: attr(data-n); font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300;
+  font-size: clamp(9rem, 17vw, 15rem); line-height: 1; color: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07)); font-variant-numeric: lining-nums; }
+.sg-copy { position: relative; display: grid; gap: 6px; padding: 0 clamp(20px, 3vw, 36px) clamp(20px, 3vw, 32px); }
+.sg-copy p { margin: 0; }
+.sg-kicker { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); font-variant-numeric: tabular-nums; }
+.sg-title { font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; color: var(--label);
+  font-size: clamp(2.75rem, 5vw, 4.5rem); line-height: 1; letter-spacing: -0.01em; margin-top: 4px !important; }
+.sg-desc { font-size: 1.0625rem; line-height: 1.5; color: var(--label-2); max-width: 30rem; margin-top: 6px !important; }
+.sg-meta { font-size: 0.75rem; color: var(--label-3); }
+.sg-state { margin-top: 10px !important; font-size: 0.8125rem; color: var(--label-2); display: flex; align-items: center; gap: 8px; }
+.sg-state[data-on="1"] { color: var(--label); }
+.sg-state[data-on="1"]::before { content: ""; width: 5px; height: 10px; margin: -3px 3px 0 2px; border: solid var(--label); border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+.sg-credit { font-size: 0.6875rem; color: var(--label-3); margin-top: 6px !important; }
+/* the subject in focus: its layer comes up, its picture settles */
+.sg-stage[data-focus="philosophy"] .sg-layer[data-t="philosophy"],
+.sg-stage[data-focus="cosmos"] .sg-layer[data-t="cosmos"],
+.sg-stage[data-focus="investing"] .sg-layer[data-t="investing"],
+.sg-stage[data-focus="business"] .sg-layer[data-t="business"],
+.sg-stage[data-focus="fashion"] .sg-layer[data-t="fashion"],
+.sg-stage[data-focus="jewelry"] .sg-layer[data-t="jewelry"],
+.sg-stage[data-focus="free"] .sg-layer[data-t="free"] {
+  opacity: 1; visibility: visible; transition: opacity var(--t-layout) var(--ease), visibility 0s;
+}
+.sg-stage[data-focus="philosophy"] .sg-layer[data-t="philosophy"] .sg-art,
+.sg-stage[data-focus="cosmos"] .sg-layer[data-t="cosmos"] .sg-art,
+.sg-stage[data-focus="investing"] .sg-layer[data-t="investing"] .sg-art,
+.sg-stage[data-focus="business"] .sg-layer[data-t="business"] .sg-art,
+.sg-stage[data-focus="fashion"] .sg-layer[data-t="fashion"] .sg-art,
+.sg-stage[data-focus="jewelry"] .sg-layer[data-t="jewelry"] .sg-art,
+.sg-stage[data-focus="free"] .sg-layer[data-t="free"] .sg-art { transform: none; }
+/* before the page has marked a focus, the first subject shows */
+.sg-stage:not([data-focus]) .sg-layer:first-child { opacity: 1; visibility: visible; }
+@media (max-width: 899px) {
+  .sg-stage { height: 232px; min-height: 0; border-radius: 0; background: var(--env); }
+  .sg-art { -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent 100%); mask-image: linear-gradient(to bottom, #000 20%, transparent 100%); }
+  .sg-copy { padding: 0 16px 14px; gap: 2px; }
+  .sg-title { font-size: 2.5rem; }
+  .sg-desc, .sg-meta, .sg-credit { display: none; }
+  .sg-state { margin-top: 4px !important; }
+  .sg-art.no-art::before { font-size: 7.5rem; }
+}
+
+/* ---------- moving between steps: the step leaves toward where she came from ---------- */
+[class*="st-key-ob_step_"][data-leaving] { transition: opacity 200ms var(--ease), transform 260ms var(--ease); pointer-events: none; }
+[class*="st-key-ob_step_"][data-leaving="fwd"] { opacity: 0; transform: translateX(-20px); }
+[class*="st-key-ob_step_"][data-leaving="back"] { opacity: 0; transform: translateX(20px); }
+
+/* ---------- Settings: the same index and lens, a size smaller ---------- */
+[class*="st-key-set_sec_"] .opt-index .opt-t { font-size: 1.25rem; }
+[class*="st-key-set_sec_"] .opt-index { padding: 14px 14px 14px 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sg-layer, .sg-art, [class*="st-key-ob_step_"][data-leaving] { transition: none !important; }
+  .sg-art { transform: none; }
+}
+</style>
+"""
+
 def stylesheet() -> str:
-    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, TOUCH))
+    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, TOUCH))
     return CSS.replace("</style>", rest + "</style>")
 
 

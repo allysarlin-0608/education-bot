@@ -31,6 +31,7 @@ def update(**fields) -> bool:
 
 
 def pick_subject(topic: str) -> None:
+    st.session_state.set_focus = topic           # the lens goes to the row she touched
     now = ui.config()["subjects"]
     if update(subjects=settings.toggle_subject(now, topic)):
         st.session_state.set_subjects_changed = True
@@ -75,8 +76,11 @@ problem = st.session_state.pop("set_problem", "")
 with st.container(key="set_sec_subjects"):
     st.markdown("#### Subjects")
     chosen = config["subjects"]
-    choices.rows("setsubj", [(t, core.TOPICS[t], settings.DESCRIPTIONS[t]) for t in settings.SUBJECTS],
-                 chosen, pick_subject, multi=True, full=len(chosen) >= settings.MAX_SUBJECTS)
+    focus = st.session_state.get("set_focus")
+    choices.rows("setsubj", [(t, core.TOPICS[t], settings.DESCRIPTIONS[t], {"n": k})
+                             for k, t in enumerate(settings.SUBJECTS, start=1)],
+                 chosen, pick_subject, multi=True, full=len(chosen) >= settings.MAX_SUBJECTS,
+                 focus=focus if focus in settings.SUBJECTS else (chosen[0] if chosen else None), style="index")
     order = " → ".join(core.TOPICS[t] for t in chosen)
     st.html(f'<p class="ob-note">{len(chosen)} of {settings.MAX_SUBJECTS} · one a day, in this order: {escape(order)}</p>'
             + (f'<p class="ob-note">{escape(problem)}</p>' if problem else "")
@@ -86,8 +90,8 @@ with st.container(key="set_sec_subjects"):
 # ---------- Daily pace ----------
 with st.container(key="set_sec_pace"):
     st.markdown("#### Daily pace")
-    choices.rows("setpace", [(n, name, settings.pace_line(n)) for n, (name, _) in settings.PACES.items()],
-                 {config["units_per_day"]}, pick_pace)
+    choices.rows("setpace", [(n, name, settings.pace_line(n), {"bars": n}) for n, (name, _) in settings.PACES.items()],
+                 [config["units_per_day"]], pick_pace, style="pace")
 
 # ---------- Starting level ----------
 with st.container(key="set_sec_level"):

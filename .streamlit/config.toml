@@ -71,5 +71,8 @@ grayBackgroundColor = "#1A1A1A"
 grayTextColor = "#D9D9D9"
 chartCategoricalColors = ["#F2F2F2", "#BFBFBF", "#8C8C8C", "#595959"]
 
+[server]
+enableStaticServing = true
+
 [client]
 toolbarMode = "viewer"

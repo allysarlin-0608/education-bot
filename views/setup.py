@@ -9,7 +9,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import choices, core, settings, ui
+from coach import choices, core, settings, ui, visuals
 
 STEP_NAMES = ("Welcome", "Subjects", "Daily pace", "Level", "Reading", "Summary")
 WELCOME, SUBJECTS, PACE, LEVEL, READING, SUMMARY = range(6)
@@ -42,6 +42,7 @@ def go(step: int) -> None:
 
 
 def pick_subject(topic: str) -> None:
+    st.session_state.ob_focus = topic           # the lens goes to the row she touched
     d = draft()
     d["subjects"] = settings.toggle_subject(d["subjects"], topic)
     put(d)
@@ -90,6 +91,34 @@ def nav(back: bool = True, label: str = "Continue", ready: bool = True, note: st
                   on_click=on or go, args=() if on else (step + 1,))
 
 
+def stage_html() -> str:
+    """The subjects' stage: every subject drawn once, one layer each; the
+    page shows the one in focus (motion.py sets it), so moving between
+    them is a crossfade, never a redraw."""
+    layers = []
+    for k, t in enumerate(settings.SUBJECTS, start=1):
+        kicker, shows, _ = visuals.ART[t]
+        f, url = visuals.facts(t), visuals.image_url(t)
+        art = (f'<div class="sg-art" role="img" aria-label="{escape(shows)}" style="background-image:url(\'{url}\')"></div>'
+               if url else f'<div class="sg-art no-art" aria-hidden="true" data-n="{k:02d}"></div>')
+        credit = visuals.CREDITS.get(t, "") if url else ""
+        layers.append(
+            f'<div class="sg-layer" data-t="{t}">{art}<div class="sg-copy">'
+            f'<p class="sg-kicker">{k:02d} · {escape(kicker)}</p>'
+            f'<p class="sg-title">{escape(core.TOPICS[t])}</p>'
+            f'<p class="sg-desc">{escape(settings.DESCRIPTIONS[t])}</p>'
+            f'<p class="sg-meta">{f["units"]} topics · {f["lessons"]} lessons · begins with {escape(f["first"])}</p>'
+            f'<p class="sg-state" data-on="0">Not chosen</p>'
+            + (f'<p class="sg-credit">{escape(credit)}</p>' if credit else "")
+            + "</div></div>")
+    return f'<div class="sg-stage" data-first="{settings.SUBJECTS[0]}">{"".join(layers)}</div>'
+
+
+def lead(title: str, lede: str) -> None:
+    st.markdown(f"## {title}")
+    st.html(f'<p class="ob-lede">{escape(lede)}</p>')
+
+
 d = draft()
 step = min(d["step"], reachable(d))
 came = st.session_state.pop("ob_way", "none")
@@ -102,62 +131,81 @@ st.html(f'<div class="ob-progress" role="progressbar" aria-label="Setup" aria-va
         f'<div class="ob-track"><i style="--from:{(was + 1) / 6:.4f};--to:{(step + 1) / 6:.4f}"></i></div>'
         f'<div class="ob-where"><span>{STEP_NAMES[step]}</span><span>{step + 1} of 6</span></div></div>')
 
-# each step is its own block, so it comes in from the side she is heading to
+# each step is its own block, so it comes in from the side she is heading to;
+# inside it one editorial grid: the question on the left, the decision on the
+# right (on a narrow page, one above the other)
 with st.container(key=f"ob_step_{step}_{came}"):
     if step == WELCOME:
-        st.markdown("## Learn a little every day")
-        st.html('<p class="ob-lede">Choose what you want to learn and how much time you have. '
-                "Each day brings one subject: a few short lessons, each with a quiz to check it stayed.</p>")
-        with st.container(key="ob_nav", horizontal=True, horizontal_alignment="left"):
-            st.button("Get started", key="ob_next", type="primary", on_click=go, args=(SUBJECTS,))
+        with st.container(key="ob_hero"):
+            st.markdown("# Learn a little every day")
+            st.html('<p class="ob-lede">Choose what you want to learn and how much time you have. '
+                    "Each day brings one subject: a few short lessons, each with a quiz to check it stayed.</p>")
+            with st.container(key="ob_nav", horizontal=True, horizontal_alignment="left"):
+                st.button("Get started", key="ob_next", type="primary", on_click=go, args=(SUBJECTS,))
 
     elif step == SUBJECTS:
-        st.markdown("## What would you like to learn?")
-        st.html('<p class="ob-lede">Choose up to three. They take turns, one a day, in the order you choose them.</p>')
-        full = len(d["subjects"]) >= settings.MAX_SUBJECTS
-        choices.rows("subj", [(t, core.TOPICS[t], settings.DESCRIPTIONS[t]) for t in settings.SUBJECTS],
-                     d["subjects"], pick_subject, multi=True, full=full)
-        n = len(d["subjects"])
-        order = " → ".join(core.TOPICS[t] for t in d["subjects"])
-        nav(ready=n >= settings.MIN_SUBJECTS,
-            note=(f"{n} of {settings.MAX_SUBJECTS} chosen · {order}" if n else "Choose at least one subject to continue."))
+        with st.container(key="ob_grid_subjects"):
+            with st.container(key="ob_lead"):
+                lead("What would you like to learn?",
+                     "Choose up to three. They take turns, one a day, in the order you choose them.")
+            with st.container(key="ob_stage"):
+                st.html(stage_html())
+            with st.container(key="ob_body"):
+                full = len(d["subjects"]) >= settings.MAX_SUBJECTS
+                focus = st.session_state.get("ob_focus")
+                if focus not in settings.SUBJECTS:
+                    focus = d["subjects"][-1] if d["subjects"] else None
+                choices.rows("subj", [(t, core.TOPICS[t], settings.DESCRIPTIONS[t], {"n": k})
+                                      for k, t in enumerate(settings.SUBJECTS, start=1)],
+                             d["subjects"], pick_subject, multi=True, full=full, focus=focus, style="index")
+                n = len(d["subjects"])
+                nav(ready=n >= settings.MIN_SUBJECTS,
+                    note=(f"{n} of {settings.MAX_SUBJECTS} chosen" + (" · the most you can choose" if full else "")
+                          if n else "Choose at least one subject to continue."))
 
     elif step == PACE:
-        st.markdown("## How much each day?")
-        st.html('<p class="ob-lede">One subject a day, in short lessons. You can change this later in Settings.</p>')
-        choices.rows("pace", [(n, name, settings.pace_line(n)) for n, (name, _) in settings.PACES.items()],
-                     {d["units_per_day"]}, pick_pace)
-        nav()
+        with st.container(key="ob_grid"):
+            with st.container(key="ob_lead"):
+                lead("How much each day?", "One subject a day, in short lessons. You can change this later in Settings.")
+            with st.container(key="ob_body"):
+                choices.rows("pace", [(n, name, settings.pace_line(n), {"bars": n})
+                                      for n, (name, _) in settings.PACES.items()],
+                             [d["units_per_day"]], pick_pace, style="pace")
+                nav()
 
     elif step == LEVEL:
-        st.markdown("## Where should each subject start?")
-        st.html('<p class="ob-lede">Start from the basics, or answer five quick questions to find your level.</p>')
-        levels = settings.draft_levels(d)
-        for t in d["subjects"]:
-            c = settings.level_choice(d, t)
-            with st.container(key=f"ob_subject_{t}"):
-                st.html(f'<p class="ob-subject">{escape(core.TOPICS[t])}</p>')
-                choices.way_switch(f"lvl_{t}", c["way"], set_way, args=(t,))
-                if c["way"] == choices.PLACEMENT:
-                    choices.placement(
-                        t, t, c,
-                        on_answer=lambda i, t=t: set_level(t, lambda c: choices.answer(c, i)),
-                        on_move=lambda k, t=t: set_level(t, lambda c: choices.move(c, t, k)),
-                        on_again=lambda t=t: set_level(t, lambda c: dict(c, **choices.fresh())))
-        waiting = [core.TOPICS[t] for t, lv in levels.items() if lv is None]
-        nav(ready=not waiting, note=f"Finish the questions for {', '.join(waiting)} to continue." if waiting else "")
+        with st.container(key="ob_grid"):
+            with st.container(key="ob_lead"):
+                lead("Where should each subject start?",
+                     "Start from the basics, or answer five quick questions to find your level.")
+            with st.container(key="ob_body"):
+                levels = settings.draft_levels(d)
+                for t in d["subjects"]:
+                    c = settings.level_choice(d, t)
+                    with st.container(key=f"ob_subject_{t}"):
+                        st.html(f'<p class="ob-subject">{escape(core.TOPICS[t])}</p>')
+                        choices.way_switch(f"lvl_{t}", c["way"], set_way, args=(t,))
+                        if c["way"] == choices.PLACEMENT:
+                            choices.placement(
+                                t, t, c,
+                                on_answer=lambda i, t=t: set_level(t, lambda c: choices.answer(c, i)),
+                                on_move=lambda k, t=t: set_level(t, lambda c: choices.move(c, t, k)),
+                                on_again=lambda t=t: set_level(t, lambda c: dict(c, **choices.fresh())))
+                waiting = [core.TOPICS[t] for t, lv in levels.items() if lv is None]
+                nav(ready=not waiting, note=f"Finish the questions for {', '.join(waiting)} to continue." if waiting else "")
 
     elif step == READING:
-        st.markdown("## Reading")
-        st.html('<p class="ob-lede">Choose a book and it is split into 14 days: read your part each day, '
-                "then come back and talk it through.</p>")
-        with st.container(key="ob_toggle"):
-            st.toggle("Add a 14-day reading plan", value=d["reading_enabled"], key="ob_reading", on_change=set_reading)
-        nav()
+        with st.container(key="ob_grid"):
+            with st.container(key="ob_lead"):
+                lead("Reading", "Choose a book and it is split into 14 days: read your part each day, "
+                                "then come back and talk it through.")
+            with st.container(key="ob_body"):
+                with st.container(key="ob_toggle"):
+                    st.toggle("Add a 14-day reading plan", value=d["reading_enabled"], key="ob_reading",
+                              on_change=set_reading)
+                nav()
 
     else:
-        st.markdown("## Your plan")
-        st.html('<p class="ob-lede">Everything can be changed later in Settings.</p>')
         levels = settings.draft_levels(d)
         name, minutes = settings.PACES[d["units_per_day"]]
         n = d["units_per_day"]
@@ -168,17 +216,21 @@ with st.container(key=f"ob_step_{step}_{came}"):
             return (f'<span class="ob-pair"><span>{escape(core.TOPICS[t])}</span>'
                     f'<span>{escape(levels[t] or "")} <small>· {how}</small></span></span>')
 
-        st.html('<dl class="ob-summary">'
-                f'<div><dt>Subjects</dt><dd>{escape(" → ".join(core.TOPICS[t] for t in d["subjects"]))}'
-                f'<small>{"Every day" if len(d["subjects"]) == 1 else "One a day, taking turns"}</small></dd></div>'
-                f'<div><dt>Daily pace</dt><dd>{name}<small>{n} {"lesson" if n == 1 else "lessons"} a day · {minutes}</small></dd></div>'
-                f'<div><dt>Starting level</dt><dd>{"".join(level_line(t) for t in d["subjects"])}</dd></div>'
-                f'<div><dt>Reading plan</dt><dd>{"On" if d["reading_enabled"] else "Off"}'
-                f'<small>{"A book over 14 days" if d["reading_enabled"] else "You can add one later"}</small></dd></div>'
-                "</dl>")
-        problem = st.session_state.pop("ob_problem", "")
-        nav(label="Start learning", ready=not settings.errors(dict(settings.blank(""), subjects=d["subjects"],
-                                                                    units_per_day=d["units_per_day"],
-                                                                    subject_levels=levels,
-                                                                    reading_enabled=d["reading_enabled"])),
-            note=problem, on=start)
+        with st.container(key="ob_grid"):
+            with st.container(key="ob_lead"):
+                lead("Your plan", "Everything can be changed later in Settings.")
+            with st.container(key="ob_body"):
+                st.html('<dl class="ob-summary">'
+                        f'<div><dt>Subjects</dt><dd>{escape(" → ".join(core.TOPICS[t] for t in d["subjects"]))}'
+                        f'<small>{"Every day" if len(d["subjects"]) == 1 else "One a day, taking turns"}</small></dd></div>'
+                        f'<div><dt>Daily pace</dt><dd>{name}<small>{n} {"lesson" if n == 1 else "lessons"} a day · {minutes}</small></dd></div>'
+                        f'<div><dt>Starting level</dt><dd>{"".join(level_line(t) for t in d["subjects"])}</dd></div>'
+                        f'<div><dt>Reading plan</dt><dd>{"On" if d["reading_enabled"] else "Off"}'
+                        f'<small>{"A book over 14 days" if d["reading_enabled"] else "You can add one later"}</small></dd></div>'
+                        "</dl>")
+                problem = st.session_state.pop("ob_problem", "")
+                nav(label="Start learning", ready=not settings.errors(dict(settings.blank(""), subjects=d["subjects"],
+                                                                            units_per_day=d["units_per_day"],
+                                                                            subject_levels=levels,
+                                                                            reading_enabled=d["reading_enabled"])),
+                    note=problem, on=start)
