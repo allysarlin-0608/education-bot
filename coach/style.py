@@ -28,7 +28,7 @@ CSS = f"""
      in Settings), and light-dark() follows it. */
   --env: light-dark(#FFFFFF, #000000);          /* pure white or pure black, nothing else */
   --label: light-dark(#141414, #EDEDED); --label-2: light-dark(#5C5C5C, #9B9B9B);
-  --label-3: light-dark(#8C8C8C, #6A6A6A); --strong: light-dark(#000000, #FFFFFF);
+  --label-3: light-dark(#767676, #7C7C7C);   /* 4.5:1 or more on white and on black */ --strong: light-dark(#000000, #FFFFFF);
   --hair: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.07));
   --wash: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
   --field: light-dark(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.03));
@@ -158,7 +158,7 @@ CSS = f"""
 /* ---------- type ---------- */
 .stApp h1, .stApp h2, .stApp h3 {{ color: var(--label); font-family: {SERIF}; font-weight: 300; font-variant-numeric: lining-nums; }}
 .stApp h2 {{ font-size: 2.25rem; line-height: 1.12; letter-spacing: 0; padding: 0 0 var(--space-3); }}
-.stApp h3 {{ font-size: 1.625rem; line-height: 1.22; letter-spacing: 0; padding: 0; }}
+.stApp h3 {{ font-size: 1.625rem; line-height: 1.22; letter-spacing: 0; padding: 0 0 var(--space-2); }}
 /* section headings (Quiz, Last four weeks, Progress by subject, ...): the
    serif at a size that reads as a heading, in full ink */
 .stApp h4 {{
@@ -203,6 +203,10 @@ CSS = f"""
 }}
 .stButton button:active, .stFormSubmitButton button:active, .stDownloadButton button:active {{
   transform: scale(0.97); transition-duration: var(--t-press);
+}}
+.stButton button:disabled, .stFormSubmitButton button:disabled {{
+  background: var(--glass-faint) !important; border-color: transparent !important; box-shadow: none !important;
+  color: var(--label-3) !important; opacity: 0.55; cursor: default;
 }}
 .stButton button:focus-visible, .stFormSubmitButton button:focus-visible,
 .stDownloadButton button:focus-visible {{
@@ -382,10 +386,13 @@ html {{ scroll-behavior: smooth; }}
 [data-testid="stAppScrollToBottomContainer"], [data-testid="stMain"] {{ scroll-behavior: smooth; }}
 
 /* ---------- lesson cards: one per block, its name as the title ---------- */
+/* one lesson reads as one article: each block is a section under a hairline,
+   its text kept to a comfortable measure, not a box of its own */
 [class*="st-key-lcard_"] {{
-  padding: var(--space-4) var(--space-5) var(--space-5); border-radius: var(--radius-medium);
-  background: var(--glass); box-shadow: var(--optic); gap: var(--space-2);
+  padding: var(--space-5) 0 0; border-radius: 0; background: none; box-shadow: none;
+  border-top: 0.5px solid var(--field-edge); gap: var(--space-3);
 }}
+[class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] {{ max-width: 42rem; }}
 [class*="st-key-lcard_"] .lcard-title {{
   font-family: {SERIF}; font-size: 1.3125rem; font-weight: 400; line-height: 1.25;
   font-variant-numeric: lining-nums; color: var(--label);
@@ -393,7 +400,7 @@ html {{ scroll-behavior: smooth; }}
 [class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] {{ margin-bottom: 0 !important; }}
 [class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] > :last-child,
 [class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] p:last-child {{ margin-bottom: 0 !important; }}
-@media (max-width: 640px) {{ [class*="st-key-lcard_"] {{ padding: var(--space-3) var(--space-4); }} }}
+@media (max-width: 640px) {{ [class*="st-key-lcard_"] {{ padding: var(--space-4) 0 0; }} }}
 
 /* ---------- lesson diagrams: natural size, centered, never wider than the page ---------- */
 [data-testid="stGraphVizChart"] {{ display: flex; justify-content: center; margin: var(--space-2) 0; }}
@@ -631,10 +638,10 @@ LIQUID = """
 .st-key-review_bar > div:last-child { flex: 0 0 auto; width: auto !important; }
 
 /* ---------- today in the sidebar: an upright glass tube ---------- */
-.lqv { --p: var(--to); display: flex; gap: 16px; align-items: stretch; margin: 4px 0 8px; }
+.lqv { --p: var(--to); display: flex; gap: 18px; align-items: stretch; margin: 0; }
 .lqv-tube {
-  position: relative; flex: none; width: 52px; height: 148px; box-sizing: border-box;
-  border-radius: 16px;
+  position: relative; flex: none; width: 44px; height: 140px; box-sizing: border-box;
+  border-radius: 15px;
   background: linear-gradient(90deg, var(--lq-glass-top), var(--lq-glass-bottom));
   box-shadow: inset 1px 0 1px -1px var(--lq-edge-hi), inset -1px 0 1px -1px var(--lq-edge-lo),
               inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 0 6px -2px var(--lq-edge-near);
@@ -660,18 +667,40 @@ LIQUID = """
   animation: lq-front 1150ms cubic-bezier(0.3, 0.6, 0.3, 1) both,
              lq-surge 1300ms cubic-bezier(0.4, 0, 0.3, 1) both;
 }
-.lqv-info { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; padding: 2px 0; }
+/* the sidebar: the day, then today's subject beside its tube, then the
+   book; one small label per step, one serif line under it, hairline apart */
+.sb-label { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
+/* the sidebar's date sits on the same line as the page's title (on Today,
+   the same date): the two columns start together */
+.sb-label:first-child { margin-top: 13px; }
 .lqv-date {
-  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 400; font-size: 1.1875rem;
-  line-height: 1.2; color: var(--label); font-variant-numeric: lining-nums;
+  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.375rem;
+  line-height: 1.2; color: var(--label); font-variant-numeric: lining-nums; margin: 6px 0 26px;
 }
-.lqv-subject { font-size: 0.8125rem; color: var(--label-2); margin-top: 4px; }
+.lqv-info { display: flex; flex-direction: column; min-width: 0; padding: 1px 0 2px; }
+.lqv-subject {
+  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 400; font-size: 1.0625rem; line-height: 1.25; color: var(--label);
+}
+.lqv-topic { font-size: 0.8125rem; line-height: 1.4; color: var(--label-2); margin-top: 4px; }
 .lqv-pct {
-  font-family: "Newsreader", serif; font-weight: 300; font-size: 2.5rem; line-height: 1;
-  font-variant-numeric: lining-nums tabular-nums; color: var(--label); margin-top: auto;
+  font-family: "Newsreader", serif; font-weight: 300; font-size: 2.25rem; line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums; color: var(--label); margin-top: auto; padding-top: 12px;
 }
 .lqv-pct .unit { font-size: 0.5em; margin-left: 2px; color: var(--label-2); }
-.lqv-count { font-size: 0.75rem; color: var(--label-3); margin-top: 6px; }
+.lqv-count { font-size: 0.75rem; color: var(--label-3); margin-top: 6px; font-variant-numeric: tabular-nums; }
+.sb-rule { border: none; height: 0.5px; background: var(--field-edge); margin: 32px 0 22px; }
+.sb-book { font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 400; font-size: 1.0625rem; line-height: 1.25; color: var(--label); margin-top: 8px; }
+.sb-author { font-size: 0.8125rem; color: var(--label-2); margin-top: 3px; }
+.sb-quiet { font-size: 0.8125rem; color: var(--label-3); margin-top: 8px; }
+/* the book's days: the same liquid, as a thin line */
+.sb-line {
+  position: relative; height: 5px; margin: 14px 0 8px; border-radius: 999px; padding: 0.5px 0; box-sizing: border-box;
+  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
+  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo), inset 0 0 0 0.5px var(--lq-edge-near);
+}
+.sb-line i { display: block; height: 100%; min-width: 4px; border-radius: 999px; background: var(--lq-liquid); opacity: 0.92;
+  transition: width var(--t-layout, 560ms) var(--ease, ease); }
+.sb-meta { font-size: 0.75rem; color: var(--label-3); font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .lqv.flowing .lqv-liquid { animation: none; } }
 
 /* ---------- rolling numbers (coach/rolling.py) ---------- */
@@ -1232,6 +1261,11 @@ NAV = """
   will-change: transform, width;
 }
 [data-cx] { position: relative; isolation: isolate; }
+.cx-pill { transition: opacity var(--t-micro) var(--ease); }
+/* Today's lessons: the one short mark under the lesson open, travelling
+   (it takes over from the mark each lesson drew for itself) */
+.cx-pill.cx-mark { background: var(--label); box-shadow: none; border-radius: 0; }
+[class*="st-key-lesson_steps"][data-cx] [class*="st-key-step_"][class*="_viewing"] button p::before { display: none; }
 [data-cx] > :not(.cx-pill) { position: relative; z-index: 1; }
 
 /* ---------- the pages: one control, fixed in the middle of the header ---------- */
@@ -1324,6 +1358,18 @@ NAV = """
 @media (hover: hover) { [class*="st-key-sres_"]:hover { background: var(--wash); } }
 [class*="st-key-sres_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -1px; }
 @media (pointer: coarse) { [role="dialog"] input { font-size: 16px !important; } }
+/* a dialog's title: the same serif as every other heading */
+[role="dialog"] [data-testid="stMarkdownContainer"]:not([data-testid="stVerticalBlock"] [data-testid="stMarkdownContainer"]) p {
+  font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.625rem; line-height: 1.2; color: var(--label);
+}
+
+/* ---------- signing in: a quiet, centred page, not a boxed form ---------- */
+.stMainBlockContainer:has([data-testid="stForm"]):not(:has(.st-key-topnav)) { max-width: 420px; padding-top: max(96px, 20vh); }
+.stMainBlockContainer:has([data-testid="stForm"]):not(:has(.st-key-topnav)) h3 { font-size: 2.25rem; padding-bottom: 4px; }
+.stMainBlockContainer:has([data-testid="stForm"]):not(:has(.st-key-topnav)) [data-testid="stForm"] { border: none; padding: 0; }
+.stMainBlockContainer:has([data-testid="stForm"]):not(:has(.st-key-topnav)) [data-testid="stForm"] [data-testid="stElementContainer"]:has(button[kind="primaryFormSubmit"]),
+.stMainBlockContainer:has([data-testid="stForm"]):not(:has(.st-key-topnav)) [data-testid="stForm"] [data-testid="stElementContainer"]:has(button[kind="primaryFormSubmit"]) *:has(button),
+.stMainBlockContainer:has([data-testid="stForm"]):not(:has(.st-key-topnav)) button[kind="primaryFormSubmit"] { width: 100% !important; }
 </style>
 """
 

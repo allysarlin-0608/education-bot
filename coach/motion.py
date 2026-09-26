@@ -34,30 +34,40 @@ SCRIPT = r"""
       on: (items) => items.find((a) => a.getAttribute('href') && pathOf(a) === here()) || items.find((a) => !a.getAttribute('href')) },
     { root: '.st-key-prog_view [data-testid="stButtonGroup"] > div', item: 'button',
       on: (items) => items.find((b) => b.getAttribute('aria-checked') === 'true') },
+    // Today's lessons: the short mark under the lesson open travels to the
+    // next one opened (it moves once the page has opened it: a locked lesson
+    // only says so, so it must not set off on the tap)
+    { root: '[class*="st-key-lesson_steps"]', item: '[class*="st-key-step_"] button', wait: true, cls: 'cx-mark',
+      shape: (b) => ({ x: b.x + b.w / 2 - 6, y: b.y + 40, w: 12, h: 1 }),
+      on: (items) => items.find((x) => x.closest('[class*="st-key-step_"]').className.includes('_viewing')) },
   ];
   const state = new WeakMap();
 
-  function box(root, el) {
+  function box(root, el, c) {
     const r = root.getBoundingClientRect(), e = el.getBoundingClientRect();
-    return { x: e.left - r.left, y: e.top - r.top, w: e.width, h: e.height };
+    const b = { x: e.left - r.left, y: e.top - r.top, w: e.width, h: e.height };
+    return c && c.shape ? c.shape(b) : b;
   }
-  function pill(root) {
+  function pill(root, c) {
     let p = root.querySelector(':scope > .cx-pill');
-    if (!p) { p = doc.createElement('span'); p.className = 'cx-pill'; p.setAttribute('aria-hidden', 'true'); root.appendChild(p); }
+    if (!p) { p = doc.createElement('span'); p.className = 'cx-pill' + (c && c.cls ? ' ' + c.cls : ''); p.setAttribute('aria-hidden', 'true'); root.appendChild(p); }
     return p;
   }
   function mark(items, on) { items.forEach((i) => { if (i === on) i.setAttribute('data-cx-on', ''); else i.removeAttribute('data-cx-on'); }); }
   function draw(root, b, ms) {
-    const p = pill(root);
+    const p = pill(root, (state.get(root) || {}).c);
+    p.style.opacity = '';
     p.style.transition = ms ? 'transform ' + ms + 'ms var(--ease-nav), width ' + ms + 'ms var(--ease-nav), height ' + ms + 'ms var(--ease-nav)' : 'none';
     p.style.width = b.w + 'px'; p.style.height = b.h + 'px';
     p.style.transform = 'translate(' + b.x + 'px, ' + b.y + 'px)';
     root.style.setProperty('--cx-dur', (ms || 1) + 'ms');
   }
   // move the surface to `to`: the time grows a little with the distance
-  function go(root, items, to, animate) {
+  function go(root, items, to, animate, c) {
     const s = state.get(root) || {};
-    const b = box(root, to);
+    if (c) s.c = c;
+    state.set(root, s);
+    const b = box(root, to, s.c);
     let ms = 0;
     if (animate && s.b) ms = reduced() ? 0 : Math.round(Math.min(560, Math.max(300, 280 + Math.abs(b.x - s.b.x) * 0.9)));
     if (ms === 0 && animate && reduced()) pill(root).animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 160 });
@@ -65,6 +75,7 @@ SCRIPT = r"""
     mark(items, to);
     root.setAttribute('data-cx', '');
     state.set(root, Object.assign(s, { b: b, on: to }));
+    if (s.c) s.c.last = { b: b, at: performance.now() };
   }
 
   // keep every control's surface on its item (the truth), unless a tap has
@@ -74,13 +85,19 @@ SCRIPT = r"""
       doc.querySelectorAll(c.root).forEach((root) => {
         const items = [...root.querySelectorAll(c.item)];
         const on = items.length && c.on(items);
-        if (!on) return;
+        if (!on) { const p = root.querySelector(':scope > .cx-pill'); if (p) p.style.opacity = '0'; return; }   // nothing on: the surface bows out
         const s = state.get(root) || {};
+        // the page redrew the control as a new element (a key changed): if
+        // that happened just now, the surface carries on from where it was
+        if (!s.b && c.last && performance.now() - c.last.at > 0 && 2000 > performance.now() - c.last.at) {
+          s.c = c; s.b = c.last.b; state.set(root, s); draw(root, s.b, 0); root.getBoundingClientRect();
+        }
         if (s.pending && performance.now() - s.pendingAt > 3000) s.pending = null;
         if (s.pending && s.pending !== on) return;
         s.pending = null; state.set(root, s);
-        const b = box(root, on);
-        if (s.on !== on || !s.b || Math.abs(b.x - s.b.x) + Math.abs(b.w - s.b.w) > 0.5 || !root.querySelector(':scope > .cx-pill')) go(root, items, on, !!s.b && s.on !== on);
+        const b = box(root, on, c);
+        const p = root.querySelector(':scope > .cx-pill');
+        if (s.on !== on || !s.b || Math.abs(b.x - s.b.x) + Math.abs(b.w - s.b.w) > 0.5 || !p || p.style.opacity === '0') go(root, items, on, !!s.b && (s.on !== on || Math.abs(b.x - s.b.x) > 0.5), c);
       });
     }
     // a new page has come in (Streamlit has redrawn: its stale marks have
@@ -106,6 +123,7 @@ SCRIPT = r"""
   }
   doc.addEventListener('click', (ev) => {
     for (const c of CONTROLS) {
+      if (c.wait) continue;
       const to = ev.target.closest && ev.target.closest(c.root + ' ' + c.item);
       if (!to) continue;
       const root = to.closest(c.root);
