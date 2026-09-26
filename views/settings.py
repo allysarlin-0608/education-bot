@@ -88,6 +88,15 @@ with st.container(key="set_sec_subjects"):
             + ('<p class="ob-note set-kept">Your existing learning history will be preserved.</p>'
                if st.session_state.get("set_subjects_changed") else ""))
 
+    # each chosen subject is a world of its own
+    with st.container(key="set_worlds", horizontal=True):
+        for t in chosen:
+            with st.container(key=f"enter_{t}"):
+                if st.button(f"Enter {core.TOPICS[t]}", type="tertiary", key=f"set_world_{t}",
+                             icon=":material/arrow_outward:"):
+                    st.session_state.world_topic = t
+                    st.switch_page("views/world.py")
+
 # ---------- Daily pace ----------
 with st.container(key="set_sec_pace"):
     st.markdown("#### Daily pace")

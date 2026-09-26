@@ -26,9 +26,14 @@ pages += [
     st.Page("views/records.py", title="Progress"),
     st.Page("views/settings.py", title="Settings"),
 ]
+# each subject's world: one page, reached from the subject (not from the bar)
+world = st.Page("views/world.py", title="Subject", url_path="subject")
 # Streamlit does the routing; the pages are shown by the connected control
 # at the top of every page (coach/topnav.py), not as a list in the sidebar
-page = st.navigation(pages, position="hidden")
+page = st.navigation(pages + [world], position="hidden")
+if (entering := st.session_state.pop("enter_world", None)):     # setup just finished: into the first day's subject
+    st.session_state.world_topic = entering
+    st.switch_page(world)
 topnav.render(pages, st.session_state.coach_log)
 # Progress bars flow in on arriving at a page, not on every rerun.
 st.session_state.lq_entering = st.session_state.get("lq_page") != page.url_path

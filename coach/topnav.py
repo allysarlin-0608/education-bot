@@ -17,7 +17,7 @@ from coach import search, settings, ui
 def render(pages: list, log: dict) -> None:
     with st.container(key="topnav", horizontal=True, vertical_alignment="center", gap=None):
         with st.container(key="topnav_items", horizontal=True, vertical_alignment="center", gap=None):
-            for p in pages:
+            for p in pages:                        # (a subject's world isn't in the bar)
                 # Settings: its name on a wide page, a gear where the bar is narrow (style.py)
                 st.page_link(p, label=p.title, icon=":material/settings:" if p.title == "Settings" else None)
         if st.button("Search", icon=":material/search:", key="nav_search"):

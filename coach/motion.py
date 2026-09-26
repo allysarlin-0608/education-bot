@@ -35,7 +35,7 @@ SCRIPT = r"""
     // the page that is on (it travels, and takes each word's width)
     { root: '.st-key-topnav_items', item: '[data-testid="stPageLink-NavLink"]', pages: true, target: 'p, [data-testid="stIconMaterial"]', cls: 'cx-line',
       shape: (b, r) => ({ x: b.x - 2, y: r.h - 1.5, w: b.w + 4, h: 1.5 }),
-      on: (items) => items.find((a) => a.getAttribute('href') && pathOf(a) === here()) || items.find((a) => !a.getAttribute('href')) },
+      on: (items) => items.find((a) => a.getAttribute('href') && pathOf(a) === here()) || (here() === '/' ? items.find((a) => !a.getAttribute('href')) : null) },
     // switches (Progress's Day | Sessions | Subjects, a subject's starting
     // point): the lens slides along the track, over the words chosen
     { root: '.st-key-prog_view [data-testid="stButtonGroup"] > div', item: 'button', cls: 'cx-lens',
@@ -125,6 +125,7 @@ SCRIPT = r"""
       });
     }
     stage();
+    world();
     // a new page has come in (Streamlit has redrawn: its stale marks have
     // come and gone): let the content settle back
     if (doc.documentElement.hasAttribute('data-cx-leaving')) {
@@ -186,6 +187,57 @@ SCRIPT = r"""
       }
     }
   }, true);
+
+  // a subject's world: touching a way into it (anything inside an
+  // enter_(subject) block, or Start learning at the end of the setup), the
+  // subject's object is noted where it is on screen; the world then carries
+  // that same object from there into its own place (world() below)
+  const shown = (e) => {
+    const r = e.getBoundingClientRect();
+    if (r.width * r.height === 0 || r.bottom > w.innerHeight + 40 && r.top > w.innerHeight) return false;
+    const layer = e.closest('.sg-layer');
+    return !layer || +w.getComputedStyle(layer).opacity > 0.5;
+  };
+  doc.addEventListener('click', (ev) => {
+    const b = ev.target.closest && ev.target.closest('[class*="st-key-enter_"] button, .st-key-ob_nav .st-key-ob_next button, .st-key-ob_nav button[kind="primary"]');
+    if (!b) return;
+    const box = b.closest('[class*="st-key-enter_"]');
+    const mark = doc.querySelector('[data-enter]');
+    const t = box ? (box.className.match(/st-key-enter_([a-z]+)/) || [])[1] : mark && mark.dataset.enter;
+    if (!t) return;
+    const o = [...doc.querySelectorAll('[data-object="' + t + '"]')].find(shown);
+    const r = o && o.getBoundingClientRect();
+    try {
+      w.sessionStorage.setItem('cx-object', JSON.stringify(r ? { t: t, x: r.left, y: r.top, w: r.width, h: r.height, at: Date.now() } : { t: t, at: Date.now() }));
+    } catch (e) {}
+  }, true);
+  function world() {
+    const hero = doc.querySelector('.w-object[data-object]:not([data-arrived])');
+    if (!hero) return;
+    if (!hero.getBoundingClientRect().width) return;
+    hero.dataset.arrived = '1';
+    // a new world opens at its beginning, wherever the last one was left
+    const scroller = doc.querySelector('[data-testid="stMain"]');
+    if (scroller && scroller.scrollTop) scroller.scrollTo({ top: 0, behavior: 'instant' });
+    const r = hero.getBoundingClientRect();
+    const page = hero.closest('[class*="st-key-world_"]');
+    let from = null;
+    try { from = JSON.parse(w.sessionStorage.getItem('cx-object') || 'null'); w.sessionStorage.removeItem('cx-object'); } catch (e) {}
+    if (page) page.dataset.entering = '1';
+    setTimeout(() => page && page.removeAttribute('data-entering'), 1400);
+    if (reduced()) return;
+    if (from && from.t === hero.dataset.object && 6000 > Date.now() - from.at && from.w) {
+      // the same object, from where it was to where it lives here
+      const k = Math.sqrt((from.w / r.width) * (from.h / r.height));
+      const dx = from.x + from.w / 2 - (r.left + r.width / 2), dy = from.y + from.h / 2 - (r.top + r.height / 2);
+      hero.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + k + ')', opacity: 0.9 },
+                    { transform: 'none', opacity: 1 }],
+                   { duration: 820, easing: 'cubic-bezier(0.32, 0.72, 0, 1)', fill: 'backwards' });
+    } else {
+      hero.animate([{ opacity: 0, transform: 'scale(1.035)' }, { opacity: 1, transform: 'none' }],
+                   { duration: 900, easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)', fill: 'backwards' });
+    }
+  }
 
   // the setup: pressing Continue or Back, the step leaves toward where she
   // came from while the next one is drawn (style.py)
