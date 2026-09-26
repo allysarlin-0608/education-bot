@@ -7,7 +7,7 @@ so a new subject needs one entry in WORLD and its object, nothing else.
 
 Objects are pictures kept in static/subjects/ and served by Streamlit's
 static serving: works in the public domain or CC0, or objects modelled and
-rendered for this app (the jewellery's necklace, art/emerald.py). A "cut"
+rendered for this app (the jewellery's necklace, art/necklace.py). A "cut"
 object stands free, its background taken away (art/cutout.py, or rendered
 on nothing), so it sits in the page itself rather than in a frame. A
 picture that isn't there yet is never shown broken: the subject's number
@@ -52,9 +52,11 @@ WORLD = {
     "fashion": dict(kicker="Dress and textiles", shows="Vermeer's Lacemaker, bent over her lace pillow",
                     object="subjects/fashion.jpg", focus="50% 36%", layout="figure", title="serif",
                     credit="Johannes Vermeer, The Lacemaker, c. 1669–70 · Musée du Louvre · Public domain"),
-    "jewelry": dict(kicker="Craft and materials", shows="A single emerald-cut diamond on a fine chain",
+    "jewelry": dict(kicker="Craft and materials",
+                    shows="A diamond necklace: two twisted bands of round and marquise diamonds meeting in a V, "
+                          "a pear-shaped diamond hanging from it",
                     object="subjects/jewelry.webp", cut=True, focus="50% 0%", layout="pendant", title="tracked",
-                    credit="Emerald-cut diamond, platinum claws and chain · modelled and rendered for this app"),
+                    credit="Diamond and platinum necklace with a pear-shaped drop · modelled and rendered for this app"),
     "free": dict(kicker="Across the disciplines",
                  shows="The frontispiece of the Encyclopédie: all the arts and sciences gathered",
                  object="subjects/free.jpg", focus="50% 22%", layout="figure", title="serif",
