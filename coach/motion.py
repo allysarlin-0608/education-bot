@@ -149,7 +149,7 @@ SCRIPT = r"""
     const layer = st.querySelector('.sg-layer[data-t="' + t + '"]');
     const state = layer && layer.querySelector('.sg-state');
     if (!state || !f) return;
-    let text = 'Not chosen';
+    let text = /__dis/.test(f.className) ? 'Not chosen · three are chosen already, so take one out to add this' : 'Not chosen';
     if (chosen(f)) {
       const o = f.querySelector('.opt');
       const day = o && o.dataset.day ? +o.dataset.day : rows.filter((r) => chosen(r) && r !== f).length + 1;
@@ -209,7 +209,7 @@ SCRIPT = r"""
     if (!b || b.disabled) return;
     const row = b.closest('[class*="st-key-opt_"]'), list = row.closest('[class*="st-key-optlist_"]');
     const o = row.querySelector('.opt'), on = row.dataset.on ? row.dataset.on === '1' : row.className.includes('__sel');
-    if (o && o.dataset.multi === '1') row.dataset.on = on ? '0' : '1';
+    if (o && o.dataset.multi === '1') { if (!/__dis/.test(row.className)) row.dataset.on = on ? '0' : '1'; }
     else if (list) { list.querySelectorAll('[class*="st-key-opt_"]').forEach((r) => { r.dataset.on = '0'; }); row.dataset.on = '1'; }
     pickAt = performance.now(); pickSaw = false;
     stage();

@@ -58,9 +58,11 @@ def rows(group: str, items: list, chosen, on_pick, *, multi: bool = False, full:
                         + (f'<small class="opt-day">Day {day}</small>' if day else "")
                         + "</span></div>")
                 # the row's button, stretched over it; its words are for screen readers
-                label = f"{name}, selected" if on else name
+                # a row past the limit can still be looked at (the lens and the
+                # stage go to it); it just isn't added
+                label = f"{name}, selected" if on else f"{name}, can't be added: the limit is reached" if state == "dis" else name
                 st.button(label + (f", day {day}" if day else ""), key=f"pick_{group}_{key}",
-                          disabled=state == "dis", on_click=on_pick, args=(*args, key))
+                          on_click=on_pick, args=(*args, key))
 
 
 def way_switch(key: str, way: str, on_change, args: tuple = ()) -> None:

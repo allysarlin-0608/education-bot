@@ -33,7 +33,8 @@ def update(**fields) -> bool:
 def pick_subject(topic: str) -> None:
     st.session_state.set_focus = topic           # the lens goes to the row she touched
     now = ui.config()["subjects"]
-    if update(subjects=settings.toggle_subject(now, topic)):
+    new = settings.toggle_subject(now, topic)
+    if new != now and update(subjects=new):          # past the limit: only looked at, nothing changes
         st.session_state.set_subjects_changed = True
 
 

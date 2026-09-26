@@ -99,7 +99,7 @@ def stage_html() -> str:
     for k, t in enumerate(settings.SUBJECTS, start=1):
         kicker, shows, _ = visuals.ART[t]
         f, url = visuals.facts(t), visuals.image_url(t)
-        art = (f'<div class="sg-art" role="img" aria-label="{escape(shows)}" style="background-image:url(\'{url}\')"></div>'
+        art = (f'<div class="sg-art" role="img" aria-label="{escape(shows)}" style="background-image:url(\'{url}\');background-position:{visuals.FOCUS[t]}"></div>'
                if url else f'<div class="sg-art no-art" aria-hidden="true" data-n="{k:02d}"></div>')
         credit = visuals.CREDITS.get(t, "") if url else ""
         layers.append(
