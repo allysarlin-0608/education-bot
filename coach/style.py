@@ -1268,58 +1268,81 @@ NAV = """
 [class*="st-key-lesson_steps"][data-cx] [class*="st-key-step_"][class*="_viewing"] button p::before { display: none; }
 [data-cx] > :not(.cx-pill) { position: relative; z-index: 1; }
 
-/* ---------- the pages: one control, fixed in the middle of the header ---------- */
+/* ---------- the header: one surface in three parts ----------
+   left, the sidebar control; in the middle, the pages and Search; on the
+   right, the app's own actions. No part has a surface of its own: they
+   all sit on the header's glass, over one hairline at its lower edge. The
+   page that is on is marked by a thin line on that edge, under its word,
+   and the line travels (coach/motion.py). */
+[data-testid="stHeader"] { height: 56px; min-height: 56px; box-shadow: inset 0 -0.5px 0 var(--field-edge); }
 [data-testid="stLayoutWrapper"]:has(> .st-key-topnav) {
-  position: fixed; top: 9px; left: var(--cx-main, 50%); transform: translateX(-50%); z-index: 999990; width: auto !important;
+  position: fixed; top: 0; left: var(--cx-main, 50%); transform: translateX(-50%); z-index: 999990; width: auto !important;
   transition: left var(--t-layout) var(--ease-layout);    /* follows the page as the sidebar opens and closes */
 }
-.st-key-topnav {
-  width: auto !important; flex-wrap: nowrap !important; gap: 2px !important; padding: 3px; border-radius: 999px;
-  background: light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.075));
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-optics);   /* the header's own glass */
-  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.08));
-  corner-shape: superellipse(1.6);
-}
-.st-key-topnav_items { width: auto !important; flex-wrap: nowrap !important; gap: 0 !important; }
+.st-key-topnav { width: auto !important; height: 56px; flex-wrap: nowrap !important; gap: 0 !important; padding: 0; background: none; }
+.st-key-topnav_items { width: auto !important; height: 56px !important; min-height: 56px; align-self: stretch !important; flex-wrap: nowrap !important; gap: 0 !important; align-items: stretch !important; }
 .st-key-topnav > div, .st-key-topnav_items > div { width: auto !important; flex: 0 0 auto !important; min-width: 0; }
-.st-key-topnav [data-testid="stPageLink"] { margin: 0; }
+.st-key-topnav_items > div, .st-key-topnav_items [data-testid="stPageLink"] { height: 100%; margin: 0 !important; }
 .st-key-topnav [data-testid="stPageLink-NavLink"] {
   position: relative; display: flex; align-items: center; justify-content: center;
-  height: 34px; min-height: 34px; padding: 0 16px; margin: 0; border-radius: 999px;
+  height: 56px; min-height: 56px; padding: 0 18px; margin: 0; border-radius: 0;
   background: transparent !important; text-decoration: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
-.st-key-topnav [data-testid="stPageLink-NavLink"]::after { content: ""; position: absolute; inset: -5px 0; }   /* a 44px reach */
 .st-key-topnav [data-testid="stPageLink-NavLink"] p {
   margin: 0; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; white-space: nowrap;
   color: var(--label-2); transition: color var(--cx-dur, 360ms) var(--ease);
 }
 .st-key-topnav [data-testid="stPageLink-NavLink"][data-cx-on] p { color: var(--label); }
 @media (hover: hover) { .st-key-topnav [data-testid="stPageLink-NavLink"]:not([data-cx-on]):hover p { color: var(--label); } }
-.st-key-topnav [data-testid="stPageLink-NavLink"]:focus-visible { outline: 1px solid var(--outline); outline-offset: 1px; }
-/* Search: part of the same object, apart from the pages */
-.st-key-nav_search { position: relative; margin-left: 5px; }
+.st-key-topnav [data-testid="stPageLink-NavLink"]:active p { color: var(--label); }
+.st-key-topnav [data-testid="stPageLink-NavLink"]:focus-visible { outline: none; }
+.st-key-topnav [data-testid="stPageLink-NavLink"]:focus-visible p { outline: 1px solid var(--outline); outline-offset: 4px; border-radius: 3px; }
+/* the travelling mark: a thin line of the text's own colour on the header's edge */
+.cx-pill.cx-line { background: var(--label); box-shadow: none; border-radius: 1px; }
+/* Search: in the same row, after a short upright hairline */
+.st-key-nav_search { position: relative; margin-left: 8px; display: flex; align-items: center; }
 .st-key-nav_search::before {
-  content: ""; position: absolute; left: -4px; top: 10px; bottom: 10px; width: 0.5px; background: var(--field-edge);
+  content: ""; position: absolute; left: -4px; top: 50%; height: 14px; margin-top: -7px; width: 0.5px; background: var(--field-edge);
 }
 .st-key-nav_search button {
-  position: relative; width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0 !important;
-  border-radius: 50%; border: none !important; background: transparent !important; box-shadow: none !important;
+  position: relative; width: 44px; min-width: 44px; height: 56px; min-height: 56px; padding: 0 !important;
+  border-radius: 0; border: none !important; background: transparent !important; box-shadow: none !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important; color: var(--label-2);
-  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: color var(--t-micro) var(--ease);
 }
-.st-key-nav_search button::after { content: ""; position: absolute; inset: -5px -3px; }
 .st-key-nav_search button p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.st-key-nav_search button:active { background: var(--wash) !important; }
+.st-key-nav_search button:active { color: var(--label); transform: none !important; }
 @media (hover: hover) { .st-key-nav_search button:hover { color: var(--label); } }
-@media (max-width: 640px) {
-  [data-testid="stLayoutWrapper"]:has(> .st-key-topnav) { top: 8px; }
-  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 12px; }
+/* the right: the app's own actions (Share, Star, Edit, GitHub, the menu) on
+   the same surface, in the same quiet grey, answering like the pages do */
+[data-testid="stToolbar"] { align-items: center; }
+[data-testid="stToolbarActions"] button, [data-testid="stMainMenu"] button,
+[data-testid="stToolbarActionButton"], [data-testid="stAppDeployButton"] button {
+  background: transparent !important; border: none !important; box-shadow: none !important;
+  color: var(--label-2) !important; transition: color var(--t-micro) var(--ease);
 }
-@media (max-width: 360px) {        /* the narrowest phones: the same control, a little tighter, clear of the header's buttons */
+[data-testid="stToolbarActions"] button p, [data-testid="stToolbarActionButton"] p { font-size: 0.8125rem; font-weight: 500; color: inherit; }
+@media (hover: hover) {
+  [data-testid="stToolbarActions"] button:hover, [data-testid="stMainMenu"] button:hover, [data-testid="stToolbarActionButton"]:hover { color: var(--label) !important; }
+}
+[data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapseButton"] button { color: var(--label-2); transition: color var(--t-micro) var(--ease); }
+@media (hover: hover) { [data-testid="stExpandSidebarButton"]:hover, [data-testid="stSidebarCollapseButton"] button:hover { color: var(--label); } }
+/* narrower: the same three parts, closer together; the actions keep their
+   icons and give up their words, then (on a phone) rest in the menu */
+@media (max-width: 1024px) {
+  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 14px; }
+  [data-testid="stToolbarActions"] button p, [data-testid="stToolbarActionButton"] p { display: none; }
+}
+@media (max-width: 640px) {
+  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 11px; }
+  .st-key-nav_search { margin-left: 4px; }
+  .st-key-nav_search button { width: 40px; min-width: 40px; }
+  [data-testid="stToolbarActions"] { display: none; }
+}
+@media (max-width: 360px) {
   .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 8px; }
   .st-key-topnav [data-testid="stPageLink-NavLink"] p { font-size: 0.8125rem; }
-  .st-key-nav_search { margin-left: 3px; }
-  .st-key-nav_search button { width: 30px; min-width: 30px; }
+  .st-key-nav_search button { width: 34px; min-width: 34px; }
 }
 
 /* moving between pages: the content quietens as the surface sets off, and

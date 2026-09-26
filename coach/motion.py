@@ -30,7 +30,10 @@ SCRIPT = r"""
   const here = () => strip(w.location.pathname);
   const pathOf = (a) => strip(new URL(a.getAttribute('href'), w.location.href).pathname);
   const CONTROLS = [
-    { root: '.st-key-topnav_items', item: '[data-testid="stPageLink-NavLink"]', pages: true,
+    // the pages: a thin line on the header's lower edge, under the words of
+    // the page that is on (it travels, and takes each word's width)
+    { root: '.st-key-topnav_items', item: '[data-testid="stPageLink-NavLink"]', pages: true, target: 'p', cls: 'cx-line',
+      shape: (b, r) => ({ x: b.x - 2, y: r.h - 1.5, w: b.w + 4, h: 1.5 }),
       on: (items) => items.find((a) => a.getAttribute('href') && pathOf(a) === here()) || items.find((a) => !a.getAttribute('href')) },
     { root: '.st-key-prog_view [data-testid="stButtonGroup"] > div', item: 'button',
       on: (items) => items.find((b) => b.getAttribute('aria-checked') === 'true') },
@@ -44,9 +47,11 @@ SCRIPT = r"""
   const state = new WeakMap();
 
   function box(root, el, c) {
-    const r = root.getBoundingClientRect(), e = el.getBoundingClientRect();
+    const r = root.getBoundingClientRect();
+    const t = c && c.target ? el.querySelector(c.target) || el : el;
+    const e = t.getBoundingClientRect();
     const b = { x: e.left - r.left, y: e.top - r.top, w: e.width, h: e.height };
-    return c && c.shape ? c.shape(b) : b;
+    return c && c.shape ? c.shape(b, { w: r.width, h: r.height }) : b;
   }
   function pill(root, c) {
     let p = root.querySelector(':scope > .cx-pill');
@@ -169,7 +174,7 @@ SCRIPT = r"""
     const to = items[at + (dx > 0 ? -1 : 1)];   // a swipe to the left goes on to the next page
     sw.to = to || null;
     if (!to) { sw.p = 0; draw(sw.root, s.b, 0); return; }
-    const a = s.b, b = box(sw.root, to);
+    const a = s.b, b = box(sw.root, to, CONTROLS[0]);
     const p = sw.p = Math.min(1, Math.abs(dx) / (w.innerWidth * 0.45));
     draw(sw.root, { x: a.x + (b.x - a.x) * p, y: a.y, w: a.w + (b.w - a.w) * p, h: a.h }, 0);
     mark(items, p > 0.5 ? to : s.on);
