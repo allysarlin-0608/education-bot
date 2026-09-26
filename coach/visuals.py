@@ -25,6 +25,7 @@ STATIC = Path(__file__).resolve().parent.parent / "static"
 #   shows    what its object is (alt text)
 #   object   "subjects/<file>"
 #   cut      the object stands free (no background of its own), not framed
+#   light    (optional) the same object photographed for the light theme; "object" is then the dark theme's
 #   focus    where a picture sits in its frame (its subject kept in view)
 #   layout   how the world is composed: "figure" (a tall figure beside the
 #            title), "instrument" (an object held in the middle of the
@@ -55,7 +56,7 @@ WORLD = {
     "jewelry": dict(kicker="Craft and materials",
                     shows="A diamond necklace: two twisted bands of round and marquise diamonds meeting in a V, "
                           "a pear-shaped diamond hanging from it",
-                    object="subjects/jewelry.webp", cut=True, focus="50% 0%", layout="pendant", title="tracked",
+                    object="subjects/jewelry.webp", light="subjects/jewelry-light.webp", cut=True, focus="50% 0%", layout="pendant", title="tracked",
                     credit="Diamond and platinum necklace with a pear-shaped drop · modelled and rendered for this app"),
     "free": dict(kicker="Across the disciplines",
                  shows="The frontispiece of the Encyclopédie: all the arts and sciences gathered",
@@ -81,9 +82,14 @@ def object_html(topic: str, cls: str, number: int = 0) -> str:
     w = WORLD[topic]
     url = image_url(topic)
     if url:
-        return (f'<div class="{cls}{" is-cut" if w.get("cut") else ""}" data-object="{topic}" data-layout="{w["layout"]}" role="img" '
+        # an object with a light theme's picture: the page shows the one for its theme (style.py)
+        light = w.get("light")
+        themed = (f"--img-dark:url('{url}');--img-light:url('app/static/{light}');"
+                  if light and (STATIC / light).exists() else f"background-image:url('{url}');")
+        return (f'<div class="{cls}{" is-cut" if w.get("cut") else ""}{" is-themed" if "--img-dark" in themed else ""}" '
+                f'data-object="{topic}" data-layout="{w["layout"]}" role="img" '
                 f'aria-label="{escape(w["shows"])}" '
-                f'style="background-image:url(\'{url}\');background-position:{w["focus"]}"></div>')
+                f'style="{themed}background-position:{w["focus"]}"></div>')
     return f'<div class="{cls} no-art" data-object="{topic}" aria-hidden="true" data-n="{number:02d}"></div>'
 
 

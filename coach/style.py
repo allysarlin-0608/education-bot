@@ -1897,6 +1897,9 @@ WORLDS = """
 .is-cut { background-size: contain !important; background-repeat: no-repeat !important; border-radius: 0 !important;
   -webkit-mask-image: none !important; mask-image: none !important; filter: none !important; }
 :root[data-scheme="dark"] .is-cut { filter: brightness(0.92) !important; }
+/* an object photographed for each theme: the dark one on the dark page, the light one on the light page */
+.is-themed { background-image: var(--img-light) !important; }
+:root[data-scheme="dark"] .is-themed { background-image: var(--img-dark) !important; filter: none !important; }
 
 .w-object.is-cut { background-position: 35% bottom !important; }
 .w-thumb.is-cut, .ob-obj.is-cut { background-color: var(--wash) !important; background-size: auto 86% !important; background-position: center !important; }

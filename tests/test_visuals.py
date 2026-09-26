@@ -26,8 +26,11 @@ def test_free_standing_objects_are_marked_and_have_no_backdrop():
         assert ("is-cut" in html) == bool(w.get("cut"))
         if w.get("cut"):
             # a cut object is a picture with its own transparency, clear at its corners
-            im = Image.open(visuals.STATIC / w["object"])
-            assert im.mode == "RGBA" and im.getpixel((0, 0))[3] == 0
+            for f in filter(None, (w["object"], w.get("light"))):
+                im = Image.open(visuals.STATIC / f)
+                assert im.mode == "RGBA" and im.getpixel((0, 0))[3] == 0
+    html = visuals.object_html("jewelry", "w-object", 6)
+    assert "is-themed" in html and "--img-dark" in html and "--img-light" in html
     assert visuals.WORLD["jewelry"]["cut"] and visuals.credit("jewelry")
 
 
