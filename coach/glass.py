@@ -147,6 +147,15 @@ def script() -> str:
         "doc.addEventListener('click', (ev) => { if (!ev.target.closest || !ev.target.closest('button')) return;"
         "  doc.querySelectorAll('[data-picking]').forEach((x) => x.removeAttribute('data-picking'));"
         "  const b = ev.target.closest('[class*=\"st-key-cal_20\"] button');"
-        "  if (b && !b.disabled) b.setAttribute('data-picking', ''); }, true);"
+        "  if (b && !b.disabled) b.setAttribute('data-picking', '');"
+        # a month change starts the moment she taps: the month showing steps
+        # aside (away from where she is going) while the next one is drawn,
+        # then the next one comes in from that side (style.py)
+        "  const grid = doc.querySelector('[class*=\"st-key-calgrid_\"]'); if (!grid) return;"
+        "  const gm = (grid.className.match(/st-key-calgrid_(\\d+)_(\\d+)/) || []).slice(1).map(Number);"
+        "  let way = ev.target.closest('.st-key-cal_next') ? 'next' : ev.target.closest('.st-key-cal_prev') ? 'prev' : '';"
+        "  const day = b && b.closest('[class*=\"st-key-cal_20\"]').className.match(/st-key-cal_(\\d+)-(\\d+)-/);"
+        "  if (!way && day && gm.length === 2) { const d = +day[1] * 12 + +day[2], g = gm[0] * 12 + gm[1]; way = d > g ? 'next' : g > d ? 'prev' : ''; }"
+        "  if (way) grid.dataset.leaving = way; }, true);"
         "})();</script>"
     )
