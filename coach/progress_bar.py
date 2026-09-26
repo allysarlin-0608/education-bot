@@ -98,31 +98,37 @@ def today_count(done: int, total: int) -> str:
     return f"{done} of {total} {'lesson' if total == 1 else 'lessons'} today" if total else "No lessons left to do"
 
 
-def build_vertical(heading: str, subject: str, done: int, total: int, *, previous=None, old: dict = None) -> str:
-    """Today in the sidebar: an upright glass tube the liquid rises in, with
-    the date, the subject, the percentage and the lesson count beside it."""
+def build_vertical(heading: str, subject: str, done: int, total: int, *, previous=None, old: dict = None,
+                   topic: str = None, count: str = None) -> str:
+    """Today in the sidebar: the date over an upright glass tube the liquid
+    rises in, with the subject, its topic, the percentage and where she is
+    in the day's lessons beside it."""
     pct = percent(done, total)
     old = old or {}
     classes = ["lqv"] + (["empty"] if pct == 0 else []) + (
         ["flowing"] if previous is not None and previous != pct else [])
-    count = today_count(done, total)
+    count = count or today_count(done, total)
     return (
+        f'<div class="sb-label">Today</div><div class="lqv-date">{escape(heading)}</div>'
         f'<section class="{" ".join(classes)}" style="--to:{pct};--from:{previous or 0}" '
         f'role="group" aria-label="Today">'
         f'<div class="lqv-tube" role="progressbar" aria-valuemin="0" aria-valuemax="100" '
         f'aria-valuenow="{pct}" aria-valuetext="{pct}% · {escape(count)}"><div class="lqv-liquid"></div></div>'
-        f'<div class="lqv-info"><div class="lqv-date">{escape(heading)}</div>'
-        f'<div class="lqv-subject">{escape(subject)}</div>'
-        f'<div class="lqv-pct" aria-hidden="true">{rolling.html(pct, old.get("pct"))}<span class="unit">%</span></div>'
+        f'<div class="lqv-info"><div class="lqv-subject">{escape(subject)}</div>'
+        + (f'<div class="lqv-topic">{escape(topic)}</div>' if topic else "")
+        + f'<div class="lqv-pct" aria-hidden="true">{rolling.html(pct, old.get("pct"))}<span class="unit">%</span></div>'
         f'<div class="lqv-count">{rolling.html(count, old.get("count"))}</div></div>'
         "</section>"
     )
 
 
-def render_vertical(key: str, heading: str, subject: str, done: int, total: int, where=st):
+def render_vertical(key: str, heading: str, subject: str, done: int, total: int, where=st,
+                    topic: str = None, count: str = None, after: str = ""):
     pct = percent(done, total)
-    old = seen(key, pct=pct, count=today_count(done, total))      # the date doesn't roll
-    where.html(build_vertical(heading, subject, done, total, previous=_previous(key, pct), old=old))
+    count = count or today_count(done, total)
+    old = seen(key, pct=pct, count=count)      # the date doesn't roll
+    where.html(build_vertical(heading, subject, done, total, previous=_previous(key, pct), old=old,
+                              topic=topic, count=count) + after)
 
 
 def rolled(key: str, text: str) -> str:
