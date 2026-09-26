@@ -2,6 +2,7 @@
 import hmac
 import os
 from datetime import datetime
+from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
 import streamlit as st
@@ -31,6 +32,11 @@ def require_password():
     from secrets (APP_PASSWORD) is entered in this session."""
     if st.session_state.get("coach_authed"):
         return
+    # the page she asked for (a refresh, a link): she is taken back to it once in
+    try:
+        st.session_state.setdefault("coach_asked_path", urlparse(st.context.url).path.strip("/").split("/")[-1])
+    except Exception:
+        pass
     expected = get_setting("APP_PASSWORD")
     st.markdown("### Daily Learning Coach")
     if not expected:
@@ -121,6 +127,17 @@ def save_settings(new: dict) -> bool:
 def topic_for(day):
     """The subject for a day, from her settings."""
     return settings.topic_for(config(), day, TIMEZONE)
+
+
+WORLD_PAGE = "views/world.py"
+
+
+def enter_world(topic: str):
+    """Into a subject's world. The one subject it shows is kept in her
+    session and named in the page's address (?subject=), so a refresh, the
+    browser's Back or a link opens that same subject, never another."""
+    st.session_state.world_topic = topic
+    st.switch_page(WORLD_PAGE, query_params={"subject": topic})
 
 
 def today():

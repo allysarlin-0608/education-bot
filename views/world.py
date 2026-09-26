@@ -17,14 +17,20 @@ config = ui.config()
 today = ui.today()
 mine = settings.shown_subjects(config)
 
-topic = st.session_state.get("world_topic")
-if topic not in visuals.WORLD or (topic not in mine and not settings.is_legacy(config)):
-    topic = ui.topic_for(today) if ui.topic_for(today) in visuals.WORLD else (mine[0] if mine else "philosophy")
+# the one subject this page shows: named in its address first (a refresh, a
+# link, the browser's Back), then her session; a subject that isn't one
+# (a stale or mistyped address) opens today's subject, and the address is
+# rewritten to say so, so the address and the page never disagree
+asked = st.query_params.get("subject")
+topic = asked if visuals.known(asked) else st.session_state.get("world_topic")
+if not visuals.known(topic):
+    topic = ui.topic_for(today) if visuals.known(ui.topic_for(today)) else (mine[0] if mine else settings.SUBJECTS[0])
 st.session_state.world_topic = topic
+if asked != topic:
+    st.query_params["subject"] = topic
+s = visuals.subject(topic)
 w = visuals.WORLD[topic]
-name = core.TOPICS[topic]
-number = list(settings.SUBJECTS).index(topic) + 1 if topic in settings.SUBJECTS else 0
-f = visuals.facts(topic)
+name, number, f = s["title"], s["number"], s["facts"]
 
 
 def next_day(t: str):
@@ -35,21 +41,30 @@ def next_day(t: str):
     return None
 
 
-def enter(t: str) -> None:
-    """Into another subject's world (its object is carried from here)."""
-    st.session_state.world_topic = t
-    st.rerun()
+def all_subjects() -> None:
+    """Back to the subjects (Settings), with this one still in focus there."""
+    st.session_state.set_focus = topic
+    st.switch_page("views/settings.py", query_params={"subject": topic})
 
 
 st.html('<div id="world-page" hidden></div>')
 
-# ---------- the world: its object and its name ----------
+# the way back: to all the subjects, this one still in focus
+with st.container(key="w_back"):
+    if st.button("All subjects", type="tertiary", key="w_all", icon=":material/arrow_back:"):
+        all_subjects()
+
+# ---------- the world: its name at the top, its object, and what she can do here ----------
 with st.container(key=f"world_{w['layout']}"):
+    with st.container(key="w_head"):
+        st.html(f'<div class="w-copy w-title-{s["title_style"]}">'
+                f'<p class="w-kicker">{number:02d} · {escape(s["kicker"])}</p>'
+                f'<h1 class="w-title">{escape(name)}</h1></div>')
+    with st.container(key="w_object"):
+        st.html(visuals.object_html(topic, "w-object", number)
+                + (f'<p class="w-credit">{escape(s["credit"])}</p>' if s["credit"] else ""))
     with st.container(key="w_copy"):
-        st.html(f'<div class="w-copy w-title-{w["title"]}">'
-                f'<p class="w-kicker">{number:02d} · {escape(w["kicker"])}</p>'
-                f'<h1 class="w-title">{escape(name)}</h1>'
-                f'<p class="w-about">{escape(settings.DESCRIPTIONS.get(topic, ""))}</p>'
+        st.html(f'<div class="w-copy"><p class="w-about">{escape(s["description"])}</p>'
                 f'<p class="w-meta">{f["units"]} topics · {f["lessons"]} lessons · '
                 f'begins with {escape(f["first"])}</p></div>')
         # what she can do here
@@ -57,7 +72,7 @@ with st.container(key=f"world_{w['layout']}"):
         with st.container(key="w_actions", horizontal=True, vertical_alignment="center"):
             if when == today:
                 entry = core.find_entry(log, today, topic)
-                begun = entry is not None and any(s.get("lesson") for s in entry.get("lessons") or [])
+                begun = entry is not None and any(x.get("lesson") for x in entry.get("lessons") or [])
                 if st.button("Continue today's lessons" if begun else "Begin today's lessons", type="primary",
                              key="w_today"):
                     st.switch_page("views/daily.py")
@@ -67,9 +82,6 @@ with st.container(key=f"world_{w['layout']}"):
                 st.session_state.prog_view_next = "Sessions"
                 st.session_state.sessions_topic = topic
                 st.switch_page("views/records.py")
-    with st.container(key="w_object"):
-        st.html(visuals.object_html(topic, "w-object", number)
-                + (f'<p class="w-credit">{escape(visuals.credit(topic))}</p>' if visuals.credit(topic) else ""))
 
 # ---------- where she is, what comes next, what she has done ----------
 unit = curriculum.unit_progress(log, topic)
@@ -114,9 +126,9 @@ if others:
         st.html('<p class="w-sec-title">Your other subjects</p>')
         with st.container(key="w_others", horizontal=True):
             for t in others:
-                k = list(settings.SUBJECTS).index(t) + 1
+                o = visuals.subject(t)
                 with st.container(key=f"enter_{t}"):
-                    st.html(visuals.object_html(t, "w-thumb", k)
-                            + f'<p class="w-thumb-name">{escape(core.TOPICS[t])}</p>')
-                    if st.button(f"Enter {core.TOPICS[t]}", key=f"w_enter_{t}"):
-                        enter(t)
+                    st.html(visuals.object_html(t, "w-thumb", o["number"])
+                            + f'<p class="w-thumb-name">{escape(o["title"])}</p>')
+                    if st.button(f"Enter {o['title']}", key=f"w_enter_{t}"):
+                        ui.enter_world(t)

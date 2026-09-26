@@ -16,7 +16,7 @@ from functools import lru_cache
 from html import escape
 from pathlib import Path
 
-from coach import curriculum
+from coach import core, curriculum, settings
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 
@@ -89,6 +89,23 @@ def object_html(topic: str, cls: str, number: int = 0) -> str:
 
 def credit(topic: str) -> str:
     return WORLD[topic]["credit"] if image_url(topic) else ""
+
+
+def known(topic) -> bool:
+    return topic in WORLD
+
+
+def subject(topic: str) -> dict:
+    """Everything a page shows of one subject, from one place: every screen
+    that shows a subject (the stage in the setup and in Settings, its world,
+    the ways into it) draws its name, words and object from here, keyed by
+    the one subject it is showing, so no part of a screen can belong to
+    another subject."""
+    w = WORLD[topic]
+    return {"key": topic, "number": list(settings.SUBJECTS).index(topic) + 1 if topic in settings.SUBJECTS else 0,
+            "title": core.TOPICS[topic], "description": settings.DESCRIPTIONS.get(topic, ""),
+            "kicker": w["kicker"], "shows": w["shows"], "layout": w["layout"], "title_style": w["title"],
+            "credit": credit(topic), "facts": facts(topic)}
 
 
 @lru_cache(maxsize=None)

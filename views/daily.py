@@ -187,8 +187,7 @@ start_level = settings.start_level(config, topic)
 st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
 with st.container(key=f"enter_{topic}", horizontal=True):      # into the day's subject, its world
     if st.button(f"Enter {core.TOPICS[topic]}", type="tertiary", key="today_world", icon=":material/arrow_outward:"):
-        st.session_state.world_topic = topic
-        st.switch_page("views/world.py")
+        ui.enter_world(topic)
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
 
