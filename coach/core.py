@@ -328,13 +328,24 @@ def _clip(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit] + "…"
 
 
-def _syllabus_lines(topic: str, slot: dict) -> list:
+def lesson_level(n: int, start_level: str = None) -> str:
+    """A lesson's level: its place in the syllabus, or the level her
+    settings start the subject at, whichever is higher."""
+    level = curriculum.level_for(n)
+    if start_level in LEVELS and LEVELS.index(start_level) > LEVELS.index(level):
+        return start_level
+    return level
+
+
+def _syllabus_lines(topic: str, slot: dict, start_level: str = None) -> list:
     """Where this lesson sits in the fixed syllabus, so the model teaches
     exactly this title at this level and doesn't run ahead."""
     n = slot["n"]
+    level = lesson_level(n, start_level)
+    source = "依課綱位置" if level == curriculum.level_for(n) else "她的起始程度（程度測驗）"
     lines = [
         f"- 今天要上的課（依固定課綱，照這個標題講，不要換題目）：第 {n} 課「{slot['title']}」",
-        f"- 所屬單元：{slot['unit'] or '（無）'}；難度（依課綱位置）：{curriculum.level_for(n)}",
+        f"- 所屬單元：{slot['unit'] or '（無）'}；難度（{source}）：{level}",
     ]
     before, after = curriculum.lesson(topic, n - 1), curriculum.lesson(topic, n + 1)
     if before:
@@ -344,7 +355,8 @@ def _syllabus_lines(topic: str, slot: dict) -> list:
     return lines
 
 
-def build_history_context(log: dict, topic: str, today: date, slot: dict = None) -> str:
+def build_history_context(log: dict, topic: str, today: date, slot: dict = None,
+                          start_level: str = None) -> str:
     """Summarize her track record for the model, so it can apply part 6
     (no repeats, the right difficulty, a specific 小提醒). With a syllabus
     lesson (slot), the title and level come from the syllabus."""
@@ -354,7 +366,7 @@ def build_history_context(log: dict, topic: str, today: date, slot: dict = None)
         f"- 今天的主題：{TOPICS[topic]}",
     ]
     if slot is not None:
-        lines += _syllabus_lines(topic, slot)
+        lines += _syllabus_lines(topic, slot, start_level)
     else:
         session_number = topic_session_number(log, topic, today)
         lines.append(f"- 這是她第 {session_number} 次接觸這個主題，依難度規則，難度為：{level_for_session(session_number)}")
@@ -402,8 +414,8 @@ FOLLOWUP_NOTE = """【App 補充：今天的課程已經給過了】
 
 
 def build_system_prompt(log: dict, topic: str, today: date, followup: bool = False,
-                        slot: dict = None) -> str:
-    prompt = f"{load_system_prompt(topic)}\n\n{build_history_context(log, topic, today, slot)}"
+                        slot: dict = None, start_level: str = None) -> str:
+    prompt = f"{load_system_prompt(topic)}\n\n{build_history_context(log, topic, today, slot, start_level)}"
     if followup:
         prompt += f"\n\n{FOLLOWUP_NOTE}"
     return prompt

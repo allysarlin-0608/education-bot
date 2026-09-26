@@ -22,8 +22,9 @@ class FakeResponse:
 class FakePostgrest:
     """Just enough of PostgREST's /rest/v1/<table> behavior for the store."""
 
-    def __init__(self, key=KEY, books_table=True, followups_column=True, missing_columns=()):
+    def __init__(self, key=KEY, books_table=True, followups_column=True, missing_columns=(), settings_table=False):
         self.key = key
+        self.settings = {} if settings_table else None
         self.missing = set(missing_columns) | (set() if followups_column else {"followups"})
         self.rows = {}
         self.books = {} if books_table else None
@@ -36,6 +37,8 @@ class FakePostgrest:
             return FakeResponse(401, {"message": "Invalid API key"})
         if url == f"{URL}/rest/v1/{storage.BOOKS_TABLE}":
             return self.books_request(method, params, json)
+        if url == f"{URL}/rest/v1/{storage.SETTINGS_TABLE}":
+            return self.settings_request(method, params, json)
         assert url == f"{URL}/rest/v1/{storage.TABLE}"
         if method == "GET":
             if params and params.get("select") in self.missing:
@@ -57,6 +60,19 @@ class FakePostgrest:
                 return FakeResponse(400, {"message": "DELETE requires a WHERE clause"})
             self.rows.clear()
             return FakeResponse(204)
+        raise AssertionError(method)
+
+    def settings_request(self, method, params, json):
+        if self.settings is None:
+            return FakeResponse(404, {"code": "PGRST205", "message": "Could not find the table 'public.user_settings'"})
+        if method == "GET":
+            uid = params["user_id"].removeprefix("eq.")        # always by user_id
+            return FakeResponse(200, [r for k, r in self.settings.items() if k == uid])
+        if method == "POST":
+            assert params == {"on_conflict": "user_id"}
+            for row in json:
+                self.settings[row["user_id"]] = row
+            return FakeResponse(201)
         raise AssertionError(method)
 
     def books_request(self, method, params, json):

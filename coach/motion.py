@@ -1,8 +1,9 @@
 """Connected controls: one active surface that travels between the items
 of a control instead of each item lighting up on its own.
 
-Used by the page navigation at the top (Today, Reading, Progress) and by
-the switch on Progress (Day, Sessions, Subjects). For each control the
+Used by the page navigation at the top (Today, Reading, Progress,
+Settings), the switch on Progress (Day, Sessions, Subjects) and the
+setup's starting-level switch. For each control the
 script finds which item is on from the page itself (the page's address
 for the navigation, aria-checked for the switch), so there is one source
 of truth, and draws one surface under it:
@@ -32,10 +33,13 @@ SCRIPT = r"""
   const CONTROLS = [
     // the pages: a thin line on the header's lower edge, under the words of
     // the page that is on (it travels, and takes each word's width)
-    { root: '.st-key-topnav_items', item: '[data-testid="stPageLink-NavLink"]', pages: true, target: 'p', cls: 'cx-line',
+    { root: '.st-key-topnav_items', item: '[data-testid="stPageLink-NavLink"]', pages: true, target: 'p, [data-testid="stIconMaterial"]', cls: 'cx-line',
       shape: (b, r) => ({ x: b.x - 2, y: r.h - 1.5, w: b.w + 4, h: 1.5 }),
       on: (items) => items.find((a) => a.getAttribute('href') && pathOf(a) === here()) || items.find((a) => !a.getAttribute('href')) },
     { root: '.st-key-prog_view [data-testid="stButtonGroup"] > div', item: 'button',
+      on: (items) => items.find((b) => b.getAttribute('aria-checked') === 'true') },
+    // the setup's "Start from the basics | I know some already", one per subject
+    { root: '[class*="st-key-sw_"] [data-testid="stButtonGroup"] > div', item: 'button',
       on: (items) => items.find((b) => b.getAttribute('aria-checked') === 'true') },
     // Today's lessons: the short mark under the lesson open travels to the
     // next one opened (it moves once the page has opened it: a locked lesson
@@ -48,7 +52,8 @@ SCRIPT = r"""
 
   function box(root, el, c) {
     const r = root.getBoundingClientRect();
-    const t = c && c.target ? el.querySelector(c.target) || el : el;
+    // the target that shows (Settings is a word on a wide page, an icon on a narrow one)
+    const t = c && c.target ? [...el.querySelectorAll(c.target)].find((x) => x.getBoundingClientRect().width > 1) || el : el;
     const e = t.getBoundingClientRect();
     const b = { x: e.left - r.left, y: e.top - r.top, w: e.width, h: e.height };
     return c && c.shape ? c.shape(b, { w: r.width, h: r.height }) : b;
@@ -141,6 +146,29 @@ SCRIPT = r"""
       }
     }
   }, true);
+
+  // a list of options (setup, Settings): a tap shows the row chosen (or not)
+  // at once; the page redraws it the same way a moment later, and the marks
+  // set here are cleared once it has
+  let pickAt = 0, pickSaw = false;
+  doc.addEventListener('click', (ev) => {
+    const b = ev.target.closest && ev.target.closest('[class*="st-key-opt_"] button');
+    if (!b || b.disabled) return;
+    const row = b.closest('[class*="st-key-opt_"]'), list = row.closest('[class*="st-key-optlist_"]');
+    const o = row.querySelector('.opt'), on = row.dataset.on ? row.dataset.on === '1' : row.className.includes('__sel');
+    if (o && o.dataset.multi === '1') row.dataset.on = on ? '0' : '1';
+    else if (list) { list.querySelectorAll('[class*="st-key-opt_"]').forEach((r) => { r.dataset.on = '0'; }); row.dataset.on = '1'; }
+    pickAt = performance.now(); pickSaw = false;
+  }, true);
+  new w.MutationObserver(() => {
+    if (!pickAt) return;
+    const stale = !!doc.querySelector('[data-testid="stMain"] [data-stale="true"]');
+    if (stale) pickSaw = true;
+    if ((pickSaw && !stale) || performance.now() - pickAt > 2500) {
+      doc.querySelectorAll('[class*="st-key-opt_"][data-on]').forEach((r) => r.removeAttribute('data-on'));
+      pickAt = 0;
+    }
+  }).observe(doc.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-stale'] });
 
   // a clearly sideways swipe across the page, on a touch screen, moves between pages
   let sw = null;

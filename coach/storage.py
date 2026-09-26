@@ -1,8 +1,11 @@
 """Where the learning log lives: a Supabase table when SUPABASE_URL and
 SUPABASE_KEY are configured, otherwise a local JSON file (which Streamlit
 Cloud wipes on restart)."""
+import json
 import logging
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 import requests
 
@@ -10,6 +13,7 @@ from coach import core
 
 TABLE = "learning_entries"
 BOOKS_TABLE = "reading_books"
+SETTINGS_TABLE = "user_settings"
 TIMEOUT = 10
 
 # Run once in the Supabase SQL editor. RLS stays on with no policies, so
@@ -83,6 +87,27 @@ alter table public.learning_entries
   add column if not exists lessons jsonb not null default '[]'::jsonb;
 """
 
+# Her settings (subjects, daily pace, starting levels, reading): one row
+# per user, always read and written by user_id. Until this has been run
+# the app keeps its old fixed setup (see settings.legacy).
+SETTINGS_SQL = """\
+create table public.user_settings (
+  user_id text primary key,
+  subjects jsonb not null default '[]'::jsonb,
+  units_per_day integer not null default 3 check (units_per_day in (1, 3, 5)),
+  subject_levels jsonb not null default '{}'::jsonb,
+  reading_enabled boolean not null default false,
+  onboarding jsonb,
+  onboarded_at timestamptz,
+  updated_at timestamptz,
+  check (jsonb_array_length(subjects) <= 3),
+  check (onboarded_at is null or jsonb_array_length(subjects) >= 1)
+);
+alter table public.user_settings enable row level security;
+revoke all on public.user_settings from anon, authenticated;
+grant select, insert, update, delete on public.user_settings to service_role;
+"""
+
 # Columns added after the first release. If a database doesn't have one
 # yet, entries are saved without it instead of failing (the daily page
 # warns when "lessons" is missing, since lesson progress needs it).
@@ -95,6 +120,9 @@ BOOKS_TABLE_MISSING = (
 
 
 logger = logging.getLogger("coach.storage")
+
+SETTINGS_COLUMNS = ("user_id", "subjects", "units_per_day", "subject_levels", "reading_enabled",
+                    "onboarding", "onboarded_at", "updated_at")
 
 
 class StorageError(Exception):
@@ -110,10 +138,36 @@ class StorageError(Exception):
 class FileStore:
     name = "file"
 
-    def __init__(self, path=core.DEFAULT_LOG_PATH):
+    def __init__(self, path=core.DEFAULT_LOG_PATH, settings_path=None):
         self.path = path
+        self.settings_path = Path(settings_path or os.environ.get("COACH_SETTINGS_PATH")
+                                  or Path(path).with_name("user_settings.json"))
 
     books_error = None
+    settings_missing = False
+
+    def _settings_rows(self) -> list:
+        try:
+            rows = json.loads(self.settings_path.read_text(encoding="utf-8")).get("user_settings")
+        except (FileNotFoundError, json.JSONDecodeError, AttributeError):
+            return []
+        return [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
+
+    def load_settings(self, user_id: str):
+        """This user's settings row, or None if she has none yet."""
+        return next((r for r in self._settings_rows() if r.get("user_id") == user_id), None)
+
+    def save_settings(self, user_id: str, row: dict) -> None:
+        rows = [r for r in self._settings_rows() if r.get("user_id") != user_id]
+        rows.append({**{k: row.get(k) for k in SETTINGS_COLUMNS}, "user_id": user_id})
+        try:
+            self.settings_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.settings_path.with_suffix(".tmp")
+            tmp.write_text(json.dumps({"user_settings": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.replace(self.settings_path)
+        except OSError as e:
+            logger.error("saving settings failed: %s", e)
+            raise StorageError("your settings couldn't be written to a file") from e
 
     def load(self) -> dict:
         return core.load_log(self.path)
@@ -144,6 +198,8 @@ class SupabaseStore:
         self.base = f"{url}/rest/v1"
         # Set when the books table can't be read; the rest keeps working.
         self.books_error = None
+        # True when there is no user_settings table yet (settings.sql not run)
+        self.settings_missing = False
         # Optional columns Supabase said it doesn't have (their .sql not run
         # yet); entries are saved without them instead of failing.
         self.missing_columns = set()
@@ -239,6 +295,28 @@ class SupabaseStore:
             prefer="resolution=merge-duplicates,return=minimal",
             table=BOOKS_TABLE,
         )
+
+    def load_settings(self, user_id: str):
+        """This user's settings row, or None if she has none yet (or the
+        table doesn't exist yet: then settings_missing is set)."""
+        try:
+            resp = self._request("GET", params={"select": "*", "user_id": f"eq.{user_id}"},
+                                 table=SETTINGS_TABLE)
+        except StorageError as e:
+            if e.status != 404:
+                raise
+            logger.warning("no user_settings table; run supabase/user_settings.sql")
+            self.settings_missing = True
+            return None
+        self.settings_missing = False
+        rows = resp.json()
+        return rows[0] if rows else None
+
+    def save_settings(self, user_id: str, row: dict) -> None:
+        body = {k: row.get(k) for k in SETTINGS_COLUMNS}
+        body["user_id"] = user_id
+        self._request("POST", params={"on_conflict": "user_id"}, json=[body],
+                      prefer="resolution=merge-duplicates,return=minimal", table=SETTINGS_TABLE)
 
     def replace(self, log: dict) -> None:
         """Make the tables hold exactly this log (used by backup import)."""

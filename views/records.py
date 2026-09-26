@@ -13,10 +13,12 @@ from html import escape
 
 import streamlit as st
 
-from coach import core, curriculum, history, lesson_view, progress_bar, rolling, ui
+from coach import core, curriculum, history, lesson_view, progress_bar, rolling, settings, ui
 
 log = st.session_state.coach_log
 today = ui.today()
+config = ui.config()
+subjects = settings.shown_subjects(config)       # only the subjects she has chosen
 
 st.html('<div id="progress-page" hidden></div>')      # lets the page use the width (style.py)
 st.markdown("## Progress")
@@ -138,9 +140,15 @@ def view_day():
                     + (f", {picked.year}" if picked.year != today.year else ""))
         on_day = history.entries_on(log, picked)
         if not on_day:
-            planned = core.TOPICS[core.scheduled_topic(picked)]
-            st.caption(f"Nothing recorded. {core.weekday_name(picked)}s are for {planned}."
-                       if stats["status"] != "future" else f"Coming up: {planned}.")
+            planned = core.TOPICS[ui.topic_for(picked)]
+            if stats["status"] == "future":
+                st.caption(f"Coming up: {planned}.")
+            elif settings.is_legacy(config):
+                st.caption(f"Nothing recorded. {core.weekday_name(picked)}s are for {planned}.")
+            elif picked >= settings.start_day(config, ui.TIMEZONE):
+                st.caption(f"Nothing recorded. This day was for {planned}.")
+            else:
+                st.caption("Nothing recorded.")
         else:
             st.markdown('<span class="day-status">' + {"done": "Completed", "partial": "Partly done"}.get(
                 stats["status"], "") + "</span>", unsafe_allow_html=True)
@@ -163,9 +171,11 @@ def view_sessions():
     if log["entries"]:
         with st.container(key="sessions_head", horizontal=True, vertical_alignment="center"):
             count_spot = st.empty()          # (the switch above already names the view)
+            if st.session_state.get("sessions_topic") not in ("all", *subjects):
+                st.session_state.pop("sessions_topic", None)     # a subject she has since taken out
             topic_filter = st.selectbox(
                 "Subject",
-                ["all", *core.TOPICS],
+                ["all", *subjects],
                 format_func=lambda k: "All subjects" if k == "all" else core.TOPICS[k],
                 label_visibility="collapsed",
                 key="sessions_topic",
@@ -199,15 +209,18 @@ def view_subjects():
     """Each subject and the topic (unit) she is in now; Reading links to its page."""
     st.caption(f"Each subject has {curriculum.TOTAL:,} lessons taken in order: 1–{curriculum.LEVEL_SIZE:,} "
                f"Beginner, {curriculum.LEVEL_SIZE + 1:,}–{2 * curriculum.LEVEL_SIZE:,} Intermediate, the rest "
-               f"Advanced. The bar is the topic you're in now.")
+               f"Advanced, or your starting level where that's higher. The bar is the topic you're in now.")
+    shown = subjects + (["reading"] if settings.reading_on(config) else [])
     with st.container(key="subj_list"):
-        for key, label in core.TOPICS.items():
+        for key in shown:
+            label = core.TOPICS[key]
             if curriculum.has_syllabus(key):
                 p = curriculum.progress(log, key)
                 unit = curriculum.unit_progress(log, key)
+                level = core.lesson_level(min(p["done"] + 1, curriculum.TOTAL), settings.start_level(config, key))
                 progress_bar.render(
                     f"course_{key}", label, unit["done"], unit["total"],
-                    f"{p['done']:,} of {p['total']:,} overall · {p['level']}",
+                    f"{p['done']:,} of {p['total']:,} overall · {level}",
                     label="", compact=True, topic=unit["unit"],
                 )
                 continue
@@ -239,9 +252,11 @@ with month_col:
                        f"{summary['lessons']} {'lesson' if summary['lessons'] == 1 else 'lessons'} passed")
                 + "</span>", unsafe_allow_html=True)
 
-    # weekday names, each with the subject that day of the week is for
+    # weekday names; on the old weekly schedule, each with the subject that day of the week is for
+    weekly = settings.is_legacy(config)
     st.html('<div class="cal-week">' + "".join(
-        f'<span><b>{name[:3]}</b><i>{history.short_topic(core.WEEKDAY_TOPIC[k])}</i></span>'
+        f'<span><b>{name[:3]}</b>'
+        + (f'<i>{history.short_topic(core.WEEKDAY_TOPIC[k])}</i>' if weekly else "") + "</span>"
         for k, name in enumerate(core.WEEKDAYS)) + "</div>")
     # the grid is new for each month (its key names the month), so it slides in
     with st.container(key=f"calgrid_{year}_{month}_{way}"):

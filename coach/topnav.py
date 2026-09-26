@@ -1,5 +1,5 @@
-"""The top of every page: one connected control for the three pages
-(Today, Reading, Progress) with a single active surface that travels
+"""The top of every page: one connected control for the pages
+(Today, Reading when she has a reading plan, Progress, Settings) with a single active surface that travels
 between them, and Search at its end.
 
 Which page is on comes from one place: Streamlit's own navigation (the
@@ -11,14 +11,15 @@ from datetime import date
 
 import streamlit as st
 
-from coach import search
+from coach import search, settings, ui
 
 
 def render(pages: list, log: dict) -> None:
     with st.container(key="topnav", horizontal=True, vertical_alignment="center", gap=None):
         with st.container(key="topnav_items", horizontal=True, vertical_alignment="center", gap=None):
             for p in pages:
-                st.page_link(p, label=p.title)
+                # Settings: its name on a wide page, a gear where the bar is narrow (style.py)
+                st.page_link(p, label=p.title, icon=":material/settings:" if p.title == "Settings" else None)
         if st.button("Search", icon=":material/search:", key="nav_search"):
             _search(log)
 
@@ -32,6 +33,8 @@ def _search(log: dict) -> None:
     query = st.text_input("Search", key="search_q", label_visibility="collapsed",
                           placeholder="Lessons, subjects, books, your notes…")
     found = search.find(log, query)
+    if not settings.reading_on(ui.config()):      # no Reading page to open a book on
+        found = [r for r in found if r["open"][0] != "book"]
     if not query.strip():
         st.caption("Type a word or two and press Enter. Every word has to appear.")
         return

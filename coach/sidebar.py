@@ -1,12 +1,12 @@
 """The sidebar on every page: where she is today. Three quiet steps down:
 the day, today's subject (its topic, how far through the day's lessons
 she is, as liquid rising in an upright glass tube), then the book she is
-reading. The pages themselves are in the control at the top."""
+reading (when she has a reading plan). The pages themselves are in the control at the top."""
 from html import escape
 
 import streamlit as st
 
-from coach import books, core, curriculum, progress_bar, shelf, steps, ui
+from coach import books, core, curriculum, progress_bar, settings, shelf, steps, ui
 
 
 def _reading(log: dict) -> str:
@@ -26,12 +26,13 @@ def _reading(log: dict) -> str:
 
 
 def render(log: dict) -> None:
-    today = ui.today()
-    topic = core.scheduled_topic(today)
-    plan = curriculum.day_plan(log, topic, core.find_entry(log, today, topic))
+    today, config = ui.today(), ui.config()
+    topic = ui.topic_for(today)
+    plan = curriculum.day_plan(log, topic, core.find_entry(log, today, topic), settings.units(config))
     done = sum(1 for s in plan if s.get("completed"))
     unit = curriculum.unit_progress(log, topic)["unit"] if curriculum.has_syllabus(topic) else None
     progress_bar.render_vertical(
         "sidebar_today", f"{core.weekday_name(today)}, {today:%B} {today.day}",
         core.TOPICS[topic], done, len(plan), where=st.sidebar,
-        topic=unit, count=steps.label(plan) if plan else None, after=_reading(log))
+        topic=unit, count=steps.label(plan) if plan else None,
+        after=_reading(log) if settings.reading_on(config) else "")

@@ -1,8 +1,9 @@
 import streamlit as st
 
-from coach import core, curriculum, lesson_view, llm, place, progress_bar, quiz, steps, tokens, ui
+from coach import core, curriculum, lesson_view, llm, place, progress_bar, quiz, settings, steps, tokens, ui
 
 log = st.session_state.coach_log
+config = ui.config()        # her subjects, daily pace and starting levels
 
 
 # Today is always the real today (past days are in the Progress history).
@@ -33,6 +34,11 @@ def day_entry():
     entry = core.start_entry(log, today, topic)
     if not entry["lessons"]:
         entry["lessons"] = [dict(s) for s in plan]
+    elif [s["n"] for s in entry["lessons"]] != [s["n"] for s in plan]:
+        # her pace changed since the day started (curriculum.fit): the
+        # lessons she began are the same objects, the rest follow the pace
+        entry["lessons"] = plan
+        entry["completed"] = curriculum.day_complete(plan)
     return entry
 
 
@@ -54,7 +60,8 @@ def run_kickoff(i):
     kickoff = core.build_kickoff_message(topic, today, slot=slot)
     chat.append({"role": "user", "content": kickoff})
     lesson, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today, slot=slot), chat, max_tokens=tokens.LESSON_MAX_TOKENS,
+        core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level), chat,
+        max_tokens=tokens.LESSON_MAX_TOKENS,
     )
     if error:
         chat.pop()
@@ -64,7 +71,7 @@ def run_kickoff(i):
     slot["kickoff"], slot["lesson"] = kickoff, lesson
     first, last = entry["lessons"][0]["n"], entry["lessons"][-1]["n"]
     entry["title"] = f"Lessons {first}–{last}"
-    entry["level"] = curriculum.level_for(first)
+    entry["level"] = core.lesson_level(first, start_level)
     entry["followup_question"] = core.extract_section(lesson, "Question to Explore")
     ui.save_entry(log, entry)
     st.rerun()
@@ -80,7 +87,7 @@ def run_followup(i, text):
     with st.chat_message("user"):
         st.markdown(text)
     reply, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today, followup=True, slot=slot), chat,
+        core.build_system_prompt(log, topic, today, followup=True, slot=slot, start_level=start_level), chat,
         max_tokens=tokens.CHAT_MAX_TOKENS,
     )
     if error:
@@ -173,9 +180,10 @@ with st.sidebar:
 
 
 # ============================================================
-# TODAY'S TOPIC: fixed by the weekly schedule (Reading has its own page)
+# TODAY'S TOPIC: her subjects take turns, one a day (settings; Reading has its own page)
 # ============================================================
-topic = core.scheduled_topic(today)
+topic = ui.topic_for(today)
+start_level = settings.start_level(config, topic)
 st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
@@ -184,7 +192,7 @@ if st.session_state.get("coach_toast"):           # set just before a rerun, sho
     st.toast(st.session_state.pop("coach_toast"))
 
 entry = core.find_entry(log, today, topic)
-plan = curriculum.day_plan(log, topic, entry)
+plan = curriculum.day_plan(log, topic, entry, settings.units(config))
 
 store = st.session_state.coach_store
 if "lessons" in getattr(store, "missing_columns", ()):
