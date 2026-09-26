@@ -1814,8 +1814,8 @@ WORLDS = """
   mask-image: linear-gradient(to left, #000 55%, transparent 100%), linear-gradient(to bottom, #000 58%, transparent 100%);
   -webkit-mask-composite: source-in; mask-composite: intersect;
 }
-:root[data-scheme="dark"] .w-object:not(.is-drawn):not(.no-art) { filter: grayscale(1) contrast(1.06) brightness(0.84); }
-:root:not([data-scheme="dark"]) .w-object:not(.is-drawn):not(.no-art) { filter: grayscale(1) contrast(1.04) brightness(1.08); }
+:root[data-scheme="dark"] .w-object:not(.no-art) { filter: grayscale(1) contrast(1.06) brightness(0.84); }
+:root:not([data-scheme="dark"]) .w-object:not(.no-art) { filter: grayscale(1) contrast(1.04) brightness(1.08); }
 /* the work's credit: small, at the object's upper corner, out of the words' way */
 .w-credit { position: absolute; right: 14px; top: 12px; margin: 0; font-size: 0.6875rem; line-height: 1.4; color: var(--label-2);
   text-align: right; max-width: min(60%, 26rem); text-shadow: 0 0 10px var(--env), 0 0 2px var(--env); z-index: 1; }
@@ -1833,13 +1833,9 @@ WORLDS = """
   -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%), radial-gradient(ellipse 80% 90% at 50% 40%, #000 55%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 40%, transparent 100%), radial-gradient(ellipse 80% 90% at 50% 40%, #000 55%, transparent 100%); }
 
-/* a pendant: hung from the top of the page, the stone in the open space */
-/* a drawn object: a picture in the theme's own ink, hung from the top */
-.is-drawn { background: var(--ink-light) top center / contain no-repeat !important; }
-:root[data-scheme="dark"] .is-drawn { background-image: var(--ink-dark) !important; }
-.w-object.is-drawn { -webkit-mask-image: none; mask-image: none; filter: none; border-radius: 0; }
-/* the chain starts at the header's lower edge (the page's top space is 96px, the header 56px) */
-.st-key-world_pendant .w-object { height: calc(min(76vh, 740px) + 40px); margin-top: -40px; }
+/* a pendant: hung from the top of the page, the stone in the open space;
+   the chain starts at the header's lower edge (the page's top space is 96px, the header 56px) */
+.st-key-world_pendant .w-object { height: calc(min(76vh, 740px) + 40px); margin-top: -40px; background-position: center top; }
 
 /* arriving: the object is carried in (motion.py); the words follow it, one after another */
 @keyframes w-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -1873,8 +1869,7 @@ WORLDS = """
 .st-key-w_others [class*="st-key-enter_"] { position: relative; width: 168px !important; flex: 0 0 168px !important; gap: 8px !important; }
 .w-thumb { height: 112px; border-radius: 14px; corner-shape: superellipse(1.6); background: center / cover no-repeat;
   filter: grayscale(1) contrast(1.04); transition: transform var(--t-state) var(--ease); }
-:root[data-scheme="dark"] .w-thumb:not(.is-drawn) { filter: grayscale(1) contrast(1.04) brightness(0.84); }
-.w-thumb.is-drawn { background-color: var(--wash) !important; background-size: auto 130% !important; background-position: center 80% !important; filter: none; }
+:root[data-scheme="dark"] .w-thumb { filter: grayscale(1) contrast(1.04) brightness(0.84); }
 .w-thumb.no-art { background: var(--wash); }
 .w-thumb-name { margin: 0; font-family: "Newsreader", serif; font-weight: 300; font-size: 1.125rem; color: var(--label); }
 .st-key-w_others [class*="st-key-enter_"] [data-testid="stElementContainer"]:has(.w-thumb) { pointer-events: none; }
@@ -1890,11 +1885,23 @@ WORLDS = """
 @media (hover: hover) { [class*="st-key-enter_"] .stButton button[kind="tertiary"]:hover { color: var(--label); } }
 .st-key-set_worlds { gap: var(--space-4) !important; flex-wrap: wrap; }
 
-/* ---------- the drawn necklace wherever it appears ---------- */
-.sg-art.is-drawn { -webkit-mask-image: none; mask-image: none; filter: none; transform: none !important; background-size: auto 72% !important; }
+/* ---------- an object that stands free: no frame, no backdrop, no fade ----------
+   (a cut-out or a render on nothing): it sits in the page itself, whole */
+.is-cut { background-size: contain !important; background-repeat: no-repeat !important; border-radius: 0 !important;
+  -webkit-mask-image: none !important; mask-image: none !important; filter: none !important; }
+:root[data-scheme="dark"] .is-cut { filter: brightness(0.92) !important; }
+/* on the stage it keeps to the space above the words (they take about 320px), never under them */
+.sg-art.is-cut { inset: 28px 24px 330px 24px; background-position: center bottom !important; }
+.sg-art.is-cut[data-layout="pendant"] { inset: 0 24px 320px 24px; background-position: center top !important; }
+.w-object.is-cut { background-position: center !important; }
+/* a free-standing object fills its space to the edges: its credit goes under it, not over it */
+.st-key-w_object:has(.is-cut) .w-credit { position: static; margin: 10px 0 0 auto; }
+.st-key-world_pendant .w-object.is-cut { background-position: center top !important; }
+.w-thumb.is-cut, .ob-obj.is-cut { background-color: var(--wash) !important; background-size: auto 86% !important; background-position: center !important; }
+.w-thumb.is-cut[data-layout="pendant"] { background-size: auto 190% !important; background-position: center 100% !important; }
+.ob-obj.is-cut[data-layout="pendant"] { background-size: auto 210% !important; background-position: center 100% !important; }
 .ob-objs { display: flex; gap: 8px; margin-bottom: 8px; }
 .ob-obj { width: 40px; height: 52px; border-radius: 8px; background: center / cover no-repeat; filter: grayscale(1); flex: none; }
-.ob-obj.is-drawn { background-color: var(--wash) !important; background-size: auto 140% !important; background-position: center 90% !important; filter: none; }
 .ob-obj.no-art { background: var(--wash); }
 
 @media (max-width: 899px) {
@@ -1905,10 +1912,15 @@ WORLDS = """
   .w-object { height: 46vh; border-radius: 0; margin: 0 -16px; width: calc(100% + 32px); }
   .st-key-world_pendant .w-object { height: calc(46vh + 32px); margin-top: -32px; }
   .st-key-w_copy { margin-top: -10vh; }
+  [class*="st-key-world_"]:has(.is-cut) .st-key-w_copy { margin-top: var(--space-4); }
+  .w-object.is-cut { height: 42vh; margin: 0; width: 100%; }
+  .st-key-world_pendant .w-object.is-cut { height: calc(42vh + 32px); margin-top: -32px; }
   .st-key-world_painting .st-key-w_copy { margin-top: 0; }
   .w-credit { right: 16px; top: 10px; }
   [class*="st-key-w_sec_"] { display: flex !important; flex-direction: column; }
-  .sg-art.is-drawn { background-size: auto 100% !important; background-position: 88% top !important; }
+  /* on a narrow page the object stands to the right of the words */
+  .sg-art.is-cut { inset: 12px 16px 12px 48%; background-position: right center !important; }
+  .sg-art.is-cut[data-layout="pendant"] { inset: 0 16px 0 50%; background-position: right top !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .w-kicker, .stApp .w-title, .w-about, .w-meta, .st-key-w_actions { animation: none; }
