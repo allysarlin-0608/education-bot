@@ -1772,8 +1772,152 @@ LENS = """
 </style>
 """
 
+WORLDS = """
+<style>
+/* ==========================================================================
+   A SUBJECT'S WORLD: one system, a room per subject
+   The object that stands for the subject, its name set large, and below,
+   quietly, where she is in it. Only the object, its composition and the
+   title's setting change from one subject to the next (visuals.WORLD).
+   ========================================================================== */
+.stMainBlockContainer:has(#world-page) { max-width: 1180px; }
+[class*="st-key-world_"] {
+  display: grid !important; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  column-gap: clamp(24px, 5vw, 80px); align-items: end; min-height: min(76vh, 740px);
+}
+[class*="st-key-world_"] > * { min-width: 0; width: auto !important; }
+.st-key-w_copy { gap: var(--space-5) !important; padding-bottom: clamp(8px, 4vh, 40px); position: relative; z-index: 2; }
+.w-copy p { margin: 0; }
+.w-kicker { font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--label-2); font-variant-numeric: tabular-nums; }
+.stApp .w-title {
+  margin: 14px 0 0; padding: 0; color: var(--label); font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300;
+  font-size: clamp(3.5rem, 8vw, 7.25rem); line-height: 0.95; letter-spacing: -0.02em;
+}
+/* a subject about precision: its name in fine, spaced capitals */
+.stApp .w-title-tracked .w-title {
+  font-family: "Inter", "Noto Sans TC", sans-serif; font-weight: 300; text-transform: uppercase;
+  font-size: clamp(1.75rem, 3.6vw, 3rem); letter-spacing: 0.3em; line-height: 1.25;
+}
+.w-about { margin-top: 22px !important; font-size: 1.1875rem; line-height: 1.5; color: var(--label-2); max-width: 27rem; }
+.w-meta { margin-top: 12px !important; font-size: 0.75rem; color: var(--label-3); }
+.st-key-w_actions { gap: var(--space-5) !important; flex-wrap: wrap; justify-content: flex-start !important; }
+.st-key-w_actions > * { flex: 0 0 auto !important; width: auto !important; }
+.st-key-w_actions .stButton button[kind="tertiary"] { color: var(--label-2); background: transparent !important; border-color: transparent !important; box-shadow: none !important; backdrop-filter: none !important; padding: 0 var(--space-2); }
+.w-next { margin: 0; font-size: 0.875rem; color: var(--label-2); }
+
+/* the object */
+.st-key-w_object { position: relative; align-self: stretch; gap: 0 !important; }
+.w-object {
+  position: relative; height: min(76vh, 740px); background: center / cover no-repeat; transform-origin: center;
+  filter: grayscale(1) contrast(1.06); border-radius: 22px; corner-shape: superellipse(1.6);
+  -webkit-mask-image: linear-gradient(to left, #000 55%, transparent 100%), linear-gradient(to bottom, #000 58%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 55%, transparent 100%), linear-gradient(to bottom, #000 58%, transparent 100%);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+}
+:root[data-scheme="dark"] .w-object:not(.is-drawn):not(.no-art) { filter: grayscale(1) contrast(1.06) brightness(0.84); }
+:root:not([data-scheme="dark"]) .w-object:not(.is-drawn):not(.no-art) { filter: grayscale(1) contrast(1.04) brightness(1.08); }
+/* the work's credit: small, at the object's upper corner, out of the words' way */
+.w-credit { position: absolute; right: 14px; top: 12px; margin: 0; font-size: 0.6875rem; line-height: 1.4; color: var(--label-2);
+  text-align: right; max-width: min(60%, 26rem); text-shadow: 0 0 10px var(--env), 0 0 2px var(--env); z-index: 1; }
+.w-object.no-art { -webkit-mask-image: none; mask-image: none; display: flex; align-items: flex-start; justify-content: flex-end; }
+.w-object.no-art::before { content: attr(data-n); font-family: "Newsreader", serif; font-weight: 300; font-size: clamp(10rem, 22vw, 20rem); line-height: 1;
+  color: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07)); }
+/* an instrument: held whole in the middle of its space, its edges falling away */
+.st-key-world_instrument .w-object { background-size: contain;
+  -webkit-mask-image: radial-gradient(ellipse 58% 60% at 50% 48%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 58% 60% at 50% 48%, #000 45%, transparent 100%); }
+/* a painting: a scene laid wide above, the name set where it fades */
+.st-key-world_painting { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+.st-key-world_painting > :has(> .st-key-w_object) { grid-row: 1; }
+.st-key-world_painting > :has(> .st-key-w_copy) { grid-row: 2; margin-top: clamp(-200px, -16vh, -80px); }
+.st-key-world_painting .w-object { height: min(58vh, 560px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%), radial-gradient(ellipse 80% 90% at 50% 40%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 40%, transparent 100%), radial-gradient(ellipse 80% 90% at 50% 40%, #000 55%, transparent 100%); }
+
+/* a pendant: hung from the top of the page, the stone in the open space */
+/* a drawn object: a picture in the theme's own ink, hung from the top */
+.is-drawn { background: var(--ink-light) top center / contain no-repeat !important; }
+:root[data-scheme="dark"] .is-drawn { background-image: var(--ink-dark) !important; }
+.w-object.is-drawn { -webkit-mask-image: none; mask-image: none; filter: none; border-radius: 0; }
+/* the chain starts at the header's lower edge (the page's top space is 96px, the header 56px) */
+.st-key-world_pendant .w-object { height: calc(min(76vh, 740px) + 40px); margin-top: -40px; }
+
+/* arriving: the object is carried in (motion.py); the words follow it, one after another */
+@keyframes w-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.w-kicker { animation: w-rise var(--t-space) var(--ease) 180ms backwards; }
+.stApp .w-title { animation: w-rise var(--t-layout) var(--ease) 260ms backwards; }
+.w-about { animation: w-rise var(--t-space) var(--ease) 420ms backwards; }
+.w-meta { animation: w-rise var(--t-space) var(--ease) 500ms backwards; }
+.st-key-w_actions { animation: w-rise var(--t-space) var(--ease) 580ms backwards; }
+
+/* ---------- below: where she is, what's next, lately ---------- */
+[class*="st-key-w_sec_"] {
+  display: grid !important; grid-template-columns: 10rem minmax(0, 1fr); column-gap: var(--space-6); align-items: start;
+  padding-top: var(--space-5); border-top: 0.5px solid var(--field-edge); gap: var(--space-4) !important;
+}
+[class*="st-key-w_sec_"] > * { width: auto !important; min-width: 0; }
+.st-key-w_sec_where { margin-top: var(--space-7); }
+.w-sec-title { margin: 0; font-family: "Newsreader", serif; font-weight: 300; font-size: 1.375rem; line-height: 1.2; color: var(--label); }
+.w-sec-body { display: grid; gap: 10px; }
+.w-sec-body p { margin: 0; }
+.w-big { font-family: "Newsreader", serif; font-weight: 300; font-size: 1.75rem; line-height: 1.15; color: var(--label); }
+.w-small { font-size: 0.8125rem; color: var(--label-2); }
+.w-line { position: relative; height: 2px; border-radius: 2px; background: var(--field-edge); overflow: hidden; max-width: 28rem; }
+.w-line i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--label); border-radius: 2px; }
+.w-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.w-list li { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: var(--space-3); padding: 10px 0; border-bottom: 0.5px solid var(--hair); font-size: 0.9375rem; color: var(--label); }
+.w-list li:last-child { border-bottom: none; }
+.w-list .n, .w-list .d { color: var(--label-3); font-size: 0.8125rem; font-variant-numeric: tabular-nums; padding-top: 2px; }
+/* her other subjects: each its own room, entered by its object */
+.st-key-w_others { gap: var(--space-5) !important; flex-wrap: wrap; justify-content: flex-start !important; }
+.st-key-w_others > * { flex: 0 0 auto !important; width: auto !important; }
+.st-key-w_others [class*="st-key-enter_"] { position: relative; width: 168px !important; flex: 0 0 168px !important; gap: 8px !important; }
+.w-thumb { height: 112px; border-radius: 14px; corner-shape: superellipse(1.6); background: center / cover no-repeat;
+  filter: grayscale(1) contrast(1.04); transition: transform var(--t-state) var(--ease); }
+:root[data-scheme="dark"] .w-thumb:not(.is-drawn) { filter: grayscale(1) contrast(1.04) brightness(0.84); }
+.w-thumb.is-drawn { background-color: var(--wash) !important; background-size: auto 130% !important; background-position: center 80% !important; filter: none; }
+.w-thumb.no-art { background: var(--wash); }
+.w-thumb-name { margin: 0; font-family: "Newsreader", serif; font-weight: 300; font-size: 1.125rem; color: var(--label); }
+.st-key-w_others [class*="st-key-enter_"] [data-testid="stElementContainer"]:has(.w-thumb) { pointer-events: none; }
+.st-key-w_others [class*="st-key-enter_"] [data-testid="stElementContainer"]:has(.stButton),
+.st-key-w_others [class*="st-key-enter_"] [data-testid="stElementContainer"]:has(.stButton) *:not(button) { position: static !important; }
+.st-key-w_others [class*="st-key-enter_"] .stButton button { position: absolute !important; inset: 0; width: 100%; height: 100%; opacity: 0; z-index: 2; }
+@media (hover: hover) { .st-key-w_others [class*="st-key-enter_"]:hover .w-thumb { transform: scale(1.02); } }
+.st-key-w_others [class*="st-key-enter_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: 4px; border-radius: 14px; }
+
+/* the ways in, elsewhere: quiet words with an arrow */
+[class*="st-key-enter_"] .stButton button[kind="tertiary"] { color: var(--label-2); background: transparent !important; border-color: transparent !important;
+  box-shadow: none !important; backdrop-filter: none !important; padding: 0 2px; min-height: 36px; }
+@media (hover: hover) { [class*="st-key-enter_"] .stButton button[kind="tertiary"]:hover { color: var(--label); } }
+.st-key-set_worlds { gap: var(--space-4) !important; flex-wrap: wrap; }
+
+/* ---------- the drawn necklace wherever it appears ---------- */
+.sg-art.is-drawn { -webkit-mask-image: none; mask-image: none; filter: none; transform: none !important; background-size: auto 72% !important; }
+.ob-objs { display: flex; gap: 8px; margin-bottom: 8px; }
+.ob-obj { width: 40px; height: 52px; border-radius: 8px; background: center / cover no-repeat; filter: grayscale(1); flex: none; }
+.ob-obj.is-drawn { background-color: var(--wash) !important; background-size: auto 140% !important; background-position: center 90% !important; filter: none; }
+.ob-obj.no-art { background: var(--wash); }
+
+@media (max-width: 899px) {
+  [class*="st-key-world_"] { display: flex !important; flex-direction: column-reverse; min-height: 0; align-items: stretch !important; }
+  .st-key-world_painting { flex-direction: column; }
+  [class*="st-key-world_"] > * { width: 100% !important; }
+  .st-key-world_painting > :has(> .st-key-w_copy) { margin-top: -12vh; }
+  .w-object { height: 46vh; border-radius: 0; margin: 0 -16px; width: calc(100% + 32px); }
+  .st-key-world_pendant .w-object { height: calc(46vh + 32px); margin-top: -32px; }
+  .st-key-w_copy { margin-top: -10vh; }
+  .st-key-world_painting .st-key-w_copy { margin-top: 0; }
+  .w-credit { right: 16px; top: 10px; }
+  [class*="st-key-w_sec_"] { display: flex !important; flex-direction: column; }
+  .sg-art.is-drawn { background-size: auto 100% !important; background-position: 88% top !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .w-kicker, .stApp .w-title, .w-about, .w-meta, .st-key-w_actions { animation: none; }
+}
+</style>
+"""
+
 def stylesheet() -> str:
-    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, TOUCH))
+    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, WORLDS, TOUCH))
     return CSS.replace("</style>", rest + "</style>")
 
 

@@ -76,6 +76,7 @@ def start() -> None:
         return
     if ui.save_settings(done):
         st.session_state.pop("ob_way", None)
+        st.session_state.enter_world = done["subjects"][0]     # into the first day's subject
 
 
 def nav(back: bool = True, label: str = "Continue", ready: bool = True, note: str = "", on=None) -> None:
@@ -97,11 +98,10 @@ def stage_html() -> str:
     them is a crossfade, never a redraw."""
     layers = []
     for k, t in enumerate(settings.SUBJECTS, start=1):
-        kicker, shows, _ = visuals.ART[t]
-        f, url = visuals.facts(t), visuals.image_url(t)
-        art = (f'<div class="sg-art" role="img" aria-label="{escape(shows)}" style="background-image:url(\'{url}\');background-position:{visuals.FOCUS[t]}"></div>'
-               if url else f'<div class="sg-art no-art" aria-hidden="true" data-n="{k:02d}"></div>')
-        credit = visuals.CREDITS.get(t, "") if url else ""
+        kicker = visuals.WORLD[t]["kicker"]
+        f = visuals.facts(t)
+        art = visuals.object_html(t, "sg-art", k)
+        credit = visuals.credit(t)
         layers.append(
             f'<div class="sg-layer" data-t="{t}">{art}<div class="sg-copy">'
             f'<p class="sg-kicker">{k:02d} · {escape(kicker)}</p>'
@@ -220,8 +220,10 @@ with st.container(key=f"ob_step_{step}_{came}"):
             with st.container(key="ob_lead"):
                 lead("Your plan", "Everything can be changed later in Settings.")
             with st.container(key="ob_body"):
-                st.html('<dl class="ob-summary">'
-                        f'<div><dt>Subjects</dt><dd>{escape(" → ".join(core.TOPICS[t] for t in d["subjects"]))}'
+                objs = "".join(visuals.object_html(t, "ob-obj", list(settings.SUBJECTS).index(t) + 1) for t in d["subjects"])
+                st.html(f'<div hidden data-enter="{d["subjects"][0]}"></div><dl class="ob-summary">'
+                        f'<div><dt>Subjects</dt><dd><span class="ob-objs">{objs}</span>'
+                        f'{escape(" → ".join(core.TOPICS[t] for t in d["subjects"]))}'
                         f'<small>{"Every day" if len(d["subjects"]) == 1 else "One a day, taking turns"}</small></dd></div>'
                         f'<div><dt>Daily pace</dt><dd>{name}<small>{n} {"lesson" if n == 1 else "lessons"} a day · {minutes}</small></dd></div>'
                         f'<div><dt>Starting level</dt><dd>{"".join(level_line(t) for t in d["subjects"])}</dd></div>'
