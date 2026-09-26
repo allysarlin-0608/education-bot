@@ -90,9 +90,14 @@ CSS = f"""
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
   --control: 44px;
 
-  /* motion */
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --t-micro: 200ms; --t-space: 400ms;
+  /* motion: every change has a beginning, a middle and an end. Small
+     answers (a press, a hover, a focus ring) take about a quarter second;
+     a change of state about half; things that move the layout a little
+     longer. One soft deceleration for things arriving, a symmetric curve
+     for things that grow and shrink in place; nothing overshoots. */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-layout: cubic-bezier(0.45, 0, 0.25, 1);
+  --t-press: 120ms; --t-micro: 240ms; --t-state: 420ms; --t-space: 480ms; --t-layout: 560ms;
 }}
 
 /* ---------- environment: pure black or pure white, no ambient light ---------- */
@@ -139,7 +144,7 @@ CSS = f"""
   animation: arrive var(--t-space) var(--ease) backwards;   /* not "both": a kept transform would trap the floating button */
 }}
 @keyframes arrive {{
-  from {{ opacity: 0; transform: translateY(10px); }}
+  from {{ opacity: 0; transform: translateY(8px); }}
   to   {{ opacity: 1; transform: none; }}
 }}
 @media (min-width: 768px) {{ .stMainBlockContainer {{ padding-top: 96px; }} }}
@@ -194,7 +199,7 @@ CSS = f"""
   }}
 }}
 .stButton button:active, .stFormSubmitButton button:active, .stDownloadButton button:active {{
-  transform: scale(0.97);
+  transform: scale(0.97); transition-duration: var(--t-press);
 }}
 .stButton button:focus-visible, .stFormSubmitButton button:focus-visible,
 .stDownloadButton button:focus-visible {{
@@ -230,7 +235,7 @@ CSS = f"""
   background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.97) !important;
   border: 1px solid rgb(from currentColor r g b / 0.08) !important; border-radius: var(--radius-medium) !important;
   box-shadow: var(--glass-depth-soft) !important; overflow: hidden;
-  animation: fade var(--t-space) var(--ease) both;   /* opacity only: the popover is positioned by transform */
+  animation: fade 280ms var(--ease) both;   /* opacity only: the popover is positioned by transform */
 }}
 @keyframes fade {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
 [role="grid"] {{   /* the date picker also renders outside .stApp */
@@ -242,7 +247,7 @@ CSS = f"""
 }}
 [role="grid"] [role="button"] {{
   border-radius: 50% !important; border: 1px solid transparent;
-  transition: background-color 300ms var(--ease), border-color 300ms var(--ease), transform 300ms var(--ease);
+  transition: background-color var(--t-state) var(--ease), border-color var(--t-state) var(--ease), transform var(--t-state) var(--ease);
 }}
 [role="grid"] [role="button"][data-selected="true"] {{
   background: var(--glass-strong) !important; color: var(--strong) !important;
@@ -338,7 +343,7 @@ CSS = f"""
   background: var(--glass) !important;
   -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-optics);
   box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
-  transition: box-shadow 220ms var(--ease);
+  transition: box-shadow 360ms var(--ease), background-color 360ms var(--ease);
 }}
 [data-testid="stChatInput"]:focus-within {{
   box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.28), rgba(255, 255, 255, 0.28));
@@ -348,10 +353,10 @@ CSS = f"""
 [data-testid="stChatInput"] textarea::placeholder {{ color: var(--label-2); opacity: 1; }}
 [data-testid="stChatInputSubmitButton"] {{
   border-radius: 50% !important; background: transparent !important; color: var(--label-3) !important;
-  transition: background-color 180ms var(--ease), color 180ms var(--ease), transform 120ms var(--ease);
+  transition: background-color 320ms var(--ease), color 320ms var(--ease), transform var(--t-micro) var(--ease);
 }}
 [data-testid="stChatInputSubmitButton"]:not(:disabled) {{ background: var(--label) !important; color: var(--env) !important; }}
-[data-testid="stChatInputSubmitButton"]:not(:disabled):active {{ transform: scale(0.92); }}
+[data-testid="stChatInputSubmitButton"]:not(:disabled):active {{ transform: scale(0.92); transition-duration: var(--t-press); }}
 /* the chat box stays at the bottom of the screen while she scrolls; at the end of the page it sits in its place */
 [data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock), .st-key-chat_dock {{
   position: sticky; bottom: max(var(--space-4), env(safe-area-inset-bottom)); z-index: 40;   /* clear of the iPhone's home bar */
@@ -505,8 +510,8 @@ LIQUID = """
 
 /* motion: flows in, settles, then is still (no bounce, no loop) */
 .lq.flowing .lq-liquid {
-  animation: lq-front 950ms cubic-bezier(0.3, 0.6, 0.25, 1) both,
-             lq-surge 1100ms cubic-bezier(0.4, 0, 0.3, 1) both;
+  animation: lq-front 1150ms cubic-bezier(0.3, 0.6, 0.3, 1) both,
+             lq-surge 1300ms cubic-bezier(0.4, 0, 0.3, 1) both;
 }
 @keyframes lq-front { from { --p: var(--from); } to { --p: var(--to); } }
 @keyframes lq-surge { 0% { --surge: 0; } 30% { --surge: 1; } 100% { --surge: 0; } }
@@ -539,7 +544,7 @@ LIQUID = """
 /* the liquid in a completed lesson; the last completed one ends in a round meniscus */
 [class*="st-key-step_"] button::after {
   content: ""; position: absolute; left: 0; top: 6.5px; height: 4px; width: 0;
-  background: var(--lq-liquid); opacity: 0.92; transition: opacity 0.3s ease-out;
+  background: var(--lq-liquid); opacity: 0.92; transition: opacity var(--t-micro) var(--ease);
 }
 [class*="st-key-lesson_steps"] > :first-child button::after { border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
 [class*="st-key-step_"][class*="_completed"] button::after { width: 100%; }
@@ -559,7 +564,7 @@ LIQUID = """
 [class*="st-key-lesson_steps"] button [data-testid="stMarkdownContainer"] { line-height: 16px; }
 [class*="st-key-lesson_steps"] button p {
   display: block; margin: 0; font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums;
-  color: var(--label-2); transition: color 0.3s ease-out;
+  color: var(--label-2); transition: color var(--t-state) var(--ease);
 }
 [class*="st-key-lesson_steps"] button:focus-visible { outline: 1px solid var(--outline); outline-offset: 2px; }
 [class*="st-key-step_"][class*="_completed"] button p::after { content: "✓"; font-size: 10px; margin-left: 2px; }
@@ -584,7 +589,7 @@ LIQUID = """
 .st-key-lesson_steps_flow > [class*="_completed"]:not(:has(+ [class*="_completed"])) button::after {
   animation-duration: 420ms; animation-timing-function: cubic-bezier(0.3, 0.6, 0.25, 1);
 }
-[class*="st-key-step_"][class*="_fresh"] button::after { animation: lq-fill 700ms cubic-bezier(0.3, 0.6, 0.25, 1) both; }
+[class*="st-key-step_"][class*="_fresh"] button::after { animation: lq-fill 900ms cubic-bezier(0.3, 0.6, 0.3, 1) both; }
 @media (prefers-reduced-motion: reduce) {
   [class*="st-key-step_"] button::after { animation: none !important; }
 }
@@ -649,8 +654,8 @@ LIQUID = """
 }
 .lqv.empty .lqv-liquid { opacity: 0.45; }   /* a drop at the bottom, so the tube is never empty-looking */
 .lqv.flowing .lqv-liquid {
-  animation: lq-front 950ms cubic-bezier(0.3, 0.6, 0.25, 1) both,
-             lq-surge 1100ms cubic-bezier(0.4, 0, 0.3, 1) both;
+  animation: lq-front 1150ms cubic-bezier(0.3, 0.6, 0.3, 1) both,
+             lq-surge 1300ms cubic-bezier(0.4, 0, 0.3, 1) both;
 }
 .lqv-info { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; padding: 2px 0; }
 .lqv-date {
@@ -754,7 +759,7 @@ PROGRESS = """
 .st-key-prog_view [data-testid="stButtonGroup"] button {
   flex: 1 1 0; min-height: 36px; margin: 0 !important; border: none !important; border-radius: 999px !important;
   background: transparent !important; box-shadow: none !important; color: var(--label-2);
-  transition: background-color 220ms var(--ease), color 220ms var(--ease), box-shadow 220ms var(--ease);
+  transition: background-color var(--t-state) var(--ease), color var(--t-state) var(--ease), box-shadow var(--t-state) var(--ease);
 }
 .st-key-prog_view [data-testid="stButtonGroup"] button p { font-size: 0.875rem; }
 .st-key-prog_view [data-testid="stButtonGroup"] button[aria-checked="true"] {
@@ -763,7 +768,7 @@ PROGRESS = """
 .st-key-prog_view [data-testid="stButtonGroup"] button[aria-checked="true"] p { font-weight: 600; }
 @media (hover: hover) { .st-key-prog_view [data-testid="stButtonGroup"] button:hover:not([aria-checked="true"]) { color: var(--label); } }
 /* a view eases in when switched to */
-[class*="st-key-view_"] { gap: var(--space-4) !important; animation: rise-in 240ms var(--ease) backwards; }
+[class*="st-key-view_"] { gap: var(--space-4) !important; animation: rise-in var(--t-space) var(--ease) backwards; }
 /* the subjects: as many columns as fit, never cramped */
 .st-key-subj_list {
   display: grid !important; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
@@ -798,7 +803,7 @@ PROGRESS = """
   position: relative; height: 56px; min-height: 44px; padding: 0 0 12px !important;
   border: none; border-radius: 14px; background: transparent; box-shadow: none;
   backdrop-filter: none; -webkit-backdrop-filter: none; color: var(--label-3);
-  transition: background-color 200ms var(--ease), box-shadow 200ms var(--ease), color 200ms var(--ease);
+  transition: background-color 320ms var(--ease), box-shadow 320ms var(--ease), color 320ms var(--ease);
 }
 [class*="st-key-cal_20"] .stButton button > div, [class*="st-key-cal_20"] .stButton button [data-testid="stMarkdownContainer"] { overflow: visible !important; min-width: 0; }
 [class*="st-key-cal_20"] .stButton button p { font-size: 0.9375rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: visible; }
@@ -807,7 +812,7 @@ PROGRESS = """
 }
 [class*="st-key-cal_20"][class*="_done_"] .stButton button::before,
 [class*="st-key-cal_20"][class*="_partial_"] .stButton button::before { width: 24px; background: var(--hair); }
-[class*="st-key-cal_20"] .stButton button::after { width: 0; background: var(--label-2); transition: width 300ms var(--ease); }
+[class*="st-key-cal_20"] .stButton button::after { width: 0; background: var(--label-2); transition: width var(--t-space) var(--ease); }
 [class*="st-key-cal_20"][class*="_a1"] .stButton button::after { width: 4.8px; }
 [class*="st-key-cal_20"][class*="_a2"] .stButton button::after { width: 9.6px; }
 [class*="st-key-cal_20"][class*="_a3"] .stButton button::after { width: 14.4px; }
@@ -829,7 +834,7 @@ PROGRESS = """
   background: var(--glass-strong); color: var(--label);
   box-shadow: var(--optic), inset 0 0 0 1px light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.34));
 }
-[class*="st-key-cal_20"][class*="_sel"] .stButton button { animation: day-pick 220ms var(--ease) backwards; }
+[class*="st-key-cal_20"][class*="_sel"] .stButton button { animation: day-pick var(--t-state) var(--ease) backwards; }
 [class*="st-key-calgrid_"]:has(button[data-picking]) [class*="_sel"] .stButton button:not([data-picking]) {
   background: transparent; box-shadow: none;
 }
@@ -846,7 +851,7 @@ PROGRESS = """
 [class*="st-key-prog_day_"] {
   gap: var(--space-2) !important; padding: var(--space-5);
   border-radius: var(--radius-medium); background: var(--glass); box-shadow: var(--optic);
-  animation: rise-in 260ms var(--ease) backwards; scroll-margin: 88px 0 16px;
+  animation: rise-in var(--t-space) var(--ease) backwards; scroll-margin: 88px 0 16px;
 }
 [class*="st-key-prog_day_"] h4 { padding: 0 0 2px !important; }
 [class*="st-key-prog_day_"] [data-testid="stMarkdownContainer"] p { margin-bottom: 0; }
@@ -870,10 +875,16 @@ PROGRESS = """
 [class*="st-key-reader_"] {
   gap: var(--space-2) !important; padding: var(--space-4) var(--space-4) var(--space-3);
   border-radius: 18px; background: var(--glass); box-shadow: var(--optic);
-  animation: rise-in 240ms var(--ease) backwards;
+  animation: fade-in 420ms var(--ease) 80ms backwards;
 }
 /* the section grows with its text: the page is the one thing that scrolls */
-[class*="st-key-reader_"] [role="tabpanel"] { animation: fade-in 200ms var(--ease) backwards; }
+/* its space opens in place, moving what is below down with it (the
+   reader itself is sized by its row, so the row is what grows) */
+[data-testid="stLayoutWrapper"]:has(> [class*="st-key-reader_"]) {
+  min-height: 0; overflow-y: clip; overflow-clip-margin: 6px;
+  animation: grow-in var(--t-layout) var(--ease-layout) backwards;
+}
+[class*="st-key-reader_"] [role="tabpanel"] { animation: fade-in 320ms var(--ease) backwards; }
 [class*="st-key-reader_"] [role="tablist"] { gap: 2px; }
 [class*="st-key-reader_"] [role="tab"] p { font-size: 0.8125rem; white-space: nowrap; }
 
@@ -885,7 +896,7 @@ PROGRESS = """
 .st-key-sessions_head h4 { padding: 0 !important; margin: 0; }
 .st-key-sessions_head [data-testid="stSelectbox"] { width: min(240px, 100%); }
 .st-key-sessions_head > div:last-child { flex: 0 1 240px !important; width: auto !important; }
-[class*="st-key-sessions_list_"] { gap: 0 !important; animation: fade-in 240ms var(--ease) backwards; }
+[class*="st-key-sessions_list_"] { gap: 0 !important; animation: fade-in 360ms var(--ease) backwards; }
 [class*="st-key-sessions_list_"] > div { width: 100% !important; min-width: 0; }
 [class*="st-key-oncal_"] button { min-height: 32px; padding: 0 !important; }
 [class*="st-key-oncal_"] button p { font-size: 0.8125rem; color: var(--label-2); }
@@ -893,24 +904,42 @@ PROGRESS = """
 /* ---------- motion ---------- */
 /* expanders open and close smoothly (where the browser can size to auto) */
 :root { interpolate-size: allow-keywords; }
-[data-testid="stExpander"] details::details-content {
-  block-size: 0; overflow-y: clip;
-  transition: block-size 280ms var(--ease), content-visibility 280ms allow-discrete;
+/* Streamlit's expander moves its own height (about half a second, in and
+   out); animating it here as well played the close twice. Here, only the
+   content fading in as the space opens. */
+[data-testid="stExpander"] details::details-content { opacity: 0; }
+[data-testid="stExpander"] details[open]::details-content { opacity: 1; transition: opacity 420ms var(--ease) 80ms; }
+/* the bookshelf's rows are plain details: the space opens and the content
+   fades in inside it; closing, the content fades first and the space follows */
+.bk-book::details-content {
+  block-size: 0; opacity: 0; overflow-y: clip;
+  transition: opacity 200ms var(--ease), block-size 440ms var(--ease-layout) 40ms, content-visibility 480ms allow-discrete;
 }
-[data-testid="stExpander"] details[open]::details-content { block-size: auto; }
-[class*="st-key-calgrid_"][class*="_next"] { animation: from-right 320ms var(--ease) backwards; }
-[class*="st-key-calgrid_"][class*="_prev"] { animation: from-left 320ms var(--ease) backwards; }
-[class*="st-key-calgrid_"][class*="_none"] { animation: fade-in 220ms var(--ease) backwards; }
-@keyframes from-right { from { opacity: 0; transform: translateX(16px); } }
-@keyframes from-left { from { opacity: 0; transform: translateX(-16px); } }
-@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } }
+.bk-book[open]::details-content {
+  block-size: auto; opacity: 1;
+  transition: block-size var(--t-layout) var(--ease-layout), opacity 420ms var(--ease) 80ms, content-visibility var(--t-layout) allow-discrete;
+}
+[class*="st-key-calgrid_"][class*="_next"] { animation: from-right 520ms var(--ease) backwards; }
+[class*="st-key-calgrid_"][class*="_prev"] { animation: from-left 520ms var(--ease) backwards; }
+[class*="st-key-calgrid_"][class*="_none"] { animation: fade-in 360ms var(--ease) backwards; }
+[class*="st-key-calgrid_"] { transition: opacity 320ms var(--ease), transform 320ms var(--ease); }
+[class*="st-key-calgrid_"][data-leaving="next"] { opacity: 0.3; transform: translateX(-10px); }
+[class*="st-key-calgrid_"][data-leaving="prev"] { opacity: 0.3; transform: translateX(10px); }
+@keyframes from-right { from { opacity: 0; transform: translateX(12px); } }
+@keyframes from-left { from { opacity: 0; transform: translateX(-12px); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes grow-in { from { opacity: 0; block-size: 0; } }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes day-pick { from { background-color: transparent; box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) {
   [class*="st-key-calgrid_"], [class*="st-key-prog_day_"], [class*="st-key-reader_"], [class*="st-key-sessions_list_"],
   [class*="st-key-view_"],
   [class*="st-key-reader_"] [role="tabpanel"], [class*="st-key-cal_20"] .stButton button { animation: none !important; }
-  [data-testid="stExpander"] details::details-content { transition: none; }
+  [data-testid="stExpander"] details::details-content, [data-testid="stExpander"] details[open]::details-content { transition: none; }
+  [class*="st-key-calgrid_"] { transition: none; }
+  [data-testid="stLayoutWrapper"]:has(> [class*="st-key-reader_"]) { animation: none !important; }
+  /* Streamlit animates an expander's height itself, reduced motion or not: hold it at its size */
+  [data-testid="stExpander"] details[style*="height"] { height: auto !important; }
 }
 </style>
 """
@@ -1049,7 +1078,7 @@ BOOKS = """
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   min-height: 56px; box-sizing: border-box; padding: 10px 16px; cursor: pointer; list-style: none;
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-  transition: background-color 200ms var(--ease);
+  transition: background-color var(--t-micro) var(--ease);
 }
 .bk-book > summary::-webkit-details-marker { display: none; }
 .bk-book > summary::marker { content: ""; }
@@ -1063,11 +1092,6 @@ BOOKS = """
 .bk-title { font-size: 0.9375rem; font-weight: 500; color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bk-author { font-size: 0.8125rem; color: var(--label-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bk-state { flex: none; font-size: 0.8125rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
-.bk-book::details-content {
-  block-size: 0; opacity: 0; overflow-y: clip;
-  transition: block-size 280ms var(--ease), opacity 220ms var(--ease), content-visibility 280ms allow-discrete;
-}
-.bk-book[open]::details-content { block-size: auto; opacity: 1; }
 
 /* a book opened: its fourteen days, what she wrote, whether it passed */
 .bk-open { padding: 0 16px 14px; }
@@ -1127,21 +1151,25 @@ BOOKS = """
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
 .st-key-start_book button::after { content: ""; position: absolute; inset: -5px -2px; }
-.st-key-start_book button { transition: background-color 160ms var(--ease), border-color 160ms var(--ease), transform 120ms var(--ease) !important; }
+.st-key-start_book button { transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease), transform var(--t-micro) var(--ease) !important; }
 @media (hover: hover) {
   .st-key-start_book button:hover { border-color: light-dark(rgba(60, 60, 67, 0.6), rgba(235, 235, 245, 0.5)) !important; }
 }
 .st-key-start_book button p { font-size: 0.875rem; color: var(--label); }
-.st-key-start_book button:active { background: var(--wash) !important; }
+.st-key-start_book button:active { background: var(--wash) !important; transition-duration: var(--t-press) !important; }
 
 /* an open book: its title row offers Close (the whole row closes it) */
 .bk-side { flex: none; display: flex; align-items: baseline; gap: 14px; }
 .bk-close { display: none; font-size: 13px; color: var(--label-2); }
 .bk-book[open] > summary .bk-close { display: inline; }
 /* the days not read wait behind one quiet line; opened, the whole fortnight shows in place */
-.bk-open:not(:has(> .bk-more[open])) .bk-days li.later { display: none; }
-.bk-days li.later { transition: opacity 240ms var(--ease), display 240ms allow-discrete; }
-@starting-style { .bk-open:has(> .bk-more[open]) .bk-days li.later { opacity: 0; } }
+.bk-open:not(:has(> .bk-more[open])) .bk-days li.later { display: none; block-size: 0; opacity: 0; padding-block: 0; }
+.bk-days li.later {
+  block-size: auto; overflow: clip;
+  transition: block-size 480ms var(--ease-layout), padding-block 480ms var(--ease-layout),
+              opacity 360ms var(--ease) 80ms, display 480ms allow-discrete;
+}
+@starting-style { .bk-open:has(> .bk-more[open]) .bk-days li.later { block-size: 0; opacity: 0; padding-block: 0; } }
 .bk-more > summary {
   display: flex; align-items: center; min-height: 44px; cursor: pointer; list-style: none;
   font-size: 0.8125rem; color: var(--label-2); border-top: 0.5px solid var(--bk-sep);
@@ -1155,11 +1183,6 @@ BOOKS = """
 .bk-more[open] .bk-more-hide { display: inline; }
 @media (prefers-reduced-motion: reduce) { .bk-days li.later { transition: none; } }
 
-/* Reading: its disclosures (14-day plan, More options) open with height and a soft fade */
-.stMainBlockContainer:has(.reading-page) [data-testid="stExpander"] details::details-content {
-  opacity: 0; transition: block-size 280ms var(--ease), opacity 220ms var(--ease), content-visibility 280ms allow-discrete;
-}
-.stMainBlockContainer:has(.reading-page) [data-testid="stExpander"] details[open]::details-content { opacity: 1; }
 /* Reading's chat box: a translucent material, clearly a surface to write
    on (what passes behind is blurred well away from the text), with a
    quiet ring when focused */
@@ -1168,7 +1191,7 @@ BOOKS = """
   -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
   box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12)),
               0 6px 20px -14px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.9));
-  transition: box-shadow 200ms var(--ease), background-color 200ms var(--ease);
+  transition: box-shadow 360ms var(--ease), background-color 360ms var(--ease);
 }
 .stMainBlockContainer:has(.reading-page) [data-testid="stChatInput"]:focus-within {
   background: light-dark(rgba(255, 255, 255, 0.74), rgba(34, 34, 36, 0.74)) !important;
@@ -1188,7 +1211,7 @@ BOOKS = """
 }
 @media (prefers-reduced-motion: reduce) {
   .bk-line.flowing .bk-seg.done::after { animation: none; }
-  .bk-book::details-content, .stMainBlockContainer:has(.reading-page) [data-testid="stExpander"] details::details-content { transition: none; }
+  .bk-book::details-content, .bk-book[open]::details-content { transition: none; }
   .st-key-start_book button, .stMainBlockContainer:has(.reading-page) [data-testid="stChatInput"] { transition: none !important; }
 }
 </style>
