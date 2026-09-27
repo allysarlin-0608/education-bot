@@ -221,6 +221,9 @@ def test_books_round_trip_and_replace():
     log = store.load()
     book = books.new_book(date(2026, 9, 23))
     book["title"] = "原子習慣"
+    book["chapters"] = [f"Chapter {k}" for k in range(1, 21)]
+    book["chapter_count"] = 20
+    book["plan"] = books.allocate(20)
     log["books"].append(book)
     store.save_book(log, book)
     book["status"] = "reading"

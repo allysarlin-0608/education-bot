@@ -311,11 +311,58 @@ def new_book(today: date) -> dict:
     }
 
 
+STATUSES = ("setup", "planning", "reading", "finished", "switched")
+
+
+def _local_today() -> date:
+    """The learner's date (COACH_TIMEZONE, as ui.TIMEZONE), not the server's."""
+    import os
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    return datetime.now(ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))).date()
+
+
 def normalize_book(data):
-    if not isinstance(data, dict) or not data.get("id"):
+    """A stored or imported book with every field of the right type and the
+    plan consistent with the chapters; None if it can't be a book. (A backup
+    can hold anything; nothing built on a book may break.)"""
+    if not isinstance(data, dict) or not isinstance(data.get("id"), str) or not data["id"].strip():
         return None
-    book = new_book(date.today())
-    book.update({k: v for k, v in data.items() if k in book})
+    book = new_book(_local_today())
+    for key, default in book.items():
+        value = data.get(key, default)
+        if isinstance(default, bool) or not isinstance(value, type(default)) or isinstance(value, bool):
+            value = default
+        if isinstance(default, int) and not 0 <= value <= 100000:
+            value = default
+        book[key] = value
+    book["id"] = data["id"].strip()[:64]
+    if book["status"] not in STATUSES:
+        book["status"] = "setup"
+    book["chapters"] = [c if isinstance(c, str) else str(c) for c in book["chapters"]
+                        if isinstance(c, (str, int, float)) and not isinstance(c, bool)][:2000]
+    book["pending_toc"] = [t for t in book["pending_toc"] if isinstance(t, str)][:2000]
+    book["pending_numbers"] = [n if isinstance(n, int) and not isinstance(n, bool) else None
+                               for n in book["pending_numbers"]][:2000]
+    n = len(book["chapters"])
+    plan = book["plan"]
+    plan_ok = (isinstance(plan, list) and len(plan) == DAYS
+               and all(isinstance(day, list) and all(isinstance(c, int) and not isinstance(c, bool) and 1 <= c <= n
+                                                     for c in day) for day in plan))
+    if book["status"] in ("reading", "finished"):
+        if not n:
+            book["status"] = "setup"       # kept (nothing is thrown away), but not read without chapters
+            book["plan"] = []
+            return book
+        if not plan_ok:
+            book["plan"] = allocate(n)
+        book["chapter_count"] = n
+    elif not plan_ok:
+        book["plan"] = []
+    book["checks"] = {d: {"passed_on": c.get("passed_on") if isinstance(c.get("passed_on"), str) else "",
+                          "summary": c.get("summary") if isinstance(c.get("summary"), str) else ""}
+                      for d, c in book["checks"].items()
+                      if isinstance(d, str) and d.isdigit() and 1 <= int(d) <= DAYS and isinstance(c, dict)}
     return book
 
 

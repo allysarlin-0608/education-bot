@@ -129,15 +129,19 @@ def parse_log(data) -> dict:
             day = date.fromisoformat(str(e.get("date")))
         except ValueError:
             continue
+        number = e.get("session_number")
+        level = e.get("level") if isinstance(e.get("level"), str) else ""
         entry = {
             "date": day.isoformat(),
             "topic": e["topic"],
-            "session_number": e.get("session_number") or 0,
-            "level": LEGACY_LEVELS.get(e.get("level"), e.get("level") if e.get("level") in LEVELS else ""),
-            "completed": bool(e.get("completed")),
+            # every field its own type: a backup can hold anything
+            "session_number": number if isinstance(number, int) and not isinstance(number, bool)
+            and 0 < number < 100000 else 0,
+            "level": LEGACY_LEVELS.get(level, level if level in LEVELS else ""),
+            "completed": e.get("completed") is True,
         }
         for field in TEXT_FIELDS:
-            entry[field] = e.get(field) or ""
+            entry[field] = e.get(field) if isinstance(e.get(field), str) else ""
         entry["followups"] = parse_followups(e.get("followups"))
         entry["lessons"] = curriculum.parse_slots(e.get("lessons"))
         # One entry per (date, topic); a later duplicate wins.
