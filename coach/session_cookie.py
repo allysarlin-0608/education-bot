@@ -27,6 +27,13 @@ from streamlit.web.server.starlette.starlette_server_config import (
 from coach import ui
 
 
+# Written into every session this app makes. A cookie without it (e.g. one
+# left by Streamlit's own st.login, which uses the same cookie names) is not
+# one of ours and counts as no one signed in.
+MARK = "gnosis_session"
+MARK_VERSION = 1
+
+
 def app_url() -> str:
     """The app's public address, e.g. https://x.streamlit.app (APP_URL)."""
     return ui.get_setting("APP_URL").rstrip("/")
@@ -46,7 +53,7 @@ def routes_base() -> str:
 
 async def write(response: Response, person: dict, session: dict, **flags) -> None:
     """Signed-in: person (supa_auth.profile) and the Supabase session."""
-    payload = dict(person, origin=origin(), is_logged_in=True,
+    payload = dict(person, origin=origin(), is_logged_in=True, **{MARK: MARK_VERSION},
                    exp=int(session.get("expires_at") or 0), **flags)
     tokens = {"access_token": session["access_token"], "refresh_token": session["refresh_token"]}
     await _sa._set_auth_cookie(response, payload, tokens)
@@ -66,7 +73,8 @@ def read(request: Request):
         person, tokens = json.loads(raw_user), json.loads(raw_tokens)
     except (ValueError, UnicodeDecodeError):
         return None, None
-    if not person.get("is_logged_in") or person.get("origin") != origin() or not tokens.get("refresh_token"):
+    if (not person.get("is_logged_in") or person.get(MARK) != MARK_VERSION or person.get("origin") != origin()
+            or not tokens.get("refresh_token")):
         return None, None
     return person, tokens
 

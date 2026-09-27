@@ -199,3 +199,18 @@ def test_a_refused_email_link_says_so():
     assert resp.headers["location"].endswith("?auth_error=link")
     bogus = asyncio.run(routes._confirm(_request({}, query=b"token_hash=x&type=nonsense")))
     assert bogus.headers["location"].endswith("?auth_error=link")
+
+
+def test_a_cookie_left_by_st_login_is_not_a_session(monkeypatch):
+    """Streamlit's own st.login uses the same cookie names; its cookie (a
+    Google sub, an expired Google exp, no refresh token) must read as no one."""
+    import streamlit
+    from streamlit.web.server.starlette import starlette_auth_routes as sa
+    resp = Response()
+    old = {"sub": "108234234234", "email": "a@example.com", "exp": 1, "origin": APP, "is_logged_in": True}
+    asyncio.run(sa._set_auth_cookie(resp, old, {"id_token": "x", "access_token": "y"}))
+    assert session_cookie.read(_request(_cookies(resp))) == (None, None)
+    monkeypatch.setattr(streamlit, "user", dict(old))
+    assert auth.identity() is None
+    monkeypatch.setattr(streamlit, "user", dict(old, gnosis_session=1))
+    assert auth.identity()["sub"] == "108234234234"

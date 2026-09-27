@@ -20,7 +20,8 @@ def public(monkeypatch):
 
 
 def signed_in(monkeypatch, **user):
-    monkeypatch.setattr(streamlit, "user", {"is_logged_in": bool(user), **user})
+    """st.user as this app's session cookie makes it (marked as ours)."""
+    monkeypatch.setattr(streamlit, "user", {"is_logged_in": bool(user), "gnosis_session": 1, **user})
 
 
 def test_the_user_is_their_sub_never_their_email(public, monkeypatch):

@@ -73,10 +73,11 @@ def is_public() -> bool:
 def identity():
     """The signed-in person (st.user, from the session cookie), or None.
     Without a "sub" (their user id) there is no one signed in."""
+    from coach import session_cookie
     try:
         user = st.user
-        if not user.get("is_logged_in"):
-            return None
+        if not user.get("is_logged_in") or user.get(session_cookie.MARK) != session_cookie.MARK_VERSION:
+            return None          # no one, or a cookie this app didn't make (e.g. an old st.login one)
         sub = user.get("sub")
     except Exception:  # no [auth] configured: st.user has nothing
         return None
