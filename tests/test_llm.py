@@ -97,10 +97,22 @@ def test_empty_reply_is_an_error_not_a_blank_bubble(monkeypatch, waits):
         list(llm.stream_text(SYSTEM, MSGS, 500))
 
 
-def test_bad_json_is_friendly(monkeypatch, waits):
-    use(monkeypatch, FakeClient([types.SimpleNamespace(choices=[types.SimpleNamespace(
-        message=types.SimpleNamespace(content="不是 JSON"), finish_reason="stop")])]))
+def _json_reply(text):
+    return types.SimpleNamespace(choices=[types.SimpleNamespace(
+        message=types.SimpleNamespace(content=text), finish_reason="stop")])
+
+
+def test_bad_json_twice_is_friendly(monkeypatch, waits):
+    client = use(monkeypatch, FakeClient([_json_reply("不是 JSON"), _json_reply("still not JSON")]))
     assert llm.ask_json(SYSTEM, MSGS) == (None, llm.FAILED)
+    assert len(client.calls) == 2               # one automatic retry, then the friendly error
+
+
+def test_bad_json_once_is_retried_automatically(monkeypatch, waits):
+    """BUG-001: one unreadable reply is asked again once before any error shows."""
+    client = use(monkeypatch, FakeClient([_json_reply("prose, not JSON"), _json_reply('{"ok": 1}')]))
+    assert llm.ask_json(SYSTEM, MSGS) == ({"ok": 1}, None)
+    assert len(client.calls) == 2
 
 
 def test_every_request_sets_a_bounded_max_tokens_and_fits(monkeypatch, waits):

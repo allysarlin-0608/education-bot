@@ -21,8 +21,9 @@ except ImportError:
     GROQ_AVAILABLE = False
 
 MODEL_NAME = "openai/gpt-oss-120b"
-MAX_RETRIES = 3            # after the first attempt, on 429 / connection errors (up to ~45s)
+MAX_RETRIES = 3            # after the first attempt, on 429 / connection errors
 MAX_WAIT_SECONDS = 15.0    # cap on a single backoff wait
+
 
 NO_KEY = "No Groq API key yet. Add one in the sidebar first."
 BUSY = "The coach is busy right now. Wait a few seconds and try again."
@@ -34,6 +35,7 @@ logger = logging.getLogger("coach.llm")
 
 def _sleep(seconds):
     time.sleep(seconds)
+
 
 
 class CoachError(Exception):
@@ -175,20 +177,22 @@ def ask_json(system, messages, max_tokens=tokens.JSON_MAX_TOKENS):
     client = get_client()
     if client is None:
         return None, NO_KEY
-    try:
-        resp = _create(
-            client,
-            model=MODEL_NAME,
-            messages=_prepare(system, messages, max_tokens),
-            max_completion_tokens=max_tokens,
-            reasoning_effort="low",
-            response_format={"type": "json_object"},
-        )
-    except CoachError as e:
-        return None, str(e)
-    data = parse_json(resp.choices[0].message.content)
-    if data is None:
-        logger.error("groq returned unparseable JSON (finish_reason=%s): %.300r",
-                     resp.choices[0].finish_reason, resp.choices[0].message.content)
-        return None, FAILED
-    return data, None
+    prepared = _prepare(system, messages, max_tokens)
+    for attempt in range(2):          # an unreadable reply is asked for once more
+        try:
+            resp = _create(
+                client,
+                model=MODEL_NAME,
+                messages=prepared,
+                max_completion_tokens=max_tokens,
+                reasoning_effort="low",
+                response_format={"type": "json_object"},
+            )
+        except CoachError as e:
+            return None, str(e)
+        data = parse_json(resp.choices[0].message.content)
+        if data is not None:
+            return data, None
+        logger.error("groq returned unparseable JSON (attempt %d, finish_reason=%s): %.300r",
+                     attempt + 1, resp.choices[0].finish_reason, resp.choices[0].message.content)
+    return None, FAILED
