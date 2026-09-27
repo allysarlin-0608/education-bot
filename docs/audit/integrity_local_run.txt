@@ -1,0 +1,89 @@
+== TEST database checks, realistic data (expect all 0) ==
+check | problems | example
+accounts whose email is neither invited nor admin (info: invited earlier, since removed) | 0 | 
+ai_usage dated in the future | 0 | 
+ai_usage with negative counts | 0 | 
+anon role can use an app table | 0 | 
+app tables without row level security | 0 | 
+auth users without public.users row (never opened the app: info) | 0 | 
+books being read with a plan that is not 14 days | 0 | 
+books whose data.id differs from the row id | 0 | 
+books with an unknown status | 0 | 
+entries marked completed with a lesson not passed | 0 | 
+entries not completed although every lesson passed | 0 | 
+entries whose lessons is not a JSON array | 0 | 
+entries with an unknown level | 0 | 
+entries with an unknown topic | 0 | 
+entries with session_number < 1 | 0 | 
+entries with the same lesson number twice | 0 | 
+finished books without a finished_on date | 0 | 
+invites not in lower case | 0 | 
+learning_entries dated in the future (> today + 1, any time zone) | 0 | 
+lessons passed without a passing quiz score (>= 80) | 0 | 
+more than one book being read by the same person | 0 | 
+old functions still present (delete_user_data, 4-argument add_ai_usage) | 0 | 
+orphan ai_usage (no auth user) | 0 | 
+orphan learning_entries (no auth user) | 0 | 
+orphan public.users (no auth user) | 0 | 
+orphan reading_books (no auth user) | 0 | 
+orphan user_settings (no auth user) | 0 | 
+people with lessons but no finished setup | 0 | 
+quiz scores outside 0-100 | 0 | 
+settings with 0 or more than 3 subjects after setup | 0 | 
+settings with an unknown subject | 0 | 
+the same lesson number passed on two different days (same person, subject) | 0 | 
+
+== TEST database checks, with one broken row of each kind (expect them found) ==
+check | problems | example
+people with lessons but no finished setup | 2 | 5976a9b5-0815-409d-a653-595a0b2afa01
+accounts whose email is neither invited nor admin (info: invited earlier, since removed) | 1 | someone@example.com
+ai_usage with negative counts | 1 | 5976a9b5-0815-409d-a653-595a0b2afa01 2026-09-28
+auth users without public.users row (never opened the app: info) | 1 | someone@example.com
+books being read with a plan that is not 14 days | 1 | 5976a9b5-0815-409d-a653-595a0b2afa01 x1
+books whose data.id differs from the row id | 1 | 5976a9b5-0815-409d-a653-595a0b2afa01 x1
+entries marked completed with a lesson not passed | 1 | 5976a9b5-0815-409d-a653-595a0b2afa01 2026-08-09
+entries with the same lesson number twice | 1 | 5976a9b5-0815-409d-a653-595a0b2afa01 2026-08-08
+learning_entries dated in the future (> today + 1, any time zone) | 1 | 5976a9b5-0815-409d-a653-595a0b2afa01 2026-10-07
+lessons passed without a passing quiz score (>= 80) | 1 | 5976a9b5-0815-409d-a653-595a0b2afa01 2026-08-07 #4
+orphan learning_entries (no auth user) | 1 | fb05ad47-d421-4416-9e18-5893cdee324a 2026-08-19
+the same lesson number passed on two different days (same person, subject) | 1 | 5976a9b5-0815-409d-a653-595a0b2afa01 philosophy #4
+ai_usage dated in the future | 0 | 
+anon role can use an app table | 0 | 
+app tables without row level security | 0 | 
+books with an unknown status | 0 | 
+entries not completed although every lesson passed | 0 | 
+entries whose lessons is not a JSON array | 0 | 
+entries with an unknown level | 0 | 
+entries with an unknown topic | 0 | 
+entries with session_number < 1 | 0 | 
+finished books without a finished_on date | 0 | 
+invites not in lower case | 0 | 
+more than one book being read by the same person | 0 | 
+old functions still present (delete_user_data, 4-argument add_ai_usage) | 0 | 
+orphan ai_usage (no auth user) | 0 | 
+orphan public.users (no auth user) | 0 | 
+orphan reading_books (no auth user) | 0 | 
+orphan user_settings (no auth user) | 0 | 
+quiz scores outside 0-100 | 0 | 
+settings with 0 or more than 3 subjects after setup | 0 | 
+settings with an unknown subject | 0 | 
+
+== PERSONAL database checks, realistic data (expect all 0) ==
+check | problems | example
+anon or authenticated role can use an app table | 0 | 
+app tables without row level security | 0 | 
+books being read with a plan that is not 14 days | 0 | 
+books whose data.id differs from the row id | 0 | 
+books with an unknown status | 0 | 
+entries marked completed with a lesson not passed | 0 | 
+entries not completed although every lesson passed | 0 | 
+entries whose lessons is not a JSON array | 0 | 
+entries with an unknown level (old Chinese names are fine: 入門/中階/進階) | 0 | 
+entries with an unknown topic | 0 | 
+entries with session_number < 1 | 0 | 
+entries with the same lesson number twice | 0 | 
+learning_entries dated in the future (> today + 1) | 0 | 
+more than one book being read | 0 | 
+quiz scores outside 0-100 | 0 | 
+the same lesson number passed on two different days (same subject) | 0 | 
+
