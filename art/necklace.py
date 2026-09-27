@@ -2,31 +2,31 @@
 and rendered as a studio photograph of a real piece, floating on nothing.
 
 The design follows a reference photograph (a V necklace on a display bust):
-- two sides that come down from the neck and meet in a V, each a twisted
-  band of round brilliants set in two staggered rows, a marquise laid across
-  every gap between them, the stones growing larger toward the front;
-- at the V a round brilliant, a marquise hanging from it, and from that the
-  pear-shaped drop, point up: 30 x 16 mm, the piece's focus.
+- two sides that come down from the neck along one smooth curve each and
+  meet in a V: a continuous band of articulated modules, each a diagonal
+  pair of round brilliants leaning one way and a marquise leaning the other,
+  on its own gallery, hinged to the next (the reference's twisted band);
+- where they meet, a centre setting (a round ringed by eight melee), a
+  standing marquise, and the pear-shaped drop, point up: 36 x 20 mm, the
+  piece's focus.
 
 Units are millimetres. Every stone is a faceted solid (a round brilliant's
 table, star, bezel, upper and lower girdle and pavilion facets; the pear and
-the marquise are the same brilliant drawn out to their outline), diamond's
-index 2.417, and dispersion from one render per colour channel at that
-channel's index, only part of it kept (fire at the edges, never rainbow
-bands). Each stone sits in its own setting: a collet ring under the girdle
-and claws over its edge (a V claw at a point), all on a rail that runs the
-length of each side; jump rings join the V, the marquise and the drop.
-Platinum with roughness that varies across the surface and fine scratches.
+the marquise are the same brilliant drawn out to their outline), glass at
+diamond's index 2.417, roughness 0.01, rendered once per colour channel at
+the C, d and F lines (Abbe number 55). Each stone sits in its own collet with
+claws over its edge (a V claw at a point); jump rings join the centre, the
+marquise and the drop. Platinum, roughness about 0.12, barely varying.
 
-No ground, no shadow: the necklace hangs in a white light box with dark
-flags (the facets mirror them, which gives a diamond its contrast), a
-large softbox above, and the film is transparent, so the page is its
-background.
+No ground, no shadow: the necklace hangs in a dark studio lit by three large
+soft sources (key, fill, rim at 1 : 0.2 : 0.15) with black flags; the film
+and the glass are transparent, so the page's own dark field (style.py, the
+jewellery's "field") shows through the stones: transparent, and dark.
 
 Run with Blender's Python module (pip install bpy==4.2.0 numpy pillow, Python 3.11):
 
-    python art/necklace.py jewelry.png 1600 160
-    then: Image.open("jewelry.png").save("static/subjects/jewelry.webp", quality=86, method=6)
+    python art/necklace.py jewelry.png 1600 96
+    then: Image.open("jewelry.png").save("static/subjects/jewelry.webp", quality=88, method=6)
 
     python necklace.py OUT.png [height] [samples] [--mono] [--light]"""
 import math
@@ -262,13 +262,20 @@ def jump_ring(p, r, tube, axis):
 
 
 # ---------- the sides: articulated modules along one smooth V ----------
-# Each side is a cubic Bézier from the V up to the neck; a slight tipping of
-# the stones' faces follows the neck they would lie around.
+# Each side is a cubic Bézier from the centre up to the neck, its curve
+# tightening toward the centre; the stones' faces tip a little with the neck
+# they would lie around. Along it, one module repeats, each a small
+# construction of its own on a metal gallery, hinged to the next, and set so
+# the band reads as twisted, as the reference's does:
+#   a diagonal pair of rounds leaning one way (2.5 mm outside, 2.0 mm inside,
+#   half a step on), then a marquise (1.1 x 3.2 mm) leaning the other way.
+# Modules close up to one another; no two stones touch (checked when this was
+# drawn up); metal shows between them.
 NECK = 60.0
 
 
 def bezier(t, sx):
-    p0, p1, p2, p3 = Vector((0, 0, 0)), Vector((sx * 7, 5.5, 0)), Vector((sx * 27, 30, 0)), Vector((sx * 39, 76, 0))
+    p0, p1, p2, p3 = Vector((0, 0, 0)), Vector((sx * 8, 6.5, 0)), Vector((sx * 27, 31, 0)), Vector((sx * 39, 78, 0))
     q = (1 - t) ** 3 * p0 + 3 * (1 - t) ** 2 * t * p1 + 3 * (1 - t) * t ** 2 * p2 + t ** 3 * p3
     q.z = NECK * (math.cos(math.asin(min(abs(q.x) / (NECK + 8), 0.99))) - 1)       # curving back round the neck
     return q
@@ -279,17 +286,13 @@ def face_normal(p):
     return (n + Vector((0, 0.15, 0))).normalized()
 
 
-# one module (mm, in the band's own frame: x along it, y across it, the outside +y):
-# a principal round on the outside, a smaller round on the inside half a step on
-# (the two rows interlock, stone to stone), a small round in the inner notch, and
-# a marquise standing out of the outer notch, the band's leafy outer edge; checked
-# so no two stones touch
-MODULE = [("round", 1.0, 1.40, (0.0, 0.9), 0),
-          ("round", 1.0, 1.15, (2.15, -1.0), 0),
-          ("round", 1.0, 0.60, (0.0, -1.45), 0),
-          ("marquise", 2.8, 0.45, (2.15, 1.95), 80)]
-PITCH = 4.3
-SCALE = 1.45   # the band about a third of the drop's width, as in the reference
+MODULE = [("round", 1.25, (0.0, 1.05), 0),                 # (shape, half-width, place in the band, lean)
+          ("round", 1.0, (1.25, -1.2), 0),
+          ("marquise", 0.55, (2.85, 0.2), -55)]
+PITCH = 4.6
+BASE = 1.35                                                  # the band at the front about a third of the drop's width
+MQ_RATIO = 1.6 / 0.55
+
 
 for sx in (-1, 1):
     ts = [i / 3000 for i in range(3001)]
@@ -302,47 +305,55 @@ for sx in (-1, 1):
         i = min(range(len(lens)), key=lambda k: abs(lens[k] - dist))
         return line[i], (line[min(i + 1, len(line) - 1)] - line[max(i - 1, 0)]).normalized()
 
-    # the hinge rail under the modules, visible between them
-    wire([line[i] + face_normal(line[i]) * -1.6 for i in range(0, len(line), 60)], 0.45)
-    dist, k, prev = 7.0, 0, None
-    while dist < lens[-1] - 2:
-        g = SCALE * (1.0 - 0.3 * min(1.0, dist / 95))         # modules grow toward the front
-        p, t = at(dist)
+    # the modules, from beside the centre setting up to the neck, a little smaller as they go
+    dist, k, prev = 4.2, 0, None
+    while True:
+        g = BASE * (1.0 - 0.25 * min(1.0, dist / 100))
+        if dist + PITCH * g > lens[-1] - 1:
+            break
+        p, t = at(dist + 1.4 * g)
         n = face_normal(p)
-        b = n.cross(t).normalized() * sx                      # across the band, the outside +
-        turn = math.radians(7 if k % 2 else -5)               # each module sits a little differently
+        t = (t - n * t.dot(n)).normalized()
+        b = n.cross(t).normalized() * sx                     # across the band, the outside +
+        turn = math.radians(rng.uniform(-3, 3))              # each module set by hand, a little differently
         t2 = (t * math.cos(turn) + b * math.sin(turn)).normalized()
         b2 = n.cross(t2).normalized() * sx
-        for shape, lh, hw, (u, v), ang in MODULE:
-            pos = p + (t2 * u + b2 * v) * g + n * 0.12
+        for shape, hw, (u, v), lean in MODULE:
+            pos = p + (t2 * (u - 1.4) + b2 * v) * g + n * 0.12 * g
             if shape == "round":
                 place("round", 1.0, hw * g * rng.uniform(0.97, 1.03), pos, n, t2)
             else:
-                a = math.radians(ang)
+                a = math.radians(lean)
                 axis = (t2 * math.cos(a) + b2 * math.sin(a)).normalized()
-                place("marquise", lh, hw * g, pos + n * 0.1, n, axis)
-        # the module's hinge to the last one, under the stones
-        here = p + n * -1.1
+                place("marquise", MQ_RATIO, hw * g, pos + n * 0.08 * g, n, axis)
+        # the module's gallery bar under its stones, hinged to the last
+        here = p - n * 0.9 * g
+        wire([p + (t2 * -1.4 + b2 * 0.5) * g - n * 0.7 * g, here, p + (t2 * 1.5 - b2 * 0.3) * g - n * 0.7 * g], 0.3 * g)
         if prev is not None:
-            wire([prev, (prev + here) / 2 + n * -0.3, here], 0.4 * g)
+            wire([prev, (prev + here) / 2 - n * 0.25 * g, here], 0.26 * g)
         prev = here
         dist += PITCH * g
         k += 1
 
-# ---------- the centre: the two sides gather to a round, then the marquise, then the drop ----------
+# ---------- the centre: a larger cluster where the sides meet, a vertical marquise, the drop ----------
 front = Vector((0, 0.1, 1)).normalized()
-place("round", 1.0, 2.0, Vector((0, 1.0, 0.5)), front, Vector((0, 1, 0)))
-for sx in (-1, 1):                                            # small pears leading each side in
-    place("pear", 1.9, 0.9, Vector((sx * 3.4, 2.6, 0.3)), front, Vector((sx * 0.8, 0.6, 0)).normalized())
-MQ_W, MQ_LH = 2.3, 2.3                                        # 4.6 x 10.6 mm
-place("marquise", MQ_LH, MQ_W, Vector((0, -1.6 - MQ_W * MQ_LH, 0.2)), front, Vector((0, 1, 0)))
-jump_ring(Vector((0, -1.3, -0.3)), 0.8, 0.26, Vector((1, 0, 0)))
-ring_y = -1.6 - 2 * MQ_W * MQ_LH - 0.9
-jump_ring(Vector((0, ring_y, -0.3)), 1.1, 0.32, Vector((1, 0, 0)))
+up = Vector((0, 1, 0))
+CENTRE = Vector((0, 2.2, 0.4))
+place("round", 1.0, 1.9, CENTRE + front * 0.2, front, up)                  # 3.8 mm
+for k in range(8):                                                        # ringed by eight melee
+    a = math.pi / 8 + math.pi / 4 * k
+    place("round", 1.0, 0.62, CENTRE + Vector((math.cos(a), math.sin(a), 0)) * 2.75, front, up)
+wire([CENTRE + Vector((math.cos(2 * math.pi * k / 40), math.sin(2 * math.pi * k / 40), -1.1)) * 1 * 2.6
+      for k in range(40)], 0.2, closed=True)
+MQ_W, MQ_LH = 1.7, 2.3                                                    # the connector: 3.4 x 7.8 mm, standing
+mq_top = CENTRE.y - 3.5 - 0.6
+place("marquise", MQ_LH, MQ_W, Vector((0, mq_top - MQ_W * MQ_LH, 0.2)), front, up)
+jump_ring(Vector((0, CENTRE.y - 3.5, -0.4)), 0.7, 0.24, Vector((1, 0, 0)))
+ring_y = mq_top - 2 * MQ_W * MQ_LH - 0.8
+jump_ring(Vector((0, ring_y, -0.4)), 1.1, 0.32, Vector((1, 0, 0)))
 # the drop: 20 mm across, 36 mm long, point up
 PEAR_W, PEAR_LH = 10.0, 2.6
-place("pear", PEAR_LH, PEAR_W, Vector((0, ring_y - 1.0 - PEAR_LH * PEAR_W, 0.0)), Vector((0, -0.02, 1)).normalized(),
-      Vector((0, 1, 0)))
+place("pear", PEAR_LH, PEAR_W, Vector((0, ring_y - 1.0 - PEAR_LH * PEAR_W, 0.0)), Vector((0, -0.02, 1)).normalized(), up)
 
 # ---------- the studio: dark, lit by three large soft sources ----------
 # The film is transparent and so is the glass where it shows only the dark

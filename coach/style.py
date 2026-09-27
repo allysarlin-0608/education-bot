@@ -1897,9 +1897,16 @@ WORLDS = """
 .is-cut { background-size: contain !important; background-repeat: no-repeat !important; border-radius: 0 !important;
   -webkit-mask-image: none !important; mask-image: none !important; filter: none !important; }
 :root[data-scheme="dark"] .is-cut { filter: brightness(0.92) !important; }
-/* an object photographed for each theme: the dark one on the dark page, the light one on the light page */
-.is-themed { background-image: var(--img-light) !important; }
-:root[data-scheme="dark"] .is-themed { background-image: var(--img-dark) !important; filter: none !important; }
+/* a dark field: a subject whose object needs darkness to be seen (a transparent
+   stone) is shown on near-black in either theme, its words set light on it */
+.field-dark, .sg-layer[data-field="dark"], [class*="st-key-world_"][class*="_field"] {
+  --label: #F2F2F2; --label-2: rgba(242, 242, 242, 0.72); --label-3: rgba(242, 242, 242, 0.5); --env: #070707;
+  background: #070707; color: var(--label); color-scheme: dark; }
+.sg-layer[data-field="dark"] .is-cut, [class*="st-key-world_"][class*="_field"] .is-cut { filter: none !important; }
+[class*="st-key-world_"][class*="_field"] { padding: clamp(24px, 4vw, 56px) !important; border-radius: 22px; corner-shape: superellipse(1.6); }
+@media (min-width: 900px) { .sg-layer[data-field="dark"] { padding: clamp(20px, 2.6vw, 36px); border-radius: 22px; corner-shape: superellipse(1.6); } }
+@media (max-width: 899px) { [class*="st-key-world_"][class*="_field"] { padding: 20px 16px !important; margin: 0 -16px; border-radius: 0;
+  width: calc(100% + 32px) !important; max-width: none !important; } }
 
 .w-object.is-cut { background-position: 35% bottom !important; }
 .w-thumb.is-cut, .ob-obj.is-cut { background-color: var(--wash) !important; background-size: auto 86% !important; background-position: center !important; }
@@ -1920,7 +1927,8 @@ WORLDS = """
   [class*="st-key-w_sec_"] { display: flex !important; flex-direction: column; }
   /* on a narrow page the object stands to the right of the words */
   .sg-art.is-cut { inset: 12px 16px 12px 48%; background-position: right center !important; }
-  .sg-art.is-cut[data-layout="pendant"] { inset: 0 16px 0 50%; background-position: right top !important; }
+  /* a necklace in the narrow band: its centre and drop, large enough to read as a necklace, not a speck */
+  .sg-art.is-cut[data-layout="pendant"] { inset: 0 4px 0 60%; background-size: auto 150% !important; background-position: 50% 96% !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .w-kicker, .stApp .w-title, .w-about, .w-meta, .st-key-w_actions { animation: none; }
