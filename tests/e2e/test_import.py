@@ -40,7 +40,7 @@ def entries_of(app, email):
 
 
 def test_download_backup_has_my_lesson(public_app, pages, tmp_path):
-    covers("W-records-download_a_backup")
+    covers("W-records-download_a_backup", "W-records-backup_and_restore")
     app = public_app
     p = setup_with_a_lesson(app, pages, "dl")
     open_backup(p, app)

@@ -13,7 +13,8 @@ _n = itertools.count()
 def fresh(app, pages, width=1440, **kw):
     """A new person, set up, on Today."""
     p = pages(width=width, **kw)
-    flows.sign_in(p, app, email=f"ai{next(_n)}-{int(time.time() * 1000)}@example.com")
+    p.email = f"ai{next(_n)}-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=p.email)
     flows.onboard(p)
     flows.open_app(p, app)
     app.set_llm()
@@ -174,3 +175,15 @@ def test_lesson_text_has_no_raw_markers(public_app, pages):
     text = p.page.evaluate("document.body.innerText")
     for bad in ("【", "】", "**", "##", "|---"):
         assert bad not in text, f"raw {bad!r} in the lesson as shown"
+
+
+def test_every_ai_call_is_counted_for_the_person(public_app, pages):
+    covers("D-quota-add_usage")
+    app = public_app
+    p = fresh(app, pages)
+    flows.start_lesson(p)
+    d = app.get("/__dump")
+    uid = next(u["id"] for u in d["users"] if u["email"] == p.email)
+    mine = [r for r in d["tables"].get("ai_usage", []) if r["user_id"] == uid]
+    assert len(mine) == 1, mine
+    assert mine[0]["request_count"] == len(app.calls()) and mine[0]["token_count"] >= 1
