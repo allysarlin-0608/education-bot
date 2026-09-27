@@ -211,7 +211,7 @@ if auth.is_public():
             st.html(f'<p class="ob-note">Couldn\'t gather your data ({escape(str(e))}). Refresh in a moment.</p>')
         with st.container(key="data_actions", horizontal=True, vertical_alignment="center"):
             if mine is not None:
-                st.download_button("Download my data", mine, file_name="daily-learning-coach-data.json",
+                st.download_button("Download my data", mine, file_name="gnosis-data.json",
                                    mime="application/json", key="data_download")
             st.button("Delete my account", key="data_delete", type="tertiary", on_click=ask_delete)
         if st.session_state.get("del_open"):

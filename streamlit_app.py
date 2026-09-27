@@ -3,7 +3,7 @@ import streamlit as st
 from coach import auth, settings, sidebar, style, topnav, ui
 
 st.set_page_config(
-    page_title="Daily Learning Coach",
+    page_title="GNOSIS",
     page_icon=":material/school:",
     layout="centered",
     initial_sidebar_state="auto",   # collapsed on phones, so it never covers the page

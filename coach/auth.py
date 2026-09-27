@@ -79,7 +79,7 @@ def login_page() -> None:
     """Title, one line, one button; st.login() does the rest (Google)."""
     attempted = bool(st.context.cookies.get(ATTEMPT_COOKIE))
     with st.container(key="signin"):
-        st.html('<p class="si-title">Daily Learning Coach</p><p class="si-lede">Learn a little every day.</p>')
+        st.html('<p class="si-title">GNOSIS</p><p class="si-lede">Learn a little every day.</p>')
         if attempted:
             st.html(f'<p class="si-note" role="alert">{html.escape(SIGNIN_FAILED)}</p>')
             _clear_attempt()
@@ -98,7 +98,7 @@ def login_page() -> None:
 
 def invite_only_page() -> None:
     with st.container(key="signin"):
-        st.html('<p class="si-title">Daily Learning Coach</p>'
+        st.html('<p class="si-title">GNOSIS</p>'
                 f'<p class="si-lede">{html.escape(INVITE_ONLY)}</p>')
         if st.button("Sign out", key="signin_out"):
             st.logout()

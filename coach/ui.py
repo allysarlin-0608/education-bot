@@ -38,7 +38,7 @@ def require_password():
     except Exception:
         pass
     expected = get_setting("APP_PASSWORD")
-    st.markdown("### Daily Learning Coach")
+    st.markdown("### GNOSIS")
     if not expected:
         st.error(PASSWORD_MISSING)
         st.stop()

@@ -10,9 +10,9 @@
 
 ## 1. Google Cloud Console：建專案、設同意畫面
 
-1. 到 https://console.cloud.google.com/ ，最上方專案選單 → **New project**，名字例如 `daily-learning-coach-test` → **Create**，建好後切到這個專案。
+1. 到 https://console.cloud.google.com/ ，最上方專案選單 → **New project**，名字例如 `GNOSIS`（只有你看得到） → **Create**，建好後切到這個專案。
 2. 左側選單 → **APIs & Services → OAuth consent screen**（新版介面叫 **Google Auth Platform**），按 **Get started**：
-   - App name：`Daily Learning Coach`
+   - App name：`GNOSIS`（測試者登入時會看到）
    - User support email：你的 Gmail
    - Audience：**External**
    - Contact information：你的 Gmail
