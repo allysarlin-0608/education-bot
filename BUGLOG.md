@@ -16,7 +16,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-006 | P0 | Progress / import, and every page reading records | A backup with a field of the wrong type crashed the page | fixed (cb7ed7d) |
 | BUG-007 | P2 | Progress / Backup and restore (import) | A file that isn't a backup showed a raw parser error | fixed (7b62327) |
 | BUG-008 | P1 | Progress / Backup and restore (import) | Any size of file was read into memory on import | fixed (d58ade9) |
-| BUG-009 | P1 | Today / lesson and chat | Leaving while a lesson streamed left a lesson-less day with the quiz offered | fixed |
+| BUG-009 | P1 | Today / lesson and chat | Leaving while a lesson streamed left a lesson-less day with the quiz offered | fixed (aadd4a9) |
 
 ## Details
 
@@ -108,7 +108,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-009 (P1) — Leaving while a lesson streamed left a lesson-less day with the quiz offered
 - **Page / flow:** Today / lesson and chat
-- **Status:** fixed
+- **Status:** fixed (aadd4a9)
 - **Steps to reproduce:** Start this lesson → while the text is still streaming, click Progress → back to Today
 - **Expected:** The lesson is either complete or can be started again (1.3 no lost state)
 - **Actual:** No lesson text, no Start button; Take the quiz offered on an empty lesson for the rest of the session
