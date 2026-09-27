@@ -84,7 +84,7 @@ def set_up(p, title="The Test Book", author="A. Writer", chapters=5, pages_=200,
 
 
 def test_set_up_adjust_confirm_and_read_day_one(public_app, pages):
-    covers("W-reading-placeholder_book", "W-reading-start_book", "W-reading-adjust_a_day_yourself",
+    covers("W-reading-placeholder_book", "W-reading-start_book", "W-reading-adjust_a_day_yourself", "W-reading-adjust_open",
            "W-reading-adjust_day", "W-reading-lighter_move_its_last_chapter_to_day",
            "W-reading-heavier_bring_over_day_s_first_chapter", "W-reading-confirm_the_plan", "W-reading-14_day_plan",
            "W-reading-i_ve_finished_today_s_reading", "AI-reading-ask_json", "D-reading-save_book",
