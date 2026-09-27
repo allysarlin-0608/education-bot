@@ -411,7 +411,8 @@ class SupabaseStore(_Scope):
         if resp.status_code >= 400:
             logger.error("supabase %s %s -> %s: %s", method, table, resp.status_code, resp.text[:500])
             if resp.status_code == 401 and self.access_token is not None:
-                raise StorageError("your session has ended; refresh the page to continue", status=401)
+                raise StorageError("your session has ended; refresh the page to continue", status=401,
+                                   detail=resp.text[:300])
             raise StorageError("the database isn't responding right now", status=resp.status_code, detail=resp.text[:500])
         return resp
 

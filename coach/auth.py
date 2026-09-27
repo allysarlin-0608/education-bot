@@ -18,6 +18,7 @@ that person (their access token), so row level security applies.
 get_current_user_id() is the one answer to "whose data is this?"; storage.py
 asks it on every call."""
 import html
+import logging
 import json
 import re
 import time
@@ -25,6 +26,8 @@ import time
 import streamlit as st
 
 from coach import ui
+
+logger = logging.getLogger("coach.auth")
 
 PERSONAL, PUBLIC = "personal", "public"
 MIN_PASSWORD = 7
@@ -166,14 +169,22 @@ def _take_note() -> None:
             del st.query_params[key]
 
 
-def _reload_for_fresh_session() -> None:
-    """The access token is about to expire: reload the page so the server
-    renews the session (routes.RefreshSession). Once a minute at most."""
-    last = st.session_state.get("auth_reloaded_at", 0)
-    if time.time() - last < 60:
-        return
-    st.session_state.auth_reloaded_at = time.time()
-    st.html("<script>(window.top || window).location.reload();</script>", unsafe_allow_javascript=True)
+def _reload_for_fresh_session(why: str) -> None:
+    """The access token is about to expire (or was refused): reload the page
+    so the server renews the session (routes.RefreshSession) — at most once a
+    minute per browser tab (remembered in the tab, since a reload starts a new
+    session here). If that didn't help, say so, with a way out, instead of
+    reloading again."""
+    logger.warning("session needs renewing (%s); reloading the page once", why)
+    st.html("<script>(function(){const w=window.top||window;let t=0;"
+            "try{t=+w.sessionStorage.getItem('gnRenewAt')||0}catch(e){}"
+            "if(Date.now()-t>60000){try{w.sessionStorage.setItem('gnRenewAt',String(Date.now()))}catch(e){}"
+            "w.location.reload();}})();</script>", unsafe_allow_javascript=True)
+    with st.container(key="signin"):
+        st.html('<p class="si-title">GNOSIS</p>'
+                '<p class="si-lede">Your session needs to be renewed. If this page doesn\'t refresh by itself, '
+                'sign out and sign in again.</p>')
+        _raw(f'<a class="si-plain" href="{html.escape(signout_url())}">Sign out</a>')
     st.stop()
 
 
@@ -441,7 +452,7 @@ def gate(store) -> None:
     if who is None:
         login_page()
     if who["exp"] and who["exp"] - time.time() < 120:
-        _reload_for_fresh_session()
+        _reload_for_fresh_session(f"expires in {int(who['exp'] - time.time())} s")
     if who["recovery"]:
         reset_password_page(who)
     note = st.session_state.pop("auth_note", None)
@@ -454,7 +465,7 @@ def gate(store) -> None:
         allowed = is_admin() or store.is_invited(who["email"])
     except storage.StorageError as e:
         if e.status == 401:
-            _reload_for_fresh_session()
+            _reload_for_fresh_session(f"the database refused the session: {e.detail[:200]}")
         st.error(f"Couldn't check your invitation ({e}). Refresh the page in a moment to try again.")
         st.stop()
     if not allowed:
