@@ -12,6 +12,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-002 | P1 | All AI actions | No overall time limit: a hung or rate-limited request could keep the person waiting minutes | fixed (0e3f046) |
 | BUG-003 | P0 | Today / sidebar (API key box) | The Groq key box could put the server's secret key into the page, and appeared in public mode | fixed (add6ad2) |
 | BUG-004 | P3 | Reading (books from storage) | normalize_book fills missing dates with the server's date, not the learner's | open |
+| BUG-005 | P0 | Progress / Backup and restore (import) | A failed import deleted the existing records | fixed (ed7b280) |
 
 ## Details
 
@@ -56,3 +57,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** The box never shows a stored key (value empty); only a personal app shows it; with groq missing it shows only the note
 - **Files changed:** views/daily.py, tests/test_app_password.py
 - **Covered by:** tests/test_app_password.py::test_the_server_key_never_reaches_the_page
+
+### BUG-005 (P0) — A failed import deleted the existing records
+- **Page / flow:** Progress / Backup and restore (import)
+- **Status:** fixed (ed7b280)
+- **Steps to reproduce:** Progress → Backup and restore → import a backup while the database write fails (fake: /__fail POST learning_entries)
+- **Expected:** Existing records kept; the failure reported (criterion 1.4 atomic writes)
+- **Actual:** All existing learning_entries rows deleted
+- **Root cause:** SupabaseStore.replace: DELETE all, then upsert
+- **Fix:** Upsert first, then delete only the rows not in the backup, one by one
+- **Files changed:** coach/storage.py, tests/test_storage.py
+- **Covered by:** tests/test_storage.py::test_replace_writes_before_it_removes, tests/e2e/test_import.py::test_a_failed_import_keeps_the_records
