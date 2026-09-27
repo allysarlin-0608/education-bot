@@ -7,10 +7,10 @@ a 2D blueprint (art/necklace_blueprint.json: each side's centreline and band
 width with stations along it, the V, the stem to the bail, the drop's
 outline), checked by overlaying it on the photograph; this script builds on
 that blueprint in the plane the camera looks at square on, so the render lies
-on the photograph's necklace. Along each side, two staggered rows of
-individually set round brilliants twisting down the band, a small stone in
-each notch at the edges, a pear or a marquise across the band every fifth; at
-the V a round, then a pear point up to the bail; the drop as traced, twice as
+on the photograph's necklace. Along each side, princess-cut (square)
+diamonds two abreast, each on its own collet with claws at its corners, their
+edges square to the traced line, each turned a degree or two its own way; at
+the V a princess set on its point, then a pear point up to the bail; the drop as traced, twice as
 long as it is wide, widest at 64%.
 
 Units are millimetres. Every stone is a faceted solid (a round brilliant's
@@ -33,7 +33,7 @@ Run with Blender's Python module (pip install bpy==4.2.0 numpy pillow, Python 3.
     python art/necklace.py jewelry-light.png 1600 96 --light
     then: Image.open("jewelry.png").save("static/subjects/jewelry.webp", quality=88, method=6)
 
-    python necklace.py OUT.png [height] [samples] [--mono] [--light]"""
+    python necklace.py OUT.png [height] [samples] [--mono] [--light] [--backdrop GREY]"""
 import math
 import random
 import sys
@@ -95,7 +95,11 @@ ml.new(bump.outputs["Normal"], pb.inputs["Normal"])
 # ---------- the cuts ----------
 def brilliant_points():
     """A round brilliant of radius 1 (diameter 2), table up: 57% table, 15% crown,
-    43% pavilion, a thin girdle; its facets are the convex hull of these points."""
+    43% pavilion, a thin girdle; its facets are the convex hull of these points.
+    Cut plainly: sixteen girdle points and no lower-girdle facets, so each facet
+    is large enough to carry one clean reflection (a table, eight stars, eight
+    bezels and sixteen upper-girdle facets above; sixteen long pavilion facets
+    below), not a mosaic."""
     pts = []
     rt = 0.57 / math.cos(math.radians(22.5))
     for k in range(8):                                       # the table
@@ -104,13 +108,9 @@ def brilliant_points():
     for k in range(8):                                       # the star facets' points
         a = math.radians(45 * k + 22.5)
         pts.append((0.79 * math.cos(a), 0.79 * math.sin(a), 0.178))
-    for k in range(32):                                      # the girdle, both edges
-        a = math.radians(11.25 * k)
+    for k in range(16):                                      # the girdle, both edges
+        a = math.radians(22.5 * k)
         pts += [(math.cos(a), math.sin(a), 0.02), (math.cos(a), math.sin(a), -0.02)]
-    for k in range(8):                                       # the lower girdle facets' points
-        a = math.radians(45 * k + 22.5)
-        r = 0.23
-        pts.append((r * math.cos(a), r * math.sin(a), -0.02 - (1 - r) * 0.86 + 0.012))
     pts.append((0, 0, -0.88))                                # the culet
     return pts
 
@@ -126,6 +126,8 @@ def vesica(ux, uy, lh):
 def outline(shape, lh):
     if shape == "round":
         return lambda ux, uy: 1.0
+    if shape == "square":           # a princess cut: square, its corners barely softened (a superellipse, p = 12)
+        return lambda ux, uy: (abs(ux) ** 12 + abs(uy) ** 12) ** (-1 / 12)
     if shape == "marquise":
         return lambda ux, uy: vesica(ux, uy, lh)
     if shape == "pear2":            # the reference's drop: point up, its lower part a half-ellipse (widest at 55%)
@@ -137,10 +139,47 @@ def outline(shape, lh):
 PEAR_LOW = 1.62
 
 
+def princess_points():
+    """A princess cut, half-width 1: a square table (70%), a crown of two steps,
+    a thin girdle with its corners barely chamfered, and a pavilion of one row
+    of chevrons (a square ring crossed by one turned 45 degrees) down to a
+    culet; 73% deep. Few facets, each large: a square stone reads as square,
+    a table and a few bright and dark planes."""
+    pts = []
+
+    def sq(h, z, c=0.0):
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                pts.extend([(sx * (h - c), sy * h, z), (sx * h, sy * (h - c), z)] if c else [(sx * h, sy * h, z)])
+
+    def mid(h, z):
+        pts.extend([(h, 0, z), (-h, 0, z), (0, h, z), (0, -h, z)])
+
+    sq(0.70, 0.17)                                  # the table
+    sq(0.86, 0.10, 0.03)                            # the crown's step
+    sq(1.0, 0.012, 0.05)                            # the girdle, both edges
+    sq(1.0, -0.012, 0.05)
+    mid(0.98, 0.10)                                 # the crown's kite facets, from the sides' middles
+    sq(0.55, -0.36, 0.03)                           # the pavilion: one square ring...
+    mid(0.62, -0.34)                                # ...crossed by one turned 45 degrees: a single row of chevrons
+    pts.append((0, 0, -0.73))                       # the culet
+    return pts
+
+
 def stone_mesh(shape="round", lh=1.0):
-    """A cut as a mesh: the brilliant drawn out to its outline, then its hull."""
+    """A cut as a mesh: its points, then their hull (a round brilliant drawn out
+    to its outline for the round, pear and marquise; the princess its own)."""
     f = outline(shape, lh)
     bm = bmesh.new()
+    if shape == "square":
+        for p in princess_points():
+            bm.verts.new(p)
+        bmesh.ops.convex_hull(bm, input=bm.verts)
+        bmesh.ops.dissolve_limit(bm, angle_limit=math.radians(0.6), verts=bm.verts, edges=bm.edges)
+        me = bpy.data.meshes.new("princess")
+        bm.to_mesh(me)
+        me.materials.append(gem)
+        return me
     for x, y, z in brilliant_points():
         r = math.hypot(x, y)
         s = f(x / r, y / r) if r > 1e-9 else 1.0
@@ -299,41 +338,46 @@ def place_melee(p, r):
     place("round", 1.0, r, p, tilt, Vector((math.cos(rng.uniform(0, 6.3)), math.sin(rng.uniform(0, 6.3)), 0)))
 
 
-# ---------- the sides: two staggered rows of individually set stones, twisting ----------
-# At each station (every 0.42 band-widths along the traced line) one stone,
-# alternately on the band's outer and inner half: two rows of round brilliants,
-# each a little over half the band wide, interlocking, a small stone in each
-# notch between them on the edges; every fifth, a pear or a marquise
-# laid across the band, as the reference's twist has them. The band's own
-# width, as traced, makes them larger toward the centre.
+# ---------- the sides: square diamonds, two abreast, along the traced line ----------
+# At each station (every 0.42 band-widths along the traced line) a pair of
+# princess-cut diamonds side by side across the band, each 0.38 of its width
+# (a fine gap to the next every way), their edges square to the line; every other pair shifted a touch
+# along and across, and every stone turned a degree or two its own way, as a
+# setter leaves them (the band reads as square stones, never as a ruled grid).
+# The band's own width, as traced, makes them larger toward the centre.
+def place_square(p, side_len, along):
+    turn = math.radians(rng.uniform(-3, 3))
+    tilt = Vector((rng.uniform(-0.08, 0.08), rng.uniform(-0.08, 0.08), 1)).normalized()
+    up = (along * math.cos(turn) + FACE.cross(along) * math.sin(turn)).normalized()
+    place("square", 1.0, side_len / 2, p, tilt, up)
+
+
 for i, (side_, x, y, ang, w) in enumerate(BP["stations"]):
     ax = Vector((math.cos(ang), -math.sin(ang), 0))          # along the band (image y is down)
     ac = Vector((-ax.y, ax.x, 0))                             # across it
     k = i if side_ == "L" else i - sum(1 for s_ in BP["stations"] if s_[0] == "L")
-    row = 1 if k % 2 == 0 else -1
-    c = to_mm(x, y) + ac * row * w * MM * 0.22
-    d = w * MM * rng.uniform(0.52, 0.58)                      # a stone's diameter
-    # a small stone in the notch on the other row's side, between this stone and the last
-    place_melee(to_mm(x, y) - ac * row * w * MM * 0.36 - ax * w * MM * 0.2 + FACE * 0.02, w * MM * 0.11)
-    if k % 5 == 3:
-        lean = math.radians(rng.uniform(35, 55)) * row
-        axis = (ax * math.cos(lean) + ac * math.sin(lean)).normalized()
-        shape = "pear" if k % 10 == 3 else "marquise"
-        place(shape, 1.9, d * 0.34, c + FACE * 0.05, FACE, axis)
-    else:
-        place_melee(c, d / 2)
+    shift = (0.04 if k % 2 else -0.04) * w * MM
+    for row in (1, -1):
+        c = to_mm(x, y) + ac * (row * 0.205 * w * MM + shift * 0.5) + ax * shift
+        place_square(c, w * MM * rng.uniform(0.37, 0.39), ax)     # 0.42 w apart along, 0.41 w across: fine gaps between
 # the gallery under each side: a wire along the traced line, the collets sitting on it
 for key in "LR":
     ss = [s_ for s_ in BP["stations"] if s_[0] == key]
-    wire([to_mm(x, y, -0.9) for _, x, y, _, _ in ss[::2]], max(0.25, ss[0][4] * MM * 0.08))
+    for row in (1, -1):
+        pts = []
+        for _, x, y, ang, w in ss[::2]:
+            ax = Vector((math.cos(ang), -math.sin(ang), 0))
+            pts.append(to_mm(x, y, -0.9) + Vector((-ax.y, ax.x, 0)) * row * 0.205 * w * MM)
+        wire(pts, max(0.18, ss[0][4] * MM * 0.05))
 
 # ---------- the centre, as traced: the V, a pear point up, the bail ----------
 STEM = BP["stem"]
 cx = sum((a_ + b_) / 2 for _, a_, b_ in STEM) / len(STEM)
 v_y, bail_y = BP["v_y"], BP["bail_y"]
-# where the rows meet, a round closes the V
+# where the rows meet, a square diamond closes the V, set on its point
 w_v = STEM[0][2] - STEM[0][1]
-place_melee(to_mm(cx, v_y + w_v * 0.3, 0.05), w_v * MM * 0.3)
+place("square", 1.0, w_v * MM * 0.24, to_mm(cx, v_y + w_v * 0.32, 0.05), FACE,
+      Vector((math.cos(math.pi / 4), math.sin(math.pi / 4), 0)))
 # the connecting pear, point up, filling the traced stem below it
 sw = max(b_ - a_ for y_, a_, b_ in STEM if y_ > v_y + (bail_y - v_y) * 0.3)
 p_top, p_bot = v_y + (bail_y - v_y) * 0.32, bail_y - 4
@@ -424,16 +468,19 @@ def softbox(el0, el1, az, half, power, dist=2000.0):
     o.visible_shadow = False
 
 
-# long soft boxes round the piece, with dark gaps between them: what the pavilion's
-# facets see through the stone (light passing through it, the transparent, light
-# regions) and what they don't (the dark room, the deep ones)
+# the reflection sources: a few large, bright shapes in a dark room, for the
+# facets to mirror (not to light the piece): a tall softbox 20 degrees off the
+# camera's axis, a long narrow strip at 50, a broad soft source low to the side
+# for the edges, and the room dark between them. Each large facet then carries
+# one of three things: a clean bright band, the dark room, or the light passing
+# through the stone.
 if not LIGHT:
-    # 1.5: on the drop about 54% light-carrying midtones, 35% deep, 10% bright, 1% clipped
-    SB = 1.5
-    for az in (20, 110, 200, 290):
-        softbox(28, 52, az, 22, SB)
-    for az in (65, 245):
-        softbox(58, 72, az, 30, SB * 0.6)
+    RS = 2.0                                      # on the drop about 30% light-carrying, 52% deep, 18% bright, 0.1% clipped
+    softbox(55, 78, 150, 16, 6.0 * RS)            # the tall key reflection, upper left of the camera
+    softbox(34, 46, 20, 34, 5.0 * RS)             # the long narrow strip, right
+    softbox(6, 26, 250, 40, 3.0 * RS)             # the broad edge source, low left
+    softbox(18, 36, 300, 18, 2.0 * RS)            # a secondary, lower right
+    softbox(20, 40, 90, 22, 2.0 * RS)             # and one behind, seen through the stone
 
 
 def flag(loc, size):
@@ -476,6 +523,23 @@ ASPECT = (bx1 - bx0) / (by1 - by0)
 r = scene.render
 r.engine = "CYCLES"
 r.film_transparent = True
+# the transmission test: the piece against a flat backdrop of a given grey, seen through the stones
+# (python necklace.py OUT.png 800 32 --mono --backdrop 0.5); a stone that shows the backdrop through it is transparent
+if "--backdrop" in sys.argv:
+    grey = float(sys.argv[sys.argv.index("--backdrop") + 1])
+    bpy.ops.mesh.primitive_plane_add(size=4000, location=(0, 0, -60))
+    bd = bpy.context.object
+    bm_ = bpy.data.materials.new("backdrop")
+    bm_.use_nodes = True
+    bn = bm_.node_tree.nodes
+    bn.clear()
+    em_ = bn.new("ShaderNodeEmission")
+    em_.inputs["Color"].default_value = (grey, grey, grey, 1)
+    bm_.node_tree.links.new(em_.outputs[0], bn.new("ShaderNodeOutputMaterial").inputs["Surface"])
+    bd.data.materials.append(bm_)
+    bd.visible_shadow = False
+    bd.visible_glossy = False
+    r.film_transparent = False
 scene.cycles.film_transparent_glass = not LIGHT     # where a stone shows only the dark room, the page shows through
 scene.cycles.film_transparent_roughness = 0.1
 r.resolution_y = size
@@ -517,7 +581,7 @@ else:
     mono = (r_ + g_ + b_) / 3
     disp = mono.copy()
     disp[..., 0], disp[..., 1], disp[..., 2] = r_[..., 0], g_[..., 1], b_[..., 2]
-    img = mono + 0.35 * (disp - mono)    # a third of the fire kept: a trace of cool colour at the edges, never rainbow bands
+    img = mono + 0.25 * (disp - mono)    # a third of the fire kept: a trace of cool colour at the edges, never rainbow bands
     img[..., 3] = g_[..., 3]
     Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGBA").save(out)
 print("wrote", out)
