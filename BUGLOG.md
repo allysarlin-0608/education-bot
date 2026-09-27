@@ -14,6 +14,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-004 | P3 | Reading (books from storage) | normalize_book fills missing dates with the server's date, not the learner's | fixed (cb7ed7d) |
 | BUG-005 | P0 | Progress / Backup and restore (import) | A failed import deleted the existing records | fixed (ed7b280) |
 | BUG-006 | P0 | Progress / import, and every page reading records | A backup with a field of the wrong type crashed the page | fixed (cb7ed7d) |
+| BUG-007 | P2 | Progress / Backup and restore (import) | A file that isn't a backup showed a raw parser error | fixed |
 
 ## Details
 
@@ -80,3 +81,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** Type and range checks on every entry, lesson and book field; plan made consistent with chapters
 - **Files changed:** coach/core.py, coach/books.py, tests/test_backup_validation.py
 - **Covered by:** tests/test_backup_validation.py, tests/e2e/test_import.py::test_wrong_types_never_break_a_page
+
+### BUG-007 (P2) — A file that isn't a backup showed a raw parser error
+- **Page / flow:** Progress / Backup and restore (import)
+- **Status:** fixed
+- **Steps to reproduce:** Progress → Backup and restore → import a .json file that holds plain text, binary, a list or nothing, then Replace
+- **Expected:** A plain message that the file isn't a backup and nothing changed (1.9/1.10)
+- **Actual:** 'Import failed: Expecting value: line 1 column 1 (char 0)' or a raw validation message; binary files raised UnicodeDecodeError
+- **Root cause:** The exception text was shown as-is; UnicodeDecodeError and RecursionError were not caught
+- **Fix:** One clear message for any unreadable file; decode errors and deep nesting caught too
+- **Files changed:** views/records.py, tests/e2e/test_import.py
+- **Covered by:** tests/e2e/test_import.py::test_malformed_files_are_refused_kindly

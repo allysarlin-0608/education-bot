@@ -311,9 +311,9 @@ with st.expander("Backup and restore"):
     uploaded = st.file_uploader("Import a backup", type="json")
     if uploaded is not None and st.button("Replace my records with this backup"):
         try:
-            new_log = core.parse_log(json.load(uploaded))
-        except (ValueError, json.JSONDecodeError) as err:
-            st.error(f"Import failed: {err}")
+            new_log = core.parse_log(json.loads(uploaded.getvalue().decode("utf-8")))
+        except (ValueError, UnicodeDecodeError, RecursionError):   # json errors are ValueErrors
+            st.error("This file isn't a backup from this app, so nothing was changed.")
         else:
             if ui.replace_log(new_log):
                 st.session_state.coach_log = new_log
