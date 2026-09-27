@@ -20,7 +20,7 @@ def html(focus: str, group: str) -> str:
         s = visuals.subject(t)
         f = s["facts"]
         layers.append(
-            f'<div class="sg-layer" data-t="{t}" aria-hidden="{"false" if t == focus else "true"}">'
+            f'<div class="sg-layer" data-t="{t}" data-field="{s["field"]}" aria-hidden="{"false" if t == focus else "true"}">'
             + visuals.object_html(t, "sg-art", s["number"])
             + f'<div class="sg-head sg-title-{s["title_style"]}">'
             f'<p class="sg-kicker">{s["number"]:02d} · {escape(s["kicker"])}</p>'

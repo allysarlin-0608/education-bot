@@ -15,7 +15,8 @@ def test_the_stage_is_drawn_with_its_focus_showing():
     html = stage.html("jewelry", "subj")
     assert 'data-focus="jewelry"' in html and 'data-group="subj"' in html
     # only the subject in focus is exposed; every layer's name, words and object are its own subject's
-    assert re.findall(r'data-t="(\w+)" aria-hidden="false"', html) == ["jewelry"]
+    assert re.findall(r'data-t="(\w+)" data-field="\w*" aria-hidden="false"', html) == ["jewelry"]
+    assert 'data-t="jewelry" data-field="dark"' in html
     for t in settings.SUBJECTS:
         layer = html.split(f'data-t="{t}"')[1].split('class="sg-layer"')[0]
         s = visuals.subject(t)
