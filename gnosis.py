@@ -41,6 +41,8 @@ asked = st.session_state.pop("coach_asked_path", None)
 target = next((p for p in pages + [world] if asked and p.url_path == asked), None)
 if target is not None and target.url_path != page.url_path:
     st.switch_page(target, query_params=st.query_params.to_dict())
+if st.session_state.get("lq_page") != page.url_path:
+    st.session_state.account_menu = False      # a menu choice that changed the page closes the menu
 topnav.render(pages, st.session_state.coach_log)
 # Progress bars flow in on arriving at a page, not on every rerun.
 st.session_state.lq_entering = st.session_state.get("lq_page") != page.url_path

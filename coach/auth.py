@@ -487,7 +487,9 @@ def account_menu() -> None:
     if not who:
         return
     initial = (who["name"] or who["email"] or "?")[:1].upper()
-    with st.popover(initial, key="account_menu"):
+    # it tracks open/closed so that choosing Settings (another page) closes it
+    # instead of leaving it open over that page (gnosis.py closes it on a page change)
+    with st.popover(initial, key="account_menu", on_change="rerun"):
         pic = (f'<img class="acct-pic" src="{html.escape(who["picture"])}" alt="" referrerpolicy="no-referrer">'
                if who["picture"].startswith("https://") else "")
         st.html(f'<div class="acct-who">{pic}<div><p class="acct-name">{html.escape(who["name"])}</p>'
