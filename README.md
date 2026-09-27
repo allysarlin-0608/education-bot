@@ -38,7 +38,7 @@ Allysa 專屬的每日興趣學習教練：每天照固定課綱上當天主題�
 
 ## 檔案結構
 
-- `streamlit_app.py`：進入點，負責共用設定和兩個頁面的切換。
+- `streamlit_app.py`：進入點（st.App：app 本身加上登入需要的 HTTP 路由 coach/routes.py）；`gnosis.py`：共用設定和頁面切換。
 - `views/daily.py`：每日學習（當天 5 堂課和追問）；`views/reading.py`：看書。
 - `coach/curriculum.py` 與 `coach/curriculum/`：固定課綱與每天 5 堂的進度邏輯。
 - `views/records.py`：學習紀錄。

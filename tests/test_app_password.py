@@ -6,7 +6,7 @@ from streamlit.testing.v1 import AppTest
 
 from test_storage import FakePostgrest
 
-APP = str(Path(__file__).resolve().parent.parent / "streamlit_app.py")
+APP = str(Path(__file__).resolve().parent.parent / "gnosis.py")
 
 
 def start(monkeypatch, password, **db_options):
