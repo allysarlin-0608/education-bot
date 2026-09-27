@@ -62,7 +62,7 @@ gn.clear()
 glass = gn.new("ShaderNodeBsdfGlass")
 glass.distribution = "GGX"
 glass.inputs["Color"].default_value = (1, 1, 1, 1)
-glass.inputs["Roughness"].default_value = 0.01
+glass.inputs["Roughness"].default_value = 0.005                  # facets optically crisp
 glass.inputs["IOR"].default_value = 2.417
 gem.node_tree.links.new(glass.outputs[0], gn.new("ShaderNodeOutputMaterial").inputs["Surface"])
 
@@ -399,7 +399,9 @@ world = bpy.data.worlds.new("dark")
 scene.world = world
 world.use_nodes = True
 LIGHT = "--light" in sys.argv       # the same piece in a white light box, for the page's light theme
-world.node_tree.nodes["Background"].inputs["Color"].default_value = (1, 1, 1, 1) if LIGHT else (0, 0, 0, 1)
+# the dark studio isn't pure black: a faint neutral room (#050505 or so) gives the
+# transparent facets something to carry, so they read as clear, not as holes
+world.node_tree.nodes["Background"].inputs["Color"].default_value = (1, 1, 1, 1) if LIGHT else (0.0016, 0.0016, 0.0016, 1)
 world.node_tree.nodes["Background"].inputs["Strength"].default_value = (0.6 if LIGHT else 1.0)   # the white box a little down, so the facets keep their structure
 
 
@@ -416,10 +418,57 @@ def area(name, size, power, loc, aim=(0, 0, 0)):
     return li
 
 
-KEY = 2.5e7 if LIGHT else 4.0e7
-area("key", (520, 320), KEY, (-220, 1100, 650))                # above, a little left: its bands cross the facets, not a table's mirror line
-area("fill", (900, 260), KEY * 0.15, (0, -1100, 900))           # broad and weak, low in front (off the tables' mirror line)
-area("rim", (260, 700), KEY * 0.15, (1100, 250, -60))            # far right, grazing: the silhouette's edge, never seen through a stone
+# three long soft boxes, key : secondary : rim = 1 : 0.3 : 0.2, far brighter than the room,
+# so the facets carry long bright bands against deep dark ones (the contrast is the light's,
+# not the stone's colour). Chosen from three setups compared on the drop (moderate,
+# stronger, stronger rim): the stronger one, with the soft boxes below
+KEY = 2.5e7 if LIGHT else 9.0e7
+area("key", (700, 180), KEY, (-220, 1100, 650))                 # a long strip above, a little left: bands across the facets
+area("secondary", (180, 700), KEY * 0.3, (900, -500, 700))      # a long strip front right, crossing the key's bands
+area("rim", (220, 900), KEY * 0.2, (1100, 250, -60))   # far right, grazing: the edges
+
+
+def softbox(el0, el1, az, half, power, dist=2000.0):
+    """A large soft light round the piece (the stones see it; the camera never does),
+    seen from the piece between elevations el0..el1 degrees, centred on azimuth az."""
+    m = bpy.data.materials.new("softbox")
+    m.use_nodes = True
+    nodes = m.node_tree.nodes
+    nodes.clear()
+    e = nodes.new("ShaderNodeEmission")
+    e.inputs["Strength"].default_value = power
+    m.node_tree.links.new(e.outputs[0], nodes.new("ShaderNodeOutputMaterial").inputs["Surface"])
+    b2 = bmesh.new()
+    n, rows = 10, []
+    for i in range(n + 1):
+        el = math.radians(el0 + (el1 - el0) * i / n)
+        row = []
+        for j in range(n + 1):
+            t = math.radians(az - half + 2 * half * j / n)
+            row.append(b2.verts.new((dist * math.cos(el) * math.cos(t), dist * math.cos(el) * math.sin(t), dist * math.sin(el))))
+        rows.append(row)
+    for i in range(n):
+        for j in range(n):
+            b2.faces.new((rows[i][j], rows[i][j + 1], rows[i + 1][j + 1], rows[i + 1][j]))
+    me = bpy.data.meshes.new("softbox")
+    b2.to_mesh(me)
+    o = bpy.data.objects.new("softbox", me)
+    scene.collection.objects.link(o)
+    o.data.materials.append(m)
+    o.visible_camera = False
+    o.visible_shadow = False
+
+
+# long soft boxes round the piece, with dark gaps between them: what the pavilion's
+# facets see through the stone (light passing through it, the transparent, light
+# regions) and what they don't (the dark room, the deep ones)
+if not LIGHT:
+    # 1.5: on the drop about 54% light-carrying midtones, 35% deep, 10% bright, 1% clipped
+    SB = 1.5
+    for az in (20, 110, 200, 290):
+        softbox(28, 52, az, 22, SB)
+    for az in (65, 245):
+        softbox(58, 72, az, 30, SB * 0.6)
 
 
 def flag(loc, size):
