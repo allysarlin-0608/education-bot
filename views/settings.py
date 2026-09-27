@@ -80,13 +80,13 @@ with st.container(key="set_sec_subjects"):
     st.markdown("#### Subjects")
     chosen = config["subjects"]
     # the subject in focus: the one she touched last, else the one the address
-    # names (a refresh, Back from a world); the address is kept saying the same
+    # names (a link from a world). The address isn't rewritten to follow it:
+    # Streamlit adds a browser history step for every such change, so Back
+    # would walk through them instead of leaving the page.
     asked = st.query_params.get("subject")
     looked = st.session_state.get("set_focus")
     focus = stage.focus_of(looked if looked in settings.SUBJECTS else asked, chosen)
     st.session_state.set_focus = focus
-    if asked != focus:
-        st.query_params["subject"] = focus
     with st.container(key="set_grid_subjects"):
         with st.container(key="set_stage"):
             st.html(stage.html(focus, "setsubj"))

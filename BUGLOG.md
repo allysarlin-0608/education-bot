@@ -20,6 +20,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-010 | P2 | Deploy | Four dependencies were unpinned | fixed (95fc0e4) |
 | BUG-011 | P2 | Personal mode / password gate | Unlimited password attempts on the personal app | open — needs your decision |
 | BUG-012 | P2 | Account menu (public) | Choosing Settings from the account menu left the menu open over the Settings page | fixed (8316212) |
+| BUG-013 | P2 | Settings / browser Back | Back from Settings needed several presses (the page added history entries) | fixed |
 
 ## Details
 
@@ -152,3 +153,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** The popover tracks its state (on_change=rerun) and gnosis.py closes it whenever the page changes
 - **Files changed:** coach/auth.py, gnosis.py
 - **Covered by:** tests/e2e/test_auth.py::test_account_menu_settings_and_sign_out
+
+### BUG-013 (P2) — Back from Settings needed several presses (the page added history entries)
+- **Page / flow:** Settings / browser Back
+- **Status:** fixed
+- **Steps to reproduce:** Today → Progress → Settings → Today, then press the browser's Back repeatedly
+- **Expected:** Each Back goes to the previous page once
+- **Actual:** Settings → Settings?subject=… → Settings → Progress: 3 Backs to leave Settings; touching a subject added one more each time
+- **Root cause:** Settings rewrote ?subject= to follow the focused subject; Streamlit writes query params with history.pushState
+- **Fix:** Settings keeps the focused subject in the session and no longer rewrites the address (it still reads ?subject= from links)
+- **Files changed:** views/settings.py
+- **Covered by:** tests/e2e/test_nav.py::test_top_bar_goes_everywhere_and_back_forward_work
