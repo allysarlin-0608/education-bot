@@ -18,6 +18,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-008 | P1 | Progress / Backup and restore (import) | Any size of file was read into memory on import | fixed (d58ade9) |
 | BUG-009 | P1 | Today / lesson and chat | Leaving while a lesson streamed left a lesson-less day with the quiz offered | fixed (aadd4a9) |
 | BUG-010 | P2 | Deploy | Four dependencies were unpinned | fixed (95fc0e4) |
+| BUG-011 | P2 | Personal mode / password gate | Unlimited password attempts on the personal app | open — needs your decision |
 
 ## Details
 
@@ -128,3 +129,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** All five pinned to the versions the test suite runs on (resolver dry-run clean)
 - **Files changed:** requirements.txt
 - **Covered by:** pip install --dry-run -r requirements.txt; full suite
+
+### BUG-011 (P2) — Unlimited password attempts on the personal app
+- **Page / flow:** Personal mode / password gate
+- **Status:** open — needs your decision
+- **Steps to reproduce:** Personal app: submit wrong passwords in a loop (each new session starts fresh)
+- **Expected:** Attempts are limited (1.6 limits not bypassable)
+- **Actual:** No limit or delay; only the password's strength protects the data
+- **Root cause:** require_password compares and reruns; no attempt counter
+- **Fix:** Proposed: a per-server delay after 5 wrong tries (e.g. 30 s, doubling). Changes personal-mode behaviour, so waiting for approval
+- **Files changed:** coach/ui.py (proposed)
+- **Covered by:** to add with the fix
