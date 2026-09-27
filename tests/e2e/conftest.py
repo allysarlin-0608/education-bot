@@ -132,6 +132,22 @@ class App:
     def get(self, path):
         return json.loads(urllib.request.urlopen(self.fake + path).read())
 
+    def seed_entries(self, email, entries):
+        """Put learning entries straight into this app's store (the fake
+        database, or the personal app's file)."""
+        if self.mode == "public":
+            uid = next(u["id"] for u in self.get("/__dump")["users"] if u["email"] == email.lower())
+            self.post("/__seed", {"learning_entries": [dict(e, user_id=uid) for e in entries]})
+        else:
+            path = self.state / "learning_log.json"
+            try:
+                have = json.loads(path.read_text())["entries"]
+            except FileNotFoundError:
+                have = []
+            keep = {(e["date"], e["topic"]) for e in entries}
+            path.write_text(json.dumps({"version": 1, "entries": [e for e in have if (e["date"], e["topic"]) not in keep]
+                                        + entries}))
+
     def log_text(self):
         return self.log_path.read_text(errors="replace")
 
