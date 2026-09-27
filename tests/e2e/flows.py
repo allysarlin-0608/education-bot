@@ -201,13 +201,20 @@ def take_quiz(p, correct=True):
 
 
 def choose(p, box, text):
-    """Pick an option in a selectbox by typing it (as a keyboard user would)."""
+    """Pick an option in a selectbox: by typing it on a computer (as a
+    keyboard user would), by tapping the list on a touch screen."""
     page = p.page
-    box.locator("input").first.click()
-    page.keyboard.type(text[:12])
-    opt = page.get_by_role("option", name=text, exact=True).first
-    opt.wait_for(timeout=5000)
-    opt.click()
+    if p.width < TOUCH_W:
+        box.locator("input").first.tap()
+        opt = page.get_by_role("option", name=text, exact=True).first
+        opt.wait_for(timeout=5000)
+        opt.tap()
+    else:
+        box.locator("input").first.click()
+        page.keyboard.type(text[:12])
+        opt = page.get_by_role("option", name=text, exact=True).first
+        opt.wait_for(timeout=5000)
+        opt.click()
     idle(page)
 
 
