@@ -1,0 +1,98 @@
+...................................................F.....F.............. [ 67%]
+...................F..............                                       [100%]
+=================================== FAILURES ===================================
+___________________ test_a_legacy_session_keeps_its_thoughts ___________________
+
+public_app = <conftest.App object at 0x7fd7ec858650>
+pages = <function pages.<locals>.make at 0x7fd7ebc7a520>
+
+    def test_a_legacy_session_keeps_its_thoughts(public_app, pages):
+        covers("W-records-rec_reflection", "W-records-rec_save", "W-records-rec_lesson", "D-records-save_entry")
+        app = public_app
+        p, email, _ = with_history(app, pages, legacy=True)
+        p.page.get_by_role("radio", name="Sessions").or_(p.page.get_by_role("button", name="Sessions", exact=True)).first.click()
+        flows.idle(p.page)
+        while p.page.get_by_role("button", name="Show", exact=False).filter(has_text="more of").count():
+            flows.tap(p, p.page.get_by_role("button", name="Show", exact=False).filter(has_text="more of").first)
+            flows.idle(p.page)
+        p.page.locator('[data-testid="stExpander"] summary', has_text="An old session").click()
+        flows.idle(p.page)
+        box = p.page.get_by_label("My thoughts").last
+        box.fill("It still makes sense.")
+        p.page.keyboard.press("Tab")
+        flows.button(p, "Save my thoughts")
+>       assert flows.wait_text(p.page, "Saved.", 5)
+E       AssertionError: assert False
+E        +  where False = <function wait_text at 0x7fd7eccd62a0>(<Page url='http://localhost:57959/records'>, 'Saved.', 5)
+E        +    where <function wait_text at 0x7fd7eccd62a0> = flows.wait_text
+E        +    and   <Page url='http://localhost:57959/records'> = <conftest.Page object at 0x7fd7eb59df10>.page
+
+tests/e2e/test_progress.py:167: AssertionError
+_________________ test_set_up_adjust_confirm_and_read_day_one __________________
+
+public_app = <conftest.App object at 0x7fd7ec858650>
+pages = <function pages.<locals>.make at 0x7fd7eb96a700>
+
+    def test_set_up_adjust_confirm_and_read_day_one(public_app, pages):
+        covers("W-reading-placeholder_book", "W-reading-start_book", "W-reading-adjust_a_day_yourself", "W-reading-adjust_open",
+               "W-reading-adjust_day", "W-reading-lighter_move_its_last_chapter_to_day",
+               "W-reading-heavier_bring_over_day_s_first_chapter", "W-reading-confirm_the_plan", "W-reading-14_day_plan",
+               "W-reading-i_ve_finished_today_s_reading", "AI-reading-ask_json", "D-reading-save_book",
+               "D-reading-save_entry", "D-ui-save_book")
+        app = public_app
+        p = reader(app, pages)
+        set_up(p, chapters=20, pages_=400)
+        assert books_of(app, p.email)[0] == [], "a draft isn't saved before it's confirmed"
+        p.page.get_by_text("Adjust a day yourself").click()
+        flows.idle(p.page)
+        flows.button(p, "Lighter: move its last chapter to Day 2", exact=False)
+        assert flows.wait_text(p.page, "I moved Day 1's last chapter to Day 2.")
+        flows.button(p, "Heavier: bring over Day 2's first chapter", exact=False)
+        assert flows.wait_text(p.page, "I moved Day 2's first chapter to Day 1.")
+        flows.button(p, "Confirm the plan")
+        assert flows.wait_text(p.page, "Your plan is set.")
+        saved, _ = books_of(app, p.email)
+        assert len(saved) == 1 and saved[0]["status"] == "reading" and saved[0]["started_on"] == today().isoformat()
+        assert sum(len(d) for d in saved[0]["plan"]) == 20, "every chapter is on some day"
+        p.page.get_by_text("14-day plan", exact=True).click()
+        assert flows.wait_text(p.page, "Day 14")
+        flows.button(p, "I've finished today's reading")
+        assert "Tell me in your own words" in p.page.locator(".st-key-chat_dock textarea").get_attribute("placeholder")
+        app.reset_calls()
+        say(p, SHARE, "Day done")
+        assert app.calls("reading_judge")
+        saved, entries = books_of(app, p.email)
+        assert "1" in saved[0]["checks"]
+        reading = [e for e in entries if e["topic"] == "reading"]
+>       assert len(reading) == 1 and reading[0]["completed"] is True and SHARE in reading[0]["reflection"]
+E       assert (0 == 1)
+E        +  where 0 = len([])
+
+tests/e2e/test_reading.py:117: AssertionError
+_________________ test_new_person_learns_one_lesson[personal] __________________
+
+mode = 'personal', pages = <function pages.<locals>.make at 0x7fd7ebaaefc0>
+request = <FixtureRequest for <Function test_new_person_learns_one_lesson[personal]>>
+
+    @pytest.mark.parametrize("mode", ["public", "personal"])
+    def test_new_person_learns_one_lesson(mode, pages, request):
+        covers("W-setup-get_started", "W-daily-start_this_lesson", "W-daily-take_the_quiz", "AI-daily-stream_reply",
+               "AI-daily-ask_json", "AI-daily-ask_json-2", "D-setup-save_settings-2", "D-daily-save_entry",
+               # the servers are configured only through these, so both modes working covers them
+               "S-supabase_url", "S-supabase_key", "S-coach_log_path", "S-coach_settings_path", "D-auth-touch_user")
+        app = request.getfixturevalue(f"{mode}_app")
+        p = pages(width=1440)
+        flows.sign_in(p, app, email=f"smoke-{mode}@example.com")
+>       assert flows.wait_text(p.page, "Get started"), "a new person starts with the setup"
+E       AssertionError: a new person starts with the setup
+E       assert False
+E        +  where False = <function wait_text at 0x7fd7eccd62a0>(<Page url='http://localhost:41703/'>, 'Get started')
+E        +    where <function wait_text at 0x7fd7eccd62a0> = flows.wait_text
+E        +    and   <Page url='http://localhost:41703/'> = <conftest.Page object at 0x7fd7e9d1a690>.page
+
+tests/e2e/test_smoke.py:19: AssertionError
+=========================== short test summary info ============================
+FAILED tests/e2e/test_progress.py::test_a_legacy_session_keeps_its_thoughts
+FAILED tests/e2e/test_reading.py::test_set_up_adjust_confirm_and_read_day_one
+FAILED tests/e2e/test_smoke.py::test_new_person_learns_one_lesson[personal]
+3 failed, 103 passed in 2008.26s (0:33:28)

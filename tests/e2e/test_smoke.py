@@ -14,6 +14,9 @@ def test_new_person_learns_one_lesson(mode, pages, request):
            # the servers are configured only through these, so both modes working covers them
            "S-supabase_url", "S-supabase_key", "S-coach_log_path", "S-coach_settings_path", "D-auth-touch_user")
     app = request.getfixturevalue(f"{mode}_app")
+    if mode == "personal":              # the personal app has one person: start them afresh
+        for f in ("learning_log.json", "user_settings.json"):
+            (app.state / f).unlink(missing_ok=True)
     p = pages(width=1440)
     flows.sign_in(p, app, email=f"smoke-{mode}@example.com")
     assert flows.wait_text(p.page, "Get started"), "a new person starts with the setup"

@@ -259,6 +259,14 @@ def pages(browser, request):
 
 
 @pytest.fixture(autouse=True)
+def no_leftover_failures():
+    """Failures a test injected but didn't use up never reach the next test."""
+    yield
+    if "public" in _apps:
+        _apps["public"].post("/__fail", {"clear": True})
+
+
+@pytest.fixture(autouse=True)
 def no_server_tracebacks(request):
     """Fail the test if any running app logged a Python traceback during it."""
     before = {m: len(a.log_text()) for m, a in _apps.items()}

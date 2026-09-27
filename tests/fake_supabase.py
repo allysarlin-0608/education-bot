@@ -468,8 +468,13 @@ def build_app(access_ttl=3600):
         return JSONResponse(data, status_code=resp.status_code) if data is not None else Response(status_code=resp.status_code)
 
     async def fail(request):
-        """Test setup: {"method": "POST", "table": "learning_entries", "times": 1, "skip": 0}."""
-        app.state.fail.append(await request.json())
+        """Test setup: {"method": "POST", "table": "learning_entries", "times": 1, "skip": 0};
+        {"clear": true} removes every rule not used up yet."""
+        body = await request.json()
+        if body.get("clear"):
+            app.state.fail.clear()
+        else:
+            app.state.fail.append(body)
         return JSONResponse({"ok": True})
 
     async def outbox(request):
