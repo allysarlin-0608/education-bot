@@ -1,5 +1,5 @@
 streamlit==1.64.0
-groq
-requests
-tzdata
-starlette
+groq==1.7.0
+requests==2.33.1
+tzdata==2026.4
+starlette==1.7.0

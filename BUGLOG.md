@@ -17,6 +17,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-007 | P2 | Progress / Backup and restore (import) | A file that isn't a backup showed a raw parser error | fixed (7b62327) |
 | BUG-008 | P1 | Progress / Backup and restore (import) | Any size of file was read into memory on import | fixed (d58ade9) |
 | BUG-009 | P1 | Today / lesson and chat | Leaving while a lesson streamed left a lesson-less day with the quiz offered | fixed (aadd4a9) |
+| BUG-010 | P2 | Deploy | Four dependencies were unpinned | fixed |
 
 ## Details
 
@@ -116,3 +117,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** The chat is only extended after a complete reply; the request uses a copy
 - **Files changed:** views/daily.py, tests/e2e/test_ai.py, tests/e2e/harness/fake_groq.py (chunk_delay)
 - **Covered by:** tests/e2e/test_ai.py::test_leaving_while_the_lesson_streams_leaves_no_half_lesson, ::test_clicking_elsewhere_while_a_lesson_is_written_loses_nothing
+
+### BUG-010 (P2) — Four dependencies were unpinned
+- **Page / flow:** Deploy
+- **Status:** fixed
+- **Steps to reproduce:** Reboot the app after a new major release of groq/starlette/requests
+- **Expected:** The same versions the app was tested with (1.3 stability)
+- **Actual:** requirements.txt: groq, requests, tzdata, starlette with no version; any reboot could install an untested release
+- **Root cause:** Only streamlit was pinned
+- **Fix:** All five pinned to the versions the test suite runs on (resolver dry-run clean)
+- **Files changed:** requirements.txt
+- **Covered by:** pip install --dry-run -r requirements.txt; full suite
