@@ -55,7 +55,7 @@ with st.container(key="w_back"):
         all_subjects()
 
 # ---------- the world: its name at the top, its object, and what she can do here ----------
-with st.container(key=f"world_{w['layout']}" + ("_field" if s["field"] else "")):
+with st.container(key=f"world_{w['layout']}"):
     with st.container(key="w_head"):
         st.html(f'<div class="w-copy w-title-{s["title_style"]}">'
                 f'<p class="w-kicker">{number:02d} · {escape(s["kicker"])}</p>'

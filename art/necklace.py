@@ -1,14 +1,16 @@
 """The jewellery subject's object: a high-jewellery diamond necklace, modelled
 and rendered as a studio photograph of a real piece, floating on nothing.
 
-The design follows a reference photograph (a V necklace on a display bust):
-- two sides that come down from the neck along one smooth curve each and
-  meet in a V: a continuous band of articulated modules, each a diagonal
-  pair of round brilliants leaning one way and a marquise leaning the other,
-  on its own gallery, hinged to the next (the reference's twisted band);
-- where they meet, a centre setting (a round ringed by eight melee), a
-  standing marquise, and the pear-shaped drop, point up: 36 x 20 mm, the
-  piece's focus.
+The design is the reference photograph's (a V necklace on a display bust),
+traced first and built second: art/necklace_trace.py turns the photograph into
+a 2D blueprint (art/necklace_blueprint.json: each side's centreline and band
+width, the links along it, the centre, the drop's outline), checked by
+overlaying it on the photograph; this script builds on that blueprint in the
+plane the camera looks at square on, so the render lies on the photograph's
+necklace. Along each side, oval links of pave (a larger round ringed by
+melee, on a fine rim), end to end and overlapping a little; where they meet,
+a block of pave closing to a point, a marquise in a pave halo, the bail, and
+the pear drop, point up, 1.8 times as long as it is wide, widest at 55%.
 
 Units are millimetres. Every stone is a faceted solid (a round brilliant's
 table, star, bezel, upper and lower girdle and pavilion facets; the pear and
@@ -18,14 +20,16 @@ the C, d and F lines (Abbe number 55). Each stone sits in its own collet with
 claws over its edge (a V claw at a point); jump rings join the centre, the
 marquise and the drop. Platinum, roughness about 0.12, barely varying.
 
-No ground, no shadow: the necklace hangs in a dark studio lit by three large
-soft sources (key, fill, rim at 1 : 0.2 : 0.15) with black flags; the film
-and the glass are transparent, so the page's own dark field (style.py, the
-jewellery's "field") shows through the stones: transparent, and dark.
+No ground, no shadow. Two renders: for the dark theme, a dark studio lit by
+three large soft sources (key, fill, rim at 1 : 0.2 : 0.15) with black flags,
+the film and the glass transparent so the dark page shows through the stones
+(transparent, and dark); for the light theme (--light), a white light box
+with the same flags, the stones white on the white page.
 
 Run with Blender's Python module (pip install bpy==4.2.0 numpy pillow, Python 3.11):
 
     python art/necklace.py jewelry.png 1600 96
+    python art/necklace.py jewelry-light.png 1600 96 --light
     then: Image.open("jewelry.png").save("static/subjects/jewelry.webp", quality=88, method=6)
 
     python necklace.py OUT.png [height] [samples] [--mono] [--light]"""
@@ -123,7 +127,13 @@ def outline(shape, lh):
         return lambda ux, uy: 1.0
     if shape == "marquise":
         return lambda ux, uy: vesica(ux, uy, lh)
+    if shape == "pear2":            # the reference's drop: point up, its lower part a half-ellipse (widest at 55%)
+        low = PEAR_LOW
+        return lambda ux, uy: 1.0 / math.sqrt(ux * ux + (uy / low) ** 2) if uy <= 0 else vesica(ux, uy, lh)
     return lambda ux, uy: 1.0 if uy <= 0 else vesica(ux, uy, lh)          # pear: point up
+
+
+PEAR_LOW = 1.62
 
 
 def stone_mesh(shape="round", lh=1.0):
@@ -261,99 +271,123 @@ def jump_ring(p, r, tube, axis):
     o.matrix_world = m
 
 
-# ---------- the sides: articulated modules along one smooth V ----------
-# Each side is a cubic Bézier from the centre up to the neck, its curve
-# tightening toward the centre; the stones' faces tip a little with the neck
-# they would lie around. Along it, one module repeats, each a small
-# construction of its own on a metal gallery, hinged to the next, and set so
-# the band reads as twisted, as the reference's does:
-#   a diagonal pair of rounds leaning one way (2.5 mm outside, 2.0 mm inside,
-#   half a step on), then a marquise (1.1 x 3.2 mm) leaning the other way.
-# Modules close up to one another; no two stones touch (checked when this was
-# drawn up); metal shows between them.
-NECK = 60.0
+# ---------- the piece, built on the traced blueprint ----------
+# art/necklace_blueprint.json is the reference photograph traced (art/necklace_trace.py):
+# each side's centreline and band width, the links along it, the centre, the
+# drop's outline. Here those image pixels become millimetres (the drop 24 mm
+# across) in the same plane the camera looks at square on, so the model's
+# silhouette is the tracing's: the stones are laid around the line, never the
+# other way round.
+import json
+import os
+BP = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "necklace_blueprint.json")))
+DROP = BP["drop"]
+MM = 24.0 / max(b_ - a_ for _, a_, b_ in DROP)                 # mm per traced pixel
+X0 = BP["points_px"]["P5 centre"][0]
+Y0 = BP["points_px"]["P5 centre"][1]
 
 
-def bezier(t, sx):
-    p0, p1, p2, p3 = Vector((0, 0, 0)), Vector((sx * 8, 6.5, 0)), Vector((sx * 27, 31, 0)), Vector((sx * 39, 78, 0))
-    q = (1 - t) ** 3 * p0 + 3 * (1 - t) ** 2 * t * p1 + 3 * (1 - t) * t ** 2 * p2 + t ** 3 * p3
-    q.z = NECK * (math.cos(math.asin(min(abs(q.x) / (NECK + 8), 0.99))) - 1)       # curving back round the neck
-    return q
+def to_mm(px, py, z=0.0):
+    return Vector(((px - X0) * MM, -(py - Y0) * MM, z))
 
 
-def face_normal(p):
-    n = Vector((p.x, 0, p.z + NECK)).normalized()
-    return (n + Vector((0, 0.15, 0))).normalized()
+FACE = Vector((0, 0, 1))
 
 
-MODULE = [("round", 1.25, (0.0, 1.05), 0),                 # (shape, half-width, place in the band, lean)
-          ("round", 1.0, (1.25, -1.2), 0),
-          ("marquise", 0.55, (2.85, 0.2), -55)]
-PITCH = 4.6
-BASE = 1.35                                                  # the band at the front about a third of the drop's width
-MQ_RATIO = 1.6 / 0.55
+def pave_link(x, y, ang, length, width):
+    """One link of the band: an oval of pavé on its own metal plate and rim,
+    the stones on a staggered grid filling the oval, a larger one at its heart."""
+    c = to_mm(x, y); L, Wd = length * MM, width * MM
+    ax = Vector((math.cos(ang), -math.sin(ang), 0))           # along the band (image y is down)
+    ac = Vector((-ax.y, ax.x, 0))                              # across it
+    a, b = L / 2, Wd / 2 * 0.94
+    rim = [c + ax * a * math.cos(t) + ac * b * math.sin(t) - FACE * 0.25 for t in [2 * math.pi * k / 40 for k in range(40)]]
+    wire(rim, max(0.06, Wd * 0.014), closed=True)             # a fine rim: the stones, not the metal, make the band
+    # a large round at the heart, a ring of melee round it following the oval, as the reference's links are
+    big = b * 0.5
+    place("round", 1.0, big, c + FACE * 0.05, FACE, ax)
+    ring_a, ring_b = a - (a - big) * 0.5, b - (b - big) * 0.5
+    per = math.pi * (3 * (ring_a + ring_b) - math.sqrt((3 * ring_a + ring_b) * (ring_a + 3 * ring_b)))
+    d = min(b - big, a - big) * 1.02
+    n = max(6, int(per / (d * 1.08)))
+    for k in range(n):
+        t = 2 * math.pi * (k + 0.5) / n
+        place_melee(c + ax * ring_a * math.cos(t) + ac * ring_b * math.sin(t), d / 2)
+    # the gallery under it: a flat bar across, where the stones' collets meet (hidden behind them)
+    wire([c - ac * b * 0.7 - FACE * 0.9, c + ac * b * 0.7 - FACE * 0.9], max(0.1, Wd * 0.05))
 
 
-for sx in (-1, 1):
-    ts = [i / 3000 for i in range(3001)]
-    line = [bezier(t, sx) for t in ts]
-    lens = [0.0]
-    for a_, b_ in zip(line, line[1:]):
-        lens.append(lens[-1] + (a_ - b_).length)
+MELEE = None
 
-    def at(dist):
-        i = min(range(len(lens)), key=lambda k: abs(lens[k] - dist))
-        return line[i], (line[min(i + 1, len(line) - 1)] - line[max(i - 1, 0)]).normalized()
 
-    # the modules, from beside the centre setting up to the neck, a little smaller as they go
-    dist, k, prev = 4.2, 0, None
-    while True:
-        g = BASE * (1.0 - 0.25 * min(1.0, dist / 100))
-        if dist + PITCH * g > lens[-1] - 1:
-            break
-        p, t = at(dist + 1.4 * g)
-        n = face_normal(p)
-        t = (t - n * t.dot(n)).normalized()
-        b = n.cross(t).normalized() * sx                     # across the band, the outside +
-        turn = math.radians(rng.uniform(-3, 3))              # each module set by hand, a little differently
-        t2 = (t * math.cos(turn) + b * math.sin(turn)).normalized()
-        b2 = n.cross(t2).normalized() * sx
-        for shape, hw, (u, v), lean in MODULE:
-            pos = p + (t2 * (u - 1.4) + b2 * v) * g + n * 0.12 * g
-            if shape == "round":
-                place("round", 1.0, hw * g * rng.uniform(0.97, 1.03), pos, n, t2)
-            else:
-                a = math.radians(lean)
-                axis = (t2 * math.cos(a) + b2 * math.sin(a)).normalized()
-                place("marquise", MQ_RATIO, hw * g, pos + n * 0.08 * g, n, axis)
-        # the module's gallery bar under its stones, hinged to the last
-        here = p - n * 0.9 * g
-        wire([p + (t2 * -1.4 + b2 * 0.5) * g - n * 0.7 * g, here, p + (t2 * 1.5 - b2 * 0.3) * g - n * 0.7 * g], 0.3 * g)
-        if prev is not None:
-            wire([prev, (prev + here) / 2 - n * 0.25 * g, here], 0.26 * g)
-        prev = here
-        dist += PITCH * g
-        k += 1
+def place_melee(p, r):
+    """A melee brilliant held by the metal around it (beads between stones)."""
+    o = bpy.data.objects.new("melee", cut("round", 1.0))
+    scene.collection.objects.link(o)
+    # set by hand: each a few degrees off the plane and turned its own way, so no two
+    # catch the light alike (a row of identical sparkles reads as beads, not diamonds)
+    tilt = Matrix.Rotation(math.radians(rng.uniform(-9, 9)), 4, "X") @ Matrix.Rotation(math.radians(rng.uniform(-9, 9)), 4, "Y")
+    o.matrix_world = Matrix.Translation(p) @ tilt @ Matrix.Rotation(rng.uniform(0, math.pi / 4), 4, "Z") @ Matrix.Diagonal((r, r, r, 1))
+    bead(p + Vector((r * 0.95, r * 0.35, 0.02)), r * 0.16)
 
-# ---------- the centre: a larger cluster where the sides meet, a vertical marquise, the drop ----------
-front = Vector((0, 0.1, 1)).normalized()
-up = Vector((0, 1, 0))
-CENTRE = Vector((0, 2.2, 0.4))
-place("round", 1.0, 1.9, CENTRE + front * 0.2, front, up)                  # 3.8 mm
-for k in range(8):                                                        # ringed by eight melee
-    a = math.pi / 8 + math.pi / 4 * k
-    place("round", 1.0, 0.62, CENTRE + Vector((math.cos(a), math.sin(a), 0)) * 2.75, front, up)
-wire([CENTRE + Vector((math.cos(2 * math.pi * k / 40), math.sin(2 * math.pi * k / 40), -1.1)) * 1 * 2.6
-      for k in range(40)], 0.2, closed=True)
-MQ_W, MQ_LH = 1.7, 2.3                                                    # the connector: 3.4 x 7.8 mm, standing
-mq_top = CENTRE.y - 3.5 - 0.6
-place("marquise", MQ_LH, MQ_W, Vector((0, mq_top - MQ_W * MQ_LH, 0.2)), front, up)
-jump_ring(Vector((0, CENTRE.y - 3.5, -0.4)), 0.7, 0.24, Vector((1, 0, 0)))
-ring_y = mq_top - 2 * MQ_W * MQ_LH - 0.8
-jump_ring(Vector((0, ring_y, -0.4)), 1.1, 0.32, Vector((1, 0, 0)))
-# the drop: 20 mm across, 36 mm long, point up
-PEAR_W, PEAR_LH = 10.0, 2.6
-place("pear", PEAR_LH, PEAR_W, Vector((0, ring_y - 1.0 - PEAR_LH * PEAR_W, 0.0)), Vector((0, -0.02, 1)).normalized(), up)
+
+# the two sides: the links as traced, end to end along each centreline
+for side_, x, y, ang, length, width in BP["links"]:
+    pave_link(x, y, ang, length, width)
+# where the rims meet, a hinge under each join
+for key in "LR":
+    ls = [l for l in BP["links"] if l[0] == key]
+    for l0, l1 in zip(ls, ls[1:]):
+        wire([to_mm(l0[1], l0[2], -0.6), to_mm(l1[1], l1[2], -0.6)], max(0.2, min(l0[5], l1[5]) * MM * 0.1))
+
+# ---------- the centre, as traced: the convergence, the marquise setting, the bail ----------
+STEM = BP["stem"]
+NECK = BP["neck_y"]
+cx = sum((a_ + b_) / 2 for _, a_, b_ in STEM) / len(STEM)
+# the convergence: the two bands close into one, pavé filling the traced block
+def inside(px, py, pad):
+    for y_, a_, b_ in STEM:
+        if y_ == int(py):
+            return a_ + pad < px < b_ - pad
+    return False
+
+
+d_c = 13.0                                                     # its melee, in traced pixels
+for i in range(0, 12):
+    py = 884 + i * d_c * 0.866
+    if py > 928:
+        break
+    for j in range(-8, 9):
+        px = cx + j * d_c + (d_c / 2 if i % 2 else 0)
+        if inside(px, py, d_c * 0.45):
+            place_melee(to_mm(px, py, 0.05), d_c * MM * 0.46)
+# the marquise setting: a marquise in a pavé halo, from the block down to the bail
+my0, my1 = 925, NECK - 4
+mw = max(b_ - a_ for y_, a_, b_ in STEM if my0 < y_ < my1)
+mc = to_mm(cx, (my0 + my1) / 2)
+half_len = (my1 - my0) / 2 * MM
+half_w = mw / 2 * MM
+place("marquise", half_len * 0.78 / (half_w * 0.62), half_w * 0.62, mc + FACE * 0.1, FACE, Vector((0, 1, 0)))
+def marquise_edge(t, k=1.0):
+    """A point on the marquise's outline (long axis vertical), k times out from its centre."""
+    r = vesica(math.sin(t), math.cos(t), half_len / half_w) * half_w * k
+    return mc + Vector((math.sin(t) * r, math.cos(t) * r, 0))
+
+
+for k in range(26):                                            # the halo, round the marquise's outline
+    place_melee(marquise_edge(2 * math.pi * k / 26, 0.86), 0.45)
+wire([marquise_edge(2 * math.pi * k / 48) - FACE * 0.3 for k in range(48)], 0.18, closed=True)
+# the bail, where the traced outline narrows most
+jump_ring(to_mm(cx, NECK, -0.3), 0.9, 0.3, Vector((1, 0, 0)))
+
+# ---------- the drop, as traced: 24 mm across, 1.8 times as long, widest at 55% ----------
+top = DROP[0][0]; bot = DROP[-1][0]
+PEAR_W = 12.0                                                  # half its width, mm
+total = (bot - top) * MM                                       # its length
+lh = 0.55 * total / PEAR_W                                     # the upper (pointed) part, in half-widths
+PEAR_LOW = 0.45 * total / PEAR_W
+widest = to_mm(cx, top + 0.55 * (bot - top))
+place("pear2", lh, PEAR_W, widest, FACE, Vector((0, 1, 0)))
 
 # ---------- the studio: dark, lit by three large soft sources ----------
 # The film is transparent and so is the glass where it shows only the dark
@@ -366,7 +400,7 @@ scene.world = world
 world.use_nodes = True
 LIGHT = "--light" in sys.argv       # the same piece in a white light box, for the page's light theme
 world.node_tree.nodes["Background"].inputs["Color"].default_value = (1, 1, 1, 1) if LIGHT else (0, 0, 0, 1)
-world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.7 if LIGHT else 1.0
+world.node_tree.nodes["Background"].inputs["Strength"].default_value = (0.6 if LIGHT else 1.0)   # the white box a little down, so the facets keep their structure
 
 
 def area(name, size, power, loc, aim=(0, 0, 0)):
@@ -382,9 +416,9 @@ def area(name, size, power, loc, aim=(0, 0, 0)):
     return li
 
 
-KEY = 1.5e7 if LIGHT else 4.0e7
+KEY = 2.5e7 if LIGHT else 4.0e7
 area("key", (520, 320), KEY, (-220, 1100, 650))                # above, a little left: its bands cross the facets, not a table's mirror line
-area("fill", (1400, 700), KEY * 0.2, (0, -1100, 900))           # broad and weak, low in front (off the tables' mirror line)
+area("fill", (900, 260), KEY * 0.15, (0, -1100, 900))           # broad and weak, low in front (off the tables' mirror line)
 area("rim", (260, 700), KEY * 0.15, (1100, 250, -60))            # far right, grazing: the silhouette's edge, never seen through a stone
 
 
@@ -407,22 +441,23 @@ def flag(loc, size):
 
 
 # black flags: the camera and its operator, and two long ones off the sides
-flag((0, 30, 700), (260, 260))
+flag((0, 30, 700), (260, 260) if not LIGHT else (420, 420))
 flag((-600, 0, 380), (160, 900))
 flag((600, 0, 380), (160, 900))
 
-# ---------- the camera: an 85 mm lens square to the piece, everything in focus ----------
+# ---------- the camera: square on to the piece, no perspective, framing it as traced ----------
+# (orthographic, so the render lies on the blueprint exactly; a long lens would too, near enough)
 cam = bpy.data.cameras.new("cam")
-cam.lens = 85
-cam.sensor_fit = "VERTICAL"
-cam.sensor_height = 24
+cam.type = "ORTHO"
 cam.clip_end = 10000
 co = bpy.data.objects.new("cam", cam)
 scene.collection.objects.link(co)
-aim = Vector((0, 11.0, 0))
-co.location = aim + Vector((0, 0, 500))
-co.rotation_euler = (0, 0, 0)
+bx0, bx1, by0, by1 = 255, 1020, 330, 1300                      # the traced piece's box in the photograph, with a margin
+lo, hi = to_mm(bx0, by1), to_mm(bx1, by0)
+co.location = Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, 500))
+cam.ortho_scale = max(hi.x - lo.x, hi.y - lo.y)
 scene.camera = co
+ASPECT = (bx1 - bx0) / (by1 - by0)
 
 r = scene.render
 r.engine = "CYCLES"
@@ -430,7 +465,7 @@ r.film_transparent = True
 scene.cycles.film_transparent_glass = not LIGHT     # where a stone shows only the dark room, the page shows through
 scene.cycles.film_transparent_roughness = 0.1
 r.resolution_y = size
-r.resolution_x = int(size * 0.72)
+r.resolution_x = int(size * ASPECT)
 r.image_settings.file_format = "PNG"
 r.image_settings.color_mode = "RGBA"
 scene.view_settings.view_transform = "AgX"          # highlights roll off instead of clipping; no bloom, no glare
