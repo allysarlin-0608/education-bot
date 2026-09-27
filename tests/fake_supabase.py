@@ -435,6 +435,18 @@ def build_app(access_ttl=3600):
         return RedirectResponse(back + sep + urlencode({"code": code}), 303)
 
     async def rest(request):
+        # failure injection (tests): fail the next matching request(s) with a 500
+        name = request.path_params["name"]
+        for rule in list(app.state.fail):
+            if rule["method"] == request.method and rule["table"] == name:
+                rule["skip"] = rule.get("skip", 0)
+                if rule["skip"] > 0:
+                    rule["skip"] -= 1
+                    break
+                rule["times"] -= 1
+                if rule["times"] <= 0:
+                    app.state.fail.remove(rule)
+                return JSONResponse({"message": "injected failure"}, status_code=500)
         body = None
         if request.method in ("POST", "PATCH"):
             raw = await request.body()
@@ -454,6 +466,11 @@ def build_app(access_ttl=3600):
                     del auth.users[email]
         data = resp.json()
         return JSONResponse(data, status_code=resp.status_code) if data is not None else Response(status_code=resp.status_code)
+
+    async def fail(request):
+        """Test setup: {"method": "POST", "table": "learning_entries", "times": 1, "skip": 0}."""
+        app.state.fail.append(await request.json())
+        return JSONResponse({"ok": True})
 
     async def outbox(request):
         return JSONResponse(auth.outbox)
@@ -505,9 +522,11 @@ def build_app(access_ttl=3600):
         Route("/__expire_link", expire_link, methods=["POST"]),
         Route("/__dump", dump),
         Route("/__user", make_user, methods=["POST"]),
+        Route("/__fail", fail, methods=["POST"]),
     ]
     app = Starlette(routes=routes)
     app.state.auth = auth
+    app.state.fail = []
     return app
 
 

@@ -508,15 +508,28 @@ class SupabaseStore(_Scope):
                       prefer="resolution=merge-duplicates,return=minimal", table=SETTINGS_TABLE)
 
     def replace(self, log: dict) -> None:
-        """Make the tables hold exactly this log (used by backup import)."""
-        # PostgREST refuses an unfiltered DELETE, so filter on a condition
-        # every row meets.
-        self._request("DELETE", params=self._mine({"date": "gte.1900-01-01"}), prefer="return=minimal")
+        """Make the tables hold exactly this log (used by backup import).
+
+        The backup is written first; only then are the rows it doesn't have
+        removed, one by one. A failure part way (a dropped connection, a
+        database error) leaves extra rows at worst, never fewer: nothing
+        already saved is lost, and importing again finishes the job."""
         self._upsert(log["entries"])
+        keep = {(e["date"], e["topic"]) for e in log["entries"]}
+        have = self._request("GET", params=self._mine({"select": "date,topic"})).json()
+        for row in have:
+            if (row["date"], row["topic"]) not in keep:
+                self._request("DELETE", params=self._mine({"date": f"eq.{row['date']}", "topic": f"eq.{row['topic']}"}),
+                              prefer="return=minimal")
         if self.books_error is None:
-            self._request("DELETE", params=self._mine({"id": "neq."}), prefer="return=minimal",
-                          table=BOOKS_TABLE)
-            self._upsert_books(log.get("books", []))
+            book_list = log.get("books", [])
+            self._upsert_books(book_list)
+            keep_ids = {b["id"] for b in book_list}
+            have_ids = self._request("GET", params=self._mine({"select": "id"}), table=BOOKS_TABLE).json()
+            for row in have_ids:
+                if row["id"] not in keep_ids:
+                    self._request("DELETE", params=self._mine({"id": f"eq.{row['id']}"}), prefer="return=minimal",
+                                  table=BOOKS_TABLE)
 
     # ---- accounts (scoped only) ----
     def touch_user(self, email: str, name: str, picture: str = "") -> None:

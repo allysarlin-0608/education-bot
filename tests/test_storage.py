@@ -44,6 +44,8 @@ class FakePostgrest:
             if params and params.get("select") in self.missing:
                 return FakeResponse(400, {"code": "42703", "message": f"column learning_entries.{params['select']} does not exist"})
             rows = sorted(self.rows.values(), key=lambda r: (r["date"], r["topic"]))
+            if params and params.get("select") == "date,topic":
+                return FakeResponse(200, [{"date": r["date"], "topic": r["topic"]} for r in rows])
             return FakeResponse(200, [dict(r, updated_at="2026-09-23T00:00:00Z") for r in rows])
         if method == "POST":
             assert params == {"on_conflict": "date,topic"}
@@ -58,7 +60,10 @@ class FakePostgrest:
         if method == "DELETE":
             if not params:
                 return FakeResponse(400, {"message": "DELETE requires a WHERE clause"})
-            self.rows.clear()
+            if "date" in params and "topic" in params:
+                self.rows.pop((params["date"].removeprefix("eq."), params["topic"].removeprefix("eq.")), None)
+            else:
+                self.rows.clear()
             return FakeResponse(204)
         raise AssertionError(method)
 
@@ -79,6 +84,8 @@ class FakePostgrest:
         if self.books is None:
             return FakeResponse(404, {"code": "PGRST205", "message": "Could not find the table"})
         if method == "GET":
+            if params.get("select") == "id":
+                return FakeResponse(200, [{"id": k} for k in self.books])
             return FakeResponse(200, [{"data": b["data"]} for b in
                                       sorted(self.books.values(), key=lambda b: b["updated_at"])])
         if method == "POST":
@@ -89,7 +96,10 @@ class FakePostgrest:
             return FakeResponse(201)
         if method == "DELETE":
             assert params
-            self.books.clear()
+            if "id" in params and params["id"].startswith("eq."):
+                self.books.pop(params["id"].removeprefix("eq."), None)
+            else:
+                self.books.clear()
             return FakeResponse(204)
         raise AssertionError(method)
 
@@ -138,6 +148,26 @@ def test_replace_clears_then_inserts():
     assert list(fake.rows) == [("2026-09-02", "fashion")]
     delete = [c for c in fake.calls if c[0] == "DELETE"][0]
     assert delete[1]                  # filtered, as PostgREST requires
+
+
+def test_replace_writes_before_it_removes(monkeypatch):
+    """BUG-005: if writing the backup fails, nothing already saved is gone."""
+    fake, store = make()
+    old = core.empty_log()
+    core.start_entry(old, date(2026, 9, 1), "free")
+    store.replace(old)
+    new = core.empty_log()
+    core.start_entry(new, date(2026, 9, 2), "fashion")
+    real = fake.request
+
+    def failing(method, url, **kw):
+        if method == "POST":
+            return FakeResponse(500, {"message": "down"})
+        return real(method, url, **kw)
+    fake.request = failing
+    with pytest.raises(storage.StorageError):
+        store.replace(new)
+    assert ("2026-09-01", "free") in fake.rows          # still there
 
 
 def test_auth_headers_by_key_type():
