@@ -1,6 +1,5 @@
-streamlit>=1.64
+streamlit==1.64.0
 groq
 requests
 tzdata
-Authlib>=1.3.2
 starlette

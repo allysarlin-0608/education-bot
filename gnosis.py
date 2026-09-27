@@ -10,7 +10,7 @@ st.set_page_config(
 )
 style.inject()
 if auth.is_public():
-    auth.gate(ui.make_store())    # signed in with Google and invited, before any of their data is loaded
+    auth.gate(ui.make_store())    # signed in and invited, before any of their data is loaded
 else:
     ui.require_password()      # before any data is loaded
 ui.init_state()

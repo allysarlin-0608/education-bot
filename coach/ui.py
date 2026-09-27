@@ -72,10 +72,16 @@ def make_store():
             st.session_state.pop(key, None)
         st.session_state.coach_state_version = STATE_VERSION
     if "coach_store" not in st.session_state:
-        st.session_state.coach_store = storage.make_store(
-            get_setting("SUPABASE_URL"), get_setting("SUPABASE_KEY"),
-            scoped=auth.is_public(), current_user=auth.get_current_user_id,
-        )
+        public = auth.is_public()
+        try:
+            st.session_state.coach_store = storage.make_store(
+                get_setting("SUPABASE_URL"), get_setting("SUPABASE_KEY"),
+                scoped=public, current_user=auth.get_current_user_id,
+                access_token=auth.access_token if public else None,
+            )
+        except storage.StorageError as e:
+            st.error(f"The app isn't set up correctly: {e}.")
+            st.stop()
     return st.session_state.coach_store
 
 

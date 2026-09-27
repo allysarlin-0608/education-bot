@@ -1781,18 +1781,44 @@ LENS = """
 ACCOUNT = """
 <style>
 /* ---------- sign-in (public): a title, one line, one button ---------- */
-.st-key-signin { max-width: 34rem; margin: clamp(80px, 18vh, 200px) auto 0; gap: var(--space-5) !important; }
+.st-key-signin { max-width: 34rem; margin: clamp(32px, 12vh, 200px) auto 0; gap: var(--space-5) !important; }
 .st-key-signin .si-title { margin: 0; font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; color: var(--label);
   font-size: clamp(2.25rem, 6vw, 3.25rem); line-height: 1.08 !important; letter-spacing: -0.01em; }
 .st-key-signin .si-lede { margin: 12px 0 0; font-size: 1.125rem; line-height: 1.5; color: var(--label-2); }
-.si-note { margin: 0; font-size: 0.875rem; color: var(--label); }
-.st-key-signin .stButton { margin-top: var(--space-3); }
+.st-key-signin { max-width: 26rem; gap: var(--space-4) !important; }
+.si-note { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--label); }
+.si-note.si-problem { color: var(--label); border-left: 2px solid var(--label); padding-left: var(--space-3); }
+.si-hint { margin: 0; font-size: 0.875rem; color: var(--label-2); }
+.si-rule { margin: -8px 0 0; font-size: 0.8125rem; color: var(--label-2); }
+.st-key-signin [data-testid="stForm"] { padding: 0; border: 0; }
+.st-key-signin [data-testid="stForm"] [data-testid="stVerticalBlock"] { gap: var(--space-4); }
+/* Continue with Google: a quiet outlined control, the same height as the others */
+.si-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box;
+  min-height: var(--control); border-radius: var(--radius-small); border: 0.5px solid var(--field-edge);
+  color: var(--label) !important; text-decoration: none !important; font-weight: 500; font-size: 0.9375rem;
+  transition: background-color .2s ease, opacity .2s ease; }
+.si-google:hover { background: var(--wash); }
+.si-google::before { content: ""; width: 18px; height: 18px; flex: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath fill='%234285F4' d='M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z'/%3E%3Cpath fill='%2334A853' d='M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z'/%3E%3Cpath fill='%23FBBC05' d='M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.05l3.01-2.33z'/%3E%3Cpath fill='%23EA4335' d='M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z'/%3E%3C/svg%3E") center / contain no-repeat; }
+.si-google.is-busy, .si-google.is-off { opacity: .55; pointer-events: none; }
+.si-or { display: flex; align-items: center; gap: var(--space-3); margin: 0; font-size: 0.8125rem; color: var(--label-3); }
+.si-or::before, .si-or::after { content: ""; flex: 1; border-top: 0.5px solid var(--hair); }
+.st-key-si_links { gap: var(--space-4) !important; flex-wrap: wrap; align-items: center; }
+.st-key-si_links > * { flex: 0 0 auto !important; width: auto !important; }
+.st-key-signin .stButton button[kind="tertiary"] { padding: 0 2px; min-height: 32px; color: var(--label-2);
+  background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+.st-key-signin .stButton button[kind="tertiary"]:hover { color: var(--label); }
+.si-plain { font-size: 0.9375rem; color: var(--label) !important; }
 
 /* ---------- the account menu at the bar's right end ---------- */
 .st-key-account_menu button { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 50%;
   font-size: 0.8125rem; font-weight: 500; color: var(--label); background: var(--wash) !important;
   border: 0.5px solid var(--field-edge) !important; box-shadow: none !important; margin-left: var(--space-3); }
 .st-key-account_menu button [data-testid="stIconMaterial"] { display: none; }
+.acct-who { display: flex; align-items: center; gap: var(--space-3); }
+.acct-pic { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; }
+.acct-out { display: block; padding: 6px 2px; font-size: 0.9375rem; color: var(--label) !important; text-decoration: none !important; }
+.acct-out:hover { text-decoration: underline !important; }
 .acct-name { margin: 0; font-weight: 500; color: var(--label); }
 .acct-email { margin: 2px 0 8px; font-size: 0.8125rem; color: var(--label-2); }
 

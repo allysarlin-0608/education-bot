@@ -228,5 +228,5 @@ if auth.is_public():
                         else:
                             for key in list(st.session_state.keys()):
                                 del st.session_state[key]
-                            st.logout()
+                            auth._go(auth.signout_url(deleted=True))    # revoke the session, clear the cookie
                     st.button("Cancel", key="del_cancel", type="tertiary", on_click=cancel_delete)

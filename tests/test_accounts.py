@@ -10,7 +10,13 @@ from coach import auth, llm, quota, storage, ui
 @pytest.fixture
 def public(monkeypatch):
     monkeypatch.setenv("APP_MODE", "public")
-    monkeypatch.setenv("ADMIN_EMAILS", "Boss@Example.com, other@example.com")
+    admins = {"boss@example.com"}             # the app_admins table
+
+    class Store:
+        def is_admin(self, email):
+            return email.lower() in admins
+
+    monkeypatch.setattr(streamlit, "session_state", {"coach_store": Store()})
 
 
 def signed_in(monkeypatch, **user):
@@ -20,7 +26,8 @@ def signed_in(monkeypatch, **user):
 def test_the_user_is_their_sub_never_their_email(public, monkeypatch):
     signed_in(monkeypatch, sub="1234567890", email="A@Example.com", name="Ann")
     assert auth.get_current_user_id() == "1234567890"
-    assert auth.identity() == {"sub": "1234567890", "email": "a@example.com", "name": "Ann"}
+    assert auth.identity() == {"sub": "1234567890", "email": "a@example.com", "name": "Ann",
+                               "picture": "", "exp": 0, "recovery": False}
 
 
 def test_no_sub_means_not_signed_in(public, monkeypatch):
@@ -38,7 +45,7 @@ def test_personal_mode_keeps_its_one_id(monkeypatch):
     assert not auth.is_admin()
 
 
-def test_admins_by_email_any_case(public, monkeypatch):
+def test_admins_are_the_app_admins_table_any_case(public, monkeypatch):
     signed_in(monkeypatch, sub="1", email="boss@example.COM")
     assert auth.is_admin()
     signed_in(monkeypatch, sub="2", email="friend@example.com")

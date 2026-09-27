@@ -157,6 +157,25 @@ class StorageError(Exception):
 NO_USER = "no one is signed in"
 
 
+ADMINS_TABLE = "app_admins"
+
+
+def _is_secret_key(key: str) -> bool:
+    """A key that bypasses row level security: sb_secret_…, or a legacy JWT
+    whose role is service_role."""
+    if key.startswith("sb_secret_"):
+        return True
+    if key.startswith("eyJ"):
+        import base64
+        try:
+            part = key.split(".")[1]
+            claims = json.loads(base64.urlsafe_b64decode(part + "=" * (-len(part) % 4)))
+        except (IndexError, ValueError):
+            return True
+        return claims.get("role") == "service_role"
+    return False
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -253,14 +272,15 @@ class FileStore(_Scope):
             raise StorageError("the records couldn't be written to a file") from e
 
     # ---- accounts (scoped only) ----
-    def touch_user(self, email: str, name: str) -> None:
+    def touch_user(self, email: str, name: str, picture: str = "") -> None:
         uid = self._uid()
         rows = self._rows(USERS_TABLE)
         mine = next((r for r in rows if r["user_id"] == uid), None)
         if mine is None:
-            rows.append({"user_id": uid, "email": email, "display_name": name, "created_at": _now(), "last_seen_at": _now()})
+            rows.append({"user_id": uid, "email": email, "display_name": name, "avatar_url": picture,
+                         "created_at": _now(), "last_seen_at": _now()})
         else:
-            mine.update(email=email, display_name=name, last_seen_at=_now())
+            mine.update(email=email, display_name=name, avatar_url=picture, last_seen_at=_now())
         self._write_rows(USERS_TABLE, rows)
 
     def user_row(self):
@@ -317,6 +337,9 @@ class FileStore(_Scope):
         except OSError as e:
             raise StorageError("your records couldn't be deleted") from e
 
+    def is_admin(self, email: str) -> bool:
+        return any(r["email"] == email.lower() for r in self._rows(ADMINS_TABLE))
+
     def save_book(self, log: dict, book: dict) -> None:
         self.save_entry(log, None)
 
@@ -327,7 +350,7 @@ class FileStore(_Scope):
 class SupabaseStore(_Scope):
     name = "supabase"
 
-    def __init__(self, url: str, key: str, session=None, scoped=False, current_user=None):
+    def __init__(self, url: str, key: str, session=None, scoped=False, current_user=None, access_token=None):
         # Accept the Project URL with or without the /rest/v1 suffix that
         # Supabase's "API URL" field sometimes shows.
         url = url.strip().rstrip("/")
@@ -349,6 +372,13 @@ class SupabaseStore(_Scope):
             self.headers["Authorization"] = f"Bearer {key}"
         self.scoped = scoped
         self.current_user = current_user
+        # Signed-in mode (APP_MODE=public): every request is made as the
+        # person, with their access token, so the database's row level
+        # security decides what they may read and write. The key must then be
+        # the publishable one; a secret key would bypass that.
+        self.access_token = access_token
+        if access_token is not None and _is_secret_key(key):
+            raise StorageError("the app is set up with a secret database key; public mode needs the publishable key")
 
     def _mine(self, params: dict) -> dict:
         """Scoped: the same query, only the current user's rows."""
@@ -363,6 +393,11 @@ class SupabaseStore(_Scope):
 
     def _request(self, method, params=None, json=None, prefer=None, table=TABLE):
         headers = dict(self.headers)
+        if self.access_token is not None:
+            token = self.access_token()
+            if not token:
+                raise StorageError(NO_USER)
+            headers["Authorization"] = f"Bearer {token}"
         if prefer:
             headers["Prefer"] = prefer
         try:
@@ -375,6 +410,8 @@ class SupabaseStore(_Scope):
             raise StorageError("can't reach the database right now") from e
         if resp.status_code >= 400:
             logger.error("supabase %s %s -> %s: %s", method, table, resp.status_code, resp.text[:500])
+            if resp.status_code == 401 and self.access_token is not None:
+                raise StorageError("your session has ended; refresh the page to continue", status=401)
             raise StorageError("the database isn't responding right now", status=resp.status_code, detail=resp.text[:500])
         return resp
 
@@ -481,11 +518,11 @@ class SupabaseStore(_Scope):
             self._upsert_books(log.get("books", []))
 
     # ---- accounts (scoped only) ----
-    def touch_user(self, email: str, name: str) -> None:
+    def touch_user(self, email: str, name: str, picture: str = "") -> None:
         """Their users row: made the first time, last_seen_at on every sign-in."""
         uid = self._uid()
         rows = self._request("GET", params={"select": "user_id", "user_id": f"eq.{uid}"}, table=USERS_TABLE).json()
-        body = {"user_id": uid, "email": email, "display_name": name, "last_seen_at": _now()}
+        body = {"user_id": uid, "email": email, "display_name": name, "avatar_url": picture, "last_seen_at": _now()}
         if not rows:
             body["created_at"] = _now()
         self._request("POST", params={"on_conflict": "user_id"}, json=[body],
@@ -521,8 +558,8 @@ class SupabaseStore(_Scope):
     def add_usage(self, day: str, requests_: int, tokens_: int) -> None:
         """Add to today's count, in the database (the add_ai_usage function,
         so two tabs counting at once both count)."""
-        self._request("POST", json={"p_user_id": self._uid(), "p_date": day,
-                                    "p_requests": requests_, "p_tokens": tokens_},
+        self._uid()
+        self._request("POST", json={"p_date": day, "p_requests": requests_, "p_tokens": tokens_},
                       prefer="return=minimal", table="rpc/add_ai_usage")
 
     def export_my_data(self) -> dict:
@@ -538,13 +575,22 @@ class SupabaseStore(_Scope):
         }
 
     def delete_my_account(self) -> None:
-        """All of the current user's rows in every table, and their users row,
-        in one transaction (the delete_user_data function): all or nothing."""
-        self._request("POST", json={"p_user_id": self._uid()}, prefer="return=minimal",
-                      table="rpc/delete_user_data")
+        """All of the current user's rows in every table, their users row and
+        their sign-in account, in one transaction (the delete_my_account
+        function, which only ever deletes the caller): all or nothing."""
+        self._uid()
+        self._request("POST", json={}, prefer="return=minimal", table="rpc/delete_my_account")
+
+    def is_admin(self, email: str) -> bool:
+        """Whether this person may manage invitations (the app_admins table;
+        the database only shows a person their own row)."""
+        rows = self._request("GET", params={"select": "email", "email": f"eq.{email.lower()}"},
+                             table=ADMINS_TABLE).json()
+        return bool(rows)
 
 
-def make_store(url: str = "", key: str = "", session=None, scoped=False, current_user=None):
+def make_store(url: str = "", key: str = "", session=None, scoped=False, current_user=None, access_token=None):
     if url and key:
-        return SupabaseStore(url, key, session=session, scoped=scoped, current_user=current_user)
+        return SupabaseStore(url, key, session=session, scoped=scoped, current_user=current_user,
+                             access_token=access_token)
     return FileStore(scoped=scoped, current_user=current_user)
