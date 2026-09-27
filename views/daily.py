@@ -58,16 +58,16 @@ def run_kickoff(i):
     if chat:        # already generated (e.g. in another tab): never call again
         st.rerun()
     kickoff = core.build_kickoff_message(topic, today, slot=slot)
-    chat.append({"role": "user", "content": kickoff})
+    # The chat only changes once the lesson is complete: a run interrupted
+    # mid-stream (she clicks elsewhere) must not leave a lesson half there.
     lesson, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level), chat,
-        max_tokens=tokens.LESSON_MAX_TOKENS,
+        core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level),
+        [{"role": "user", "content": kickoff}], max_tokens=tokens.LESSON_MAX_TOKENS,
     )
     if error:
-        chat.pop()
         failed("kickoff", error, slot, i=i)
     lesson = core.finalize_reply(lesson, lesson=True, topic=topic)
-    chat.append({"role": "assistant", "content": lesson})
+    chat += [{"role": "user", "content": kickoff}, {"role": "assistant", "content": lesson}]
     slot["kickoff"], slot["lesson"] = kickoff, lesson
     first, last = entry["lessons"][0]["n"], entry["lessons"][-1]["n"]
     entry["title"] = f"Lessons {first}–{last}"
@@ -81,19 +81,18 @@ def run_followup(i, text):
     entry = day_entry()
     slot = entry["lessons"][i]
     chat = get_chat(slot)
-    chat.append({"role": "user", "content": text})
+    asked = chat + [{"role": "user", "content": text}]     # kept only once answered (as in run_kickoff)
     n = st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
     st.html(place.follow(n), unsafe_allow_javascript=True)      # the page follows her question
     with st.chat_message("user"):
         st.markdown(text)
     reply, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today, followup=True, slot=slot, start_level=start_level), chat,
+        core.build_system_prompt(log, topic, today, followup=True, slot=slot, start_level=start_level), asked,
         max_tokens=tokens.CHAT_MAX_TOKENS,
     )
     if error:
-        chat.pop()
         failed("followup", error, slot, i=i, text=text)
-    chat.append({"role": "assistant", "content": core.finalize_reply(reply, lesson=False, topic=topic)})
+    chat += [asked[-1], {"role": "assistant", "content": core.finalize_reply(reply, lesson=False, topic=topic)}]
     slot["followups"] = chat[2:]               # everything after the lesson
     ui.save_entry(log, entry)
     st.session_state.coach_scroll = (place.LATEST, False)      # and stays on it after the redraw

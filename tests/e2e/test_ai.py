@@ -57,9 +57,25 @@ def test_clicking_elsewhere_while_a_lesson_is_written_loses_nothing(public_app, 
     started = "Take the quiz" in text
     can_start = "Start this lesson" in text
     assert started or can_start, "the lesson is neither shown nor startable"
-    if not started:
-        # nothing half-written: the lesson area is empty only because it hasn't started
-        assert "Quiz" not in text.split("Lesson 1:")[-1][:400], "a half-started lesson shows the quiz without a lesson"
+    if started:
+        assert "Key Idea" in text, "the quiz is offered but the lesson itself is missing"
+
+
+def test_leaving_while_the_lesson_streams_leaves_no_half_lesson(public_app, pages):
+    covers("W-daily-start_this_lesson", "AI-daily-stream_reply")
+    app = public_app
+    p = fresh(app, pages)
+    app.set_llm(chunk_delay=0.15)           # the lesson is visibly being written
+    flows.button(p, "Start this lesson", wait=False)
+    assert flows.wait_text(p.page, "Earth", 20), "the lesson didn't start streaming"
+    flows.go(p, app, "Progress")            # leave mid-stream
+    app.set_llm()
+    flows.go(p, app, "Today")
+    text = p.page.evaluate("document.body.innerText")
+    if "Take the quiz" in text:
+        assert "Key Idea" in text, "the quiz is offered but the lesson itself is missing"
+    else:
+        assert "Start this lesson" in text, "the lesson is neither shown nor startable"
 
 
 def test_double_click_take_quiz_writes_one_quiz(public_app, pages):

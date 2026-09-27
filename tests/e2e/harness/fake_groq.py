@@ -8,6 +8,7 @@ make it fail, be slow, or return tricky content:
   {"mode": "ok" | "413" | "429" | "500" | "timeout" | "empty" | "invalid" | "broken_stream",
    "fail_times": 1,          # fail this many calls, then behave (default: always)
    "delay": 0.0,             # seconds before answering
+   "chunk_delay": 0.0,       # seconds between streamed pieces (a slow stream)
    "inject": false,          # put HTML/script/markdown-link injection strings in every reply
    "quiz_flag_first": false} # the answer checker flags question 0 once (exercises rewrite)
 
@@ -173,6 +174,8 @@ class FakeGroq:
                 for k, w in enumerate(words):
                     if broken and k == 5:
                         raise groq.APIConnectionError(request=httpx.Request("POST", "https://api.groq.com"))
+                    if ctl.get("chunk_delay"):
+                        time.sleep(float(ctl["chunk_delay"]))
                     yield _chunk(w + (" " if k < len(words) - 1 else ""))
                 yield _chunk("", finish="stop")
             return gen()

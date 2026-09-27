@@ -16,6 +16,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-006 | P0 | Progress / import, and every page reading records | A backup with a field of the wrong type crashed the page | fixed (cb7ed7d) |
 | BUG-007 | P2 | Progress / Backup and restore (import) | A file that isn't a backup showed a raw parser error | fixed (7b62327) |
 | BUG-008 | P1 | Progress / Backup and restore (import) | Any size of file was read into memory on import | fixed (d58ade9) |
+| BUG-009 | P1 | Today / lesson and chat | Leaving while a lesson streamed left a lesson-less day with the quiz offered | fixed |
 
 ## Details
 
@@ -104,3 +105,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** Files over 20 MB are refused with a message; nothing is changed
 - **Files changed:** views/records.py, tests/e2e/test_import.py
 - **Covered by:** tests/e2e/test_import.py::test_a_huge_file_is_refused
+
+### BUG-009 (P1) — Leaving while a lesson streamed left a lesson-less day with the quiz offered
+- **Page / flow:** Today / lesson and chat
+- **Status:** fixed
+- **Steps to reproduce:** Start this lesson → while the text is still streaming, click Progress → back to Today
+- **Expected:** The lesson is either complete or can be started again (1.3 no lost state)
+- **Actual:** No lesson text, no Start button; Take the quiz offered on an empty lesson for the rest of the session
+- **Root cause:** run_kickoff/run_followup appended the user message to the session chat before streaming; an interrupted run (fast rerun) never reached the pop/append
+- **Fix:** The chat is only extended after a complete reply; the request uses a copy
+- **Files changed:** views/daily.py, tests/e2e/test_ai.py, tests/e2e/harness/fake_groq.py (chunk_delay)
+- **Covered by:** tests/e2e/test_ai.py::test_leaving_while_the_lesson_streams_leaves_no_half_lesson, ::test_clicking_elsewhere_while_a_lesson_is_written_loses_nothing
