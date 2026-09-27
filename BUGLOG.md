@@ -10,7 +10,7 @@ Status: open · fixed (commit) · needs decision.
 |---|---|---|---|---|
 | BUG-001 | P1 | Today / quiz (all JSON AI calls) | An unreadable JSON reply showed an error at once, with no automatic retry | fixed (99fe100) |
 | BUG-002 | P1 | All AI actions | No overall time limit: a hung or rate-limited request could keep the person waiting minutes | fixed (0e3f046) |
-| BUG-003 | P0 | Today / sidebar (API key box) | The Groq key box could put the server's secret key into the page, and appeared in public mode | fixed (pending commit) |
+| BUG-003 | P0 | Today / sidebar (API key box) | The Groq key box could put the server's secret key into the page, and appeared in public mode | fixed (add6ad2) |
 | BUG-004 | P3 | Reading (books from storage) | normalize_book fills missing dates with the server's date, not the learner's | open |
 
 ## Details
@@ -48,7 +48,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-003 (P0) — The Groq key box could put the server's secret key into the page, and appeared in public mode
 - **Page / flow:** Today / sidebar (API key box)
-- **Status:** fixed (pending commit)
+- **Status:** fixed (add6ad2)
 - **Steps to reproduce:** Personal app, GROQ_API_KEY set, groq package unavailable: open Today
 - **Expected:** No secret ever reaches the page (1.6); a public app never offers a key box
 - **Actual:** The password field's value was the server key (sent to the browser)
