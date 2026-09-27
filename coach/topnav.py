@@ -11,7 +11,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import search, settings, ui
+from coach import auth, search, settings, ui
 
 
 def render(pages: list, log: dict) -> None:
@@ -22,6 +22,8 @@ def render(pages: list, log: dict) -> None:
                 st.page_link(p, label=p.title, icon=":material/settings:" if p.title == "Settings" else None)
         if st.button("Search", icon=":material/search:", key="nav_search"):
             _search(log)
+        if auth.is_public():
+            auth.account_menu()          # at the right end: who is signed in, Settings, Sign out
 
 
 def _e(text) -> str:

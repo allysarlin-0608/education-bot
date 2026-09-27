@@ -1778,6 +1778,32 @@ LENS = """
 </style>
 """
 
+ACCOUNT = """
+<style>
+/* ---------- sign-in (public): a title, one line, one button ---------- */
+.st-key-signin { max-width: 34rem; margin: clamp(80px, 18vh, 200px) auto 0; gap: var(--space-5) !important; }
+.st-key-signin .si-title { margin: 0; font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; color: var(--label);
+  font-size: clamp(2.25rem, 6vw, 3.25rem); line-height: 1.08 !important; letter-spacing: -0.01em; }
+.st-key-signin .si-lede { margin: 12px 0 0; font-size: 1.125rem; line-height: 1.5; color: var(--label-2); }
+.si-note { margin: 0; font-size: 0.875rem; color: var(--label); }
+.st-key-signin .stButton { margin-top: var(--space-3); }
+
+/* ---------- the account menu at the bar's right end ---------- */
+.st-key-account_menu button { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 50%;
+  font-size: 0.8125rem; font-weight: 500; color: var(--label); background: var(--wash) !important;
+  border: 0.5px solid var(--field-edge) !important; box-shadow: none !important; margin-left: var(--space-3); }
+.st-key-account_menu button [data-testid="stIconMaterial"] { display: none; }
+.acct-name { margin: 0; font-weight: 500; color: var(--label); }
+.acct-email { margin: 2px 0 8px; font-size: 0.8125rem; color: var(--label-2); }
+
+/* ---------- Settings: Your data ---------- */
+.del-warn { margin: 0 0 8px; font-size: 0.9375rem; color: var(--label); }
+.st-key-data_actions, .st-key-del_buttons { gap: var(--space-4) !important; flex-wrap: wrap; }
+.st-key-data_actions > *, .st-key-del_buttons > * { flex: 0 0 auto !important; width: auto !important; }
+.st-key-inv_add { gap: var(--space-3) !important; flex-wrap: wrap; }
+</style>
+"""
+
 WORLDS = """
 <style>
 /* ==========================================================================
@@ -1958,7 +1984,7 @@ WORLDS = """
 """
 
 def stylesheet() -> str:
-    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, WORLDS, TOUCH))
+    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, WORLDS, ACCOUNT, TOUCH))
     return CSS.replace("</style>", rest + "</style>")
 
 

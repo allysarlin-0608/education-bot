@@ -1,6 +1,6 @@
 import streamlit as st
 
-from coach import settings, sidebar, style, topnav, ui
+from coach import auth, settings, sidebar, style, topnav, ui
 
 st.set_page_config(
     page_title="Daily Learning Coach",
@@ -9,7 +9,10 @@ st.set_page_config(
     initial_sidebar_state="auto",   # collapsed on phones, so it never covers the page
 )
 style.inject()
-ui.require_password()      # before any data is loaded
+if auth.is_public():
+    auth.gate(ui.make_store())    # signed in with Google and invited, before any of their data is loaded
+else:
+    ui.require_password()      # before any data is loaded
 ui.init_state()
 ui.show_pending_error()
 

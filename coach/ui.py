@@ -60,17 +60,36 @@ def require_password():
 STATE_VERSION = 4
 
 
-def init_state():
+CACHED = ("coach_log", "coach_chats", "coach_settings")
+
+
+def make_store():
+    """The session's store (once per session). public: scoped to whoever is
+    signed in, asked afresh on every call (auth.get_current_user_id)."""
+    from coach import auth
     if st.session_state.get("coach_state_version") != STATE_VERSION:
-        for key in ("coach_store", "coach_log", "coach_chats", "coach_settings"):
+        for key in ("coach_store", *CACHED):
             st.session_state.pop(key, None)
         st.session_state.coach_state_version = STATE_VERSION
-    if "api_key" not in st.session_state:
-        st.session_state.api_key = get_setting("GROQ_API_KEY")
     if "coach_store" not in st.session_state:
         st.session_state.coach_store = storage.make_store(
-            get_setting("SUPABASE_URL"), get_setting("SUPABASE_KEY")
+            get_setting("SUPABASE_URL"), get_setting("SUPABASE_KEY"),
+            scoped=auth.is_public(), current_user=auth.get_current_user_id,
         )
+    return st.session_state.coach_store
+
+
+def init_state():
+    make_store()
+    # what this session holds is one person's: if someone else is signed in now
+    # (a sign-out and a sign-in in the same browser), it is dropped and reloaded
+    uid = user_id()
+    if st.session_state.get("coach_uid") != uid:
+        for key in CACHED:
+            st.session_state.pop(key, None)
+        st.session_state.coach_uid = uid
+    if "api_key" not in st.session_state:
+        st.session_state.api_key = get_setting("GROQ_API_KEY")
     if "coach_log" not in st.session_state:
         try:
             st.session_state.coach_log = st.session_state.coach_store.load()
@@ -86,10 +105,16 @@ def init_state():
         st.session_state.coach_chats = {}
 
 
-def user_id() -> str:
-    """Whose settings these are. One user for now (a fixed id, which can be
-    set with COACH_USER_ID); every read and write of settings goes by it."""
+def personal_user_id() -> str:
+    """The one user of a personal app (a fixed id, which can be set with
+    COACH_USER_ID)."""
     return get_setting("COACH_USER_ID") or settings.DEFAULT_USER_ID
+
+
+def user_id():
+    """Whose data this session shows (auth.get_current_user_id)."""
+    from coach import auth
+    return auth.get_current_user_id()
 
 
 def load_settings():
@@ -97,7 +122,7 @@ def load_settings():
     app keeps its old fixed setup, unchanged (settings.legacy)."""
     store, uid = st.session_state.coach_store, user_id()
     try:
-        row = store.load_settings(uid)
+        row = store.load_settings()
     except storage.StorageError as e:
         st.error(f"Couldn't load your settings ({e}). Refresh the page in a moment to try again.")
         st.stop()
@@ -116,7 +141,7 @@ def save_settings(new: dict) -> bool:
     if settings.is_legacy(new):
         return False
     try:
-        st.session_state.coach_store.save_settings(user_id(), new)
+        st.session_state.coach_store.save_settings(new)
     except storage.StorageError as e:
         st.session_state.coach_save_error = f"Your settings weren't saved ({e}). Try again in a moment."
         return False

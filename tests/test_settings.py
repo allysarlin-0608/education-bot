@@ -126,13 +126,18 @@ def test_every_offered_subject_has_a_syllabus_and_a_description():
 
 
 def test_file_store_keeps_each_user_apart(tmp_path):
-    store = storage.FileStore(tmp_path / "log.json", settings_path=tmp_path / "settings.json")
-    assert store.load_settings("a") is None
-    store.save_settings("a", dict(settings.blank("a"), subjects=["cosmos"]))
-    store.save_settings("b", dict(settings.blank("b"), subjects=["fashion"], legacy=True))
-    store.save_settings("a", dict(settings.blank("a"), subjects=["free"]))
-    assert store.load_settings("a")["subjects"] == ["free"]
-    assert store.load_settings("b")["subjects"] == ["fashion"]
+    who = {"id": "a"}
+    store = storage.FileStore(tmp_path / "log.json", settings_path=tmp_path / "settings.json",
+                              current_user=lambda: who["id"])
+    assert store.load_settings() is None
+    store.save_settings(dict(settings.blank("a"), subjects=["cosmos"]))
+    who["id"] = "b"
+    store.save_settings(dict(settings.blank("b"), subjects=["fashion"], legacy=True))
+    who["id"] = "a"
+    store.save_settings(dict(settings.blank("a"), subjects=["free"]))
+    assert store.load_settings()["subjects"] == ["free"]
+    who["id"] = "b"
+    assert store.load_settings()["subjects"] == ["fashion"]
     rows = json.loads((tmp_path / "settings.json").read_text())["user_settings"]
     assert len(rows) == 2 and all("legacy" not in r for r in rows)
 
@@ -156,9 +161,9 @@ class Session:
 
 def test_supabase_reads_and_writes_settings_by_user_id():
     session = Session(Resp(200, [{"user_id": "u1", "subjects": ["cosmos"]}]), Resp(201))
-    store = storage.SupabaseStore("https://x.supabase.co", "sb_secret_k", session=session)
-    assert store.load_settings("u1")["subjects"] == ["cosmos"]
-    store.save_settings("u1", dict(settings.blank("u1"), subjects=["free"], legacy=True))
+    store = storage.SupabaseStore("https://x.supabase.co", "sb_secret_k", session=session, current_user=lambda: "u1")
+    assert store.load_settings()["subjects"] == ["cosmos"]
+    store.save_settings(dict(settings.blank("u1"), subjects=["free"], legacy=True))
     (m1, url1, p1, _), (m2, url2, p2, body) = session.calls
     assert url1.endswith("/user_settings") and p1["user_id"] == "eq.u1"
     assert m2 == "POST" and p2 == {"on_conflict": "user_id"} and body[0]["user_id"] == "u1"
@@ -166,8 +171,9 @@ def test_supabase_reads_and_writes_settings_by_user_id():
 
 
 def test_supabase_without_the_table_keeps_the_old_setup():
-    store = storage.SupabaseStore("https://x.supabase.co", "sb_secret_k", session=Session(Resp(404, {})))
-    assert store.load_settings("u1") is None and store.settings_missing
+    store = storage.SupabaseStore("https://x.supabase.co", "sb_secret_k", session=Session(Resp(404, {})),
+                                  current_user=lambda: "u1")
+    assert store.load_settings() is None and store.settings_missing
 
 
 def _log_with_day(slots):

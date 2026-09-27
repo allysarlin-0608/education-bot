@@ -1,6 +1,22 @@
 """Where the learning log lives: a Supabase table when SUPABASE_URL and
 SUPABASE_KEY are configured, otherwise a local JSON file (which Streamlit
-Cloud wipes on restart)."""
+Cloud wipes on restart).
+
+This is the app's only way to its data: no other module talks to the
+database. Every function finds whose data it is by calling
+get_current_user_id() itself (the store is given it when it is made).
+
+Two layouts:
+- personal (APP_MODE=personal, the default): one person's app, exactly as
+  it has always been; the learning log and books have no user_id column
+  and settings are kept under one fixed id.
+- scoped (APP_MODE=public): many people, each seeing only their own. Every
+  table has a user_id; every read filters on it and every write sets it,
+  from get_current_user_id() and nothing else. With no current user, every
+  call refuses (StorageError). Also here: the users, allowed_users (the
+  invitation list) and ai_usage tables, the export of one person's data,
+  and the deletion of it all (one transaction, the delete_user_data
+  function in supabase/multiuser.sql)."""
 import json
 import logging
 import os
@@ -14,6 +30,9 @@ from coach import core
 TABLE = "learning_entries"
 BOOKS_TABLE = "reading_books"
 SETTINGS_TABLE = "user_settings"
+USERS_TABLE = "users"
+INVITES_TABLE = "allowed_users"
+USAGE_TABLE = "ai_usage"
 TIMEOUT = 10
 
 # Run once in the Supabase SQL editor. RLS stays on with no policies, so
@@ -135,13 +154,62 @@ class StorageError(Exception):
         self.detail = detail     # the raw response, for code paths only
 
 
-class FileStore:
+NO_USER = "no one is signed in"
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+class _Scope:
+    """Whose data a call is about: current_user() is get_current_user_id()
+    (auth.py), asked afresh on every call, never remembered."""
+
+    def _uid(self) -> str:
+        uid = self.current_user() if self.current_user else None
+        if not uid:
+            raise StorageError(NO_USER)
+        return str(uid)
+
+
+class FileStore(_Scope):
     name = "file"
 
-    def __init__(self, path=core.DEFAULT_LOG_PATH, settings_path=None):
+    def __init__(self, path=core.DEFAULT_LOG_PATH, settings_path=None, scoped=False, current_user=None):
         self.path = path
         self.settings_path = Path(settings_path or os.environ.get("COACH_SETTINGS_PATH")
                                   or Path(path).with_name("user_settings.json"))
+        self.scoped = scoped
+        self.current_user = current_user
+
+    def _log_path(self) -> Path:
+        """personal: the one log file; scoped: one file per user, beside it."""
+        if not self.scoped:
+            return Path(self.path)
+        uid = self._uid()
+        safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in uid)
+        return Path(self.path).with_name(f"{Path(self.path).stem}.{safe}.json")
+
+    def _table_path(self, table: str) -> Path:
+        return self.settings_path.with_name(f"{table}.json")
+
+    def _rows(self, table: str) -> list:
+        try:
+            rows = json.loads(self._table_path(table).read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
+        return rows if isinstance(rows, list) else []
+
+    def _write_rows(self, table: str, rows: list) -> None:
+        path = self._table_path(table)
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.replace(path)
+        except OSError as e:
+            logger.error("saving %s failed: %s", table, e)
+            raise StorageError("this couldn't be written to a file") from e
 
     books_error = None
     settings_missing = False
@@ -153,13 +221,12 @@ class FileStore:
             return []
         return [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
 
-    def load_settings(self, user_id: str):
-        """This user's settings row, or None if she has none yet."""
-        return next((r for r in self._settings_rows() if r.get("user_id") == user_id), None)
+    def load_settings(self):
+        """The current user's settings row, or None if they have none yet."""
+        uid = self._uid()
+        return next((r for r in self._settings_rows() if r.get("user_id") == uid), None)
 
-    def save_settings(self, user_id: str, row: dict) -> None:
-        rows = [r for r in self._settings_rows() if r.get("user_id") != user_id]
-        rows.append({**{k: row.get(k) for k in SETTINGS_COLUMNS}, "user_id": user_id})
+    def _write_settings(self, rows: list) -> None:
         try:
             self.settings_path.parent.mkdir(parents=True, exist_ok=True)
             tmp = self.settings_path.with_suffix(".tmp")
@@ -169,15 +236,86 @@ class FileStore:
             logger.error("saving settings failed: %s", e)
             raise StorageError("your settings couldn't be written to a file") from e
 
+    def save_settings(self, row: dict) -> None:
+        uid = self._uid()
+        rows = [r for r in self._settings_rows() if r.get("user_id") != uid]
+        rows.append({**{k: row.get(k) for k in SETTINGS_COLUMNS}, "user_id": uid})
+        self._write_settings(rows)
+
     def load(self) -> dict:
-        return core.load_log(self.path)
+        return core.load_log(self._log_path())
 
     def save_entry(self, log: dict, entry: dict) -> None:
         try:
-            core.save_log(log, self.path)
+            core.save_log(log, self._log_path())
         except OSError as e:
             logger.error("saving the local log failed: %s", e)
             raise StorageError("the records couldn't be written to a file") from e
+
+    # ---- accounts (scoped only) ----
+    def touch_user(self, email: str, name: str) -> None:
+        uid = self._uid()
+        rows = self._rows(USERS_TABLE)
+        mine = next((r for r in rows if r["user_id"] == uid), None)
+        if mine is None:
+            rows.append({"user_id": uid, "email": email, "display_name": name, "created_at": _now(), "last_seen_at": _now()})
+        else:
+            mine.update(email=email, display_name=name, last_seen_at=_now())
+        self._write_rows(USERS_TABLE, rows)
+
+    def user_row(self):
+        uid = self._uid()
+        return next((r for r in self._rows(USERS_TABLE) if r["user_id"] == uid), None)
+
+    def is_invited(self, email: str) -> bool:
+        return any(r["email"] == email.lower() for r in self._rows(INVITES_TABLE))
+
+    def list_invites(self) -> list:
+        return sorted(self._rows(INVITES_TABLE), key=lambda r: r["email"])
+
+    def add_invite(self, email: str, note: str = "") -> None:
+        rows = [r for r in self._rows(INVITES_TABLE) if r["email"] != email.lower()]
+        rows.append({"email": email.lower(), "invited_at": _now(), "note": note})
+        self._write_rows(INVITES_TABLE, rows)
+
+    def remove_invite(self, email: str) -> None:
+        self._write_rows(INVITES_TABLE, [r for r in self._rows(INVITES_TABLE) if r["email"] != email.lower()])
+
+    def usage_today(self, day: str) -> dict:
+        uid = self._uid()
+        row = next((r for r in self._rows(USAGE_TABLE) if r["user_id"] == uid and r["date"] == day), None)
+        return row or {"user_id": uid, "date": day, "request_count": 0, "token_count": 0}
+
+    def add_usage(self, day: str, requests_: int, tokens_: int) -> None:
+        uid = self._uid()
+        rows = self._rows(USAGE_TABLE)
+        row = next((r for r in rows if r["user_id"] == uid and r["date"] == day), None)
+        if row is None:
+            rows.append({"user_id": uid, "date": day, "request_count": requests_, "token_count": tokens_})
+        else:
+            row["request_count"] += requests_
+            row["token_count"] += tokens_
+        self._write_rows(USAGE_TABLE, rows)
+
+    def export_my_data(self) -> dict:
+        uid = self._uid()
+        log = self.load()
+        return {"user": self.user_row(), "settings": self.load_settings(),
+                "learning_entries": log["entries"], "reading_books": log.get("books", []),
+                "ai_usage": [r for r in self._rows(USAGE_TABLE) if r["user_id"] == uid]}
+
+    def delete_my_account(self) -> None:
+        """Everything of the current user's, gone: the log file, their settings,
+        their usage and their users row (the files each replaced whole)."""
+        uid = self._uid()
+        log_path = self._log_path()
+        self._write_settings([r for r in self._settings_rows() if r.get("user_id") != uid])
+        self._write_rows(USAGE_TABLE, [r for r in self._rows(USAGE_TABLE) if r["user_id"] != uid])
+        self._write_rows(USERS_TABLE, [r for r in self._rows(USERS_TABLE) if r["user_id"] != uid])
+        try:
+            log_path.unlink(missing_ok=True)
+        except OSError as e:
+            raise StorageError("your records couldn't be deleted") from e
 
     def save_book(self, log: dict, book: dict) -> None:
         self.save_entry(log, None)
@@ -186,10 +324,10 @@ class FileStore:
         self.save_entry(log, None)
 
 
-class SupabaseStore:
+class SupabaseStore(_Scope):
     name = "supabase"
 
-    def __init__(self, url: str, key: str, session=None):
+    def __init__(self, url: str, key: str, session=None, scoped=False, current_user=None):
         # Accept the Project URL with or without the /rest/v1 suffix that
         # Supabase's "API URL" field sometimes shows.
         url = url.strip().rstrip("/")
@@ -209,6 +347,19 @@ class SupabaseStore:
         # new sb_secret_ keys only go in the apikey header.
         if key.startswith("eyJ"):
             self.headers["Authorization"] = f"Bearer {key}"
+        self.scoped = scoped
+        self.current_user = current_user
+
+    def _mine(self, params: dict) -> dict:
+        """Scoped: the same query, only the current user's rows."""
+        return {**params, "user_id": f"eq.{self._uid()}"} if self.scoped else params
+
+    def _own(self, rows: list) -> list:
+        """Scoped: the rows to write, each stamped with the current user's id."""
+        if not self.scoped:
+            return rows
+        uid = self._uid()
+        return [{**r, "user_id": uid} for r in rows]
 
     def _request(self, method, params=None, json=None, prefer=None, table=TABLE):
         headers = dict(self.headers)
@@ -228,7 +379,7 @@ class SupabaseStore:
         return resp
 
     def load(self) -> dict:
-        resp = self._request("GET", params={"select": "*", "order": "date.asc,topic.asc"})
+        resp = self._request("GET", params=self._mine({"select": "*", "order": "date.asc,topic.asc"}))
         rows = resp.json()
         self._check_lessons_column()
         return core.parse_log({
@@ -240,7 +391,7 @@ class SupabaseStore:
         """Find out up front whether supabase/lessons.sql has been run, so the
         daily page can ask for it before a lesson is saved without it."""
         try:
-            self._request("GET", params={"select": "lessons", "limit": "1"})
+            self._request("GET", params=self._mine({"select": "lessons", "limit": "1"}))
         except StorageError as e:
             if e.status != 400:
                 raise
@@ -249,7 +400,7 @@ class SupabaseStore:
 
     def _load_books(self) -> list:
         try:
-            resp = self._request("GET", params={"select": "data", "order": "updated_at.asc"},
+            resp = self._request("GET", params=self._mine({"select": "data", "order": "updated_at.asc"}),
                                  table=BOOKS_TABLE)
         except StorageError as e:
             self.books_error = BOOKS_TABLE_MISSING if e.status == 404 else f"Reading progress: {e}. Refresh in a moment to try again."
@@ -261,11 +412,11 @@ class SupabaseStore:
         if not entries:
             return
         fields = [f for f in core.ENTRY_FIELDS if f not in self.missing_columns]
-        rows = [{k: e[k] for k in fields} for e in entries]
+        rows = self._own([{k: e[k] for k in fields} for e in entries])
         try:
             self._request(
                 "POST",
-                params={"on_conflict": "date,topic"},
+                params={"on_conflict": "user_id,date,topic" if self.scoped else "date,topic"},
                 json=rows,
                 prefer="resolution=merge-duplicates,return=minimal",
             )
@@ -290,17 +441,17 @@ class SupabaseStore:
         now = datetime.now(timezone.utc).isoformat()
         self._request(
             "POST",
-            params={"on_conflict": "id"},
-            json=[{"id": b["id"], "data": b, "updated_at": now} for b in book_list],
+            params={"on_conflict": "user_id,id" if self.scoped else "id"},
+            json=self._own([{"id": b["id"], "data": b, "updated_at": now} for b in book_list]),
             prefer="resolution=merge-duplicates,return=minimal",
             table=BOOKS_TABLE,
         )
 
-    def load_settings(self, user_id: str):
-        """This user's settings row, or None if she has none yet (or the
-        table doesn't exist yet: then settings_missing is set)."""
+    def load_settings(self):
+        """The current user's settings row, or None if they have none yet (or
+        the table doesn't exist yet: then settings_missing is set)."""
         try:
-            resp = self._request("GET", params={"select": "*", "user_id": f"eq.{user_id}"},
+            resp = self._request("GET", params={"select": "*", "user_id": f"eq.{self._uid()}"},
                                  table=SETTINGS_TABLE)
         except StorageError as e:
             if e.status != 404:
@@ -312,9 +463,9 @@ class SupabaseStore:
         rows = resp.json()
         return rows[0] if rows else None
 
-    def save_settings(self, user_id: str, row: dict) -> None:
+    def save_settings(self, row: dict) -> None:
         body = {k: row.get(k) for k in SETTINGS_COLUMNS}
-        body["user_id"] = user_id
+        body["user_id"] = self._uid()
         self._request("POST", params={"on_conflict": "user_id"}, json=[body],
                       prefer="resolution=merge-duplicates,return=minimal", table=SETTINGS_TABLE)
 
@@ -322,15 +473,78 @@ class SupabaseStore:
         """Make the tables hold exactly this log (used by backup import)."""
         # PostgREST refuses an unfiltered DELETE, so filter on a condition
         # every row meets.
-        self._request("DELETE", params={"date": "gte.1900-01-01"}, prefer="return=minimal")
+        self._request("DELETE", params=self._mine({"date": "gte.1900-01-01"}), prefer="return=minimal")
         self._upsert(log["entries"])
         if self.books_error is None:
-            self._request("DELETE", params={"id": "neq."}, prefer="return=minimal",
+            self._request("DELETE", params=self._mine({"id": "neq."}), prefer="return=minimal",
                           table=BOOKS_TABLE)
             self._upsert_books(log.get("books", []))
 
+    # ---- accounts (scoped only) ----
+    def touch_user(self, email: str, name: str) -> None:
+        """Their users row: made the first time, last_seen_at on every sign-in."""
+        uid = self._uid()
+        rows = self._request("GET", params={"select": "user_id", "user_id": f"eq.{uid}"}, table=USERS_TABLE).json()
+        body = {"user_id": uid, "email": email, "display_name": name, "last_seen_at": _now()}
+        if not rows:
+            body["created_at"] = _now()
+        self._request("POST", params={"on_conflict": "user_id"}, json=[body],
+                      prefer="resolution=merge-duplicates,return=minimal", table=USERS_TABLE)
 
-def make_store(url: str = "", key: str = "", session=None):
+    def user_row(self):
+        rows = self._request("GET", params={"select": "*", "user_id": f"eq.{self._uid()}"}, table=USERS_TABLE).json()
+        return rows[0] if rows else None
+
+    def is_invited(self, email: str) -> bool:
+        rows = self._request("GET", params={"select": "email", "email": f"eq.{email.lower()}"},
+                             table=INVITES_TABLE).json()
+        return bool(rows)
+
+    def list_invites(self) -> list:
+        return self._request("GET", params={"select": "*", "order": "email.asc"}, table=INVITES_TABLE).json()
+
+    def add_invite(self, email: str, note: str = "") -> None:
+        self._request("POST", params={"on_conflict": "email"},
+                      json=[{"email": email.lower(), "invited_at": _now(), "note": note}],
+                      prefer="resolution=merge-duplicates,return=minimal", table=INVITES_TABLE)
+
+    def remove_invite(self, email: str) -> None:
+        self._request("DELETE", params={"email": f"eq.{email.lower()}"}, prefer="return=minimal",
+                      table=INVITES_TABLE)
+
+    def usage_today(self, day: str) -> dict:
+        uid = self._uid()
+        rows = self._request("GET", params={"select": "*", "user_id": f"eq.{uid}", "date": f"eq.{day}"},
+                             table=USAGE_TABLE).json()
+        return rows[0] if rows else {"user_id": uid, "date": day, "request_count": 0, "token_count": 0}
+
+    def add_usage(self, day: str, requests_: int, tokens_: int) -> None:
+        """Add to today's count, in the database (the add_ai_usage function,
+        so two tabs counting at once both count)."""
+        self._request("POST", json={"p_user_id": self._uid(), "p_date": day,
+                                    "p_requests": requests_, "p_tokens": tokens_},
+                      prefer="return=minimal", table="rpc/add_ai_usage")
+
+    def export_my_data(self) -> dict:
+        uid = self._uid()
+        mine = {"select": "*", "user_id": f"eq.{uid}"}
+        return {
+            "user": self.user_row(),
+            "settings": self.load_settings(),
+            "learning_entries": self._request("GET", params={**mine, "order": "date.asc,topic.asc"}).json(),
+            "reading_books": [r["data"] for r in
+                              self._request("GET", params={**mine, "order": "updated_at.asc"}, table=BOOKS_TABLE).json()],
+            "ai_usage": self._request("GET", params={**mine, "order": "date.asc"}, table=USAGE_TABLE).json(),
+        }
+
+    def delete_my_account(self) -> None:
+        """All of the current user's rows in every table, and their users row,
+        in one transaction (the delete_user_data function): all or nothing."""
+        self._request("POST", json={"p_user_id": self._uid()}, prefer="return=minimal",
+                      table="rpc/delete_user_data")
+
+
+def make_store(url: str = "", key: str = "", session=None, scoped=False, current_user=None):
     if url and key:
-        return SupabaseStore(url, key, session=session)
-    return FileStore()
+        return SupabaseStore(url, key, session=session, scoped=scoped, current_user=current_user)
+    return FileStore(scoped=scoped, current_user=current_user)

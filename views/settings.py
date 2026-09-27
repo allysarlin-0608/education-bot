@@ -2,11 +2,12 @@
 starts. A change is saved as she makes it (by her user_id) and the other
 pages use it straight away. Levels aren't edited by hand: the placement
 check sets them. Nothing here touches her learning history."""
+import json
 from html import escape
 
 import streamlit as st
 
-from coach import choices, core, settings, stage, storage, ui, visuals
+from coach import auth, choices, core, settings, stage, storage, ui, visuals
 
 config = ui.config()
 
@@ -135,3 +136,97 @@ with st.container(key="set_sec_reading"):
     with st.container(key="ob_toggle"):
         st.toggle("Add a 14-day reading plan", value=config["reading_enabled"], key="set_reading",
                   on_change=set_reading)
+
+
+# ---------- Invites (public, admins only): who may sign in while in beta ----------
+def _email_ok(e: str) -> bool:
+    return "@" in e and "." in e.split("@")[-1] and " " not in e
+
+
+def add_invite() -> None:
+    email = st.session_state.inv_email.strip().lower()
+    if not _email_ok(email):
+        st.session_state.inv_problem = "That doesn't look like an email address."
+        return
+    try:
+        st.session_state.coach_store.add_invite(email, st.session_state.inv_note.strip())
+    except storage.StorageError as e:
+        st.session_state.inv_problem = f"Couldn't add it ({e})."
+        return
+    st.session_state.inv_email = st.session_state.inv_note = ""
+
+
+def remove_invite(email: str) -> None:
+    try:
+        st.session_state.coach_store.remove_invite(email)
+    except storage.StorageError as e:
+        st.session_state.inv_problem = f"Couldn't remove it ({e})."
+
+
+if auth.is_admin():
+    with st.container(key="set_sec_invites"):
+        st.markdown("#### Invites")
+        st.html('<p class="ob-note">Only these emails can sign in. A change takes effect at once.</p>')
+        with st.container(key="inv_add", horizontal=True, vertical_alignment="bottom"):
+            st.text_input("Email", key="inv_email", placeholder="name@example.com")
+            st.text_input("Note", key="inv_note", placeholder="Optional")
+            st.button("Invite", key="inv_add_btn", on_click=add_invite)
+        problem_i = st.session_state.pop("inv_problem", "")
+        if problem_i:
+            st.html(f'<p class="ob-note">{escape(problem_i)}</p>')
+        try:
+            invites = st.session_state.coach_store.list_invites()
+        except storage.StorageError as e:
+            invites = []
+            st.html(f'<p class="ob-note">Couldn\'t load the list ({escape(str(e))}).</p>')
+        for inv in invites:
+            slug = "".join(c if c.isalnum() else "_" for c in inv["email"])
+            with st.container(key=f"inv_row_{slug}", horizontal=True, vertical_alignment="center"):
+                st.html(f'<p class="set-level"><span>{escape(inv["email"])}</span>'
+                        f'<b>{escape(inv.get("note") or "")}</b></p>')
+                st.button("Remove", key=f"inv_rm_{slug}", type="tertiary",
+                          on_click=remove_invite, args=(inv["email"],))
+
+
+# ---------- Your data (public): a copy of it all, or all of it gone ----------
+DELETE_WARNING = "This permanently deletes your account and all your learning history. This can't be undone."
+
+
+def ask_delete() -> None:
+    st.session_state.del_open = True
+
+
+def cancel_delete() -> None:
+    st.session_state.del_open = False
+    st.session_state.del_confirm = ""
+
+
+if auth.is_public():
+    with st.container(key="set_sec_data"):
+        st.markdown("#### Your data")
+        try:
+            mine = json.dumps(st.session_state.coach_store.export_my_data(), ensure_ascii=False, indent=2, default=str)
+        except storage.StorageError as e:
+            mine = None
+            st.html(f'<p class="ob-note">Couldn\'t gather your data ({escape(str(e))}). Refresh in a moment.</p>')
+        with st.container(key="data_actions", horizontal=True, vertical_alignment="center"):
+            if mine is not None:
+                st.download_button("Download my data", mine, file_name="daily-learning-coach-data.json",
+                                   mime="application/json", key="data_download")
+            st.button("Delete my account", key="data_delete", type="tertiary", on_click=ask_delete)
+        if st.session_state.get("del_open"):
+            with st.container(key="del_confirm_box"):
+                st.html(f'<p class="del-warn" role="alert">{escape(DELETE_WARNING)}</p>')
+                st.text_input("Type DELETE to confirm", key="del_confirm")
+                with st.container(key="del_buttons", horizontal=True):
+                    if st.button("Delete everything", key="del_go", type="primary",
+                                 disabled=st.session_state.get("del_confirm", "").strip() != "DELETE"):
+                        try:
+                            st.session_state.coach_store.delete_my_account()
+                        except storage.StorageError as e:
+                            st.error(f"Nothing was deleted ({e}). Try again in a moment.")
+                        else:
+                            for key in list(st.session_state.keys()):
+                                del st.session_state[key]
+                            st.logout()
+                    st.button("Cancel", key="del_cancel", type="tertiary", on_click=cancel_delete)

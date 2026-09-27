@@ -27,6 +27,7 @@ MAX_WAIT_SECONDS = 15.0    # cap on a single backoff wait
 NO_KEY = "No Groq API key yet. Add one in the sidebar first."
 BUSY = "The coach is busy right now. Wait a few seconds and try again."
 FAILED = "The coach didn't manage to reply this time. Just try again."
+LIMIT = "You've reached today's limit. Your progress is saved. See you tomorrow."   # quota.LIMIT_REACHED
 
 logger = logging.getLogger("coach.llm")
 
@@ -72,10 +73,18 @@ def _wait_seconds(error, attempt: int) -> float:
 
 
 def _create(client, **kwargs):
-    """client.chat.completions.create with retries. Raises CoachError."""
+    """client.chat.completions.create with retries. Raises CoachError.
+    Every call made is counted against the person's daily allowance
+    (quota.py): the request now, and its tokens (the reply's usage, or the
+    request's estimate while a streamed reply is still coming)."""
+    from coach import quota
     for attempt in range(MAX_RETRIES + 1):
         try:
-            return client.chat.completions.create(**kwargs)
+            resp = client.chat.completions.create(**kwargs)
+            usage = getattr(resp, "usage", None)
+            quota.record(getattr(usage, "total_tokens", None)
+                         or tokens.estimate_request("", kwargs.get("messages", []), kwargs.get("max_completion_tokens", 0)))
+            return resp
         except Exception as e:   # noqa: BLE001 - every failure is mapped below
             status = _status(e)
             if _retryable(e) and attempt < MAX_RETRIES:
@@ -102,6 +111,9 @@ def _prepare(system, messages, max_tokens):
 def stream_text(system, messages, max_tokens):
     """Generator of reply text. Raises CoachError on any failure,
     including an empty reply."""
+    from coach import quota
+    if quota.over_limit():
+        raise CoachError(LIMIT)
     client = get_client()
     if client is None:
         raise CoachError(NO_KEY)
@@ -157,6 +169,9 @@ def parse_json(text: str):
 def ask_json(system, messages, max_tokens=tokens.JSON_MAX_TOKENS):
     """Ask for a JSON object (non-streaming). Returns (data, None) or
     (None, friendly_error)."""
+    from coach import quota
+    if quota.over_limit():
+        return None, LIMIT
     client = get_client()
     if client is None:
         return None, NO_KEY
