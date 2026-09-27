@@ -23,7 +23,8 @@ except ImportError:
 MODEL_NAME = "openai/gpt-oss-120b"
 MAX_RETRIES = 3            # after the first attempt, on 429 / connection errors
 MAX_WAIT_SECONDS = 15.0    # cap on a single backoff wait
-
+REQUEST_TIMEOUT = 20.0     # one request (for a stream: the wait for each next piece)
+TOTAL_SECONDS = 28.0       # all attempts and waits together: the person hears back within 30 s
 
 NO_KEY = "No Groq API key yet. Add one in the sidebar first."
 BUSY = "The coach is busy right now. Wait a few seconds and try again."
@@ -37,6 +38,9 @@ def _sleep(seconds):
     time.sleep(seconds)
 
 
+def _now():
+    return time.monotonic()
+
 
 class CoachError(Exception):
     """A failed model call. str(e) is safe to show the user."""
@@ -46,7 +50,7 @@ def get_client():
     key = st.session_state.get("api_key", "")
     if not key or not GROQ_AVAILABLE:
         return None
-    return groq.Groq(api_key=key, max_retries=0)   # retries are handled here
+    return groq.Groq(api_key=key, max_retries=0, timeout=REQUEST_TIMEOUT)   # retries are handled here
 
 
 def _status(error):
@@ -80,6 +84,7 @@ def _create(client, **kwargs):
     (quota.py): the request now, and its tokens (the reply's usage, or the
     request's estimate while a streamed reply is still coming)."""
     from coach import quota
+    deadline = _now() + TOTAL_SECONDS
     for attempt in range(MAX_RETRIES + 1):
         try:
             resp = client.chat.completions.create(**kwargs)
@@ -89,8 +94,8 @@ def _create(client, **kwargs):
             return resp
         except Exception as e:   # noqa: BLE001 - every failure is mapped below
             status = _status(e)
-            if _retryable(e) and attempt < MAX_RETRIES:
-                wait = _wait_seconds(e, attempt)
+            wait = _wait_seconds(e, attempt) if _retryable(e) else 0
+            if _retryable(e) and attempt < MAX_RETRIES and _now() + wait + REQUEST_TIMEOUT / 4 < deadline:
                 logger.warning("groq %s on attempt %d, retrying in %.1fs: %s",
                                status or type(e).__name__, attempt + 1, wait, e)
                 _sleep(wait)

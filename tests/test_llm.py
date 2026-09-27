@@ -115,6 +115,27 @@ def test_bad_json_once_is_retried_automatically(monkeypatch, waits):
     assert len(client.calls) == 2
 
 
+def test_retries_stop_within_the_time_budget(monkeypatch):
+    """BUG-002: however the waits add up, the person hears back within ~30 s."""
+    clock = {"t": 1000.0}
+    monkeypatch.setattr(llm, "_sleep", lambda s: clock.__setitem__("t", clock["t"] + s))
+    monkeypatch.setattr(llm, "_now", lambda: clock["t"])
+    client = use(monkeypatch, FakeClient([status_error(groq.RateLimitError, 429, retry_after=14)] * 10))
+    with pytest.raises(llm.CoachError, match="busy"):
+        list(llm.stream_text(SYSTEM, MSGS, 500))
+    assert clock["t"] - 1000.0 <= llm.TOTAL_SECONDS
+    assert len(client.calls) < 1 + llm.MAX_RETRIES       # it gave up early rather than wait past the budget
+
+
+def test_each_request_has_a_timeout(monkeypatch):
+    """BUG-002: a hung connection can't hold a request for Groq's default minute."""
+    made = {}
+    monkeypatch.setattr(llm.groq, "Groq", lambda **kw: made.update(kw) or object())
+    monkeypatch.setattr(llm.st, "session_state", {"api_key": "k"})
+    llm.get_client()
+    assert 0 < made["timeout"] <= llm.REQUEST_TIMEOUT <= 25
+
+
 def test_every_request_sets_a_bounded_max_tokens_and_fits(monkeypatch, waits):
     client = use(monkeypatch, FakeClient([iter([chunk("好", "stop")])]))
     history = [{"role": "user", "content": "很長的問題" * 2000}]
