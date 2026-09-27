@@ -279,7 +279,9 @@ def _handle_setup(log, book, chat, text, today):
 # ============================================================
 
 def _render_plan_controls(log, book, chat, today):
-    with st.expander("Adjust a day yourself"):
+    # a key of its own, so it stays open while she makes one move after another
+    # (each move adds a chat message above it, which would otherwise make it a new, closed panel)
+    with st.expander("Adjust a day yourself", key=f"adjust_open_{book['id']}", on_change="rerun"):
         day = st.selectbox(
             "Day", list(range(1, books.DAYS)), format_func=lambda d: f"Day {d}",
             key=f"adjust_day_{book['id']}",

@@ -21,6 +21,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-011 | P2 | Personal mode / password gate | Unlimited password attempts on the personal app | open — needs your decision |
 | BUG-012 | P2 | Account menu (public) | Choosing Settings from the account menu left the menu open over the Settings page | fixed (8316212) |
 | BUG-013 | P2 | Settings / browser Back | Back from Settings needed several presses (the page added history entries) | fixed (e17f376) |
+| BUG-014 | P3 | Reading / plan preview | 'Adjust a day yourself' closed after every move | fixed |
 
 ## Details
 
@@ -164,3 +165,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** Settings keeps the focused subject in the session and no longer rewrites the address (it still reads ?subject= from links)
 - **Files changed:** views/settings.py
 - **Covered by:** tests/e2e/test_nav.py::test_top_bar_goes_everywhere_and_back_forward_work
+
+### BUG-014 (P3) — 'Adjust a day yourself' closed after every move
+- **Page / flow:** Reading / plan preview
+- **Status:** fixed
+- **Steps to reproduce:** Reading → set up a book → open 'Adjust a day yourself' → press Lighter
+- **Expected:** The panel stays open for the next move
+- **Actual:** It closed each time (and the page jumped), so every further move meant reopening it
+- **Root cause:** Each move adds a chat message above the panel; an unkeyed expander at a new position is a new, closed element
+- **Fix:** The expander has its own key (and tracks its state), so it stays open
+- **Files changed:** coach/reading.py
+- **Covered by:** tests/e2e/test_reading.py::test_set_up_adjust_confirm_and_read_day_one
