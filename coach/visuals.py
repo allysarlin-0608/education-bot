@@ -66,10 +66,18 @@ WORLD = {
 }
 
 
+def static_url(path: str) -> str:
+    """A static file's address, with its content's fingerprint (?v=), so a
+    changed picture gets a new address and no browser keeps showing the old one."""
+    import hashlib
+    digest = hashlib.md5((STATIC / path).read_bytes()).hexdigest()[:10]
+    return f"app/static/{path}?v={digest}"
+
+
 def image_url(topic: str):
     """A picture's address, or None (a picture not there yet)."""
     obj = WORLD[topic]["object"]
-    return f"app/static/{obj}" if (STATIC / obj).exists() else None
+    return static_url(obj) if (STATIC / obj).exists() else None
 
 
 def has_object(topic: str) -> bool:
@@ -85,7 +93,7 @@ def object_html(topic: str, cls: str, number: int = 0) -> str:
         # an object rendered for each theme: the page shows the one for its theme (style.py)
         light = w.get("light")
         themed = light and (STATIC / light).exists()
-        img = (f"--img-dark:url('{url}');--img-light:url('app/static/{light}');" if themed
+        img = (f"--img-dark:url('{url}');--img-light:url('{static_url(light)}');" if themed
                else f"background-image:url('{url}');")
         return (f'<div class="{cls}{" is-cut" if w.get("cut") else ""}{" is-themed" if themed else ""}" '
                 f'data-object="{topic}" data-layout="{w["layout"]}" role="img" '
