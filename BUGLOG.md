@@ -21,7 +21,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-011 | P2 | Personal mode / password gate | Unlimited password attempts on the personal app | open — needs your decision |
 | BUG-012 | P2 | Account menu (public) | Choosing Settings from the account menu left the menu open over the Settings page | fixed (8316212) |
 | BUG-013 | P2 | Settings / browser Back | Back from Settings needed several presses (the page added history entries) | fixed (e17f376) |
-| BUG-014 | P3 | Reading / plan preview | 'Adjust a day yourself' closed after every move | fixed |
+| BUG-014 | P3 | Reading / plan preview | 'Adjust a day yourself' closed after every move | fixed (07d6c41) |
 
 ## Details
 
@@ -168,7 +168,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-014 (P3) — 'Adjust a day yourself' closed after every move
 - **Page / flow:** Reading / plan preview
-- **Status:** fixed
+- **Status:** fixed (07d6c41)
 - **Steps to reproduce:** Reading → set up a book → open 'Adjust a day yourself' → press Lighter
 - **Expected:** The panel stays open for the next move
 - **Actual:** It closed each time (and the page jumped), so every further move meant reopening it

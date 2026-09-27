@@ -9,6 +9,7 @@ make it fail, be slow, or return tricky content:
    "fail_times": 1,          # fail this many calls, then behave (default: always)
    "delay": 0.0,             # seconds before answering
    "chunk_delay": 0.0,       # seconds between streamed pieces (a slow stream)
+   "fail_kinds": ["reading_final"],   # fail only these kinds of call (default: any)
    "inject": false,          # put HTML/script/markdown-link injection strings in every reply
    "quiz_flag_first": false} # the answer checker flags question 0 once (exercises rewrite)
 
@@ -69,6 +70,8 @@ def _kind(messages: list, stream: bool) -> str:
         return "reading_adjust"
     if "總結式肯定" in system:
         return "reading_final"
+    if "她在聊這本書" in system:
+        return "reading_chat"
     if stream:
         return "followup" if len([m for m in messages if m["role"] == "user"]) > 1 else "lesson"
     return "json_other"
@@ -155,7 +158,8 @@ class FakeGroq:
             time.sleep(float(ctl["delay"]))
         mode = ctl.get("mode", "ok")
         fail_times = ctl.get("fail_times")
-        failing = mode != "ok" and (fail_times is None or n <= int(fail_times))
+        failing = (mode != "ok" and (fail_times is None or n <= int(fail_times))
+                   and (not ctl.get("fail_kinds") or kind in ctl["fail_kinds"]))
         if failing and mode in ("413", "429", "500"):
             raise _status_error(int(mode))
         if failing and mode == "timeout":

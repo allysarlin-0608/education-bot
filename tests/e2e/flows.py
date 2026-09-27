@@ -48,7 +48,7 @@ def idle(page, timeout=30):
         except Exception:
             running = True
         quiet = 0 if running else quiet + 1
-        if quiet >= 2:
+        if quiet >= 3:              # ~450 ms without a run: a rerun that follows a rerun has started by then
             return True
         page.wait_for_timeout(150)
     return False
@@ -210,12 +210,14 @@ def choose(p, box, text):
         opt.wait_for(timeout=5000)
         opt.tap()
     else:
-        box.locator("input").first.click()
-        page.keyboard.type(text[:12])
-        opt = page.get_by_role("option", name=text, exact=True).first
-        opt.wait_for(timeout=5000)
-        opt.click()
+        inp = box.locator("input").first
+        inp.click()
+        page.keyboard.type(text)
+        page.get_by_role("option", name=text, exact=True).first.wait_for(timeout=5000)
+        page.keyboard.press("Enter")          # the one option left, as a keyboard user picks it
     idle(page)
+    shown = box.locator("input").first.input_value()
+    assert shown == text, f"picked {text!r} but the box shows {shown!r}"
 
 
 def pass_lesson(p):
