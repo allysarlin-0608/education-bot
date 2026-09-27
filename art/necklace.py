@@ -475,12 +475,18 @@ def softbox(el0, el1, az, half, power, dist=2000.0):
 # one of three things: a clean bright band, the dark room, or the light passing
 # through the stone.
 if not LIGHT:
-    RS = 2.0                                      # on the drop about 30% light-carrying, 52% deep, 18% bright, 0.1% clipped
-    softbox(55, 78, 150, 16, 6.0 * RS)            # the tall key reflection, upper left of the camera
-    softbox(34, 46, 20, 34, 5.0 * RS)             # the long narrow strip, right
-    softbox(6, 26, 250, 40, 3.0 * RS)             # the broad edge source, low left
-    softbox(18, 36, 300, 18, 2.0 * RS)            # a secondary, lower right
-    softbox(20, 40, 90, 22, 2.0 * RS)             # and one behind, seen through the stone
+    RS = 2.0
+    SZ = 1.4        # each source 1.4 times its first size: on the drop about 34% light-carrying, 31% deep, 35% bright, 0.6% clipped
+
+    def big(el0, el1, az, half, power):
+        mid, h = (el0 + el1) / 2, (el1 - el0) / 2 * SZ
+        softbox(max(1, mid - h), min(85, mid + h), az, half * SZ, power)
+
+    big(55, 78, 150, 16, 6.0 * RS)                # the tall key reflection, upper left of the camera
+    big(34, 46, 20, 34, 5.0 * RS)                 # the long narrow strip, right
+    big(6, 26, 250, 40, 3.0 * RS)                 # the broad edge source, low left
+    big(18, 36, 300, 18, 2.0 * RS)                # a secondary, lower right
+    big(20, 40, 90, 22, 2.0 * RS)                 # and one behind, seen through the stone
 
 
 def flag(loc, size):
