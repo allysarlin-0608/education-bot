@@ -66,15 +66,32 @@ def button(p, name, exact=True, wait=True):
 
 
 def timed_click(p, action, locator, done, timeout=30):
-    """Click, then measure: first visible feedback (the running indicator,
-    a disabled/pressed state or the result) and completion (done(page))."""
+    """Press like a person (down, ~90 ms, up), then measure: first visible
+    feedback (the pressed style on the control, a change in the page, or the
+    result) and completion (done(page))."""
     page = p.page
-    page.evaluate("""() => { window.__fb = null; const t0 = performance.now();
-        const obs = new MutationObserver(() => { if (window.__fb === null) window.__fb = performance.now() - t0; });
+    page.evaluate("""() => { window.__fb = null; window.__t0 = null;
+        const hit = () => { if (window.__fb === null && window.__t0 !== null) window.__fb = performance.now() - window.__t0; };
+        const obs = new MutationObserver(hit);
         obs.observe(document.body, {subtree: true, childList: true, attributes: true, characterData: true});
-        window.__obs = obs; }""")
+        window.__obs = obs;
+        document.addEventListener('pointerdown', (e) => {
+            window.__t0 = performance.now();
+            const el = e.target.closest('button, a, [role=button], summary') || e.target;
+            const look = () => { const c = getComputedStyle(el); return [c.transform, c.backgroundColor, c.color, c.opacity, c.boxShadow].join('|'); };
+            const before = look();
+            const check = () => { if (window.__fb !== null) return;
+                if (look() !== before) hit(); else if (performance.now() - window.__t0 < 1000) requestAnimationFrame(check); };
+            requestAnimationFrame(check);
+        }, {capture: true, once: true}); }""")
     t0 = time.time()
-    tap(p, locator)
+    if p.width < TOUCH_W:
+        locator.tap()
+    else:
+        locator.hover()
+        page.mouse.down()
+        page.wait_for_timeout(90)
+        page.mouse.up()
     end = t0 + timeout
     while time.time() < end and not done(page):
         page.wait_for_timeout(50)
