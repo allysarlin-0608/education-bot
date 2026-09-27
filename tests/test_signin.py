@@ -169,3 +169,10 @@ def test_supabase_errors_become_short_codes(status, body, code):
 def test_messages_never_include_backend_text():
     for text in auth.ERRORS.values():
         assert "supabase" not in text.lower() and "error" not in text.lower()
+
+
+@pytest.mark.parametrize("pw,good", [("abc1234", True), ("correct horse 1", True), ("abcdefgh", False),
+                                     ("12345678", False), ("ab12", False), ("", False)])
+def test_password_rule_matches_supabase_settings(pw, good):
+    assert auth.password_ok(pw) is good
+    assert "letters and numbers" in auth.PASSWORD_RULE

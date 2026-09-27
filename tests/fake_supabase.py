@@ -170,6 +170,11 @@ from urllib.parse import urlencode  # noqa: E402
 MIN_PASSWORD = 7
 
 
+def _strong(p):
+    """As the test project is set up: at least 7, letters and digits."""
+    return len(p) >= MIN_PASSWORD and any(c.isalpha() for c in p) and any(c.isdigit() for c in p)
+
+
 class FakeAuth:
     def __init__(self, db: FakeDB, access_ttl: int):
         self.db = db
@@ -251,8 +256,8 @@ def build_app(access_ttl=3600):
         password = str(body.get("password", ""))
         if "@" not in email:
             return _err(400, "email_address_invalid")
-        if len(password) < MIN_PASSWORD:
-            return _err(422, "weak_password", "Password should be at least 7 characters.")
+        if not _strong(password):
+            return _err(422, "weak_password", "Password should contain letters and digits.")
         u = auth.users.get(email)
         if u:                                     # already registered: same answer, no user made
             if not u["confirmed"]:
@@ -335,7 +340,7 @@ def build_app(access_ttl=3600):
         if request.method == "PUT":
             body = await request.json()
             if "password" in body:
-                if len(str(body["password"])) < MIN_PASSWORD:
+                if not _strong(str(body["password"])):
                     return _err(422, "weak_password")
                 u["password"] = auth._hash(str(body["password"]))
                 if "email" not in u["providers"]:

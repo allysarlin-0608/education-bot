@@ -33,7 +33,8 @@ SIGNIN_FAILED = "Sign-in didn't complete. Please try again."
 INVITE_ONLY = "This app is invite-only for now. Ask the person who shared it with you to add your email."
 NEUTRAL = "If an account can be created with this email, we've sent you a link. Check your inbox."
 NETWORK = "We couldn't reach the sign-in service. Check your connection and try again."
-PASSWORD_RULE = f"At least {MIN_PASSWORD} characters."
+PASSWORD_RULE = f"At least {MIN_PASSWORD} characters, with letters and numbers."
+PASSWORD_PROBLEM = f"Use at least {MIN_PASSWORD} characters, with at least one letter and one number."
 
 NOTES = {   # ?auth=… / ?auth_error=… left by routes.py, shown once
     "signed_out": "You've signed out.",
@@ -46,7 +47,7 @@ NOTES = {   # ?auth=… / ?auth_error=… left by routes.py, shown once
 ERRORS = {  # supa_auth.AuthError codes → what the person reads
     "invalid_credentials": "That email and password don't match. Try again, or reset your password.",
     "email_not_confirmed": "Please confirm your email first — the link is in your inbox.",
-    "weak_password": f"Choose a longer password ({PASSWORD_RULE.lower()})",
+    "weak_password": PASSWORD_PROBLEM,
     "invalid_email": "Enter a valid email address.",
     "rate_limited": "Too many attempts. Please wait a few minutes and try again.",
     "not_invited": INVITE_ONLY,
@@ -175,6 +176,13 @@ def _reload_for_fresh_session() -> None:
 
 
 # ---------------------------------------------------------------- the sign-in page
+def password_ok(password: str) -> bool:
+    """The same rule Supabase enforces (Auth → Email: minimum 7, letters and
+    digits); checked here first only to say so sooner."""
+    return (len(password) >= MIN_PASSWORD and any(c.isalpha() for c in password)
+            and any(c.isdigit() for c in password))
+
+
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
@@ -246,8 +254,8 @@ def _run(action: str) -> None:
             email = email.strip().lower()
             if not _valid_email(email):
                 problem = ERRORS["invalid_email"]
-            elif len(password) < MIN_PASSWORD:
-                problem = f"Your password needs {PASSWORD_RULE.lower()}"
+            elif not password_ok(password):
+                problem = PASSWORD_PROBLEM
             elif password != confirm:
                 problem = "The passwords don't match."
             else:
@@ -394,8 +402,8 @@ def reset_password_page(who: dict) -> None:
         st.session_state.auth_sent = st.session_state.pop("auth_pending")[1]
         password, confirm = _form_values("rp_password", "rp_confirm")
         _forget_passwords()
-        if len(password) < MIN_PASSWORD:
-            st.session_state.auth_problem = f"Your password needs {PASSWORD_RULE.lower()}"
+        if not password_ok(password):
+            st.session_state.auth_problem = PASSWORD_PROBLEM
         elif password != confirm:
             st.session_state.auth_problem = "The passwords don't match."
         else:

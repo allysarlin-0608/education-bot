@@ -16,10 +16,11 @@
 
 ## 2. Supabase → Authentication
 
-1. **Sign In / Providers → Email**
-   - Enable Email provider：開
-   - **Confirm email：開**（沒點確認信的人不能登入）
+1. **Sign In / Providers**
+   - 頁面最上方 **User Signups**：Allow new users to sign up 開、**Confirm email 開**（沒點確認信的人不能登入）→ Save changes
+   - **Email** 面板：Enable email provider 開
    - Minimum password length：**7**
+   - Password requirements：**Letters and digits**（app 上的提示也是這個規則）
    - Save
 2. **Sign In / Providers → Google**
    - Enable：開
