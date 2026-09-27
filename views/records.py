@@ -295,6 +295,8 @@ with panel_col:
 # ============================================================
 # BACKUP: tucked away, one click to open
 # ============================================================
+MAX_BACKUP_BYTES = 20_000_000     # a year of daily lessons is a few MB; anything much bigger isn't ours
+
 with st.expander("Backup and restore"):
     if ui.using_cloud():
         st.caption("Your records are in the Supabase database, so they survive app restarts. "
@@ -310,11 +312,16 @@ with st.expander("Backup and restore"):
     )
     uploaded = st.file_uploader("Import a backup", type="json")
     if uploaded is not None and st.button("Replace my records with this backup"):
-        try:
-            new_log = core.parse_log(json.loads(uploaded.getvalue().decode("utf-8")))
-        except (ValueError, UnicodeDecodeError, RecursionError):   # json errors are ValueErrors
-            st.error("This file isn't a backup from this app, so nothing was changed.")
+        new_log = None
+        if uploaded.size > MAX_BACKUP_BYTES:
+            st.error(f"This file is too large to be a backup from this app (over {MAX_BACKUP_BYTES // 1_000_000} MB), "
+                     "so nothing was changed.")
         else:
+            try:
+                new_log = core.parse_log(json.loads(uploaded.getvalue().decode("utf-8")))
+            except (ValueError, UnicodeDecodeError, RecursionError):   # json errors are ValueErrors
+                st.error("This file isn't a backup from this app, so nothing was changed.")
+        if new_log is not None:
             if ui.replace_log(new_log):
                 st.session_state.coach_log = new_log
                 ui.reset_chat()

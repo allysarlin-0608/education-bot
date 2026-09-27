@@ -54,13 +54,12 @@ def test_malformed_files_are_refused_kindly(public_app, pages, tmp_path):
     covers("W-records-import_a_backup", "W-records-replace_my_records_with_this_backup")
     app = public_app
     p = setup_with_a_lesson(app, pages, "bad")
-    email = p.page.evaluate("1") and None
     open_backup(p, app)
     for name, data in [("not.json", b"this is not json"), ("binary.json", bytes(range(256)) * 10),
                        ("list.json", b"[1, 2, 3]"), ("empty.json", b"")]:
         text = upload(p, tmp_path, name, data)
         assert "Traceback" not in text and "Expecting value" not in text and "JSONDecodeError" not in text, name
-        assert "backup" in text.lower(), f"{name}: no message"
+        assert "isn't a backup from this app" in text, f"{name}: no clear message"
         p.page.reload()
         flows.idle(p.page)
         open_backup(p, app)
@@ -93,9 +92,9 @@ def test_a_huge_file_is_refused(public_app, pages, tmp_path):
     app = public_app
     p = setup_with_a_lesson(app, pages, "huge")
     open_backup(p, app)
-    big = json.dumps({"entries": [{"date": "2026-09-01", "topic": "philosophy", "lesson": "x" * 1000}] * 12000})
+    big = json.dumps({"entries": [{"date": "2026-09-01", "topic": "philosophy", "lesson": "x" * 1000}] * 25000})
     text = upload(p, tmp_path, "huge.json", big.encode())
-    assert "too large" in text.lower() or "too big" in text.lower(), "a 12 MB backup should be refused with a reason"
+    assert "too large" in text.lower(), "a 25 MB backup should be refused with a reason"
 
 
 def test_a_failed_import_keeps_the_records(public_app, pages, tmp_path):
