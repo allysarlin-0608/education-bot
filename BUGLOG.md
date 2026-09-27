@@ -11,8 +11,9 @@ Status: open · fixed (commit) · needs decision.
 | BUG-001 | P1 | Today / quiz (all JSON AI calls) | An unreadable JSON reply showed an error at once, with no automatic retry | fixed (99fe100) |
 | BUG-002 | P1 | All AI actions | No overall time limit: a hung or rate-limited request could keep the person waiting minutes | fixed (0e3f046) |
 | BUG-003 | P0 | Today / sidebar (API key box) | The Groq key box could put the server's secret key into the page, and appeared in public mode | fixed (add6ad2) |
-| BUG-004 | P3 | Reading (books from storage) | normalize_book fills missing dates with the server's date, not the learner's | open |
+| BUG-004 | P3 | Reading (books from storage) | normalize_book fills missing dates with the server's date, not the learner's | fixed (cb7ed7d) |
 | BUG-005 | P0 | Progress / Backup and restore (import) | A failed import deleted the existing records | fixed (ed7b280) |
+| BUG-006 | P0 | Progress / import, and every page reading records | A backup with a field of the wrong type crashed the page | fixed (cb7ed7d) |
 
 ## Details
 
@@ -41,7 +42,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-004 (P3) — normalize_book fills missing dates with the server's date, not the learner's
 - **Page / flow:** Reading (books from storage)
-- **Status:** open
+- **Status:** fixed (cb7ed7d)
 - **Steps to reproduce:** A stored book without started_on/last_active_on is loaded on Streamlit Cloud (UTC) between 00:00 and 08:00 Taipei
 - **Expected:** The learner's local date (ui.today())
 - **Actual:** The previous day (server UTC date)
@@ -68,3 +69,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** Upsert first, then delete only the rows not in the backup, one by one
 - **Files changed:** coach/storage.py, tests/test_storage.py
 - **Covered by:** tests/test_storage.py::test_replace_writes_before_it_removes, tests/e2e/test_import.py::test_a_failed_import_keeps_the_records
+
+### BUG-006 (P0) — A backup with a field of the wrong type crashed the page
+- **Page / flow:** Progress / import, and every page reading records
+- **Status:** fixed (cb7ed7d)
+- **Steps to reproduce:** Import {"entries":[{"date":"2026-09-01","topic":"philosophy","session_number":"many"}]}
+- **Expected:** Imported with the field ignored, or refused kindly; never a crash (1.6)
+- **Actual:** TypeError traceback on Progress (core.level_for_session)
+- **Root cause:** parse_log/normalize_book copied values without checking their types
+- **Fix:** Type and range checks on every entry, lesson and book field; plan made consistent with chapters
+- **Files changed:** coach/core.py, coach/books.py, tests/test_backup_validation.py
+- **Covered by:** tests/test_backup_validation.py, tests/e2e/test_import.py::test_wrong_types_never_break_a_page
