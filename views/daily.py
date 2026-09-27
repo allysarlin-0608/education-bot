@@ -1,6 +1,6 @@
 import streamlit as st
 
-from coach import core, curriculum, lesson_view, llm, place, progress_bar, quiz, settings, steps, tokens, ui
+from coach import auth, core, curriculum, lesson_view, llm, place, progress_bar, quiz, settings, steps, tokens, ui
 
 log = st.session_state.coach_log
 config = ui.config()        # her subjects, daily pace and starting levels
@@ -163,20 +163,25 @@ def show_retry(slot, kinds):
 # SIDEBAR
 # ============================================================
 with st.sidebar:
+    # A personal app with no key yet can take one here. The box never shows
+    # the key from the app's secrets (it would be sent to the browser), and a
+    # public app never offers it.
     client_ready = bool(st.session_state.api_key) and llm.GROQ_AVAILABLE
-    if not client_ready:
+    if not client_ready and not auth.is_public():
         with st.expander("Set the API key", expanded=not st.session_state.api_key):
-            entered_key = st.text_input(
-                "Groq API key",
-                type="password",
-                value=st.session_state.api_key,
-                help="You can also set GROQ_API_KEY as an environment variable or secret.",
-            )
-            if entered_key != st.session_state.api_key:
-                st.session_state.api_key = entered_key
-                st.rerun()
             if not llm.GROQ_AVAILABLE:
                 st.caption("Missing package: run `pip install groq`.")
+            else:
+                entered_key = st.text_input(
+                    "Groq API key",
+                    type="password",
+                    value="",
+                    key="groq_key_entry",
+                    help="You can also set GROQ_API_KEY as an environment variable or secret.",
+                )
+                if entered_key and entered_key != st.session_state.api_key:
+                    st.session_state.api_key = entered_key
+                    st.rerun()
 
 
 # ============================================================

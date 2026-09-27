@@ -10,7 +10,7 @@ Status: open · fixed (commit) · needs decision.
 |---|---|---|---|---|
 | BUG-001 | P1 | Today / quiz (all JSON AI calls) | An unreadable JSON reply showed an error at once, with no automatic retry | fixed (99fe100) |
 | BUG-002 | P1 | All AI actions | No overall time limit: a hung or rate-limited request could keep the person waiting minutes | fixed (0e3f046) |
-| BUG-003 | P1 | Today / sidebar (API key box) | The Groq key box can put the server's secret key into the page, and appears in public mode | open |
+| BUG-003 | P0 | Today / sidebar (API key box) | The Groq key box could put the server's secret key into the page, and appeared in public mode | fixed (pending commit) |
 | BUG-004 | P3 | Reading (books from storage) | normalize_book fills missing dates with the server's date, not the learner's | open |
 
 ## Details
@@ -37,13 +37,6 @@ Status: open · fixed (commit) · needs decision.
 - **Files changed:** coach/llm.py, tests/test_llm.py
 - **Covered by:** tests/test_llm.py::test_retries_stop_within_the_time_budget, ::test_each_request_has_a_timeout, tests/e2e/test_ai.py::test_lesson_errors_show_a_message_and_retry_works
 
-### BUG-003 (P1) — The Groq key box can put the server's secret key into the page, and appears in public mode
-- **Page / flow:** Today / sidebar (API key box)
-- **Status:** open
-- **Steps to reproduce:** Read views/daily.py: the box shows when the key is missing OR the groq package is unavailable; its value= is st.session_state.api_key, which holds the key from secrets
-- **Expected:** No secret ever reaches the page (1.6); testers can't swap in their own key in public mode
-- **Actual:** If groq failed to import while GROQ_API_KEY is set, the key is sent to the browser as the password field's value
-- **Root cause:** value=st.session_state.api_key; no mode check
 
 ### BUG-004 (P3) — normalize_book fills missing dates with the server's date, not the learner's
 - **Page / flow:** Reading (books from storage)
@@ -52,3 +45,14 @@ Status: open · fixed (commit) · needs decision.
 - **Expected:** The learner's local date (ui.today())
 - **Actual:** The previous day (server UTC date)
 - **Root cause:** books.normalize_book calls new_book(date.today())
+
+### BUG-003 (P0) — The Groq key box could put the server's secret key into the page, and appeared in public mode
+- **Page / flow:** Today / sidebar (API key box)
+- **Status:** fixed (pending commit)
+- **Steps to reproduce:** Personal app, GROQ_API_KEY set, groq package unavailable: open Today
+- **Expected:** No secret ever reaches the page (1.6); a public app never offers a key box
+- **Actual:** The password field's value was the server key (sent to the browser)
+- **Root cause:** st.text_input(value=st.session_state.api_key), which holds the key from secrets; no mode check
+- **Fix:** The box never shows a stored key (value empty); only a personal app shows it; with groq missing it shows only the note
+- **Files changed:** views/daily.py, tests/test_app_password.py
+- **Covered by:** tests/test_app_password.py::test_the_server_key_never_reaches_the_page

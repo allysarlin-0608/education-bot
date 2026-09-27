@@ -53,3 +53,18 @@ def test_with_the_settings_table_a_new_user_sets_up_first(monkeypatch):
     assert not at.exception
     assert any("Learn a little every day" in m.value for m in at.markdown)
     assert db.settings == {}                      # nothing saved just by looking
+
+
+def test_the_server_key_never_reaches_the_page(monkeypatch):
+    """BUG-003: with the groq package unavailable the key box appears, but
+    it must never be filled with the key from the app's secrets."""
+    from coach import llm
+    monkeypatch.setattr(llm, "GROQ_AVAILABLE", False)
+    at, db = start(monkeypatch, "correct horse")
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_SERVER_SECRET")
+    at = AppTest.from_file(APP, default_timeout=30).run()
+    at.text_input[0].input("correct horse").run()
+    at.button[0].click().run()
+    assert not at.exception
+    values = [t.value for t in at.text_input]
+    assert all("gsk_SERVER_SECRET" not in (v or "") for v in values), values
