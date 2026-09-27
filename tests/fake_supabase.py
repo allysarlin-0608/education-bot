@@ -473,6 +473,16 @@ def build_app(access_ttl=3600):
         auth.links[th] = (e[0], e[1], time.time() - 1, *e[3:])
         return JSONResponse({"ok": True})
 
+    async def make_user(request):
+        """Test setup: a confirmed email+password account (and its invitation)."""
+        body = await request.json()
+        email = body["email"].lower()
+        db.tables[storage.INVITES_TABLE][(email,)] = {"email": email, "note": ""}
+        if email not in auth.users:
+            u = auth.new_user(email, body["password"])
+            u["confirmed"] = True
+        return JSONResponse({"id": auth.users[email]["id"]})
+
     async def dump(request):
         return JSONResponse({"tables": {t: list(r.values()) for t, r in db.tables.items()},
                              "users": [{k: v for k, v in u.items() if k != "password"} | {"has_password": bool(u["password"])}
@@ -494,6 +504,7 @@ def build_app(access_ttl=3600):
         Route("/__seed", seed, methods=["POST"]),
         Route("/__expire_link", expire_link, methods=["POST"]),
         Route("/__dump", dump),
+        Route("/__user", make_user, methods=["POST"]),
     ]
     app = Starlette(routes=routes)
     app.state.auth = auth
