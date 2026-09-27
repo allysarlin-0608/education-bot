@@ -40,5 +40,9 @@ def test_a_missing_picture_is_never_linked(tmp_path, monkeypatch):
     assert 'data-n="01"' in visuals.object_html("philosophy", "sg-art", 1) and visuals.credit("philosophy") == ""
     (tmp_path / "subjects").mkdir()
     (tmp_path / "subjects" / "philosophy.webp").write_bytes(b"x")
-    assert visuals.image_url("philosophy") == "app/static/subjects/philosophy.webp"
+    url = visuals.image_url("philosophy")
+    assert url.startswith("app/static/subjects/philosophy.webp?v=")
+    # a changed picture gets a new address, so no browser keeps the old one
+    (tmp_path / "subjects" / "philosophy.webp").write_bytes(b"y")
+    assert visuals.image_url("philosophy") != url
     assert "background-image" in visuals.object_html("philosophy", "sg-art", 1) and visuals.credit("philosophy")
