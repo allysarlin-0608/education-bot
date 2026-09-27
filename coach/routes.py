@@ -17,8 +17,18 @@ async def _probe_set(request: Request):
 
 async def _probe_check(request: Request):
     got = request.cookies.get(PROBE_COOKIE) == "1"
-    return PlainTextResponse(f"GNOSIS routes OK (2/2). HttpOnly cookie came back: {'YES' if got else 'NO'}")
+    names = ", ".join(sorted(request.cookies)) or "(none)"
+    return PlainTextResponse(f"GNOSIS routes OK (2/2). HttpOnly cookie came back: {'YES' if got else 'NO'}\n"
+                             f"cookie names received: {names}")
+
+
+async def _probe_named(request: Request):
+    """Set cookies under a few name patterns, to see which the host lets through."""
+    resp = PlainTextResponse("set: gn_probe, _streamlit_gn_probe, streamlit_gn_probe, __Host-gn_probe")
+    for name in ("gn_probe", "_streamlit_gn_probe", "streamlit_gn_probe", "__Host-gn_probe"):
+        resp.set_cookie(name, "1", max_age=600, httponly=True, secure=True, samesite="lax", path="/")
+    return resp
 
 
 def all_routes() -> list:
-    return [Route("/auth/probe", _probe_set), Route("/auth/probe-check", _probe_check)]
+    return [Route("/auth/probe", _probe_named), Route("/auth/probe-check", _probe_check)]
