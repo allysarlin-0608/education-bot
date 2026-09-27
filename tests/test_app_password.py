@@ -57,7 +57,7 @@ def test_with_the_settings_table_a_new_user_sets_up_first(monkeypatch):
 
 
 def test_the_server_key_never_reaches_the_page(monkeypatch):
-    # covers: S-groq_api_key, W-daily-groq_key_entry
+    # covers: S-groq_api_key
     """BUG-003: with the groq package unavailable the key box appears, but
     it must never be filled with the key from the app's secrets."""
     from coach import llm
@@ -70,3 +70,18 @@ def test_the_server_key_never_reaches_the_page(monkeypatch):
     assert not at.exception
     values = [t.value for t in at.text_input]
     assert all("gsk_SERVER_SECRET" not in (v or "") for v in values), values
+
+
+def test_a_personal_app_without_a_key_takes_one_and_never_shows_it(monkeypatch):
+    # covers: W-daily-set_the_api_key, W-daily-groq_key_entry
+    at, db = start(monkeypatch, "correct horse")
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    at = AppTest.from_file(APP, default_timeout=30).run()
+    at.text_input[0].input("correct horse").run()
+    at.button[0].click().run()
+    assert not at.exception
+    assert any(e.label == "Set the API key" for e in at.expander)
+    box = next(t for t in at.text_input if t.label == "Groq API key")
+    box.input("gsk_typed_by_me").run()
+    assert at.session_state.api_key == "gsk_typed_by_me"
+    assert not any(t.label == "Groq API key" for t in at.text_input), "the box goes once a key is set"

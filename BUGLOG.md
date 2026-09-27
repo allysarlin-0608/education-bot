@@ -20,7 +20,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-010 | P2 | Deploy | Four dependencies were unpinned | fixed (95fc0e4) |
 | BUG-011 | P2 | Personal mode / password gate | Unlimited password attempts on the personal app | open — needs your decision |
 | BUG-012 | P2 | Account menu (public) | Choosing Settings from the account menu left the menu open over the Settings page | fixed (8316212) |
-| BUG-013 | P2 | Settings / browser Back | Back from Settings needed several presses (the page added history entries) | fixed |
+| BUG-013 | P2 | Settings / browser Back | Back from Settings needed several presses (the page added history entries) | fixed (e17f376) |
 
 ## Details
 
@@ -156,7 +156,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-013 (P2) — Back from Settings needed several presses (the page added history entries)
 - **Page / flow:** Settings / browser Back
-- **Status:** fixed
+- **Status:** fixed (e17f376)
 - **Steps to reproduce:** Today → Progress → Settings → Today, then press the browser's Back repeatedly
 - **Expected:** Each Back goes to the previous page once
 - **Actual:** Settings → Settings?subject=… → Settings → Progress: 3 Backs to leave Settings; touching a subject added one more each time
