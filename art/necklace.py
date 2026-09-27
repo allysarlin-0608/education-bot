@@ -4,13 +4,14 @@ and rendered as a studio photograph of a real piece, floating on nothing.
 The design is the reference photograph's (a V necklace on a display bust),
 traced first and built second: art/necklace_trace.py turns the photograph into
 a 2D blueprint (art/necklace_blueprint.json: each side's centreline and band
-width, the links along it, the centre, the drop's outline), checked by
-overlaying it on the photograph; this script builds on that blueprint in the
-plane the camera looks at square on, so the render lies on the photograph's
-necklace. Along each side, oval links of pave (a larger round ringed by
-melee, on a fine rim), end to end and overlapping a little; where they meet,
-a block of pave closing to a point, a marquise in a pave halo, the bail, and
-the pear drop, point up, 1.8 times as long as it is wide, widest at 55%.
+width with stations along it, the V, the stem to the bail, the drop's
+outline), checked by overlaying it on the photograph; this script builds on
+that blueprint in the plane the camera looks at square on, so the render lies
+on the photograph's necklace. Along each side, two staggered rows of
+individually set round brilliants twisting down the band, a small stone in
+each notch at the edges, a pear or a marquise across the band every fifth; at
+the V a round, then a pear point up to the bail; the drop as traced, twice as
+long as it is wide, widest at 64%.
 
 Units are millimetres. Every stone is a faceted solid (a round brilliant's
 table, star, bezel, upper and lower girdle and pavilion facets; the pear and
@@ -273,121 +274,85 @@ def jump_ring(p, r, tube, axis):
 
 # ---------- the piece, built on the traced blueprint ----------
 # art/necklace_blueprint.json is the reference photograph traced (art/necklace_trace.py):
-# each side's centreline and band width, the links along it, the centre, the
-# drop's outline. Here those image pixels become millimetres (the drop 24 mm
-# across) in the same plane the camera looks at square on, so the model's
-# silhouette is the tracing's: the stones are laid around the line, never the
-# other way round.
+# each side's centreline and band width with stations along it every half
+# band-width, the stem from the V to the bail, the drop's outline. Here those
+# image pixels become millimetres (the drop 26 mm across) in the plane the camera
+# looks at square on, so the model's silhouette is the tracing's: the stones are
+# laid around the line, never the other way round.
 import json
 import os
 BP = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "necklace_blueprint.json")))
 DROP = BP["drop"]
-MM = 24.0 / max(b_ - a_ for _, a_, b_ in DROP)                 # mm per traced pixel
-X0 = BP["points_px"]["P5 centre"][0]
-Y0 = BP["points_px"]["P5 centre"][1]
+MM = 26.0 / max(b_ - a_ for _, a_, b_ in DROP)                 # mm per traced pixel
+X0, Y0 = BP["points_px"]["P5 centre"]
+FACE = Vector((0, 0, 1))
 
 
 def to_mm(px, py, z=0.0):
     return Vector(((px - X0) * MM, -(py - Y0) * MM, z))
 
 
-FACE = Vector((0, 0, 1))
-
-
-def pave_link(x, y, ang, length, width):
-    """One link of the band: an oval of pavé on its own metal plate and rim,
-    the stones on a staggered grid filling the oval, a larger one at its heart."""
-    c = to_mm(x, y); L, Wd = length * MM, width * MM
-    ax = Vector((math.cos(ang), -math.sin(ang), 0))           # along the band (image y is down)
-    ac = Vector((-ax.y, ax.x, 0))                              # across it
-    a, b = L / 2, Wd / 2 * 0.94
-    rim = [c + ax * a * math.cos(t) + ac * b * math.sin(t) - FACE * 0.25 for t in [2 * math.pi * k / 40 for k in range(40)]]
-    wire(rim, max(0.06, Wd * 0.014), closed=True)             # a fine rim: the stones, not the metal, make the band
-    # a large round at the heart, a ring of melee round it following the oval, as the reference's links are
-    big = b * 0.5
-    place("round", 1.0, big, c + FACE * 0.05, FACE, ax)
-    ring_a, ring_b = a - (a - big) * 0.5, b - (b - big) * 0.5
-    per = math.pi * (3 * (ring_a + ring_b) - math.sqrt((3 * ring_a + ring_b) * (ring_a + 3 * ring_b)))
-    d = min(b - big, a - big) * 1.02
-    n = max(6, int(per / (d * 1.08)))
-    for k in range(n):
-        t = 2 * math.pi * (k + 0.5) / n
-        place_melee(c + ax * ring_a * math.cos(t) + ac * ring_b * math.sin(t), d / 2)
-    # the gallery under it: a flat bar across, where the stones' collets meet (hidden behind them)
-    wire([c - ac * b * 0.7 - FACE * 0.9, c + ac * b * 0.7 - FACE * 0.9], max(0.1, Wd * 0.05))
-
-
-MELEE = None
-
-
 def place_melee(p, r):
-    """A melee brilliant held by the metal around it (beads between stones)."""
-    o = bpy.data.objects.new("melee", cut("round", 1.0))
-    scene.collection.objects.link(o)
-    # set by hand: each a few degrees off the plane and turned its own way, so no two
-    # catch the light alike (a row of identical sparkles reads as beads, not diamonds)
-    tilt = Matrix.Rotation(math.radians(rng.uniform(-9, 9)), 4, "X") @ Matrix.Rotation(math.radians(rng.uniform(-9, 9)), 4, "Y")
-    o.matrix_world = Matrix.Translation(p) @ tilt @ Matrix.Rotation(rng.uniform(0, math.pi / 4), 4, "Z") @ Matrix.Diagonal((r, r, r, 1))
-    bead(p + Vector((r * 0.95, r * 0.35, 0.02)), r * 0.16)
+    """A small brilliant set a few degrees off true (as a setter leaves it), on
+    its own collet with claws."""
+    tilt = Vector((rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 1)).normalized()
+    place("round", 1.0, r, p, tilt, Vector((math.cos(rng.uniform(0, 6.3)), math.sin(rng.uniform(0, 6.3)), 0)))
 
 
-# the two sides: the links as traced, end to end along each centreline
-for side_, x, y, ang, length, width in BP["links"]:
-    pave_link(x, y, ang, length, width)
-# where the rims meet, a hinge under each join
+# ---------- the sides: two staggered rows of individually set stones, twisting ----------
+# At each station (every 0.42 band-widths along the traced line) one stone,
+# alternately on the band's outer and inner half: two rows of round brilliants,
+# each a little over half the band wide, interlocking, a small stone in each
+# notch between them on the edges; every fifth, a pear or a marquise
+# laid across the band, as the reference's twist has them. The band's own
+# width, as traced, makes them larger toward the centre.
+for i, (side_, x, y, ang, w) in enumerate(BP["stations"]):
+    ax = Vector((math.cos(ang), -math.sin(ang), 0))          # along the band (image y is down)
+    ac = Vector((-ax.y, ax.x, 0))                             # across it
+    k = i if side_ == "L" else i - sum(1 for s_ in BP["stations"] if s_[0] == "L")
+    row = 1 if k % 2 == 0 else -1
+    c = to_mm(x, y) + ac * row * w * MM * 0.22
+    d = w * MM * rng.uniform(0.52, 0.58)                      # a stone's diameter
+    # a small stone in the notch on the other row's side, between this stone and the last
+    place_melee(to_mm(x, y) - ac * row * w * MM * 0.36 - ax * w * MM * 0.2 + FACE * 0.02, w * MM * 0.11)
+    if k % 5 == 3:
+        lean = math.radians(rng.uniform(35, 55)) * row
+        axis = (ax * math.cos(lean) + ac * math.sin(lean)).normalized()
+        shape = "pear" if k % 10 == 3 else "marquise"
+        place(shape, 1.9, d * 0.34, c + FACE * 0.05, FACE, axis)
+    else:
+        place_melee(c, d / 2)
+# the gallery under each side: a wire along the traced line, the collets sitting on it
 for key in "LR":
-    ls = [l for l in BP["links"] if l[0] == key]
-    for l0, l1 in zip(ls, ls[1:]):
-        wire([to_mm(l0[1], l0[2], -0.6), to_mm(l1[1], l1[2], -0.6)], max(0.2, min(l0[5], l1[5]) * MM * 0.1))
+    ss = [s_ for s_ in BP["stations"] if s_[0] == key]
+    wire([to_mm(x, y, -0.9) for _, x, y, _, _ in ss[::2]], max(0.25, ss[0][4] * MM * 0.08))
 
-# ---------- the centre, as traced: the convergence, the marquise setting, the bail ----------
+# ---------- the centre, as traced: the V, a pear point up, the bail ----------
 STEM = BP["stem"]
-NECK = BP["neck_y"]
 cx = sum((a_ + b_) / 2 for _, a_, b_ in STEM) / len(STEM)
-# the convergence: the two bands close into one, pavé filling the traced block
-def inside(px, py, pad):
-    for y_, a_, b_ in STEM:
-        if y_ == int(py):
-            return a_ + pad < px < b_ - pad
-    return False
+v_y, bail_y = BP["v_y"], BP["bail_y"]
+# where the rows meet, a round closes the V
+w_v = STEM[0][2] - STEM[0][1]
+place_melee(to_mm(cx, v_y + w_v * 0.3, 0.05), w_v * MM * 0.3)
+# the connecting pear, point up, filling the traced stem below it
+sw = max(b_ - a_ for y_, a_, b_ in STEM if y_ > v_y + (bail_y - v_y) * 0.3)
+p_top, p_bot = v_y + (bail_y - v_y) * 0.32, bail_y - 4
+PW = sw * MM / 2 * 0.92
+p_len = (p_bot - p_top) * MM
+p_lh = 0.62 * p_len / PW
+PEAR_LOW = 0.38 * p_len / PW
+place("pear2", p_lh, PW, to_mm(cx, p_top + 0.62 * (p_bot - p_top), 0.1), FACE, Vector((0, 1, 0)))
+jump_ring(to_mm(cx, bail_y, -0.3), 0.9, 0.3, Vector((1, 0, 0)))
 
-
-d_c = 13.0                                                     # its melee, in traced pixels
-for i in range(0, 12):
-    py = 884 + i * d_c * 0.866
-    if py > 928:
-        break
-    for j in range(-8, 9):
-        px = cx + j * d_c + (d_c / 2 if i % 2 else 0)
-        if inside(px, py, d_c * 0.45):
-            place_melee(to_mm(px, py, 0.05), d_c * MM * 0.46)
-# the marquise setting: a marquise in a pavé halo, from the block down to the bail
-my0, my1 = 925, NECK - 4
-mw = max(b_ - a_ for y_, a_, b_ in STEM if my0 < y_ < my1)
-mc = to_mm(cx, (my0 + my1) / 2)
-half_len = (my1 - my0) / 2 * MM
-half_w = mw / 2 * MM
-place("marquise", half_len * 0.78 / (half_w * 0.62), half_w * 0.62, mc + FACE * 0.1, FACE, Vector((0, 1, 0)))
-def marquise_edge(t, k=1.0):
-    """A point on the marquise's outline (long axis vertical), k times out from its centre."""
-    r = vesica(math.sin(t), math.cos(t), half_len / half_w) * half_w * k
-    return mc + Vector((math.sin(t) * r, math.cos(t) * r, 0))
-
-
-for k in range(26):                                            # the halo, round the marquise's outline
-    place_melee(marquise_edge(2 * math.pi * k / 26, 0.86), 0.45)
-wire([marquise_edge(2 * math.pi * k / 48) - FACE * 0.3 for k in range(48)], 0.18, closed=True)
-# the bail, where the traced outline narrows most
-jump_ring(to_mm(cx, NECK, -0.3), 0.9, 0.3, Vector((1, 0, 0)))
-
-# ---------- the drop, as traced: 24 mm across, 1.8 times as long, widest at 55% ----------
-top = DROP[0][0]; bot = DROP[-1][0]
-PEAR_W = 12.0                                                  # half its width, mm
-total = (bot - top) * MM                                       # its length
-lh = 0.55 * total / PEAR_W                                     # the upper (pointed) part, in half-widths
-PEAR_LOW = 0.45 * total / PEAR_W
-widest = to_mm(cx, top + 0.55 * (bot - top))
-place("pear2", lh, PEAR_W, widest, FACE, Vector((0, 1, 0)))
+# ---------- the drop, as traced: its width, its length, widest where it is ----------
+top, bot = DROP[0][0], DROP[-1][0]
+wid = max(DROP, key=lambda t: t[2] - t[1])
+DW = (wid[2] - wid[1]) * MM / 2                                # half its width, mm
+total = (bot - top) * MM
+f = (wid[0] - top) / (bot - top)                               # where it is widest (0 top, 1 bottom)
+lh = f * total / DW
+PEAR_LOW = (1 - f) * total / DW
+place("pear2", lh, DW, to_mm(cx, wid[0]), FACE, Vector((0, 1, 0)))
 
 # ---------- the studio: dark, lit by three large soft sources ----------
 # The film is transparent and so is the glass where it shows only the dark
@@ -501,7 +466,7 @@ cam.type = "ORTHO"
 cam.clip_end = 10000
 co = bpy.data.objects.new("cam", cam)
 scene.collection.objects.link(co)
-bx0, bx1, by0, by1 = 255, 1020, 330, 1300                      # the traced piece's box in the photograph, with a margin
+bx0, bx1, by0, by1 = BP["frame"]                               # the traced piece's box in the photograph, with a margin
 lo, hi = to_mm(bx0, by1), to_mm(bx1, by0)
 co.location = Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, 500))
 cam.ortho_scale = max(hi.x - lo.x, hi.y - lo.y)
@@ -552,7 +517,7 @@ else:
     mono = (r_ + g_ + b_) / 3
     disp = mono.copy()
     disp[..., 0], disp[..., 1], disp[..., 2] = r_[..., 0], g_[..., 1], b_[..., 2]
-    img = mono + 0.35 * (disp - mono)
+    img = mono + 0.35 * (disp - mono)    # a third of the fire kept: a trace of cool colour at the edges, never rainbow bands
     img[..., 3] = g_[..., 3]
     Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGBA").save(out)
 print("wrote", out)
