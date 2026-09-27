@@ -69,6 +69,7 @@ def test_an_edited_cookie_is_not_accepted():
 
 
 def test_a_cookie_for_another_site_is_not_accepted(monkeypatch):
+    # covers: S-app_url
     resp = Response()
     asyncio.run(session_cookie.write(resp, PERSON, SESSION))
     monkeypatch.setenv("APP_URL", "https://other.streamlit.app")

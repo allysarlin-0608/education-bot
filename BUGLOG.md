@@ -19,7 +19,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-009 | P1 | Today / lesson and chat | Leaving while a lesson streamed left a lesson-less day with the quiz offered | fixed (aadd4a9) |
 | BUG-010 | P2 | Deploy | Four dependencies were unpinned | fixed (95fc0e4) |
 | BUG-011 | P2 | Personal mode / password gate | Unlimited password attempts on the personal app | open — needs your decision |
-| BUG-012 | P2 | Account menu (public) | Choosing Settings from the account menu left the menu open over the Settings page | fixed |
+| BUG-012 | P2 | Account menu (public) | Choosing Settings from the account menu left the menu open over the Settings page | fixed (8316212) |
 
 ## Details
 
@@ -144,7 +144,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-012 (P2) — Choosing Settings from the account menu left the menu open over the Settings page
 - **Page / flow:** Account menu (public)
-- **Status:** fixed
+- **Status:** fixed (8316212)
 - **Steps to reproduce:** Tap the avatar → Settings → the menu is still open on Settings; the next tap on the avatar closes it instead of opening it
 - **Expected:** The menu closes when a choice takes you to another page (1.8 floating elements never cover content)
 - **Actual:** Popover stayed open across the page change; one extra tap needed

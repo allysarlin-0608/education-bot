@@ -39,6 +39,7 @@ def test_no_sub_means_not_signed_in(public, monkeypatch):
 
 
 def test_personal_mode_keeps_its_one_id(monkeypatch):
+    # covers: S-coach_user_id, S-app_mode
     monkeypatch.delenv("APP_MODE", raising=False)
     monkeypatch.setenv("COACH_USER_ID", "")
     signed_in(monkeypatch, sub="someone", email="a@example.com")
@@ -71,6 +72,7 @@ def with_store(monkeypatch, store):
 
 
 def test_limits_default_and_from_secrets(monkeypatch):
+    # covers: S-ai_daily_request_limit, S-ai_daily_token_limit
     monkeypatch.delenv("AI_DAILY_REQUEST_LIMIT", raising=False)
     monkeypatch.delenv("AI_DAILY_TOKEN_LIMIT", raising=False)
     assert quota.limits() == (80, 150_000)

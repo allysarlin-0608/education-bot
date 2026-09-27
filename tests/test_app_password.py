@@ -29,6 +29,7 @@ def test_without_a_password_configured_nothing_opens(monkeypatch):
 
 
 def test_wrong_password_is_refused_and_loads_nothing(monkeypatch):
+    # covers: S-app_password, W-ui-login, W-ui-password, W-ui-enter
     at, db = start(monkeypatch, "correct horse")
     at.text_input[0].input("guess").run()
     at.button[0].click().run()
@@ -56,6 +57,7 @@ def test_with_the_settings_table_a_new_user_sets_up_first(monkeypatch):
 
 
 def test_the_server_key_never_reaches_the_page(monkeypatch):
+    # covers: S-groq_api_key, W-daily-groq_key_entry
     """BUG-003: with the groq package unavailable the key box appears, but
     it must never be filled with the key from the app's secrets."""
     from coach import llm
