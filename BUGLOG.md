@@ -15,7 +15,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-005 | P0 | Progress / Backup and restore (import) | A failed import deleted the existing records | fixed (ed7b280) |
 | BUG-006 | P0 | Progress / import, and every page reading records | A backup with a field of the wrong type crashed the page | fixed (cb7ed7d) |
 | BUG-007 | P2 | Progress / Backup and restore (import) | A file that isn't a backup showed a raw parser error | fixed (7b62327) |
-| BUG-008 | P1 | Progress / Backup and restore (import) | Any size of file was read into memory on import | fixed |
+| BUG-008 | P1 | Progress / Backup and restore (import) | Any size of file was read into memory on import | fixed (d58ade9) |
 
 ## Details
 
@@ -96,7 +96,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-008 (P1) — Any size of file was read into memory on import
 - **Page / flow:** Progress / Backup and restore (import)
-- **Status:** fixed
+- **Status:** fixed (d58ade9)
 - **Steps to reproduce:** Import a 25 MB JSON file
 - **Expected:** Refused with a reason before reading it (1.6 import validation: huge)
 - **Actual:** Read and parsed whole; server memory and time grow with the file
