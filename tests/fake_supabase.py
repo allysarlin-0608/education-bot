@@ -214,10 +214,18 @@ class FakeAuth:
     def _by_id(self, uid):
         return next((u for u in self.users.values() if u["id"] == uid), None)
 
-    def _mail(self, email, kind, redirect_to, expired=False):
+    def _mail(self, email, kind, redirect_to, challenge="", base=""):
+        """Supabase's default template: a link to its own /verify, which
+        checks the token and sends the browser on to redirect_to (with
+        ?code=… when the request carried a PKCE challenge). custom_link is
+        what our own template would send instead (token_hash)."""
         th = secrets.token_hex(16)
-        self.links[th] = (email, kind, time.time() + (-1 if expired else 3600))
-        self.outbox.append({"to": email, "type": kind, "link": f"{redirect_to}?token_hash={th}&type={kind}"})
+        self.links[th] = (email, kind, time.time() + 3600, challenge, redirect_to)
+        sep = "&" if "?" in redirect_to else "?"
+        self.outbox.append({"to": email, "type": kind,
+                            "link": f"{base}/auth/v1/verify?" + urlencode({"token": th, "type": kind,
+                                                                          "redirect_to": redirect_to}),
+                            "custom_link": f"{redirect_to}{sep}token_hash={th}&type={kind}"})
 
     def user_for(self, access):
         entry = self.access.get(access)
@@ -248,6 +256,31 @@ def build_app(access_ttl=3600):
     def key_ok(request):
         return request.headers.get("apikey") == KEY
 
+    def base(request):
+        return str(request.base_url).rstrip("/")
+
+    async def verify_get(request):
+        """The default email link: check it, then on to redirect_to."""
+        q = request.query_params
+        entry = auth.links.pop(q.get("token", ""), None)
+        back = q.get("redirect_to", "")
+        sep = "&" if "?" in back else "?"
+        if not entry or entry[2] < time.time():
+            return RedirectResponse(back + sep + urlencode({"error": "access_denied", "error_code": "otp_expired",
+                                                            "error_description": "Email link is invalid or has expired"}), 303)
+        email, kind, _, challenge, _ = entry
+        u = auth.users.get(email)
+        if not u:
+            return RedirectResponse(back + sep + "error=access_denied", 303)
+        u["confirmed"] = True
+        if not challenge:            # implicit flow: tokens after '#', which a server never sees
+            s = auth._session(u)
+            return RedirectResponse(back + "#" + urlencode({"access_token": s["access_token"],
+                                                            "refresh_token": s["refresh_token"]}), 303)
+        code = secrets.token_hex(12)
+        auth.codes[code] = (u["id"], challenge)
+        return RedirectResponse(back + sep + urlencode({"code": code}), 303)
+
     async def signup(request):
         if not key_ok(request):
             return _err(401, "no_api_key")
@@ -261,12 +294,14 @@ def build_app(access_ttl=3600):
         u = auth.users.get(email)
         if u:                                     # already registered: same answer, no user made
             if not u["confirmed"]:
-                auth._mail(email, "email", request.query_params.get("redirect_to", ""))
+                auth._mail(email, "email", request.query_params.get("redirect_to", ""),
+                           body.get("code_challenge", ""), base(request))
             return JSONResponse({"id": str(uuid.uuid4()), "email": email, "identities": []})
         if not auth._invited(email):              # the before-user-created hook
             return _err(403, "hook_error", "not_invited")
         u = auth.new_user(email, password)
-        auth._mail(email, "email", request.query_params.get("redirect_to", ""))
+        auth._mail(email, "email", request.query_params.get("redirect_to", ""), body.get("code_challenge", ""),
+                   base(request))
         return JSONResponse(auth._user_json(u))
 
     async def token(request):
@@ -309,7 +344,7 @@ def build_app(access_ttl=3600):
         entry = auth.links.pop(body.get("token_hash", ""), None)
         if not entry or entry[1] != body.get("type") and not (entry[1] == "email" and body.get("type") == "signup"):
             return _err(403, "otp_expired", "Email link is invalid or has expired")
-        email, kind, expires = entry
+        email, kind, expires = entry[:3]
         if expires < time.time():
             return _err(403, "otp_expired", "Email link is invalid or has expired")
         u = auth.users.get(email)
@@ -322,7 +357,8 @@ def build_app(access_ttl=3600):
         body = await request.json()
         email = str(body.get("email", "")).lower()
         if email in auth.users:
-            auth._mail(email, "recovery", request.query_params.get("redirect_to", ""))
+            auth._mail(email, "recovery", request.query_params.get("redirect_to", ""),
+                       body.get("code_challenge", ""), base(request))
         return JSONResponse({})
 
     async def resend(request):
@@ -330,7 +366,8 @@ def build_app(access_ttl=3600):
         email = str(body.get("email", "")).lower()
         u = auth.users.get(email)
         if u and not u["confirmed"]:
-            auth._mail(email, "email", request.query_params.get("redirect_to", ""))
+            auth._mail(email, "email", request.query_params.get("redirect_to", ""),
+                       body.get("code_challenge", ""), base(request))
         return JSONResponse({})
 
     async def user(request):
@@ -431,9 +468,9 @@ def build_app(access_ttl=3600):
 
     async def expire_link(request):
         """Make the newest mailed link expired (to test that case)."""
-        th = auth.outbox[-1]["link"].split("token_hash=")[1].split("&")[0]
-        email, kind, _ = auth.links[th]
-        auth.links[th] = (email, kind, time.time() - 1)
+        th = auth.outbox[-1]["custom_link"].split("token_hash=")[1].split("&")[0]
+        e = auth.links[th]
+        auth.links[th] = (e[0], e[1], time.time() - 1, *e[3:])
         return JSONResponse({"ok": True})
 
     async def dump(request):
@@ -445,6 +482,7 @@ def build_app(access_ttl=3600):
         Route("/auth/v1/signup", signup, methods=["POST"]),
         Route("/auth/v1/token", token, methods=["POST"]),
         Route("/auth/v1/verify", verify, methods=["POST"]),
+        Route("/auth/v1/verify", verify_get, methods=["GET"]),
         Route("/auth/v1/recover", recover, methods=["POST"]),
         Route("/auth/v1/resend", resend, methods=["POST"]),
         Route("/auth/v1/user", user, methods=["GET", "PUT"]),

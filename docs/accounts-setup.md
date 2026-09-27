@@ -32,20 +32,12 @@
    - Site URL：`https://education-bot-fgcmwuszrzyybm5eduumkb.streamlit.app`
    - Redirect URLs → Add URL：
      `https://education-bot-fgcmwuszrzyybm5eduumkb.streamlit.app/~/+/auth/**`
-4. **Emails → Templates**（只改這兩封的連結，其他文字可以照自己的意思）
-   - **Confirm signup**，內容換成：
-     ```html
-     <h2>Confirm your email</h2>
-     <p>Follow this link to finish creating your GNOSIS account:</p>
-     <p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">Confirm your email</a></p>
-     ```
-   - **Reset Password**，內容換成：
-     ```html
-     <h2>Reset your password</h2>
-     <p>Follow this link to choose a new password for GNOSIS:</p>
-     <p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery">Choose a new password</a></p>
-     ```
-   為什麼：Streamlit 的伺服器讀不到網址 `#` 後面的東西，所以連結改成 `?token_hash=`，由 app 的伺服器驗證。
+4. **Emails → Templates：不用改**（選做，而且要先設好第 7 步的自訂 SMTP 才能改）
+   Supabase 預設的信就能用：信裡的連結先到 Supabase 驗證，再帶著一次性的 `code` 回到 app 的
+   `/auth/confirm`，由 app 的伺服器換成登入狀態（PKCE）。設好 SMTP 之後如果想改信的文字，
+   可以把連結換成 `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email`（重設密碼用 `type=recovery`），
+   app 兩種連結都認得。
+   注意：寄出的連結一小時內有效；測試版如果在這期間重新啟動（Reboot），舊連結會失效，重新要一封就好。
 5. **Hooks → Add hook → Before User Created**
    - Hook type：Postgres
    - Schema：`public`，Function：`hook_before_user_created`

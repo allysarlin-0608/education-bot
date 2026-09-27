@@ -176,3 +176,26 @@ def test_messages_never_include_backend_text():
 def test_password_rule_matches_supabase_settings(pw, good):
     assert auth.password_ok(pw) is good
     assert "letters and numbers" in auth.PASSWORD_RULE
+
+
+def test_default_email_link_is_exchanged_once(monkeypatch):
+    got = []
+    monkeypatch.setattr(supa_auth, "exchange_code",
+                        lambda code, verifier: got.append((code, verifier)) or {**SESSION, "user": {"id": "u1", "email": "a@x.com"}})
+    back, challenge = routes.email_flow("recovery")
+    assert back.startswith(APP + "/~/+/auth/confirm?flow=") and challenge
+    flow = back.split("flow=")[1]
+    resp = asyncio.run(routes._confirm(_request({}, query=f"flow={flow}&code=abc".encode())))
+    assert resp.headers["location"].endswith("?auth=reset") and USER_COOKIE_NAME in _cookies(resp)
+    assert got[0][0] == "abc" and len(got[0][1]) >= 43                  # the verifier stayed on the server
+    again = asyncio.run(routes._confirm(_request({}, query=f"flow={flow}&code=abc".encode())))
+    assert again.headers["location"].endswith("?auth_error=link_unknown")
+
+
+def test_a_refused_email_link_says_so():
+    back, _ = routes.email_flow("signup")
+    flow = back.split("flow=")[1]
+    resp = asyncio.run(routes._confirm(_request({}, query=f"flow={flow}&error=access_denied&error_code=otp_expired".encode())))
+    assert resp.headers["location"].endswith("?auth_error=link")
+    bogus = asyncio.run(routes._confirm(_request({}, query=b"token_hash=x&type=nonsense")))
+    assert bogus.headers["location"].endswith("?auth_error=link")

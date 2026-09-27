@@ -123,11 +123,17 @@ def exchange_code(auth_code: str, verifier: str) -> dict:
 
 
 # ---- email + password ----
-def sign_up(email: str, password: str, redirect_to: str) -> None:
+def _pkce(challenge):
+    return {"code_challenge": challenge, "code_challenge_method": "s256"} if challenge else {}
+
+
+def sign_up(email: str, password: str, redirect_to: str, challenge: str = "") -> None:
     """Always ends the same way for the caller (no hint whether the email
-    was already registered); raises only for problems the person can fix."""
+    was already registered); raises only for problems the person can fix.
+    With a PKCE challenge, the emailed link (Supabase's default template)
+    comes back to redirect_to with ?code=… for the server to exchange."""
     _call("POST", "/signup", params={"redirect_to": redirect_to},
-          json={"email": email, "password": password})
+          json={"email": email, "password": password, **_pkce(challenge)})
 
 
 def sign_in(email: str, password: str) -> dict:
@@ -135,12 +141,13 @@ def sign_in(email: str, password: str) -> dict:
                  json={"email": email, "password": password})
 
 
-def resend_confirmation(email: str, redirect_to: str) -> None:
-    _call("POST", "/resend", params={"redirect_to": redirect_to}, json={"type": "signup", "email": email})
+def resend_confirmation(email: str, redirect_to: str, challenge: str = "") -> None:
+    _call("POST", "/resend", params={"redirect_to": redirect_to},
+          json={"type": "signup", "email": email, **_pkce(challenge)})
 
 
-def request_reset(email: str, redirect_to: str) -> None:
-    _call("POST", "/recover", params={"redirect_to": redirect_to}, json={"email": email})
+def request_reset(email: str, redirect_to: str, challenge: str = "") -> None:
+    _call("POST", "/recover", params={"redirect_to": redirect_to}, json={"email": email, **_pkce(challenge)})
 
 
 def verify_link(token_hash: str, kind: str) -> dict:

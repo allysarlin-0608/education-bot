@@ -32,12 +32,14 @@ from coach import session_cookie, supa_auth
 logger = logging.getLogger("coach.routes")
 
 FLOW_SECONDS = 600        # to finish Google sign-in
+EMAIL_SECONDS = 3600      # an emailed link (Supabase's link expiry is an hour)
 HANDOFF_SECONDS = 60      # from a sign-in on the page to its cookie
 REFRESH_BEFORE = 600      # renew when less than 10 minutes are left
 
 _lock = threading.Lock()
 _flows: dict = {}         # Google sign-ins under way: id -> (verifier, browser, expires)
 _handoffs: dict = {}      # page sign-ins waiting for their cookie: id -> (…, expires)
+_email_flows: dict = {}   # emailed links on their way: id -> (verifier, kind, expires)
 
 
 def _put(store: dict, value: tuple, seconds: int) -> str:
@@ -139,15 +141,42 @@ async def _callback(request: Request):
 
 
 # ---- links in our emails ----
+def email_flow(kind: str) -> tuple:
+    """For an email about to be sent (kind "signup" or "recovery"): where its
+    link should come back to, and the PKCE challenge to send with it. The
+    verifier stays here; the link may be opened on another device (a phone),
+    so it isn't tied to this browser — the link itself is the secret."""
+    verifier, challenge = supa_auth.pkce_pair()
+    key = _put(_email_flows, (verifier, kind), EMAIL_SECONDS)
+    return f"{session_cookie.routes_base()}/auth/confirm?flow={quote(key)}", challenge
+
+
 async def _confirm(request: Request):
+    """An emailed link lands here, in one of two forms:
+    - Supabase's default email: after Supabase checks it, ?flow=…&code=…
+      (PKCE), exchanged here with the verifier kept by email_flow();
+    - our own template (needs custom SMTP): ?token_hash=…&type=…, verified here."""
     q = request.query_params
-    kind, token_hash = q.get("type", ""), q.get("token_hash", "")
-    if not token_hash or kind not in ("email", "signup", "recovery"):
+    if q.get("code"):
+        entry = _take(_email_flows, q.get("flow"))
+        if not entry:              # older than an hour, or the app restarted since it was sent
+            return _to_app("auth_error=link_unknown")
+        verifier, kind, _ = entry
+        try:
+            session = await run_in_threadpool(supa_auth.exchange_code, q["code"], verifier)
+        except supa_auth.AuthError as e:
+            return _to_app(_error_note(e, "link"))
+    elif q.get("token_hash"):
+        kind = q.get("type", "")
+        if kind not in ("email", "signup", "recovery"):
+            return _to_app("auth_error=link")
+        try:
+            session = await run_in_threadpool(supa_auth.verify_link, q["token_hash"], kind)
+        except supa_auth.AuthError as e:
+            return _to_app(_error_note(e, "link"))
+    else:                          # Supabase refused the link (expired, used) — or sent no code
+        _take(_email_flows, q.get("flow"))
         return _to_app("auth_error=link")
-    try:
-        session = await run_in_threadpool(supa_auth.verify_link, token_hash, kind)
-    except supa_auth.AuthError as e:
-        return _to_app(_error_note(e, "link"))
     if not session.get("access_token"):
         return _to_app("auth_error=link")
     recovery = kind == "recovery"

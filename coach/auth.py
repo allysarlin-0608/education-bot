@@ -41,6 +41,8 @@ NOTES = {   # ?auth=… / ?auth_error=… left by routes.py, shown once
     "deleted": "Your account and all your learning history have been deleted.",
     "google": SIGNIN_FAILED,
     "link": "This link has expired or has already been used. You can ask for a new one below.",
+    "link_unknown": ("We couldn't finish that link here. If you were confirming your email, "
+                     "try signing in; if you were resetting your password, ask for a new link."),
     "expired": "That took too long. Please sign in again.",
     "network": NETWORK,
 }
@@ -235,8 +237,7 @@ def _signed_in(session: dict, **flags) -> None:
 
 def _run(action: str) -> None:
     """Do what a form asked (called while the page shows it as busy)."""
-    from coach import session_cookie, supa_auth
-    base = session_cookie.routes_base()
+    from coach import routes, supa_auth
     problem, done = None, None
     try:
         if action == "signin":
@@ -259,7 +260,7 @@ def _run(action: str) -> None:
             elif password != confirm:
                 problem = "The passwords don't match."
             else:
-                supa_auth.sign_up(email, password, f"{base}/auth/confirm")
+                supa_auth.sign_up(email, password, *routes.email_flow("signup"))
                 done = "sent"
         elif action == "forgot":
             (email,) = _form_values("fp_email")
@@ -267,7 +268,7 @@ def _run(action: str) -> None:
             if not _valid_email(email):
                 problem = ERRORS["invalid_email"]
             else:
-                supa_auth.request_reset(email, f"{base}/auth/confirm")
+                supa_auth.request_reset(email, *routes.email_flow("recovery"))
                 done = "sent"
         elif action == "resend":
             (email,) = _form_values("rs_email")
@@ -275,7 +276,7 @@ def _run(action: str) -> None:
             if not _valid_email(email):
                 problem = ERRORS["invalid_email"]
             else:
-                supa_auth.resend_confirmation(email, f"{base}/auth/confirm")
+                supa_auth.resend_confirmation(email, *routes.email_flow("signup"))
                 done = "sent"
     except supa_auth.AuthError as e:
         if e.code == "not_invited":
@@ -304,7 +305,7 @@ def _note_line() -> None:
     note = st.session_state.pop("auth_note", None)
     if note and note[1] in NOTES:
         st.html(f'<p class="si-note" role="status">{html.escape(NOTES[note[1]])}</p>')
-        if note[1] == "link":
+        if note[1] in ("link", "link_unknown"):
             st.session_state.auth_link_expired = True
     problem = st.session_state.get("auth_problem")
     if problem:
