@@ -29,7 +29,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-019 | P2 | Reading / talking with the coach | Leaving while the coach checked a message left it unanswered with no way to resend | fixed (e0078c8) |
 | BUG-020 | P3 | Today / quiz | The quiz check's rejection rate wasn't logged | fixed (b1b71cb) |
 | BUG-021 | P1 | Today, two tabs or two devices | A tab loaded earlier wrote the lesson a second time and could overwrite the day | fixed (5e01a0e) |
-| BUG-022 | P1 | Reading, two tabs or two devices | A tab loaded earlier could erase a reading day checked in another tab | fixed |
+| BUG-022 | P1 | Reading, two tabs or two devices | A tab loaded earlier could erase a reading day checked in another tab | fixed (d2a4a7e) |
 
 ## Details
 
@@ -264,7 +264,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-022 (P1) — A tab loaded earlier could erase a reading day checked in another tab
 - **Page / flow:** Reading, two tabs or two devices
-- **Status:** fixed
+- **Status:** fixed (d2a4a7e)
 - **Steps to reproduce:** Reading open in tabs A and B → in A pass today's check → in B rename a chapter (More options)
 - **Expected:** Both changes kept (1.4 integrity)
 - **Actual:** B saved its old copy of the book: A's day-1 check was gone
