@@ -24,7 +24,8 @@ Status: open · fixed (commit) · needs decision.
 | BUG-014 | P3 | Reading / plan preview | 'Adjust a day yourself' closed after every move | fixed (07d6c41) |
 | BUG-015 | P2 | Every page (captions) | Caption text fell below 4.5:1 contrast | fixed (171c5a7) |
 | BUG-016 | P3 | Today steps / Progress calendar | Locked lesson steps and future or other-month calendar days are 1.7-1.8:1 | open — needs your decision |
-| BUG-017 | P2 | Top bar (every page) | The account menu and the app menu showed no keyboard focus | fixed |
+| BUG-017 | P2 | Top bar (every page) | The account menu and the app menu showed no keyboard focus | fixed (c1d4902) |
+| BUG-018 | P2 | Today (and every page) after a save error | After a save error, the next click closed the open panels | fixed |
 
 ## Details
 
@@ -204,7 +205,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-017 (P2) — The account menu and the app menu showed no keyboard focus
 - **Page / flow:** Top bar (every page)
-- **Status:** fixed
+- **Status:** fixed (c1d4902)
 - **Steps to reproduce:** Press Tab through the top bar
 - **Expected:** A visible focus ring on every control (1.7)
 - **Actual:** The account circle and Streamlit's menu button get focus with nothing drawn
@@ -212,3 +213,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** The same 1px outline the other controls use
 - **Files changed:** coach/style.py
 - **Covered by:** tests/e2e/test_a11y.py::test_keyboard_reaches_everything_with_a_visible_focus
+
+### BUG-018 (P2) — After a save error, the next click closed the open panels
+- **Page / flow:** Today (and every page) after a save error
+- **Status:** fixed
+- **Steps to reproduce:** A save fails (the database refuses a write) → the error shows → open 'My thoughts…' and type
+- **Expected:** The panel stays open and what she typed stays in view (1.3 no lost input)
+- **Actual:** The first interaction closed the panel (text kept but hidden; Save out of reach)
+- **Root cause:** The error was an element on one run and gone on the next, shifting everything under it; Streamlit redraws shifted unkeyed panels as new, closed ones
+- **Fix:** show_pending_error always keeps its slot (st.empty), error or not, so nothing below moves
+- **Files changed:** coach/ui.py
+- **Covered by:** tests/e2e/test_resilience.py::test_a_failed_save_says_so_and_the_next_one_catches_up

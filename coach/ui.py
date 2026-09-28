@@ -202,9 +202,13 @@ def save_book(log, book):
 
 
 def show_pending_error():
+    # The slot is always there, error or not: an element that appears on one
+    # run and not the next shifts everything under it, and Streamlit then
+    # redraws the panels below as new (closed) ones.
+    slot = st.empty()
     error = st.session_state.pop("coach_save_error", None)
     if error:
-        st.error(error)
+        slot.error(error)
 
 
 def replace_log(log):
