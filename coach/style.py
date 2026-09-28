@@ -28,7 +28,7 @@ CSS = f"""
      in Settings), and light-dark() follows it. */
   --env: light-dark(#FFFFFF, #000000);          /* pure white or pure black, nothing else */
   --label: light-dark(#141414, #EDEDED); --label-2: light-dark(#5C5C5C, #9B9B9B);
-  --label-3: light-dark(#767676, #7C7C7C);   /* 4.5:1 or more on white and on black */ --strong: light-dark(#000000, #FFFFFF);
+  --label-3: light-dark(#737373, #7C7C7C);   /* 4.5:1 or more on white, the off-white cards and black */ --strong: light-dark(#000000, #FFFFFF);
   --hair: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.07));
   --wash: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
   --field: light-dark(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.03));
@@ -167,7 +167,8 @@ CSS = f"""
   padding: var(--space-6) 0 0; margin: 0;
 }}
 .stApp p, .stApp li {{ line-height: 1.65; }}
-[data-testid="stCaptionContainer"], .stApp small {{ color: var(--label-3); }}
+/* Streamlit fades captions to 60%; --label-3 is already the lightest grey that reads at 4.5:1 */
+[data-testid="stCaptionContainer"], .stApp small {{ color: var(--label-3); opacity: 1; }}
 .stApp a {{ color: var(--label); text-underline-offset: 0.2em; text-decoration-color: var(--label-3); }}
 .stApp hr {{ border-color: var(--hair); margin: var(--space-6) 0; }}
 .stApp [data-testid="stMarkdownContainer"] strong {{ font-weight: 600; }}

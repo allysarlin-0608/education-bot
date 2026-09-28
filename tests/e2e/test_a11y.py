@@ -54,6 +54,7 @@ CONTRAST = """() => {
     if (el.closest('button:disabled, [aria-disabled=true], input:disabled')) continue;   // disabled controls are exempt
     let fg = parse(s.color); const bg = bgOf(el); if (!fg || !bg) continue;
     let op = 1; for (let e = el; e; e = e.parentElement) op *= +getComputedStyle(e).opacity;
+    if (op < 0.05) continue;       // not shown at all (a screen-reader label laid over a row)
     fg = over({...fg, a: fg.a * op}, bg);
     const L1 = lum(fg), L2 = lum(bg); const ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
     const size = parseFloat(s.fontSize); const bold = +s.fontWeight >= 700;

@@ -22,6 +22,8 @@ Status: open · fixed (commit) · needs decision.
 | BUG-012 | P2 | Account menu (public) | Choosing Settings from the account menu left the menu open over the Settings page | fixed (8316212) |
 | BUG-013 | P2 | Settings / browser Back | Back from Settings needed several presses (the page added history entries) | fixed (e17f376) |
 | BUG-014 | P3 | Reading / plan preview | 'Adjust a day yourself' closed after every move | fixed (07d6c41) |
+| BUG-015 | P2 | Every page (captions) | Caption text fell below 4.5:1 contrast | fixed |
+| BUG-016 | P3 | Today steps / Progress calendar | Locked lesson steps and future or other-month calendar days are 1.7-1.8:1 | open — needs your decision |
 
 ## Details
 
@@ -176,3 +178,25 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** The expander has its own key (and tracks its state), so it stays open
 - **Files changed:** coach/reading.py
 - **Covered by:** tests/e2e/test_reading.py::test_set_up_adjust_confirm_and_read_day_one
+
+### BUG-015 (P2) — Caption text fell below 4.5:1 contrast
+- **Page / flow:** Every page (captions)
+- **Status:** fixed
+- **Steps to reproduce:** Progress → a day with nothing recorded; any st.caption, light or dark
+- **Expected:** Text contrast at least 4.5:1 (1.7)
+- **Actual:** About 2.2:1: #767676 at 60% opacity on white
+- **Root cause:** Streamlit fades captions to opacity 0.6; the app's grey (--label-3) was chosen for full opacity. On the off-white cards #767676 was 4.44:1 even without the fade
+- **Fix:** Captions at full opacity; --label-3 (light) #767676 → #737373, 4.6:1 on the off-white cards
+- **Files changed:** coach/style.py
+- **Covered by:** tests/e2e/test_a11y.py::test_names_and_contrast_on_every_page
+
+### BUG-016 (P3) — Locked lesson steps and future or other-month calendar days are 1.7-1.8:1
+- **Page / flow:** Today steps / Progress calendar
+- **Status:** open — needs your decision
+- **Steps to reproduce:** Today: the numbers of locked lessons; Progress: days after today and days of the neighbouring months
+- **Expected:** 4.5:1 for text (1.7), unless the control is inactive
+- **Actual:** Dimmed by opacity to 1.7:1 (steps) and 1.8:1 (days); both can still be pressed (a message, or the day's card)
+- **Root cause:** The dimming is the design's way of saying 'not yet' / 'not this month'
+- **Fix:** Proposed: dim to the lightest readable grey (--label-3, 4.6:1) instead of opacity, keeping the lock/future meaning with the existing marks. Changes the look, so waiting for approval
+- **Files changed:** coach/style.py (proposed)
+- **Covered by:** tests/e2e/test_a11y.py::test_names_and_contrast_on_every_page
