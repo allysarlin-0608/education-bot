@@ -30,7 +30,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-020 | P3 | Today / quiz | The quiz check's rejection rate wasn't logged | fixed (b1b71cb) |
 | BUG-021 | P1 | Today, two tabs or two devices | A tab loaded earlier wrote the lesson a second time and could overwrite the day | fixed (5e01a0e) |
 | BUG-022 | P1 | Reading, two tabs or two devices | A tab loaded earlier could erase a reading day checked in another tab | fixed (d2a4a7e) |
-| BUG-023 | P2 | Settings, two tabs or two devices | A change in one tab put back settings changed in another | fixed |
+| BUG-023 | P2 | Settings, two tabs or two devices | A change in one tab put back settings changed in another | fixed (5c29321) |
 
 ## Details
 
@@ -276,7 +276,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-023 (P2) — A change in one tab put back settings changed in another
 - **Page / flow:** Settings, two tabs or two devices
-- **Status:** fixed
+- **Status:** fixed (5c29321)
 - **Steps to reproduce:** Settings open in tabs A and B → A: pace Focused → B: add a subject
 - **Expected:** Both changes kept
 - **Actual:** Pace back to Steady: B saved its whole old row with its change
