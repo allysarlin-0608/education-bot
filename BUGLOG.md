@@ -27,7 +27,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-017 | P2 | Top bar (every page) | The account menu and the app menu showed no keyboard focus | fixed (c1d4902) |
 | BUG-018 | P2 | Today (and every page) after a save error | After a save error, the next click closed the open panels | fixed (a675a1d) |
 | BUG-019 | P2 | Reading / talking with the coach | Leaving while the coach checked a message left it unanswered with no way to resend | fixed (e0078c8) |
-| BUG-020 | P3 | Today / quiz | The quiz check's rejection rate wasn't logged | fixed |
+| BUG-020 | P3 | Today / quiz | The quiz check's rejection rate wasn't logged | fixed (b1b71cb) |
 
 ## Details
 
@@ -240,7 +240,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-020 (P3) — The quiz check's rejection rate wasn't logged
 - **Page / flow:** Today / quiz
-- **Status:** fixed
+- **Status:** fixed (b1b71cb)
 - **Steps to reproduce:** Take a quiz; read the log
 - **Expected:** Every check logs how many questions it rejected (1.5)
 - **Actual:** Only a flagged list, and nothing at all when none were flagged

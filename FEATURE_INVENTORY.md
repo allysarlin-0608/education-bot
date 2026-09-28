@@ -35,23 +35,23 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 | W-choices-pqnext | button | coach/choices.py:102 | 'See my level' if at == pq.COUNT - 1 else 'Next question' | pqnext_{…} | on_move | ✅ |
 | W-lesson_view-title_for_title_in_parts | tabs | coach/lesson_view.py:115 | [title for title, _ in parts] |  |  | ✅ |
 | W-reading-placeholder_book | chat_input | coach/reading.py:30 | _placeholder(book) |  |  | ✅ |
-| W-reading-book_retry | button | coach/reading.py:149 | Retry | book_retry_{…} |  | ✅ |
-| W-reading-14_day_plan | expander | coach/reading.py:184 | 14-day plan |  |  | ✅ |
-| W-reading-summary_retry | button | coach/reading.py:197 | Retry | summary_retry_{…} |  | ✅ |
-| W-reading-start_book | button | coach/reading.py:202 | Start a new book | start_book |  | ✅ |
-| W-reading-more_options | expander | coach/reading.py:228 | More options |  |  | ✅ |
-| W-reading-switch | button | coach/reading.py:234 | Stop this book and start another | switch_{…} |  | ✅ |
-| W-reading-restart | button | coach/reading.py:241 | Start the setup over | restart_{…} |  | ✅ |
-| W-reading-edit_ch | selectbox | coach/reading.py:249 | Chapter | edit_ch_{…} |  | ✅ |
-| W-reading-edit_title | text_input | coach/reading.py:254 | New title | edit_title_{…}_{…} |  | ✅ |
-| W-reading-edit_save | button | coach/reading.py:256 | Save title | edit_save_{…} |  | ✅ |
-| W-reading-adjust_open | expander | coach/reading.py:284 | Adjust a day yourself | adjust_open_{…} | 'rerun' | ✅ |
-| W-reading-adjust_day | selectbox | coach/reading.py:285 | Day | adjust_day_{…} |  | ✅ |
-| W-reading-lighter_move_its_last_chapter_to_day | button | coach/reading.py:290 | Lighter: move its last chapter to Day {…} |  |  | ✅ |
-| W-reading-heavier_bring_over_day_s_first_chapter | button | coach/reading.py:293 | Heavier: bring over Day {…}'s first chapter |  |  | ✅ |
-| W-reading-confirm_the_plan | button | coach/reading.py:296 | Confirm the plan |  |  | ✅ |
-| W-reading-cancel | button | coach/reading.py:356 | Not now, maybe later | cancel_{…} |  | ✅ |
-| W-reading-i_ve_finished_today_s_reading | button | coach/reading.py:361 | I've finished today's reading |  |  | ✅ |
+| W-reading-book_retry | button | coach/reading.py:170 | Retry | book_retry_{…} |  | ✅ |
+| W-reading-14_day_plan | expander | coach/reading.py:205 | 14-day plan |  |  | ✅ |
+| W-reading-summary_retry | button | coach/reading.py:218 | Retry | summary_retry_{…} |  | ✅ |
+| W-reading-start_book | button | coach/reading.py:223 | Start a new book | start_book |  | ✅ |
+| W-reading-more_options | expander | coach/reading.py:249 | More options |  |  | ✅ |
+| W-reading-switch | button | coach/reading.py:255 | Stop this book and start another | switch_{…} |  | ✅ |
+| W-reading-restart | button | coach/reading.py:262 | Start the setup over | restart_{…} |  | ✅ |
+| W-reading-edit_ch | selectbox | coach/reading.py:270 | Chapter | edit_ch_{…} |  | ✅ |
+| W-reading-edit_title | text_input | coach/reading.py:275 | New title | edit_title_{…}_{…} |  | ✅ |
+| W-reading-edit_save | button | coach/reading.py:277 | Save title | edit_save_{…} |  | ✅ |
+| W-reading-adjust_open | expander | coach/reading.py:305 | Adjust a day yourself | adjust_open_{…} | 'rerun' | ✅ |
+| W-reading-adjust_day | selectbox | coach/reading.py:306 | Day | adjust_day_{…} |  | ✅ |
+| W-reading-lighter_move_its_last_chapter_to_day | button | coach/reading.py:311 | Lighter: move its last chapter to Day {…} |  |  | ✅ |
+| W-reading-heavier_bring_over_day_s_first_chapter | button | coach/reading.py:314 | Heavier: bring over Day {…}'s first chapter |  |  | ✅ |
+| W-reading-confirm_the_plan | button | coach/reading.py:317 | Confirm the plan |  |  | ✅ |
+| W-reading-cancel | button | coach/reading.py:377 | Not now, maybe later | cancel_{…} |  | ✅ |
+| W-reading-i_ve_finished_today_s_reading | button | coach/reading.py:382 | I've finished today's reading |  |  | ✅ |
 | W-topnav-p | page_link | coach/topnav.py:22 | p |  |  | ✅ |
 | W-topnav-nav_search | button | coach/topnav.py:23 | Search | nav_search |  | ✅ |
 | W-topnav-search_q | text_input | coach/topnav.py:35 | Search | search_q |  | ✅ |
@@ -128,12 +128,12 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 |---|---|---|---|---|---|---|
 | D-auth-touch_user | touch_user | coach/auth.py:476 | who['email'] |  |  | ✅ |
 | D-quota-add_usage | add_usage | coach/quota.py:58 | ui.today().isoformat() |  |  | ✅ |
-| D-reading-save_book | save_book | coach/reading.py:123 | log |  |  | ✅ |
-| D-reading-save_entry | save_entry | coach/reading.py:445 | log |  |  | ✅ |
+| D-reading-save_book | save_book | coach/reading.py:127 | log |  |  | ✅ |
+| D-reading-save_entry | save_entry | coach/reading.py:466 | log |  |  | ✅ |
 | D-ui-save_settings | save_settings | coach/ui.py:150 | new |  |  | ✅ |
 | D-ui-save_entry | save_entry | coach/ui.py:187 | log |  |  | ✅ |
 | D-ui-save_book | save_book | coach/ui.py:197 | log |  |  | ✅ |
-| D-ui-replace | replace | coach/ui.py:213 | log |  |  | ✅ |
+| D-ui-replace | replace | coach/ui.py:217 | log |  |  | ✅ |
 | D-daily-save_entry | save_entry | views/daily.py:76 | log |  |  | ✅ |
 | D-daily-save_entry-2 | save_entry | views/daily.py:97 | log |  |  | ✅ |
 | D-daily-save_entry-3 | save_entry | views/daily.py:136 | log |  |  | ✅ |
@@ -154,10 +154,10 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 
 | ID | Type | Where | Label / name | Key | Callback | Covered |
 |---|---|---|---|---|---|---|
-| AI-reading-ask_json | ask_json | coach/reading.py:331 | _system(books.adjust_prompt(book)) |  |  | ✅ |
-| AI-reading-stream_reply | stream_reply | coach/reading.py:386 | _system(books.chat_prompt(book)) |  |  | ✅ |
-| AI-reading-ask_json-2 | ask_json | coach/reading.py:394 | _system(books.judge_prompt(book, day)) |  |  | ✅ |
-| AI-reading-stream_reply-2 | stream_reply | coach/reading.py:425 | system |  |  | ✅ |
+| AI-reading-ask_json | ask_json | coach/reading.py:352 | _system(books.adjust_prompt(book)) |  |  | ✅ |
+| AI-reading-stream_reply | stream_reply | coach/reading.py:407 | _system(books.chat_prompt(book)) |  |  | ✅ |
+| AI-reading-ask_json-2 | ask_json | coach/reading.py:415 | _system(books.judge_prompt(book, day)) |  |  | ✅ |
+| AI-reading-stream_reply-2 | stream_reply | coach/reading.py:446 | system |  |  | ✅ |
 | AI-daily-stream_reply | stream_reply | views/daily.py:63 | core.build_system_prompt(log, topic, today, slot=slot, start_level=sta |  |  | ✅ |
 | AI-daily-stream_reply-2 | stream_reply | views/daily.py:89 | core.build_system_prompt(log, topic, today, followup=True, slot=slot,  |  |  | ✅ |
 | AI-daily-ask_json | ask_json | views/daily.py:112 | system |  |  | ✅ |
