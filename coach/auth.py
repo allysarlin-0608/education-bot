@@ -128,19 +128,37 @@ LEAVE_FRAME = "a.si-google, a.si-plain, a.acct-out, a.si-continue"
 
 
 def _raw(markup: str) -> None:
-    """Our own markup for links that leave the app. Streamlit's sanitizer
-    drops target=, so one delegated handler (installed once per page) opens
-    them in the whole window, not the app's frame; the Google button also
-    shows that it's working. Never pass it anything unescaped."""
+    """Our own markup for links that leave the app (Google, sign out…).
+
+    On Streamlit Cloud the app runs in a frame, and a script can't send the
+    whole window elsewhere (Safari refuses: our scripts run with fewer
+    rights than the page). A plain link can, when it says target="_top"; the
+    sanitizer drops target=, so one small script (installed once per page)
+    puts it back on these links and lets the browser follow them itself.
+    The Google button also shows that it's working; if the window hasn't
+    left after a few seconds, it offers the same link in a new tab.
+    Never pass it anything unescaped."""
     st.html(markup)
     st.html("<script>(function(){"
             "const docs=[document];try{if(window.parent&&window.parent.document!==document)docs.push(window.parent.document)}catch(e){}"
-            "for(const d of docs){if(d.__gnLeave)continue;d.__gnLeave=true;"
+            f"const SEL={json.dumps(LEAVE_FRAME)};"
+            "const mark=d=>d.querySelectorAll(SEL).forEach(a=>{if(a.getAttribute('target')!=='_top')a.setAttribute('target','_top');});"
+            "for(const d of docs){mark(d);if(d.__gnLeave)continue;d.__gnLeave=true;"
+            "new MutationObserver(()=>mark(d)).observe(d.body||d.documentElement,{childList:true,subtree:true});"
             "d.addEventListener('click',function(e){"
-            f"const a=e.target.closest&&e.target.closest({json.dumps(LEAVE_FRAME)});if(!a)return;"
-            "e.preventDefault();if(a.classList.contains('si-google')){a.classList.add('is-busy');"
-            "const t=a.querySelector('span');if(t)t.textContent='Opening Google\u2026';}"
-            "(window.top||window).location.href=a.href;},true);}})();</script>",
+            "const a=e.target.closest&&e.target.closest(SEL);if(!a)return;"
+            "a.setAttribute('target','_top');"            # the browser follows it (no preventDefault)
+            "if(!a.classList.contains('si-google'))return;"
+            "a.classList.add('is-busy');const t=a.querySelector('span');const was=t?t.textContent:'';"
+            "if(t)t.textContent='Opening Google\u2026';"
+            "setTimeout(function(){if(!a.isConnected)return;a.classList.remove('is-busy');if(t)t.textContent=was;"
+            "if(a.parentElement&&!a.parentElement.querySelector('.si-newtab')){"
+            "const n=a.ownerDocument.createElement('p');n.className='si-note si-newtab';"
+            "n.textContent='If Google didn\u2019t open, ';"
+            "const l=a.ownerDocument.createElement('a');l.href=a.href;l.target='_blank';l.rel='noopener';"
+            "l.textContent='open it in a new tab';n.appendChild(l);n.appendChild(a.ownerDocument.createTextNode('.'));"
+            "a.parentElement.insertBefore(n,a.nextSibling);}},4000);"
+            "},true);}})();</script>",
             unsafe_allow_javascript=True)
 
 

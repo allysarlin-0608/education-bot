@@ -201,6 +201,8 @@ def test_google_invited_and_not_invited(public_app, pages):
             invite(app, email)
         p = pages(width=1440)
         flows.open_app(p, app)
+        # followed by the browser itself into the whole window (a script can't, inside Cloud's frame)
+        assert p.page.locator("a.si-google").get_attribute("target") == "_top"
         p.page.get_by_text("Continue with Google").click()
         p.page.wait_for_selector("#gemail", timeout=20000)
         p.page.fill("#gemail", email)

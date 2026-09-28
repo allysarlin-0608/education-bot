@@ -31,6 +31,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-021 | P1 | Today, two tabs or two devices | A tab loaded earlier wrote the lesson a second time and could overwrite the day | fixed (5e01a0e) |
 | BUG-022 | P1 | Reading, two tabs or two devices | A tab loaded earlier could erase a reading day checked in another tab | fixed (d2a4a7e) |
 | BUG-023 | P2 | Settings, two tabs or two devices | A change in one tab put back settings changed in another | fixed (5c29321) |
+| BUG-024 | P0 | Sign-in (Streamlit Cloud, Safari) | Continue with Google stayed on 'Opening Google…' and never opened Google | fixed — waiting for your check on the iPad |
 
 ## Details
 
@@ -284,3 +285,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** Each change (pace, subjects, reading, level) re-reads the stored settings first and applies itself to them
 - **Files changed:** coach/ui.py, views/settings.py
 - **Covered by:** tests/e2e/test_two_tabs.py::test_settings_changed_in_one_tab_arent_undone_by_the_other
+
+### BUG-024 (P0) — Continue with Google stayed on 'Opening Google…' and never opened Google
+- **Page / flow:** Sign-in (Streamlit Cloud, Safari)
+- **Status:** fixed — waiting for your check on the iPad
+- **Steps to reproduce:** iPad Safari → the test app on streamlit.app → Continue with Google
+- **Expected:** Google's sign-in page opens
+- **Actual:** The button turns to 'Opening Google…' and nothing else happens (reported with a screenshot)
+- **Root cause:** The link was followed by a script setting window.top.location; on Cloud the app runs in a frame and our scripts run with fewer rights than the page, so Safari refuses. Locally there is no frame, so the tests passed
+- **Fix:** The browser follows the link itself (target=_top put back on the sign-in/out links by a small script, no preventDefault); if the window hasn't left after 4 s, a new-tab link is offered
+- **Files changed:** coach/auth.py, tests/e2e/test_auth.py
+- **Covered by:** tests/e2e/test_auth.py::test_google_invited_and_not_invited (local; the Cloud frame can't be reproduced here)
