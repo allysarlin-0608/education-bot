@@ -23,6 +23,7 @@ if settings.is_legacy(config):
 
 def update(**fields) -> bool:
     """Save a change now; if it isn't valid, say why and keep what was there."""
+    ui.refresh_settings()          # apply the change to what is stored now (another tab may have changed it)
     try:
         new = settings.change(ui.config(), settings.now_iso(), **fields)
     except ValueError:
@@ -33,6 +34,7 @@ def update(**fields) -> bool:
 
 def pick_subject(topic: str) -> None:
     st.session_state.set_focus = topic           # the lens goes to the row she touched
+    ui.refresh_settings()
     now = ui.config()["subjects"]
     new = settings.toggle_subject(now, topic)
     if new != now and update(subjects=new):          # past the limit: only looked at, nothing changes
@@ -66,6 +68,7 @@ def check_move(k: int) -> None:
     topic = st.session_state.set_retake
     c = st.session_state.set_check = choices.move(st.session_state.set_check, topic, k)
     if c.get("level"):
+        ui.refresh_settings()
         levels = dict(ui.config()["subject_levels"], **{topic: c["level"]})
         if update(subject_levels=levels):
             st.session_state.set_placed = (topic, c["level"], c["score"])

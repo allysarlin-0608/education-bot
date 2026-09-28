@@ -30,6 +30,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-020 | P3 | Today / quiz | The quiz check's rejection rate wasn't logged | fixed (b1b71cb) |
 | BUG-021 | P1 | Today, two tabs or two devices | A tab loaded earlier wrote the lesson a second time and could overwrite the day | fixed (5e01a0e) |
 | BUG-022 | P1 | Reading, two tabs or two devices | A tab loaded earlier could erase a reading day checked in another tab | fixed (d2a4a7e) |
+| BUG-023 | P2 | Settings, two tabs or two devices | A change in one tab put back settings changed in another | fixed |
 
 ## Details
 
@@ -272,3 +273,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** Every run of Reading first re-reads the books (store.load_books) and builds on them
 - **Files changed:** coach/storage.py, coach/ui.py, coach/reading.py
 - **Covered by:** tests/e2e/test_two_tabs.py::test_reading_in_one_tab_isnt_undone_by_the_other
+
+### BUG-023 (P2) — A change in one tab put back settings changed in another
+- **Page / flow:** Settings, two tabs or two devices
+- **Status:** fixed
+- **Steps to reproduce:** Settings open in tabs A and B → A: pace Focused → B: add a subject
+- **Expected:** Both changes kept
+- **Actual:** Pace back to Steady: B saved its whole old row with its change
+- **Root cause:** Settings are cached for the session and saved as a whole row
+- **Fix:** Each change (pace, subjects, reading, level) re-reads the stored settings first and applies itself to them
+- **Files changed:** coach/ui.py, views/settings.py
+- **Covered by:** tests/e2e/test_two_tabs.py::test_settings_changed_in_one_tab_arent_undone_by_the_other

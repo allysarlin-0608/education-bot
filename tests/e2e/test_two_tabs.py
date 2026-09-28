@@ -87,3 +87,20 @@ def test_reading_in_one_tab_isnt_undone_by_the_other(public_app, pages):
     saved, _ = tr.books_of(app, a.email)
     assert "1" in saved[0]["checks"], "the other tab's save erased day 1"
     assert saved[0]["chapters"][0] == "Renamed in B"
+
+
+def test_settings_changed_in_one_tab_arent_undone_by_the_other(public_app, pages):
+    covers("D-settings-save_settings")
+    app = public_app
+    a, b, email = two_tabs(app, pages)
+    flows.open_app(a, app, "/settings")
+    flows.open_app(b, app, "/settings")
+    flows.tap(a, a.page.locator(".st-key-set_sec_pace").get_by_role("button", name="Focused", exact=False).first)
+    flows.idle(a.page)
+    flows.tap(b, b.page.locator(".st-key-set_sec_subjects").get_by_role("button", name="Astronomy", exact=False).first)
+    flows.idle(b.page)
+    d = app.get("/__dump")
+    uid = next(u["id"] for u in d["users"] if u["email"] == email)
+    row = next(r for r in d["tables"]["user_settings"] if r["user_id"] == uid)
+    assert row["subjects"] == ["philosophy", "cosmos"]
+    assert row["units_per_day"] == 5, "the other tab put the old pace back"

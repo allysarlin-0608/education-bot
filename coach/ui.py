@@ -257,3 +257,17 @@ def refresh_books(log):
         log["books"] = st.session_state.coach_store.load_books()
     except storage.StorageError as e:
         logger.warning("couldn't refresh the books (%s); using this session's copy", e)
+
+
+def refresh_settings():
+    """Her settings as stored now, before a change is applied to them:
+    another tab may have changed something else since this page loaded, and
+    the change is saved as the whole row. (Quiet: this runs in callbacks.)"""
+    store, uid = st.session_state.coach_store, user_id()
+    try:
+        row = store.load_settings()
+    except storage.StorageError as e:
+        logger.warning("couldn't refresh the settings (%s); using this session's copy", e)
+        return
+    if not store.settings_missing:
+        st.session_state.coach_settings = settings.normalize(row, uid)
