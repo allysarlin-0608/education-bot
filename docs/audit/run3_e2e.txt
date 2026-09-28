@@ -1,0 +1,10 @@
+......x................................................................. [ 46%]
+........................................................................ [ 93%]
+..........                                                               [100%]
+=============================== warnings summary ===============================
+tests/e2e/test_visual.py: 20 warnings
+  /home/user/education-bot/tests/e2e/test_visual.py:99: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    changed = sum(1 for v in diff.getdata() if v) / (a.size[0] * a.size[1])
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+153 passed, 1 xfailed, 20 warnings in 3053.36s (0:50:53)
