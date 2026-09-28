@@ -24,6 +24,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-014 | P3 | Reading / plan preview | 'Adjust a day yourself' closed after every move | fixed (07d6c41) |
 | BUG-015 | P2 | Every page (captions) | Caption text fell below 4.5:1 contrast | fixed (171c5a7) |
 | BUG-016 | P3 | Today steps / Progress calendar | Locked lesson steps and future or other-month calendar days are 1.7-1.8:1 | open — needs your decision |
+| BUG-017 | P2 | Top bar (every page) | The account menu and the app menu showed no keyboard focus | fixed |
 
 ## Details
 
@@ -200,3 +201,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** Proposed: dim to the lightest readable grey (--label-3, 4.6:1) instead of opacity, keeping the lock/future meaning with the existing marks. Changes the look, so waiting for approval
 - **Files changed:** coach/style.py (proposed)
 - **Covered by:** tests/e2e/test_a11y.py::test_names_and_contrast_on_every_page
+
+### BUG-017 (P2) — The account menu and the app menu showed no keyboard focus
+- **Page / flow:** Top bar (every page)
+- **Status:** fixed
+- **Steps to reproduce:** Press Tab through the top bar
+- **Expected:** A visible focus ring on every control (1.7)
+- **Actual:** The account circle and Streamlit's menu button get focus with nothing drawn
+- **Root cause:** Both have box-shadow/outline removed and no :focus-visible style of their own
+- **Fix:** The same 1px outline the other controls use
+- **Files changed:** coach/style.py
+- **Covered by:** tests/e2e/test_a11y.py::test_keyboard_reaches_everything_with_a_visible_focus

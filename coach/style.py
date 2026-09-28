@@ -1816,6 +1816,9 @@ ACCOUNT = """
   font-size: 0.8125rem; font-weight: 500; color: var(--label); background: var(--wash) !important;
   border: 0.5px solid var(--field-edge) !important; box-shadow: none !important; margin-left: var(--space-3); }
 .st-key-account_menu button [data-testid="stIconMaterial"] { display: none; }
+/* a keyboard user sees where they are here too (as on every other control) */
+.st-key-account_menu button:focus-visible, [data-testid="stMainMenuButton"]:focus-visible {
+  outline: 1px solid var(--outline) !important; outline-offset: 2px; }
 .acct-who { display: flex; align-items: center; gap: var(--space-3); }
 .acct-pic { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; }
 .acct-out { display: block; padding: 6px 2px; font-size: 0.9375rem; color: var(--label) !important; text-decoration: none !important; }
