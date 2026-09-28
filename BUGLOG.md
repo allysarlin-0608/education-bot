@@ -32,6 +32,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-022 | P1 | Reading, two tabs or two devices | A tab loaded earlier could erase a reading day checked in another tab | fixed (d2a4a7e) |
 | BUG-023 | P2 | Settings, two tabs or two devices | A change in one tab put back settings changed in another | fixed (5c29321) |
 | BUG-024 | P0 | Sign-in (Streamlit Cloud, Safari) | Continue with Google stayed on 'Opening Google…' and never opened Google | fixed (5d01789) — waiting for your check on the iPad |
+| BUG-025 | P0 | Sign-in (Supabase Auth hook) | Google sign-in ended on Supabase's 500 'unexpected_failure' | fix ready — you run supabase/fix_hook_grant.sql |
 
 ## Details
 
@@ -296,3 +297,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** The browser follows the link itself (target=_top put back on the sign-in/out links by a small script, no preventDefault); if the window hasn't left after 4 s, a new-tab link is offered
 - **Files changed:** coach/auth.py, tests/e2e/test_auth.py
 - **Covered by:** tests/e2e/test_auth.py::test_google_invited_and_not_invited (local; the Cloud frame can't be reproduced here)
+
+### BUG-025 (P0) — Google sign-in ended on Supabase's 500 'unexpected_failure'
+- **Page / flow:** Sign-in (Supabase Auth hook)
+- **Status:** fix ready — you run supabase/fix_hook_grant.sql
+- **Steps to reproduce:** Continue with Google → choose the account
+- **Expected:** Back in the app, signed in (or the invite-only note)
+- **Actual:** {"code":500,"error_code":"unexpected_failure",...} from Supabase
+- **Root cause:** Most likely: the Before User Created hook can't be called: supabase_auth_admin had EXECUTE on the function but no USAGE on schema public (accounts.sql missed that grant; Supabase's hook examples include it)
+- **Fix:** supabase/fix_hook_grant.sql (two grants, no data); accounts.sql now includes the grant
+- **Files changed:** supabase/fix_hook_grant.sql, supabase/accounts.sql
+- **Covered by:** confirmed by signing in on the test app
