@@ -219,12 +219,12 @@ def test_more_options_rename_switch_and_restart(public_app, pages):
     p = reader(app, pages)
     set_up(p, chapters=4, pages_=100)
     # restart the setup while still planning
-    p.page.get_by_text("More options", exact=True).click()
+    flows.open_panel(p, "More options")
     flows.button(p, "Start the setup over")
     assert flows.wait_text(p.page, "OK, let's start over.")
     set_up(p, title="Second Try", chapters=4, pages_=100, start=False)
     flows.button(p, "Confirm the plan")
-    p.page.get_by_text("More options", exact=True).click()
+    flows.open_panel(p, "More options")
     flows.idle(p.page)
     flows.choose(p, p.page.locator('[data-testid="stSelectbox"]').filter(has_text="Chapter").first,
                  "Chapter 2: Part two")
@@ -240,7 +240,7 @@ def test_more_options_rename_switch_and_restart(public_app, pages):
     assert flows.wait_text(p.page, 'Chapter 2 is now "A better name"')
     saved, _ = books_of(app, p.email)
     assert saved[0]["chapters"][1] == "A better name"
-    p.page.get_by_text("More options", exact=True).click()
+    flows.open_panel(p, "More options")
     flows.button(p, "Stop this book and start another")
     assert flows.wait_text(p.page, "OK, let's set up a new book.")
     saved, _ = books_of(app, p.email)

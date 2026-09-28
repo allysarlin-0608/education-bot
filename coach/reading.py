@@ -12,6 +12,7 @@ def render(log, today):
     if store.books_error:
         st.warning(store.books_error)
         return
+    ui.refresh_books(log)          # build on the books as stored now, not this session's old copy
     # Two parts of one page: the book she is reading on the left, the
     # bookshelf on the right (one column on narrower screens, see style.py)
     with st.container(key="read_main"):

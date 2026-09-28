@@ -223,3 +223,11 @@ def choose(p, box, text):
 def pass_lesson(p):
     start_lesson(p)
     take_quiz(p, correct=True)
+
+
+def open_panel(p, label):
+    """Open an expander by its label (only if it's closed: a click toggles it)."""
+    summary = p.page.locator("details > summary", has_text=label).first
+    if summary.evaluate("s => !s.parentElement.open"):
+        tap(p, summary)
+        idle(p.page)

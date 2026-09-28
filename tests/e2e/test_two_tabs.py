@@ -62,3 +62,28 @@ def test_a_quiz_passed_in_one_tab_isnt_undone_by_the_other(public_app, pages):
     assert saved[0]["completed"] is True and saved[0]["quiz"]["score"] == 100, "the other tab undid a passed lesson"
     assert saved[0] == before, "lesson 1 changed under the other tab"
     assert len(app.calls("lesson")) <= 1, "at most the next lesson is written, once"
+
+
+def test_reading_in_one_tab_isnt_undone_by_the_other(public_app, pages):
+    covers("D-reading-save_book", "W-reading-edit_save")
+    import test_reading as tr
+    app = public_app
+    a = tr.reader(app, pages)
+    tr.set_up(a, chapters=4, pages_=100)
+    flows.button(a, "Confirm the plan")
+    b = pages(width=1440)
+    flows.public_sign_in(b, app, a.email, create=False)
+    flows.open_app(b, app, "/reading")
+    assert flows.wait_text(b.page, "I've finished today's reading")
+    flows.button(a, "I've finished today's reading")      # A: day 1 checked
+    tr.say(a, tr.SHARE, "Day done")
+    saved, _ = tr.books_of(app, a.email)
+    assert "1" in saved[0]["checks"]
+    b.page.get_by_text("More options", exact=True).click()   # B, loaded before that, renames a chapter
+    flows.idle(b.page)
+    b.page.get_by_label("New title").fill("Renamed in B")
+    b.page.keyboard.press("Tab")
+    flows.button(b, "Save title")
+    saved, _ = tr.books_of(app, a.email)
+    assert "1" in saved[0]["checks"], "the other tab's save erased day 1"
+    assert saved[0]["chapters"][0] == "Renamed in B"

@@ -248,3 +248,12 @@ def refresh_entry(log, day, topic):
         log["entries"][mine] = stored
     for key in [k for k in st.session_state.coach_chats if k.startswith(f"{day.isoformat()}|{topic}|")]:
         del st.session_state.coach_chats[key]          # rebuilt from the stored lessons
+
+
+def refresh_books(log):
+    """The books as stored now (another tab or device may have checked a day
+    since this page was loaded), so a save never writes an old copy back."""
+    try:
+        log["books"] = st.session_state.coach_store.load_books()
+    except storage.StorageError as e:
+        logger.warning("couldn't refresh the books (%s); using this session's copy", e)

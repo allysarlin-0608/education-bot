@@ -268,6 +268,10 @@ class FileStore(_Scope):
         """The stored entry for one day and subject, or None."""
         return core.find_entry(self.load(), date.fromisoformat(day), topic)
 
+    def load_books(self) -> list:
+        """The stored books (normalized), for pages that must build on them."""
+        return self.load()["books"]
+
     def save_entry(self, log: dict, entry: dict) -> None:
         try:
             core.save_log(log, self._log_path())
@@ -435,6 +439,11 @@ class SupabaseStore(_Scope):
         rows = [{k: v for k, v in row.items() if k in core.ENTRY_FIELDS} for row in resp.json()]
         entries = core.parse_log({"entries": rows})["entries"] if rows else []
         return entries[0] if entries else None
+
+    def load_books(self) -> list:
+        """The stored books (normalized); raises StorageError if they can't be read."""
+        resp = self._request("GET", params=self._mine({"select": "data", "order": "updated_at.asc"}), table=BOOKS_TABLE)
+        return core.parse_log({"entries": [], "books": [row["data"] for row in resp.json()]})["books"]
 
     def _check_lessons_column(self) -> None:
         """Find out up front whether supabase/lessons.sql has been run, so the
