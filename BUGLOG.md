@@ -25,7 +25,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-015 | P2 | Every page (captions) | Caption text fell below 4.5:1 contrast | fixed (171c5a7) |
 | BUG-016 | P3 | Today steps / Progress calendar | Locked lesson steps and future or other-month calendar days are 1.7-1.8:1 | open — needs your decision |
 | BUG-017 | P2 | Top bar (every page) | The account menu and the app menu showed no keyboard focus | fixed (c1d4902) |
-| BUG-018 | P2 | Today (and every page) after a save error | After a save error, the next click closed the open panels | fixed |
+| BUG-018 | P2 | Today (and every page) after a save error | After a save error, the next click closed the open panels | fixed (a675a1d) |
 
 ## Details
 
@@ -216,7 +216,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-018 (P2) — After a save error, the next click closed the open panels
 - **Page / flow:** Today (and every page) after a save error
-- **Status:** fixed
+- **Status:** fixed (a675a1d)
 - **Steps to reproduce:** A save fails (the database refuses a write) → the error shows → open 'My thoughts…' and type
 - **Expected:** The panel stays open and what she typed stays in view (1.3 no lost input)
 - **Actual:** The first interaction closed the panel (text kept but hidden; Save out of reach)

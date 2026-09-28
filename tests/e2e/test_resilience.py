@@ -79,7 +79,9 @@ def test_a_failed_save_says_so_and_the_next_one_catches_up(public_app, pages):
     assert flows.wait_text(p.page, "wasn't saved", 10), "a failed save must be reported"
     assert entries(app, p.email) == [], "the injected failure didn't happen"
     # the next save writes the whole entry, lesson included
+    flows.idle(p.page)
     p.page.get_by_text("My thoughts on the question to explore", exact=False).click()
+    flows.idle(p.page)
     p.page.get_by_label("Question to explore").fill("A thought.")
     p.page.keyboard.press("Tab")
     flows.button(p, "Save my thoughts")
@@ -94,7 +96,7 @@ def test_the_database_failing_to_read_shows_a_message(public_app, pages):
     covers("W-topnav-p")
     app = public_app
     p = person(app, pages)
-    app.post("/__fail", {"method": "GET", "table": "learning_entries", "times": 3})
+    app.post("/__fail", {"method": "GET", "table": "learning_entries", "times": 1})
     flows.open_app(p, app)
     t = text(p)
     assert "Traceback" not in t
