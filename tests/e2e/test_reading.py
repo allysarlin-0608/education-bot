@@ -294,3 +294,29 @@ def test_reading_on_touch_widths(public_app, pages, width):
     flows.button(p, "I've finished today's reading")
     say(p, SHARE, "Day done")
     assert p.page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+
+
+def test_leaving_while_the_coach_reads_loses_nothing(public_app, pages):
+    covers("AI-reading-ask_json", "W-reading-book_retry")
+    app = public_app
+    p = reader(app, pages)
+    set_up(p, chapters=3, pages_=90)
+    flows.button(p, "Confirm the plan")
+    flows.button(p, "I've finished today's reading")
+    app.set_llm(delay=4.0)                        # the check takes a while
+    box = p.page.locator(".st-key-chat_dock textarea").first
+    box.fill(SHARE)
+    box.press("Enter")
+    p.page.wait_for_timeout(1500)
+    flows.go(p, app, "Progress")                  # leave while it's being checked
+    app.set_llm()
+    p.page.wait_for_timeout(4000)
+    flows.go(p, app, "Reading")
+    t = text(p)
+    saved, _ = books_of(app, p.email)
+    if "1" in saved[0]["checks"]:
+        return                                    # the check finished anyway: fine
+    # otherwise what she wrote is not left hanging without an answer or a way to send it again
+    assert "interrupted before the coach answered" in t and "Retry" in t, "her message sits there unanswered"
+    flows.button(p, "Retry")
+    assert flows.wait_text(p.page, "Day done", 30), "Retry sends what she wrote"

@@ -51,6 +51,7 @@ def _render_current(log, today):
         return None
 
     chat = _chat(book, today)
+    _recover_interrupted(book, chat)
     if book["status"] == "reading":
         _render_now_reading(log, book, chat, today)
     else:
@@ -75,6 +76,9 @@ def _render_current(log, today):
 
 def _handle_message(log, book, chat, text, today):
     chat.append({"role": "user", "content": text})
+    # until the coach answers (or fails), the message is pending: a run cut
+    # off in between (she went to another page) turns it into a Retry
+    st.session_state.book_pending = {"id": book["id"], "text": text}
     n = st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
     st.html(place.follow(n), unsafe_allow_javascript=True)      # the page follows her message
     with st.chat_message("user"):
@@ -125,6 +129,22 @@ def _save(log, book, today):
 
 def _say(chat, text):
     chat.append({"role": "assistant", "content": text})
+    st.session_state.book_pending = None
+
+
+INTERRUPTED = "That was interrupted before the coach answered. Send it again?"
+
+
+def _recover_interrupted(book, chat):
+    """Her last message never got an answer (the run was cut off): take it
+    back and offer Retry, so nothing she wrote is lost or left hanging."""
+    pending = st.session_state.get("book_pending")
+    if not pending or pending["id"] != book["id"]:
+        return
+    st.session_state.book_pending = None
+    if chat and chat[-1] == {"role": "user", "content": pending["text"]}:
+        chat.pop()
+        st.session_state.book_retry = {"id": book["id"], "text": pending["text"], "error": INTERRUPTED}
 
 
 def _system(task_prompt):
@@ -137,6 +157,7 @@ def _failed(book, chat, error, text):
     friendly note with Retry (the raw error is only in the log)."""
     if chat and chat[-1] == {"role": "user", "content": text}:
         chat.pop()
+    st.session_state.book_pending = None
     st.session_state.book_retry = {"id": book["id"], "text": text, "error": error}
     st.rerun()
 
