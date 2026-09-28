@@ -22,7 +22,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-012 | P2 | Account menu (public) | Choosing Settings from the account menu left the menu open over the Settings page | fixed (8316212) |
 | BUG-013 | P2 | Settings / browser Back | Back from Settings needed several presses (the page added history entries) | fixed (e17f376) |
 | BUG-014 | P3 | Reading / plan preview | 'Adjust a day yourself' closed after every move | fixed (07d6c41) |
-| BUG-015 | P2 | Every page (captions) | Caption text fell below 4.5:1 contrast | fixed |
+| BUG-015 | P2 | Every page (captions) | Caption text fell below 4.5:1 contrast | fixed (171c5a7) |
 | BUG-016 | P3 | Today steps / Progress calendar | Locked lesson steps and future or other-month calendar days are 1.7-1.8:1 | open — needs your decision |
 
 ## Details
@@ -181,7 +181,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-015 (P2) — Caption text fell below 4.5:1 contrast
 - **Page / flow:** Every page (captions)
-- **Status:** fixed
+- **Status:** fixed (171c5a7)
 - **Steps to reproduce:** Progress → a day with nothing recorded; any st.caption, light or dark
 - **Expected:** Text contrast at least 4.5:1 (1.7)
 - **Actual:** About 2.2:1: #767676 at 60% opacity on white
