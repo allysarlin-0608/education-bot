@@ -26,7 +26,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-016 | P3 | Today steps / Progress calendar | Locked lesson steps and future or other-month calendar days are 1.7-1.8:1 | open — needs your decision |
 | BUG-017 | P2 | Top bar (every page) | The account menu and the app menu showed no keyboard focus | fixed (c1d4902) |
 | BUG-018 | P2 | Today (and every page) after a save error | After a save error, the next click closed the open panels | fixed (a675a1d) |
-| BUG-019 | P2 | Reading / talking with the coach | Leaving while the coach checked a message left it unanswered with no way to resend | fixed |
+| BUG-019 | P2 | Reading / talking with the coach | Leaving while the coach checked a message left it unanswered with no way to resend | fixed (e0078c8) |
 
 ## Details
 
@@ -228,7 +228,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-019 (P2) — Leaving while the coach checked a message left it unanswered with no way to resend
 - **Page / flow:** Reading / talking with the coach
-- **Status:** fixed
+- **Status:** fixed (e0078c8)
 - **Steps to reproduce:** Reading → I've finished today's reading → write what you read → go to Progress before the coach answers → back to Reading
 - **Expected:** Nothing she wrote is lost: either the answer, or her message with Retry (1.3)
 - **Actual:** Her message shown without an answer, no Retry; the day not checked
