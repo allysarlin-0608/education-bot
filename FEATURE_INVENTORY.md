@@ -34,53 +34,53 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 | W-choices-pqprev | button | coach/choices.py:99 | Previous | pqprev_{…} | on_move | ✅ |
 | W-choices-pqnext | button | coach/choices.py:102 | 'See my level' if at == pq.COUNT - 1 else 'Next question' | pqnext_{…} | on_move | ✅ |
 | W-lesson_view-title_for_title_in_parts | tabs | coach/lesson_view.py:115 | [title for title, _ in parts] |  |  | ✅ |
-| W-reading-placeholder_book | chat_input | coach/reading.py:30 | _placeholder(book) |  |  | ✅ |
-| W-reading-book_retry | button | coach/reading.py:170 | Retry | book_retry_{…} |  | ✅ |
-| W-reading-14_day_plan | expander | coach/reading.py:205 | 14-day plan |  |  | ✅ |
-| W-reading-summary_retry | button | coach/reading.py:218 | Retry | summary_retry_{…} |  | ✅ |
-| W-reading-start_book | button | coach/reading.py:223 | Start a new book | start_book |  | ✅ |
-| W-reading-more_options | expander | coach/reading.py:249 | More options |  |  | ✅ |
-| W-reading-switch | button | coach/reading.py:255 | Stop this book and start another | switch_{…} |  | ✅ |
-| W-reading-restart | button | coach/reading.py:262 | Start the setup over | restart_{…} |  | ✅ |
-| W-reading-edit_ch | selectbox | coach/reading.py:270 | Chapter | edit_ch_{…} |  | ✅ |
-| W-reading-edit_title | text_input | coach/reading.py:275 | New title | edit_title_{…}_{…} |  | ✅ |
-| W-reading-edit_save | button | coach/reading.py:277 | Save title | edit_save_{…} |  | ✅ |
-| W-reading-adjust_open | expander | coach/reading.py:305 | Adjust a day yourself | adjust_open_{…} | 'rerun' | ✅ |
-| W-reading-adjust_day | selectbox | coach/reading.py:306 | Day | adjust_day_{…} |  | ✅ |
-| W-reading-lighter_move_its_last_chapter_to_day | button | coach/reading.py:311 | Lighter: move its last chapter to Day {…} |  |  | ✅ |
-| W-reading-heavier_bring_over_day_s_first_chapter | button | coach/reading.py:314 | Heavier: bring over Day {…}'s first chapter |  |  | ✅ |
-| W-reading-confirm_the_plan | button | coach/reading.py:317 | Confirm the plan |  |  | ✅ |
-| W-reading-cancel | button | coach/reading.py:377 | Not now, maybe later | cancel_{…} |  | ✅ |
-| W-reading-i_ve_finished_today_s_reading | button | coach/reading.py:382 | I've finished today's reading |  |  | ✅ |
+| W-reading-placeholder_book | chat_input | coach/reading.py:31 | _placeholder(book) |  |  | ✅ |
+| W-reading-book_retry | button | coach/reading.py:171 | Retry | book_retry_{…} |  | ✅ |
+| W-reading-14_day_plan | expander | coach/reading.py:206 | 14-day plan |  |  | ✅ |
+| W-reading-summary_retry | button | coach/reading.py:219 | Retry | summary_retry_{…} |  | ✅ |
+| W-reading-start_book | button | coach/reading.py:224 | Start a new book | start_book |  | ✅ |
+| W-reading-more_options | expander | coach/reading.py:250 | More options |  |  | ✅ |
+| W-reading-switch | button | coach/reading.py:256 | Stop this book and start another | switch_{…} |  | ✅ |
+| W-reading-restart | button | coach/reading.py:263 | Start the setup over | restart_{…} |  | ✅ |
+| W-reading-edit_ch | selectbox | coach/reading.py:271 | Chapter | edit_ch_{…} |  | ✅ |
+| W-reading-edit_title | text_input | coach/reading.py:276 | New title | edit_title_{…}_{…} |  | ✅ |
+| W-reading-edit_save | button | coach/reading.py:278 | Save title | edit_save_{…} |  | ✅ |
+| W-reading-adjust_open | expander | coach/reading.py:306 | Adjust a day yourself | adjust_open_{…} | 'rerun' | ✅ |
+| W-reading-adjust_day | selectbox | coach/reading.py:307 | Day | adjust_day_{…} |  | ✅ |
+| W-reading-lighter_move_its_last_chapter_to_day | button | coach/reading.py:312 | Lighter: move its last chapter to Day {…} |  |  | ✅ |
+| W-reading-heavier_bring_over_day_s_first_chapter | button | coach/reading.py:315 | Heavier: bring over Day {…}'s first chapter |  |  | ✅ |
+| W-reading-confirm_the_plan | button | coach/reading.py:318 | Confirm the plan |  |  | ✅ |
+| W-reading-cancel | button | coach/reading.py:378 | Not now, maybe later | cancel_{…} |  | ✅ |
+| W-reading-i_ve_finished_today_s_reading | button | coach/reading.py:383 | I've finished today's reading |  |  | ✅ |
 | W-topnav-p | page_link | coach/topnav.py:22 | p |  |  | ✅ |
 | W-topnav-nav_search | button | coach/topnav.py:23 | Search | nav_search |  | ✅ |
 | W-topnav-search_q | text_input | coach/topnav.py:35 | Search | search_q |  | ✅ |
 | W-topnav-sopen | button | coach/topnav.py:56 | Open {…} | sopen_{…} |  | ✅ |
-| W-ui-login | form | coach/ui.py:45 | login |  |  | ✅ |
-| W-ui-password | text_input | coach/ui.py:46 | Password |  |  | ✅ |
-| W-ui-enter | form_submit_button | coach/ui.py:47 | Enter |  |  | ✅ |
-| W-daily-coach_retry | button | views/daily.py:148 | Retry | coach_retry_{…} |  | ✅ |
-| W-daily-set_the_api_key | expander | views/daily.py:170 | Set the API key |  |  | ✅ |
-| W-daily-groq_key_entry | text_input | views/daily.py:174 | Groq API key | groq_key_entry |  | ✅ |
-| W-daily-today_world | button | views/daily.py:193 | Enter {…} | today_world |  | ✅ |
-| W-daily-name | button | views/daily.py:250 | str(plan[k]['n']) | name |  | ✅ |
-| W-daily-back_to_current | button | views/daily.py:286 | Back to Lesson {…} | back_to_current_{…} |  | ✅ |
-| W-daily-back_to_current-2 | button | views/daily.py:289 | Back to today's summary | back_to_current_{…} |  | ✅ |
-| W-daily-start_this_lesson | button | views/daily.py:303 | Start this lesson |  |  | ✅ |
-| W-daily-key | radio | views/daily.py:396 | label | key |  | ✅ |
-| W-daily-keys_j | selectbox | views/daily.py:407 | left | keys[j] |  | ✅ |
-| W-daily-key-2 | text_area | views/daily.py:412 | label | key |  | ✅ |
-| W-daily-submit | button | views/daily.py:417 | Submit answers | submit_{…} |  | ✅ |
-| W-daily-see_the_quiz | expander | views/daily.py:444 | See the quiz |  |  | ✅ |
-| W-daily-next_lesson | button | views/daily.py:450 | Next lesson → | next_lesson |  | ✅ |
-| W-daily-next_lesson-2 | button | views/daily.py:453 | See today's summary → | next_lesson |  | ✅ |
-| W-daily-mark_my_answers | button | views/daily.py:463 | Mark my answers |  |  | ✅ |
-| W-daily-see_what_you_missed | expander | views/daily.py:473 | See what you missed |  |  | ✅ |
-| W-daily-take_the_quiz_if_q_is_none_else_try_a_ne | button | views/daily.py:480 | 'Take the quiz' if q is None else 'Try a new quiz' |  |  | ✅ |
-| W-daily-my_thoughts_on_the_question_to_explore_o | expander | views/daily.py:494 | My thoughts on the question to explore (optional, the coach picks it u |  |  | ✅ |
-| W-daily-reflection | text_area | views/daily.py:495 | Question to explore | reflection_{…}_{…} |  | ✅ |
-| W-daily-save_my_thoughts | button | views/daily.py:501 | Save my thoughts |  |  | ✅ |
-| W-daily-ask_about_lesson_report_your_progress_or | chat_input | views/daily.py:513 | Ask about Lesson {…}, report your progress, or just talk it through… |  |  | ✅ |
+| W-ui-login | form | coach/ui.py:47 | login |  |  | ✅ |
+| W-ui-password | text_input | coach/ui.py:48 | Password |  |  | ✅ |
+| W-ui-enter | form_submit_button | coach/ui.py:49 | Enter |  |  | ✅ |
+| W-daily-coach_retry | button | views/daily.py:150 | Retry | coach_retry_{…} |  | ✅ |
+| W-daily-set_the_api_key | expander | views/daily.py:172 | Set the API key |  |  | ✅ |
+| W-daily-groq_key_entry | text_input | views/daily.py:176 | Groq API key | groq_key_entry |  | ✅ |
+| W-daily-today_world | button | views/daily.py:195 | Enter {…} | today_world |  | ✅ |
+| W-daily-name | button | views/daily.py:253 | str(plan[k]['n']) | name |  | ✅ |
+| W-daily-back_to_current | button | views/daily.py:289 | Back to Lesson {…} | back_to_current_{…} |  | ✅ |
+| W-daily-back_to_current-2 | button | views/daily.py:292 | Back to today's summary | back_to_current_{…} |  | ✅ |
+| W-daily-start_this_lesson | button | views/daily.py:306 | Start this lesson |  |  | ✅ |
+| W-daily-key | radio | views/daily.py:399 | label | key |  | ✅ |
+| W-daily-keys_j | selectbox | views/daily.py:410 | left | keys[j] |  | ✅ |
+| W-daily-key-2 | text_area | views/daily.py:415 | label | key |  | ✅ |
+| W-daily-submit | button | views/daily.py:420 | Submit answers | submit_{…} |  | ✅ |
+| W-daily-see_the_quiz | expander | views/daily.py:447 | See the quiz |  |  | ✅ |
+| W-daily-next_lesson | button | views/daily.py:453 | Next lesson → | next_lesson |  | ✅ |
+| W-daily-next_lesson-2 | button | views/daily.py:456 | See today's summary → | next_lesson |  | ✅ |
+| W-daily-mark_my_answers | button | views/daily.py:466 | Mark my answers |  |  | ✅ |
+| W-daily-see_what_you_missed | expander | views/daily.py:476 | See what you missed |  |  | ✅ |
+| W-daily-take_the_quiz_if_q_is_none_else_try_a_ne | button | views/daily.py:483 | 'Take the quiz' if q is None else 'Try a new quiz' |  |  | ✅ |
+| W-daily-my_thoughts_on_the_question_to_explore_o | expander | views/daily.py:497 | My thoughts on the question to explore (optional, the coach picks it u |  |  | ✅ |
+| W-daily-reflection | text_area | views/daily.py:498 | Question to explore | reflection_{…}_{…} |  | ✅ |
+| W-daily-save_my_thoughts | button | views/daily.py:504 | Save my thoughts |  |  | ✅ |
+| W-daily-ask_about_lesson_report_your_progress_or | chat_input | views/daily.py:516 | Ask about Lesson {…}, report your progress, or just talk it through… |  |  | ✅ |
 | W-records-read | pills | views/records.py:71 | Read a lesson | read_{…} |  | ✅ |
 | W-records-rec_reflection | text_area | views/records.py:85 | My thoughts | rec_reflection_{…} |  | ✅ |
 | W-records-rec_save | button | views/records.py:91 | Save my thoughts | rec_save_{…} |  | ✅ |
@@ -100,19 +100,19 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 | W-records-download_a_backup | download_button | views/records.py:307 | Download a backup |  |  | ✅ |
 | W-records-import_a_backup | file_uploader | views/records.py:313 | Import a backup |  |  | ✅ |
 | W-records-replace_my_records_with_this_backup | button | views/records.py:314 | Replace my records with this backup |  |  | ✅ |
-| W-settings-set_world | button | views/settings.py:94 | Enter {…} | set_world |  | ✅ |
-| W-settings-setcancel | button | views/settings.py:122 | Cancel | setcancel_{…} | cancel | ✅ |
-| W-settings-setretake | button | views/settings.py:124 | Retake placement quiz | setretake_{…} | retake | ✅ |
-| W-settings-set_reading | toggle | views/settings.py:137 | Add a 14-day reading plan | set_reading | set_reading | ✅ |
-| W-settings-inv_email | text_input | views/settings.py:171 | Email | inv_email |  | ✅ |
-| W-settings-inv_note | text_input | views/settings.py:172 | Note | inv_note |  | ✅ |
-| W-settings-inv_add_btn | button | views/settings.py:173 | Invite | inv_add_btn | add_invite | ✅ |
-| W-settings-inv_rm | button | views/settings.py:187 | Remove | inv_rm_{…} | remove_invite | ✅ |
-| W-settings-data_download | download_button | views/settings.py:214 | Download my data | data_download |  | ✅ |
-| W-settings-data_delete | button | views/settings.py:216 | Delete my account | data_delete | ask_delete | ✅ |
-| W-settings-del_confirm | text_input | views/settings.py:220 | Type DELETE to confirm | del_confirm |  | ✅ |
-| W-settings-del_go | button | views/settings.py:222 | Delete everything | del_go |  | ✅ |
-| W-settings-del_cancel | button | views/settings.py:232 | Cancel | del_cancel | cancel_delete | ✅ |
+| W-settings-set_world | button | views/settings.py:97 | Enter {…} | set_world |  | ✅ |
+| W-settings-setcancel | button | views/settings.py:125 | Cancel | setcancel_{…} | cancel | ✅ |
+| W-settings-setretake | button | views/settings.py:127 | Retake placement quiz | setretake_{…} | retake | ✅ |
+| W-settings-set_reading | toggle | views/settings.py:140 | Add a 14-day reading plan | set_reading | set_reading | ✅ |
+| W-settings-inv_email | text_input | views/settings.py:174 | Email | inv_email |  | ✅ |
+| W-settings-inv_note | text_input | views/settings.py:175 | Note | inv_note |  | ✅ |
+| W-settings-inv_add_btn | button | views/settings.py:176 | Invite | inv_add_btn | add_invite | ✅ |
+| W-settings-inv_rm | button | views/settings.py:190 | Remove | inv_rm_{…} | remove_invite | ✅ |
+| W-settings-data_download | download_button | views/settings.py:217 | Download my data | data_download |  | ✅ |
+| W-settings-data_delete | button | views/settings.py:219 | Delete my account | data_delete | ask_delete | ✅ |
+| W-settings-del_confirm | text_input | views/settings.py:223 | Type DELETE to confirm | del_confirm |  | ✅ |
+| W-settings-del_go | button | views/settings.py:225 | Delete everything | del_go |  | ✅ |
+| W-settings-del_cancel | button | views/settings.py:235 | Cancel | del_cancel | cancel_delete | ✅ |
 | W-setup-ob_back | button | views/setup.py:88 | Back | ob_back | go | ✅ |
 | W-setup-ob_next | button | views/setup.py:91 | label | ob_next | on or go | ✅ |
 | W-setup-ob_next-2 | button | views/setup.py:122 | Get started | ob_next | go | ✅ |
@@ -128,25 +128,25 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 |---|---|---|---|---|---|---|
 | D-auth-touch_user | touch_user | coach/auth.py:476 | who['email'] |  |  | ✅ |
 | D-quota-add_usage | add_usage | coach/quota.py:58 | ui.today().isoformat() |  |  | ✅ |
-| D-reading-save_book | save_book | coach/reading.py:127 | log |  |  | ✅ |
-| D-reading-save_entry | save_entry | coach/reading.py:466 | log |  |  | ✅ |
-| D-ui-save_settings | save_settings | coach/ui.py:150 | new |  |  | ✅ |
-| D-ui-save_entry | save_entry | coach/ui.py:187 | log |  |  | ✅ |
-| D-ui-save_book | save_book | coach/ui.py:197 | log |  |  | ✅ |
-| D-ui-replace | replace | coach/ui.py:217 | log |  |  | ✅ |
+| D-reading-save_book | save_book | coach/reading.py:128 | log |  |  | ✅ |
+| D-reading-save_entry | save_entry | coach/reading.py:467 | log |  |  | ✅ |
+| D-ui-save_settings | save_settings | coach/ui.py:152 | new |  |  | ✅ |
+| D-ui-save_entry | save_entry | coach/ui.py:189 | log |  |  | ✅ |
+| D-ui-save_book | save_book | coach/ui.py:199 | log |  |  | ✅ |
+| D-ui-replace | replace | coach/ui.py:219 | log |  |  | ✅ |
 | D-daily-save_entry | save_entry | views/daily.py:76 | log |  |  | ✅ |
 | D-daily-save_entry-2 | save_entry | views/daily.py:97 | log |  |  | ✅ |
-| D-daily-save_entry-3 | save_entry | views/daily.py:136 | log |  |  | ✅ |
-| D-daily-save_entry-4 | save_entry | views/daily.py:365 | log |  |  | ✅ |
-| D-daily-save_entry-5 | save_entry | views/daily.py:377 | log |  |  | ✅ |
-| D-daily-save_entry-6 | save_entry | views/daily.py:415 | log |  |  | ✅ |
-| D-daily-save_entry-7 | save_entry | views/daily.py:429 | log |  |  | ✅ |
-| D-daily-save_entry-8 | save_entry | views/daily.py:503 | log |  |  | ✅ |
+| D-daily-save_entry-3 | save_entry | views/daily.py:138 | log |  |  | ✅ |
+| D-daily-save_entry-4 | save_entry | views/daily.py:368 | log |  |  | ✅ |
+| D-daily-save_entry-5 | save_entry | views/daily.py:380 | log |  |  | ✅ |
+| D-daily-save_entry-6 | save_entry | views/daily.py:418 | log |  |  | ✅ |
+| D-daily-save_entry-7 | save_entry | views/daily.py:432 | log |  |  | ✅ |
+| D-daily-save_entry-8 | save_entry | views/daily.py:506 | log |  |  | ✅ |
 | D-records-save_entry | save_entry | views/records.py:93 | log |  |  | ✅ |
-| D-settings-save_settings | save_settings | views/settings.py:31 | new |  |  | ✅ |
-| D-settings-add_invite | add_invite | views/settings.py:152 | email |  |  | ✅ |
-| D-settings-remove_invite | remove_invite | views/settings.py:161 | email |  |  | ✅ |
-| D-settings-delete_my_account | delete_my_account | views/settings.py:225 |  |  |  | ✅ |
+| D-settings-save_settings | save_settings | views/settings.py:32 | new |  |  | ✅ |
+| D-settings-add_invite | add_invite | views/settings.py:155 | email |  |  | ✅ |
+| D-settings-remove_invite | remove_invite | views/settings.py:164 | email |  |  | ✅ |
+| D-settings-delete_my_account | delete_my_account | views/settings.py:228 |  |  |  | ✅ |
 | D-setup-save_settings | save_settings | views/setup.py:24 | dict(ui.config(), onboarding=d) |  |  | ✅ |
 | D-setup-save_settings-2 | save_settings | views/setup.py:77 | done |  |  | ✅ |
 
@@ -154,16 +154,16 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 
 | ID | Type | Where | Label / name | Key | Callback | Covered |
 |---|---|---|---|---|---|---|
-| AI-reading-ask_json | ask_json | coach/reading.py:352 | _system(books.adjust_prompt(book)) |  |  | ✅ |
-| AI-reading-stream_reply | stream_reply | coach/reading.py:407 | _system(books.chat_prompt(book)) |  |  | ✅ |
-| AI-reading-ask_json-2 | ask_json | coach/reading.py:415 | _system(books.judge_prompt(book, day)) |  |  | ✅ |
-| AI-reading-stream_reply-2 | stream_reply | coach/reading.py:446 | system |  |  | ✅ |
+| AI-reading-ask_json | ask_json | coach/reading.py:353 | _system(books.adjust_prompt(book)) |  |  | ✅ |
+| AI-reading-stream_reply | stream_reply | coach/reading.py:408 | _system(books.chat_prompt(book)) |  |  | ✅ |
+| AI-reading-ask_json-2 | ask_json | coach/reading.py:416 | _system(books.judge_prompt(book, day)) |  |  | ✅ |
+| AI-reading-stream_reply-2 | stream_reply | coach/reading.py:447 | system |  |  | ✅ |
 | AI-daily-stream_reply | stream_reply | views/daily.py:63 | core.build_system_prompt(log, topic, today, slot=slot, start_level=sta |  |  | ✅ |
 | AI-daily-stream_reply-2 | stream_reply | views/daily.py:89 | core.build_system_prompt(log, topic, today, followup=True, slot=slot,  |  |  | ✅ |
 | AI-daily-ask_json | ask_json | views/daily.py:112 | system |  |  | ✅ |
 | AI-daily-ask_json-2 | ask_json | views/daily.py:119 | system |  |  | ✅ |
-| AI-daily-ask_json-3 | ask_json | views/daily.py:130 | system |  |  | ✅ |
-| AI-daily-ask_json-4 | ask_json | views/daily.py:375 | system |  |  | ✅ |
+| AI-daily-ask_json-3 | ask_json | views/daily.py:132 | system |  |  | ✅ |
+| AI-daily-ask_json-4 | ask_json | views/daily.py:378 | system |  |  | ✅ |
 
 ## Settings and environment variables (12)
 
@@ -178,6 +178,6 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 | S-coach_settings_path | get | coach/storage.py:199 | COACH_SETTINGS_PATH |  |  | ✅ |
 | S-supabase_url | get_setting | coach/supa_auth.py:32 | SUPABASE_URL |  |  | ✅ |
 | S-supabase_key | get_setting | coach/supa_auth.py:36 | SUPABASE_KEY |  |  | ✅ |
-| S-app_password | get_setting | coach/ui.py:40 | APP_PASSWORD |  |  | ✅ |
-| S-groq_api_key | get_setting | coach/ui.py:98 | GROQ_API_KEY |  |  | ✅ |
-| S-coach_user_id | get_setting | coach/ui.py:117 | COACH_USER_ID |  |  | ✅ |
+| S-app_password | get_setting | coach/ui.py:42 | APP_PASSWORD |  |  | ✅ |
+| S-groq_api_key | get_setting | coach/ui.py:100 | GROQ_API_KEY |  |  | ✅ |
+| S-coach_user_id | get_setting | coach/ui.py:119 | COACH_USER_ID |  |  | ✅ |
