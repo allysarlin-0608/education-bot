@@ -1,0 +1,9163 @@
+{
+ "seed": 7,
+ "minutes_per_page": 10.0,
+ "pages": {
+  "/": {
+   "steps": 427,
+   "actions": [
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "General Knowledge"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Take the quiz"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"22\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Axis",
+     "Chapter 1: One\nChapter 2: Two\n"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "9"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "6"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "27"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "18"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "hello"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "0"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMore options"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light, selected"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"16\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Astronomy"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Search",
+     "‮ reversed"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing, can't be added: the "
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Fashion & Clothing"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Business Planning, can't be added: the l"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Business Planning, can't be added: the l"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Business Planning, can't be added: the l"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light, selected"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Business Planning, can't be added: the l"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"50\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "type",
+     "Ask about Lesson 1, report your progress",
+     "-5"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"38\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"42\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "type",
+     "**10.** Why does the Sun seem to rise in",
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"27\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"13\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "type",
+     "Axis",
+     "I've finished today's reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "type",
+     "Search",
+     "<script>alert(1)</script>"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMore options"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "12"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Search",
+     "12"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMy thoughts on the"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Philosophy"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Record screen"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"5\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start recording!"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "12"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMore options"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Send message"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "See its lessons so far"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMore options"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "<img src=x onerror=alert(2)>"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "light_mode\nLight"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Search",
+     "<script>alert(1)</script>"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "4"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "8"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"19\\\"]\").first\n    - locator re"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"30\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Submit answers"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "type",
+     "Axis",
+     "-5"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"31\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"32\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "**9.** Explain in your own words why we ",
+     "‮ reversed"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"32\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Ask about Lesson 1, report your progress",
+     "hello"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "type",
+     "Sunrise",
+     "' OR 1=1 --"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"28\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Rotation",
+     "hello"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"31\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"29\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "**10.** Why does the Sun seem to rise in",
+     "‮ reversed"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "type",
+     "**10.** Why does the Sun seem to rise in",
+     "looks good"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"21\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"22\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"18\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light, selected"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Jewelry & Craft, can't be added: the lim"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "keyboard_double_arrow_right"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Record screen"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "back"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "31"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "19"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Sessions"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy, selected, day 1"
+    ],
+    [
+     "resize",
+     1920
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto, can't be add"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Jewelry & Craft, can't be added: the lim"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"25\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing, can't be added: the "
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Focused"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Aesthetics"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Jewelry & Craft, can't be added: the lim"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Metaphysics"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Focused, selected"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Astronomy, selected, day 2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Metaphysics, selected"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Ethics"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Ethics, selected"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing"
+    ],
+    [
+     "resize",
+     1920
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Fashion & Clothing"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Search",
+     "Ünïcødé ✓ 漢字 🙂"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Search",
+     "hello"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_back\n\nAll subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Steady"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "General Knowledge, selected, day 1"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "4"
+    ],
+    [
+     "resize",
+     1920
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "4"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "General Knowledge"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto, can't be add"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Stocks, Investing &"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "type",
+     "Sunrise",
+     "yes"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"42\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"23\\\"]\").first\n    - locator re"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "type",
+     "Sunrise",
+     "999999999999999999999999999999"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "**9.** Explain in your own words why we ",
+     "‮ reversed"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"52\\\"]\").first\n    - locator re"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ]
+   ]
+  },
+  "/records": {
+   "steps": 389,
+   "actions": [
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "back"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "back"
+    ],
+    [
+     "back"
+    ],
+    [
+     "left the app, back",
+     "about:blank"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start this lesson"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "23"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Day"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "8"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Sessions"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"51\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "General Knowledge"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Jewelry & Craft, can't be added: the lim"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Astronomy, can't be added: the limit is "
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto, can't be add"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "General Knowledge, selected, day 2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "back"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.fill: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Take the quiz"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.fill: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"49\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"18\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"36\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"16\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Axis",
+     "Ünïcødé ✓ 漢字 🙂"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"23\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Philosophy"
+    ],
+    [
+     "back"
+    ],
+    [
+     "type",
+     "Axis",
+     "Ünïcødé ✓ 漢字 🙂"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"16\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "type",
+     "**9.** Explain in your own words why we ",
+     "0"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "back"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "back"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"25\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"26\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"42\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"36\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"26\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.fill: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"49\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"25\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"13\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"27\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"27\\\"]\").first\n    - locator re"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "type",
+     "Search",
+     "0"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "back"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"23\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "settings\n\nSettings"
+    ],
+    [
+     "click",
+     "A",
+     "settings\n\nSettings"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Jewelry & Craft, can't be added: the lim"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Focused"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto, selected, da"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"22\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "27"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "18"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "›"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"29\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"40\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"41\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"37\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"24\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"28\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Day"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"50\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"19\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy, selected, day 1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Philosophy"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "dark_mode\nDark"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_back\n\nAll subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"33\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"40\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"37\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"47\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start this lesson"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Fashion & Clothing"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Continue today's lessons"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMy thoughts on the"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_down\n\nMy thoughts on the "
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Take the quiz"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_back\n\nAll subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Jewelry & Craft"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "General Knowledge, can't be added: the l"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy, selected, day 2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"21\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Steady"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Astronomy, can't be added: the limit is "
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto, can't be add"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing, selected, day 1"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Focused"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Steady"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "dark_mode\nDark"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start this lesson"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "27"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"22\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Take the quiz"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"34\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"24\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Rotation",
+     "' OR 1=1 --"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMy thoughts on the"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"5\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Search",
+     "' OR 1=1 --"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"5\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Search",
+     "999999999999999999999999999999"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Search",
+     "' OR 1=1 --"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "A",
+     "settings\n\nSettings"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ]
+   ]
+  },
+  "/settings": {
+   "steps": 458,
+   "actions": [
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "upload\n\nUpload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Steady, selected"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy, selected, day 1"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Jewelry & Craft, selected, day 1"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "9"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "back"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "hello"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Stocks, Investing &"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Steady, selected"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Business Planning"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Business Planning"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "14"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "14"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "keyboard_double_arrow_right"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "<script>alert(1)</script>"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "   "
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMore options"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Jewelry & Craft"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "8"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"54\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "19"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "6"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "dark_mode\nDark"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"18\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "type",
+     "Search",
+     "Chapter 1: One\nChapter 2: Two\n"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"18\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start this lesson"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "dark_mode\nDark"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "dark_mode\nDark"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Stocks, Investing &"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Enter Business Planning"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "8"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "›"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "19"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"31\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"46\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"29\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"16\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"29\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"34\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"49\\\"]\").first\n    - locator re"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "See its lessons so far"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "›"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "19"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "›"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "dark_mode\nDark"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Print"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"36\\\"]\").first\n    - locator re"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"42\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"57\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Day"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "9"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "18"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Business Planning, selected, day 2"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto, selected, da"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"17\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"5\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator re"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "31"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "4"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "18"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "4"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"46\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"17\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"45\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Sessions"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "23"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light, selected"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"29\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Steady"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "6"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "14"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "31"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start this lesson"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "keyboard_double_arrow_right"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.fill: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMy thoughts on the"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "type",
+     "Ask about Lesson 1, report your progress",
+     ""
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "type",
+     "Search",
+     "hello"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "type",
+     "Ask about Lesson 1, report your progress",
+     "12"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "4"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Sessions"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"53\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "6"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "9"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "18"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "4"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "27"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "8"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ]
+   ]
+  },
+  "/reading": {
+   "steps": 447,
+   "actions": [
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "19"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Search",
+     ""
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "back"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMy thoughts on the"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "type",
+     "Question to explore",
+     "   "
+    ],
+    [
+     "click",
+     "A",
+     "settings\n\nSettings"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.fill: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.fill: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"13\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.fill: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"13\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "type",
+     "Search",
+     "Ünïcødé ✓ 漢字 🙂"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"11\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "settings\n\nSettings"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Sessions"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "A",
+     "settings\n\nSettings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "›"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "resize",
+     1920
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"49\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Lesson 1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"53\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "18"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"49\\\"]\").first\n    - locator re"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "reload"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"51\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "23"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator re"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "9"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "back"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "type",
+     "Ask about Lesson 1, report your progress",
+     "   "
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "type",
+     "Ask about Lesson 1, report your progress",
+     "Ünïcødé ✓ 漢字 🙂"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Take the quiz"
+    ],
+    [
+     "type",
+     "Rotation",
+     "yes"
+    ],
+    [
+     "type",
+     "Rotation",
+     "12"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"13\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "dark_mode\nDark"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Print"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "resize",
+     1920
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "type",
+     "Search",
+     "   "
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "type",
+     "Ask about Lesson 1, report your progress",
+     "‮ reversed"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "back"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "31"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "   "
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "9"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "27"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Day"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"16\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"36\\\"]\").first\n    - locator re"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Focused"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"49\\\"]\").first\n    - locator re"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "back"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Jewelry & Craft, can't be added: the lim"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "resize",
+     1920
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "resize",
+     390
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "keyboard_double_arrow_right"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "-5"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Send message"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"0\\\"]\").first\n    - locator res"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "27"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "9"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "8"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Philosophy"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "23"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "9"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Download a backup"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "18"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "back"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Subjects"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "4"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "27"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "31"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"38\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "14"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"51\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"21\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"38\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"29\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"36\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Day"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "›"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Submit answers"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"27\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Axis",
+     "DELETE"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"36\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Orbit",
+     "12"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"19\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"35\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"29\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"23\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"17\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "settings\n\nSettings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Astronomy, can't be added: the limit is "
+    ]
+   ]
+  },
+  "/subject?subject=philosophy": {
+   "steps": 485,
+   "actions": [
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Astronomy, can't be added: the limit is "
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "A loan you made to a company"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "A guaranteed return"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing, can't be added: the "
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Focused"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing, can't be added: the "
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Next question"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy, selected, day 1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Print"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start this lesson"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"21\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "21"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "›"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"4\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "14"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "27"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "6"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"31\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"12\\\"]\").first\n    - locator re"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"23\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"45\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"23\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "key",
+     "ArrowDown"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto, selected, da"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "resize",
+     1440
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Start a new book"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMore options"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_down\n\nMore options"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing, selected, day 2"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Take the quiz"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nMy thoughts on the"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto, selected, da"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Steady"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"2\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"16\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"8\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"10\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Answer the coach's question…",
+     "<script>alert(1)</script>"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"3\\\"]\").first\n    - locator res"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "18"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Close"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Astronomy"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Focused"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "General Knowledge"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "type",
+     "Orbit",
+     "Chapter 1: One\nChapter 2: Two\n"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"18\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Ask about Lesson 1, report your progress",
+     "I've finished today's reading"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"19\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"13\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"25\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Axis",
+     "yes"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"27\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"25\\\"]\").first\n    - locator re"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "resize",
+     768
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"33\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"18\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"63\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"38\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Sunrise",
+     "   "
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.fill: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"54\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"19\\\"]\").first\n    - locator re"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "keyboard_double_arrow_right"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "6"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Sessions"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"21\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Business Planning, can't be added: the l"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Retake placement quiz"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy, can't be added: the limit is"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "25"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Sessions"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "key",
+     "Enter"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "4"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "search\n\nSearch"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"9\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"1\\\"]\").first\n    - locator res"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"39\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"18\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"7\\\"]\").first\n    - locator res"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"14\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"49\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"45\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"52\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"38\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"6\\\"]\").first\n    - locator res"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Day"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Day"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "back"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Business Planning, can't be added: the l"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light, selected"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Light, selected"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"50\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Axis",
+     "<img src=x onerror=alert(2)>"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"50\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"32\\\"]\").first\n    - locator re"
+    ],
+    [
+     "type",
+     "Axis",
+     "DELETE"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Philosophy, can't be added: the limit is"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Philosophy"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Enter Jewelry & Craft"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"50\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "9"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"50\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "26"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "›"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "6"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "key",
+     "Shift+Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "‹"
+    ],
+    [
+     "key",
+     "Space"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "11"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "28"
+    ],
+    [
+     "key",
+     "Escape"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "23"
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "12"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Stocks, Investing & Crypto, can't be add"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Astronomy, selected, day 2"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"20\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Steady"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"31\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "31"
+    ],
+    [
+     "resize",
+     1180
+    ],
+    [
+     "click",
+     "SUMMARY",
+     "keyboard_arrow_right\n\nBackup and restore"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "›"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "2"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Main menu"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "7"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "22"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Lesson 1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "8"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "17"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "19"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Day"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "5"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "24"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "30"
+    ],
+    [
+     "click",
+     "A",
+     "Progress"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "27"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "14"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "13"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "1"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "key",
+     "Tab"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "15"
+    ],
+    [
+     "resize",
+     1024
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "10"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "20"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "3"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "29"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "16"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"49\\\"]\").first\n    - locator re"
+    ],
+    [
+     "click",
+     "A",
+     "Reading"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "Settings"
+    ],
+    [
+     "click",
+     "A",
+     "Today"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Submit answers"
+    ],
+    [
+     "reload"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"22\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"23\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"15\\\"]\").first\n    - locator re"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"35\\\"]\").first\n    - locator re"
+    ],
+    [
+     "forward"
+    ],
+    [
+     "type",
+     "Ask about Lesson 1, report your progress",
+     "999999999999999999999999999999"
+    ],
+    [
+     "step failed",
+     "TimeoutError",
+     "Locator.click: Timeout 3000ms exceeded.\nCall log:\n  - waiting for locator(\"[data-monkey=\\\"19\\\"]\").first\n    - locator re"
+    ],
+    [
+     "scroll"
+    ],
+    [
+     "click",
+     "BUTTON:button",
+     "Open"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "arrow_outward\n\nEnter Jewelry & Craft"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "M"
+    ],
+    [
+     "click",
+     "A",
+     "settings\n\nSettings"
+    ],
+    [
+     "click",
+     "BUTTON:submit",
+     "Fashion & Clothing"
+    ]
+   ]
+  }
+ },
+ "problems": []
+}
