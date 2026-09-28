@@ -27,6 +27,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-017 | P2 | Top bar (every page) | The account menu and the app menu showed no keyboard focus | fixed (c1d4902) |
 | BUG-018 | P2 | Today (and every page) after a save error | After a save error, the next click closed the open panels | fixed (a675a1d) |
 | BUG-019 | P2 | Reading / talking with the coach | Leaving while the coach checked a message left it unanswered with no way to resend | fixed (e0078c8) |
+| BUG-020 | P3 | Today / quiz | The quiz check's rejection rate wasn't logged | fixed |
 
 ## Details
 
@@ -236,3 +237,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** The message is marked pending until a reply or an error; a pending one left over is taken back and offered as Retry ('That was interrupted…')
 - **Files changed:** coach/reading.py, tests/e2e/test_reading.py
 - **Covered by:** tests/e2e/test_reading.py::test_leaving_while_the_coach_reads_loses_nothing
+
+### BUG-020 (P3) — The quiz check's rejection rate wasn't logged
+- **Page / flow:** Today / quiz
+- **Status:** fixed
+- **Steps to reproduce:** Take a quiz; read the log
+- **Expected:** Every check logs how many questions it rejected (1.5)
+- **Actual:** Only a flagged list, and nothing at all when none were flagged
+- **Root cause:** One log line inside the flagged branch
+- **Fix:** One line per check round: 'quiz check round N: k of n questions rejected'
+- **Files changed:** views/daily.py, tests/e2e/test_ai.py
+- **Covered by:** tests/e2e/test_ai.py::test_the_answer_check_rewrites_a_flagged_question

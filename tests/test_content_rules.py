@@ -138,3 +138,11 @@ def test_the_disclaimer_is_only_for_the_investing_subject():
         assert out.endswith(CLOSE) and "Gold keeps its value" in out
     assert core.DISCLAIMER not in core.finalize_reply("Index funds usually cost less.", lesson=False, topic="jewelry")
     assert "not investment advice" in core.finalize_reply(gold, lesson=True, topic="investing")
+
+
+def test_the_note_only_credits_what_she_really_did():
+    """1.5: the Note never praises something she hasn't done (the prompt's rule)."""
+    from pathlib import Path
+    prompt = (Path(__file__).resolve().parents[1] / "coach" / "prompts" / "core.md").read_text(encoding="utf-8")
+    note = next(line for line in prompt.splitlines() if line.startswith("【Note】"))
+    assert "只肯定學習紀錄裡她真的做過的事" in note and "不能說成她做的" in note

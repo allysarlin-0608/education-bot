@@ -145,6 +145,8 @@ def test_the_answer_check_rewrites_a_flagged_question(public_app, pages):
     flows.button(p, "Take the quiz", wait=False)
     assert flows.wait_text(p.page, "Submit answers", 40)
     assert [c["kind"] for c in app.calls()] == ["quiz", "quiz_check", "quiz_rewrite", "quiz_check"]
+    log = app.log_text()
+    assert "quiz check round 1: 1 of 10 questions rejected" in log and "quiz check round 2: 0 of 10 questions rejected" in log
     assert flows.wait_text(p.page, "Which way does Earth spin?", 5), "the rewritten question is shown"
 
 

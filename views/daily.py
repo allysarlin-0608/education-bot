@@ -120,9 +120,11 @@ def run_quiz(i):
         flagged = quiz.problems(data, len(questions)) if data else None
         if error or flagged is None:
             failed("quiz", error or llm.FAILED, slot, i=i)
+        # the rejection rate of every check, flagged or not (criterion 1.5)
+        llm.logger.info("quiz check round %d: %d of %d questions rejected%s", attempt + 1, len(flagged),
+                        len(questions), f" {flagged}" if flagged else "")
         if not flagged:
             break
-        llm.logger.info("quiz check flagged %s", flagged)
         if attempt == quiz.CHECK_ROUNDS:
             failed("quiz", "I couldn't write a quiz whose answers I'm sure of this time. Try again.", slot, i=i)
         system, messages = quiz.rewrite_request(slot, questions, flagged)
