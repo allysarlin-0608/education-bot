@@ -28,7 +28,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-018 | P2 | Today (and every page) after a save error | After a save error, the next click closed the open panels | fixed (a675a1d) |
 | BUG-019 | P2 | Reading / talking with the coach | Leaving while the coach checked a message left it unanswered with no way to resend | fixed (e0078c8) |
 | BUG-020 | P3 | Today / quiz | The quiz check's rejection rate wasn't logged | fixed (b1b71cb) |
-| BUG-021 | P1 | Today, two tabs or two devices | A tab loaded earlier wrote the lesson a second time and could overwrite the day | fixed |
+| BUG-021 | P1 | Today, two tabs or two devices | A tab loaded earlier wrote the lesson a second time and could overwrite the day | fixed (5e01a0e) |
 
 ## Details
 
@@ -252,7 +252,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-021 (P1) — A tab loaded earlier wrote the lesson a second time and could overwrite the day
 - **Page / flow:** Today, two tabs or two devices
-- **Status:** fixed
+- **Status:** fixed (5e01a0e)
 - **Steps to reproduce:** Open Today in tabs A and B → Start this lesson in A → then Start this lesson in B (still showing the button)
 - **Expected:** The lesson is written once; B shows it; nothing A did is undone (1.3 no duplicates, 1.4 integrity)
 - **Actual:** A second AI call (extra cost) and the stored lesson replaced; any save from B wrote B's old copy of the whole day
