@@ -200,6 +200,7 @@ if "date" in st.query_params or "topic" in st.query_params:     # links from the
 if st.session_state.get("coach_toast"):           # set just before a rerun, shown after it
     st.toast(st.session_state.pop("coach_toast"))
 
+ui.refresh_entry(log, today, topic)          # another tab may have moved on since this page loaded
 entry = core.find_entry(log, today, topic)
 plan = curriculum.day_plan(log, topic, entry, settings.units(config))
 

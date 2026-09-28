@@ -197,6 +197,8 @@ def test_only_storage_talks_to_the_database():
     for p in root.rglob("*.py"):
         if "tests" in p.parts or ".venv" in p.parts or p.name.startswith("_sim"):
             continue
+        if p.parts[len(root.parts)] == "tools":     # command-line tools run by hand, never part of the app
+            continue
         text = p.read_text(encoding="utf-8")
         if p.name != "storage.py" and ("/rest/v1" in text or "SupabaseStore(" in text):
             offenders.append(str(p.relative_to(root)))

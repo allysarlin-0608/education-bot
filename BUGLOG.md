@@ -28,6 +28,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-018 | P2 | Today (and every page) after a save error | After a save error, the next click closed the open panels | fixed (a675a1d) |
 | BUG-019 | P2 | Reading / talking with the coach | Leaving while the coach checked a message left it unanswered with no way to resend | fixed (e0078c8) |
 | BUG-020 | P3 | Today / quiz | The quiz check's rejection rate wasn't logged | fixed (b1b71cb) |
+| BUG-021 | P1 | Today, two tabs or two devices | A tab loaded earlier wrote the lesson a second time and could overwrite the day | fixed |
 
 ## Details
 
@@ -248,3 +249,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** One line per check round: 'quiz check round N: k of n questions rejected'
 - **Files changed:** views/daily.py, tests/e2e/test_ai.py
 - **Covered by:** tests/e2e/test_ai.py::test_the_answer_check_rewrites_a_flagged_question
+
+### BUG-021 (P1) — A tab loaded earlier wrote the lesson a second time and could overwrite the day
+- **Page / flow:** Today, two tabs or two devices
+- **Status:** fixed
+- **Steps to reproduce:** Open Today in tabs A and B → Start this lesson in A → then Start this lesson in B (still showing the button)
+- **Expected:** The lesson is written once; B shows it; nothing A did is undone (1.3 no duplicates, 1.4 integrity)
+- **Actual:** A second AI call (extra cost) and the stored lesson replaced; any save from B wrote B's old copy of the whole day
+- **Root cause:** Each session keeps the day it loaded; the 'already generated' guard only looked at the session's copy
+- **Fix:** Every run of Today first re-reads that day's entry (one small read, store.load_entry) and uses it if it's newer; the chats are rebuilt from it
+- **Files changed:** coach/storage.py, coach/ui.py, views/daily.py, tests/test_isolation.py (tools/ excluded: not app code)
+- **Covered by:** tests/e2e/test_two_tabs.py (both tests)

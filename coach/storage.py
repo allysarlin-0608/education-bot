@@ -20,7 +20,7 @@ Two layouts:
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import requests
@@ -264,6 +264,10 @@ class FileStore(_Scope):
     def load(self) -> dict:
         return core.load_log(self._log_path())
 
+    def load_entry(self, day: str, topic: str):
+        """The stored entry for one day and subject, or None."""
+        return core.find_entry(self.load(), date.fromisoformat(day), topic)
+
     def save_entry(self, log: dict, entry: dict) -> None:
         try:
             core.save_log(log, self._log_path())
@@ -424,6 +428,13 @@ class SupabaseStore(_Scope):
             "entries": [{k: v for k, v in row.items() if k in core.ENTRY_FIELDS} for row in rows],
             "books": self._load_books(),
         })
+
+    def load_entry(self, day: str, topic: str):
+        """The stored entry for one day and subject (a small read), or None."""
+        resp = self._request("GET", params=self._mine({"select": "*", "date": f"eq.{day}", "topic": f"eq.{topic}"}))
+        rows = [{k: v for k, v in row.items() if k in core.ENTRY_FIELDS} for row in resp.json()]
+        entries = core.parse_log({"entries": rows})["entries"] if rows else []
+        return entries[0] if entries else None
 
     def _check_lessons_column(self) -> None:
         """Find out up front whether supabase/lessons.sql has been run, so the

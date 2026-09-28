@@ -1,5 +1,6 @@
 """Streamlit helpers shared by the app's pages."""
 import hmac
+import logging
 import os
 from datetime import datetime
 from urllib.parse import urlparse
@@ -9,6 +10,7 @@ import streamlit as st
 
 from coach import settings, storage
 
+logger = logging.getLogger("coach.ui")
 TIMEZONE = ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))
 
 
@@ -224,3 +226,25 @@ def replace_log(log):
 def reset_chat():
     """Forget the on-screen chats so the lesson page reloads them from the log."""
     st.session_state.coach_chats = {}
+
+
+def refresh_entry(log, day, topic):
+    """Today's entry as stored now, in place of this session's copy: another
+    tab or device may have moved on since this page was loaded, and every
+    write (and every Start) must build on that, not on an old copy."""
+    try:
+        stored = st.session_state.coach_store.load_entry(day.isoformat(), topic)
+    except storage.StorageError as e:
+        logger.warning("couldn't refresh %s %s (%s); using this session's copy", day, topic, e)
+        return
+    mine = next((k for k, e in enumerate(log["entries"])
+                 if e["date"] == day.isoformat() and e["topic"] == topic), None)
+    if stored is None or (mine is not None and log["entries"][mine] == stored):
+        return
+    if mine is None:
+        log["entries"].append(stored)
+        log["entries"].sort(key=lambda e: (e["date"], e["topic"]))
+    else:
+        log["entries"][mine] = stored
+    for key in [k for k in st.session_state.coach_chats if k.startswith(f"{day.isoformat()}|{topic}|")]:
+        del st.session_state.coach_chats[key]          # rebuilt from the stored lessons
