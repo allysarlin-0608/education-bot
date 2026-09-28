@@ -1,0 +1,107 @@
+{
+ "load /": {
+  "n": 10,
+  "p50": 0.961,
+  "p95": 1.079,
+  "max": 1.079,
+  "limit": 2.5
+ },
+ "load /records": {
+  "n": 10,
+  "p50": 1.059,
+  "p95": 1.258,
+  "max": 1.258,
+  "limit": 2.5
+ },
+ "load /settings": {
+  "n": 10,
+  "p50": 1.023,
+  "p95": 1.145,
+  "max": 1.145,
+  "limit": 2.5
+ },
+ "load /reading": {
+  "n": 10,
+  "p50": 1.074,
+  "p95": 1.126,
+  "max": 1.126,
+  "limit": 2.5
+ },
+ "load /subject?subject=philosophy": {
+  "n": 10,
+  "p50": 1.015,
+  "p95": 1.109,
+  "max": 1.109,
+  "limit": 2.5
+ },
+ "nav Today\u2192Progress": {
+  "n": 10,
+  "p50": 0.385,
+  "p95": 0.527,
+  "max": 0.527,
+  "limit": 1.0
+ },
+ "nav Progress\u2192Settings": {
+  "n": 10,
+  "p50": 0.28,
+  "p95": 0.336,
+  "max": 0.336,
+  "limit": 1.0
+ },
+ "nav Settings\u2192Today": {
+  "n": 10,
+  "p50": 0.322,
+  "p95": 0.384,
+  "max": 0.384,
+  "limit": 1.0
+ },
+ "nav Today\u2192Reading": {
+  "n": 10,
+  "p50": 0.306,
+  "p95": 0.548,
+  "max": 0.548,
+  "limit": 1.0
+ },
+ "pick a calendar day": {
+  "n": 10,
+  "p50": 0.55,
+  "p95": 0.658,
+  "max": 0.658,
+  "limit": 1.0
+ },
+ "previous month": {
+  "n": 10,
+  "p50": 0.444,
+  "p95": 0.5,
+  "max": 0.5,
+  "limit": 1.0
+ },
+ "switch Progress view": {
+  "n": 10,
+  "p50": 0.352,
+  "p95": 0.482,
+  "max": 0.482,
+  "limit": 1.0
+ },
+ "change daily pace": {
+  "n": 10,
+  "p50": 0.233,
+  "p95": 0.315,
+  "max": 0.315,
+  "limit": 1.0
+ },
+ "search": {
+  "n": 10,
+  "p50": 0.019,
+  "p95": 0.306,
+  "max": 0.306,
+  "limit": 1.0
+ },
+ "save my thoughts": {
+  "n": 10,
+  "p50": 0.036,
+  "p95": 0.323,
+  "max": 0.323,
+  "limit": 1.0
+ }
+}
