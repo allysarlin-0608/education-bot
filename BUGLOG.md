@@ -35,7 +35,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-025 | P0 | Sign-in (Supabase settings) | Google sign-in ended on Supabase's 500 'unexpected_failure' | waiting for you: fix the Site URL in Supabase, then sign in |
 | BUG-026 | P2 | Search | Issue E: the first Enter sometimes didn't search (and could leave the box empty) | fixed (0e2e795) |
 | BUG-027 | P2 | Today (chat box) | Issue F: the floating chat box covered Retry (and other new controls) | fixed (aa01909) |
-| BUG-028 | P1 | Settings (subject showcase) | Issue C: the showcase said 'Not chosen' for a subject Starting level listed as chosen | fixed |
+| BUG-028 | P1 | Settings (subject showcase) | Issue C: the showcase said 'Not chosen' for a subject Starting level listed as chosen | fixed (18e3af0) |
 
 ## Details
 
@@ -336,7 +336,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-028 (P1) — Issue C: the showcase said 'Not chosen' for a subject Starting level listed as chosen
 - **Page / flow:** Settings (subject showcase)
-- **Status:** fixed
+- **Status:** fixed (18e3af0)
 - **Steps to reproduce:** Settings: tap subjects in quick succession (or a tap whose page update isn't seen while it happens); the showcase can keep the tap's state
 - **Expected:** The showcase, Starting level, Today and Progress always agree with user_settings.subjects
 - **Actual:** Showcase 'Not chosen' for Jewelry & Craft while Starting level listed it (Today and Progress followed the stored row, which was right)
