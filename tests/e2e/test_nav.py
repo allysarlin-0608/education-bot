@@ -83,7 +83,7 @@ def test_search(public_app, pages):
     box.fill("qwertyuiop")
     box.press("Enter")
     flows.idle(p.page)
-    assert flows.wait_text(p.page, "Nothing found for that.", 5)
+    assert flows.wait_text(p.page, "No results for ‘qwertyuiop’.", 5)
     box.fill("<script>alert(1)</script>")
     box.press("Enter")
     flows.idle(p.page)
@@ -139,3 +139,42 @@ def test_world_fits(public_app, pages, width):
     flows.open_app(p, app, "/subject?subject=philosophy")
     assert flows.wait_text(p.page, "Where you are", 10)
     assert p.page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"), "horizontal scroll"
+
+
+def test_the_first_enter_always_searches(public_app, pages):
+    """Issue E: 20 tries, typed or with the word still an unconfirmed keyboard
+    suggestion (autocorrect / predictive text) when Enter comes; right after
+    opening and after changing pages. Every one searches on the first Enter,
+    and the query stays in the box."""
+    covers("W-topnav-search_q", "W-topnav-nav_search")
+    app = public_app
+    p, _, _ = person(app, pages, width=1024, history=True)
+    page = p.page
+    cdp = p.ctx.new_cdp_session(page)
+    words = ["seed", "grows", "philosophy", "key idea"]
+    failures = []
+    for k in range(20):
+        if k % 5 == 2:
+            flows.go(p, app, ["Progress", "Settings", "Today"][k % 3])
+        flows.button(p, "Search", exact=False, wait=False)
+        box = page.get_by_placeholder("Lessons, subjects, books, your notes…")
+        box.wait_for(timeout=10000)
+        word = words[k % 4]
+        if k % 2:                                  # still a keyboard suggestion when Enter comes
+            box.click()
+            page.wait_for_timeout(120)             # (the old query gets selected on opening)
+            box.press("Control+a")
+            cdp.send("Input.imeSetComposition", {"text": word, "selectionStart": len(word), "selectionEnd": len(word)})
+            page.keyboard.press("Enter")
+            cdp.send("Input.insertText", {"text": word})
+        else:
+            page.wait_for_timeout(120)
+            page.keyboard.type(word, delay=15)     # replaces the selected old query
+            page.keyboard.press("Enter")
+        shown = flows.wait_text(page, "result", 6)
+        value = box.input_value()
+        if not shown or value != word:
+            failures.append((k, word, value, shown))
+        page.keyboard.press("Escape")
+        flows.idle(page)
+    assert not failures, failures

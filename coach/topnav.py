@@ -30,10 +30,37 @@ def _e(text) -> str:
     return html.escape(str(text or ""), quote=True)
 
 
+SEARCH_PLACEHOLDER = "Lessons, subjects, books, your notes…"
+
+
+def _enter_after_composition() -> None:
+    """An Enter pressed while the keyboard still holds the word as a
+    suggestion (autocorrect, predictive text, an input method) is ignored by
+    the text box, so the first search did nothing (on an iPad the box could
+    even end up empty). Such an Enter is remembered and sent again as soon
+    as the keyboard settles the word, so the search runs on the first Enter."""
+    st.html("<script>(function(){"
+            "const docs=[document];try{if(window.parent&&window.parent.document!==document)docs.push(window.parent.document)}catch(e){}"
+            f"const SEL='input[placeholder=\"{SEARCH_PLACEHOLDER}\"]';"
+            "for(const d of docs){if(d.__gnSearchEnter)continue;d.__gnSearchEnter=true;"
+            "d.addEventListener('keydown',function(e){const t=e.target;"
+            "if(e.key==='Enter'&&(e.isComposing||e.keyCode===229)&&t.matches&&t.matches(SEL))t.__gnEnterLater=true;},true);"
+            "d.addEventListener('compositionend',function(e){const t=e.target;"
+            "if(!(t.matches&&t.matches(SEL)&&t.__gnEnterLater))return;t.__gnEnterLater=false;"
+            "setTimeout(function(){t.dispatchEvent(new KeyboardEvent('keydown',"
+            "{key:'Enter',code:'Enter',keyCode:13,which:13,bubbles:true,cancelable:true}));},0);},true);}"
+            # opened again: the last query is selected, so what she types replaces it (not glued to it)
+            "(function pick(n){let found=false;for(const d of docs){const i=d.querySelector(SEL);if(!i)continue;found=true;"
+            "if(!i.__gnOpened){i.__gnOpened=true;i.focus();i.select();}}"
+            "if(!found&&n>0)setTimeout(function(){pick(n-1);},50);})(30);"
+            "})();</script>", unsafe_allow_javascript=True)
+
+
 @st.dialog("Search", width="medium")
 def _search(log: dict) -> None:
     query = st.text_input("Search", key="search_q", label_visibility="collapsed",
-                          placeholder="Lessons, subjects, books, your notes…")
+                          placeholder=SEARCH_PLACEHOLDER)
+    _enter_after_composition()
     found = search.find(log, query)
     if not settings.reading_on(ui.config()):      # no Reading page to open a book on
         found = [r for r in found if r["open"][0] != "book"]
@@ -41,7 +68,7 @@ def _search(log: dict) -> None:
         st.caption("Type a word or two and press Enter. Every word has to appear.")
         return
     if not found:
-        st.caption("Nothing found for that.")
+        st.caption(f"No results for ‘{query.strip()}’.")
         return
     st.caption(f"{len(found)} {'result' if len(found) == 1 else 'results'}")
     with st.container(key="search_results", gap=None):

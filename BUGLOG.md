@@ -33,6 +33,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-023 | P2 | Settings, two tabs or two devices | A change in one tab put back settings changed in another | fixed (5c29321) |
 | BUG-024 | P0 | Sign-in (Streamlit Cloud, Safari) | Continue with Google stayed on 'Opening Google…' and never opened Google | fixed (5d01789) — waiting for your check on the iPad |
 | BUG-025 | P0 | Sign-in (Supabase settings) | Google sign-in ended on Supabase's 500 'unexpected_failure' | waiting for you: fix the Site URL in Supabase, then sign in |
+| BUG-026 | P2 | Search | Issue E: the first Enter sometimes didn't search (and could leave the box empty) | fixed |
 
 ## Details
 
@@ -308,3 +309,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** Set Site URL to exactly https://education-bot-fgcmwuszrzyybm5eduumkb.streamlit.app and check each Redirect URL is one whole URL
 - **Files changed:** none (Supabase dashboard); supabase/fix_hook_grant.sql, supabase/accounts.sql (the extra grant)
 - **Covered by:** signing in on the test app
+
+### BUG-026 (P2) — Issue E: the first Enter sometimes didn't search (and could leave the box empty)
+- **Page / flow:** Search
+- **Status:** fixed
+- **Steps to reproduce:** Open search, type a word the keyboard is still suggesting a correction for (e.g. 'fibre' on an iPad), press Enter
+- **Expected:** Results (or "No results for '…'") on the first Enter; the query stays in the box
+- **Actual:** Nothing searched; the empty-state hint stays (on the iPad the box could end up empty). A second Enter, or a word with no pending suggestion ('fabric'), worked
+- **Root cause:** The text box ignores an Enter that arrives while the keyboard is still composing the word (isComposing); search only runs on that Enter. Reproduced with Chrome's input-method events: 3/3 failed before, 3/3 worked after
+- **Fix:** A small script in the search dialog remembers such an Enter and sends it again when the keyboard settles the word; the last query is selected on reopening so a new word replaces it instead of being glued to it; empty result now says No results for '…'
+- **Files changed:** coach/topnav.py, tests/e2e/test_nav.py
+- **Covered by:** tests/e2e/test_nav.py::test_the_first_enter_always_searches (20/20, twice)
