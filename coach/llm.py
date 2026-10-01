@@ -184,6 +184,7 @@ def ask_json(system, messages, max_tokens=tokens.JSON_MAX_TOKENS):
         return None, NO_KEY
     prepared = _prepare(system, messages, max_tokens)
     for attempt in range(2):          # an unreadable reply is asked for once more
+        started = _now()
         try:
             resp = _create(
                 client,
@@ -196,6 +197,11 @@ def ask_json(system, messages, max_tokens=tokens.JSON_MAX_TOKENS):
         except CoachError as e:
             return None, str(e)
         data = parse_json(resp.choices[0].message.content)
+        usage = getattr(resp, "usage", None)
+        logger.info("json call %s in %.1fs: prompt %s + reply %s tokens, finish_reason=%s",
+                    "read" if data is not None else "UNREADABLE", _now() - started,
+                    getattr(usage, "prompt_tokens", "?"), getattr(usage, "completion_tokens", "?"),
+                    resp.choices[0].finish_reason)
         if data is not None:
             return data, None
         logger.error("groq returned unparseable JSON (attempt %d, finish_reason=%s): %.300r",

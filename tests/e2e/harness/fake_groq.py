@@ -5,7 +5,7 @@ the daily allowance, JSON parsing); only the network call is replaced. What
 the "model" does is read from a control file on every call, so a test can
 make it fail, be slow, or return tricky content:
 
-  {"mode": "ok" | "413" | "429" | "500" | "timeout" | "empty" | "invalid" | "broken_stream",
+  {"mode": "ok" | "413" | "429" | "500" | "timeout" | "empty" | "invalid" | "broken_stream" | "malformed_quiz",
    "fail_times": 1,          # fail this many calls, then behave (default: always)
    "delay": 0.0,             # seconds before answering
    "chunk_delay": 0.0,       # seconds between streamed pieces (a slow stream)
@@ -169,6 +169,10 @@ class FakeGroq:
             text = ""
         if failing and mode == "invalid":
             text = "Sorry, here is some prose instead of JSON." if not stream else ""
+        if failing and mode == "malformed_quiz" and kind == "quiz":
+            q = json.loads(text)                     # valid JSON, but one question has 3 options
+            q["questions"][0]["options"] = q["questions"][0]["options"][:3]
+            text = json.dumps(q)
         usage = types.SimpleNamespace(total_tokens=max(1, len(text) // 4))
         if stream:
             words = text.split(" ") if text else []

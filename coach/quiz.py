@@ -360,3 +360,14 @@ def parse_saved(data):
             "marks": marks, "feedback": feedback,
             "score": number(data.get("score")) if answers is not None else None,
             "attempts": number(data.get("attempts")) or 0, "best": number(data.get("best")), "draft": draft}
+
+
+def why_unusable(data) -> str:
+    """For the log: what the model's quiz JSON held, when it can't be used."""
+    items = data.get("questions") if isinstance(data, dict) else None
+    if not isinstance(items, list):
+        return f"no questions list (keys: {sorted(data)[:5] if isinstance(data, dict) else type(data).__name__})"
+    usable = parse_items(data, random.Random(0))
+    kinds = {k: sum(1 for q in usable if q["type"] == k) for k in KINDS}
+    given = {k: sum(1 for i in items if isinstance(i, dict) and i.get("type", "choice") == k) for k in KINDS}
+    return f"{len(usable)} usable of {len(items)} given (usable {kinds}, given {given}; {QUESTIONS} needed)"

@@ -1,3 +1,5 @@
+import time
+
 import streamlit as st
 
 from coach import auth, core, curriculum, lesson_view, llm, place, progress_bar, quiz, settings, steps, tokens, ui
@@ -107,11 +109,14 @@ def run_quiz(i):
     slot = entry["lessons"][i]
     if curriculum.blocking(entry["lessons"], i):     # strictly in order
         st.rerun()
+    started = time.monotonic()
     system, messages = quiz.request(slot)
     with st.spinner("Writing your quiz…"):
         data, error = llm.ask_json(system, messages, max_tokens=tokens.QUIZ_MAX_TOKENS)
     questions = quiz.parse(data) if data else None
     if error or questions is None:
+        llm.logger.warning("quiz for %s lesson %s failed after %.1fs: %s", topic, slot["n"], time.monotonic() - started,
+                           error or f"unusable quiz: {quiz.why_unusable(data)}")
         failed("quiz", error or llm.FAILED, slot, i=i)
     for attempt in range(quiz.CHECK_ROUNDS + 1):
         system, messages = quiz.check_request(questions)
@@ -119,6 +124,8 @@ def run_quiz(i):
             data, error = llm.ask_json(system, messages)
         flagged = quiz.problems(data, len(questions)) if data else None
         if error or flagged is None:
+            llm.logger.warning("quiz check for %s lesson %s failed after %.1fs: %s", topic, slot["n"],
+                               time.monotonic() - started, error or f"unreadable verdict: {str(data)[:200]}")
             failed("quiz", error or llm.FAILED, slot, i=i)
         # the rejection rate of every check, flagged or not (criterion 1.5)
         llm.logger.info("quiz check round %d: %d of %d questions rejected%s", attempt + 1, len(flagged),
@@ -126,14 +133,19 @@ def run_quiz(i):
         if not flagged:
             break
         if attempt == quiz.CHECK_ROUNDS:
+            llm.logger.warning("quiz for %s lesson %s gave up: still %d flagged after %d rewrites",
+                               topic, slot["n"], len(flagged), quiz.CHECK_ROUNDS)
             failed("quiz", "I couldn't write a quiz whose answers I'm sure of this time. Try again.", slot, i=i)
         system, messages = quiz.rewrite_request(slot, questions, flagged)
         with st.spinner(f"Rewriting {len(flagged)} {'question' if len(flagged) == 1 else 'questions'}…"):
             data, error = llm.ask_json(system, messages, max_tokens=tokens.QUIZ_MAX_TOKENS)
         fresh = quiz.replace(questions, flagged, quiz.parse_items(data)) if data else None
         if error or fresh is None:
+            llm.logger.warning("quiz rewrite for %s lesson %s failed: %s", topic, slot["n"],
+                               error or f"replacements don't fit: {quiz.why_unusable(data)}")
             failed("quiz", error or llm.FAILED, slot, i=i)
         questions = fresh
+    llm.logger.info("quiz for %s lesson %s ready in %.1fs", topic, slot["n"], time.monotonic() - started)
     slot["quiz"] = quiz.new(questions, slot.get("quiz"))
     ui.save_entry(log, entry)
     st.rerun()
