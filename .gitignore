@@ -2,3 +2,5 @@ data/
 __pycache__/
 .streamlit/secrets.toml
 tests/e2e/results/
+.env
+.env.*
