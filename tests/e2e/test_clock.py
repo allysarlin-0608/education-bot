@@ -80,3 +80,38 @@ def test_a_completed_day_then_the_next_morning(public_app, pages, clock):
     figures = p.page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.figure')].map(f =>
         [f.querySelector('.figure-label').innerText.trim(), f.querySelector('.figure-value').innerText.replace(/\\s+/g, ' ').trim()]))""")
     assert figures["Current streak"] == "0 days" and figures["Longest streak"] == "2 days", figures
+
+
+def test_three_rotations_never_repeat_a_passed_lesson(public_app, pages, clock):
+    """Issue D: Fashion and Jewelry take turns. Day 1 (Fashion) passes Lesson 1
+    only; each later Fashion day starts with the first lesson not passed, a
+    passed one is never scheduled again, and every day keeps its own record."""
+    covers("D-daily-save_entry", "W-daily-start_this_lesson")
+    app = public_app
+    start = date(2026, 11, 2)
+    clock(start, "02:00:00")
+    p = pages(width=1440)
+    email = f"rot{next(_n)}-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=email)
+    flows.onboard(p, subjects=("Fashion & Clothing", "Jewelry & Craft"))
+    for day in range(6):                                   # 3 Fashion days, 3 Jewelry days
+        clock(start + timedelta(days=day), "02:00:00")
+        flows.open_app(p, app)
+        flows.pass_lesson(p) if day in (0, 1, 2, 3) else flows.start_lesson(p)
+    saved = entries(app, email)
+    by_topic = {}
+    for e in saved:
+        lessons = e["lessons"] if not isinstance(e["lessons"], str) else json.loads(e["lessons"])
+        by_topic.setdefault(e["topic"], []).append((e["date"], [(s["n"], s["completed"]) for s in lessons]))
+    fashion = by_topic["fashion"]
+    assert [d for d, _ in fashion] == [str(start), str(start + timedelta(days=2)), str(start + timedelta(days=4))]
+    # day 1: lesson 1 passed (2, 3 not); day 3 starts at 2; day 5 starts at the first not passed after that
+    assert [n for n, _ in fashion[0][1]] == [1, 2, 3] and fashion[0][1][0] == (1, True)
+    assert fashion[1][1][0][0] == 2, fashion
+    passed = {n for _, ls in fashion for n, c in ls if c}
+    for _, ls in fashion[1:]:
+        assert not any(n in passed and not c for n, c in ls), f"a passed lesson came back: {fashion}"
+    later = [n for n, _ in fashion[2][1]]
+    assert later[0] == min(n for n in range(1, 20) if n not in passed), fashion
+    # one entry per day and subject, each keeping its own lessons
+    assert len({(e["date"], e["topic"]) for e in saved}) == len(saved) == 6
