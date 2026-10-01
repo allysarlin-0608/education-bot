@@ -34,7 +34,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-024 | P0 | Sign-in (Streamlit Cloud, Safari) | Continue with Google stayed on 'Opening Google…' and never opened Google | fixed (5d01789) — waiting for your check on the iPad |
 | BUG-025 | P0 | Sign-in (Supabase settings) | Google sign-in ended on Supabase's 500 'unexpected_failure' | waiting for you: fix the Site URL in Supabase, then sign in |
 | BUG-026 | P2 | Search | Issue E: the first Enter sometimes didn't search (and could leave the box empty) | fixed (0e2e795) |
-| BUG-027 | P2 | Today (chat box) | Issue F: the floating chat box covered Retry (and other new controls) | fixed |
+| BUG-027 | P2 | Today (chat box) | Issue F: the floating chat box covered Retry (and other new controls) | fixed (aa01909) |
 
 ## Details
 
@@ -324,7 +324,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-027 (P2) — Issue F: the floating chat box covered Retry (and other new controls)
 - **Page / flow:** Today (chat box)
-- **Status:** fixed
+- **Status:** fixed (aa01909)
 - **Steps to reproduce:** Today: tap 'Take the quiz' low on the screen; the quiz fails → Retry appears where the chat box floats
 - **Expected:** Every button, field and message she needs is visible above the chat box
 - **Actual:** Retry under the box until she scrolled (measured: 1024: Retry 678-722, box from 696; 390: Retry 723-767, box from 715)
