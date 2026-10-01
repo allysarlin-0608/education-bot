@@ -35,6 +35,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-025 | P0 | Sign-in (Supabase settings) | Google sign-in ended on Supabase's 500 'unexpected_failure' | waiting for you: fix the Site URL in Supabase, then sign in |
 | BUG-026 | P2 | Search | Issue E: the first Enter sometimes didn't search (and could leave the box empty) | fixed (0e2e795) |
 | BUG-027 | P2 | Today (chat box) | Issue F: the floating chat box covered Retry (and other new controls) | fixed (aa01909) |
+| BUG-028 | P1 | Settings (subject showcase) | Issue C: the showcase said 'Not chosen' for a subject Starting level listed as chosen | fixed |
 
 ## Details
 
@@ -332,3 +333,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** A small observer brings a newly drawn control, message or focused field up just above the box (never one in a dropdown, popover or dialog, never her own scrolling). CSS scroll-padding was tried first and removed: it made selectbox option lists jump
 - **Files changed:** coach/place.py, gnosis.py, coach/style.py, tests/e2e/test_chat_bar.py
 - **Covered by:** tests/e2e/test_chat_bar.py: end of Today in lesson/quiz/result at 390, 768, 1180, 1440 and 1024x420 (keyboard open); Retry brought into view at 390 and 1024; screenshots docs/audit/screens/chat_bar/
+
+### BUG-028 (P1) — Issue C: the showcase said 'Not chosen' for a subject Starting level listed as chosen
+- **Page / flow:** Settings (subject showcase)
+- **Status:** fixed
+- **Steps to reproduce:** Settings: tap subjects in quick succession (or a tap whose page update isn't seen while it happens); the showcase can keep the tap's state
+- **Expected:** The showcase, Starting level, Today and Progress always agree with user_settings.subjects
+- **Actual:** Showcase 'Not chosen' for Jewelry & Craft while Starting level listed it (Today and Progress followed the stored row, which was right)
+- **Root cause:** A display bug, not a data bug. The server draws the list rows and Starting level from the same row; the showcase's text is set in the browser and believed a tap's optimistic mark (data-on) over the row's server state. That mark was only cleared if a later page change was observed; if not, it stayed indefinitely. (There is no user_subject_levels table: levels are user_settings.subject_levels.)
+- **Fix:** A tap's mark counts only while pending (until the row shows the server's answer, at most 2.5 s), and the showcase re-checks after 2.6 s; one helper, settings.chosen_subjects(), reads user_settings.subjects for Settings, Today's schedule (topic_for), Progress and the subject pages
+- **Files changed:** coach/motion.py, coach/settings.py, views/settings.py, tests/e2e/test_settings.py
+- **Covered by:** tests/e2e/test_settings.py::test_add_remove_readd_every_page_agrees, ::test_the_showcase_never_keeps_a_tap_the_server_didnt_take (fails on the old script with exactly 'Not chosen')

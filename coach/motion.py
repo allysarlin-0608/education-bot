@@ -148,7 +148,7 @@ SCRIPT = r"""
       const rows = [...doc.querySelectorAll('[class*="st-key-opt_' + g + '_"]')];
       const re = new RegExp('st-key-opt_' + g + '_([a-z]+)__');
       const topic = (r) => (r.className.match(re) || [])[1];
-      const chosen = (r) => (r.dataset.on ? r.dataset.on === '1' : /__sel/.test(r.className));
+      const chosen = (r) => { const t = tapped(r); return t === null ? /__sel/.test(r.className) : t; };
       const f = rows.find((r) => r.hasAttribute('data-cx-on'))
         || rows.find((r) => (r.className.match(new RegExp('st-key-opt_' + g + '_\\S+')) || [''])[0].endsWith('_f'));
       const t = f ? topic(f) : st.dataset.focus;
@@ -269,15 +269,31 @@ SCRIPT = r"""
   // at once; the page redraws it the same way a moment later, and the marks
   // set here are cleared once it has
   let pickAt = 0, pickSaw = false;
+  // What a tap says about a row counts only while that tap is still pending:
+  // until the page shows the server's answer for the row (its class changes)
+  // or for 2.5 s at most. After that the row's own class (the server's state)
+  // is the truth, so the stage can never keep saying the opposite of the list.
+  const serverOn = (r) => r.className.includes('__sel');
+  const tapped = (r) => {
+    if (!r.dataset.on) return null;
+    const answered = (r.dataset.onWas === '1') !== serverOn(r);
+    if (answered || performance.now() - (+r.dataset.onAt || 0) > 2500) {
+      delete r.dataset.on; delete r.dataset.onWas; delete r.dataset.onAt;
+      return null;
+    }
+    return r.dataset.on === '1';
+  };
+  const markTap = (r, on) => { r.dataset.on = on ? '1' : '0'; r.dataset.onWas = serverOn(r) ? '1' : '0'; r.dataset.onAt = String(performance.now()); };
   doc.addEventListener('click', (ev) => {
     const b = ev.target.closest && ev.target.closest('[class*="st-key-opt_"] button');
     if (!b || b.disabled) return;
     const row = b.closest('[class*="st-key-opt_"]'), list = row.closest('[class*="st-key-optlist_"]');
-    const o = row.querySelector('.opt'), on = row.dataset.on ? row.dataset.on === '1' : row.className.includes('__sel');
-    if (o && o.dataset.multi === '1') { if (!/__dis/.test(row.className)) row.dataset.on = on ? '0' : '1'; }
-    else if (list) { list.querySelectorAll('[class*="st-key-opt_"]').forEach((r) => { r.dataset.on = '0'; }); row.dataset.on = '1'; }
+    const o = row.querySelector('.opt'), t = tapped(row), on = t === null ? serverOn(row) : t;
+    if (o && o.dataset.multi === '1') { if (!/__dis/.test(row.className)) markTap(row, !on); }
+    else if (list) { list.querySelectorAll('[class*="st-key-opt_"]').forEach((r) => markTap(r, false)); markTap(row, true); }
     pickAt = performance.now(); pickSaw = false;
     stage();
+    w.setTimeout(stage, 2600);      // settles on the server's state even if nothing else on the page changes
   }, true);
   new w.MutationObserver(() => {
     if (!pickAt) return;

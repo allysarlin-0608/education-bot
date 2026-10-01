@@ -35,7 +35,7 @@ def update(**fields) -> bool:
 def pick_subject(topic: str) -> None:
     st.session_state.set_focus = topic           # the lens goes to the row she touched
     ui.refresh_settings()
-    now = ui.config()["subjects"]
+    now = settings.chosen_subjects(ui.config())
     new = settings.toggle_subject(now, topic)
     if new != now and update(subjects=new):          # past the limit: only looked at, nothing changes
         st.session_state.set_subjects_changed = True
@@ -81,7 +81,7 @@ problem = st.session_state.pop("set_problem", "")
 # the same stage as the setup's: the subject in focus, and the way into its world
 with st.container(key="set_sec_subjects"):
     st.markdown("#### Subjects")
-    chosen = config["subjects"]
+    chosen = settings.chosen_subjects(config)
     # the subject in focus: the one she touched last, else the one the address
     # names (a link from a world). The address isn't rewritten to follow it:
     # Streamlit adds a browser history step for every such change, so Back

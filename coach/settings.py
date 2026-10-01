@@ -199,9 +199,9 @@ def start_day(s: dict, tz) -> date:
 def topic_for(s: dict, day: date, tz) -> str:
     """The subject for `day`: her subjects take turns, one a day, in the
     order she chose them, starting with the first on the day she set up."""
-    if is_legacy(s) or not s.get("subjects"):
+    subjects = chosen_subjects(s)
+    if is_legacy(s) or not subjects:
         return core.scheduled_topic(day)
-    subjects = s["subjects"]
     return subjects[(day - start_day(s, tz)).days % len(subjects)]
 
 
@@ -215,9 +215,17 @@ def start_level(s: dict, topic: str):
     return level if level in LEVELS else None
 
 
+def chosen_subjects(s: dict) -> list:
+    """The subjects she has chosen, in her order. The one source of truth is
+    her settings row's `subjects` (user_settings.subjects); every page reads
+    it through here. (Levels may be kept for subjects she has taken out, so
+    they come back if she adds one again; nothing shows those.)"""
+    return [t for t in (s.get("subjects") or []) if t in SUBJECTS]
+
+
 def shown_subjects(s: dict) -> list:
     """The subjects the pages show: hers, or all of them on the old setup."""
-    return list(SUBJECTS) if is_legacy(s) else list(s.get("subjects") or [])
+    return list(SUBJECTS) if is_legacy(s) else chosen_subjects(s)
 
 
 def reading_on(s: dict) -> bool:

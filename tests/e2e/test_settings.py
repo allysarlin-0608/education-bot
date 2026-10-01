@@ -214,3 +214,57 @@ def test_settings_fit(public_app, pages, width):
     app = public_app
     p, _ = person(app, pages, width=width)
     assert p.page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+
+
+def _agree(p, app, topic, name, email):
+    """The showcase, Starting level, the stored row, Progress and Today agree on `topic`."""
+    page = p.page
+    flows.open_app(p, app, f"/settings?subject={topic}")
+    page.wait_for_timeout(1200)
+    stage = page.evaluate(f"document.querySelector('.sg-stage .sg-layer[data-t={topic}] .sg-state').innerText")
+    levels = page.evaluate("[...document.querySelectorAll('.st-key-set_sec_level .set-level span')].map(e => e.innerText)")
+    stored = settings_row(app, email)["subjects"]
+    chosen = topic in stored
+    assert stage.startswith("Chosen") == chosen, (stage, stored)
+    assert (name in levels) == chosen, (levels, stored)
+    flows.go(p, app, "Progress")
+    p.page.get_by_role("radio", name="Subjects").or_(p.page.get_by_role("button", name="Subjects", exact=True)).first.click()
+    flows.idle(page)
+    progress = page.locator(".st-key-subj_list").inner_text()
+    assert (name in progress) == chosen, (progress[:200], stored)
+    flows.go(p, app, "Today")
+    today_subject = page.locator(".st-key-course_card").inner_text()
+    from coach import core
+    assert any(core.TOPICS[t] in today_subject for t in stored), (today_subject[:80], stored)
+    return stored
+
+
+def test_add_remove_readd_every_page_agrees(public_app, pages):
+    covers("W-choices-pick", "D-settings-save_settings")
+    app = public_app
+    p, email = person(app, pages, subjects=("Fashion & Clothing",))
+    for step, expect in (("add", True), ("remove", False), ("re-add", True)):
+        flows.open_app(p, app, "/settings")
+        flows.tap(p, p.page.locator(".st-key-pick_setsubj_jewelry button").first)
+        flows.idle(p.page)
+        stored = _agree(p, app, "jewelry", "Jewelry & Craft", email)
+        assert ("jewelry" in stored) == expect, (step, stored)
+
+
+def test_the_showcase_never_keeps_a_tap_the_server_didnt_take(public_app, pages):
+    """The reported contradiction: the showcase said 'Not chosen' while
+    Starting level listed the subject. A tap's mark is now only believed
+    while that tap is pending; a leftover one gives way to the server's state."""
+    covers("W-choices-pick")
+    app = public_app
+    p, _ = person(app, pages, subjects=("Fashion & Clothing", "Jewelry & Craft"))
+    page = p.page
+    flows.open_app(p, app, "/settings?subject=jewelry")
+    page.wait_for_timeout(800)
+    assert page.evaluate("document.querySelector('.sg-stage .sg-layer[data-t=jewelry] .sg-state').innerText").startswith("Chosen")
+    # a tap's mark left behind (its rerun came and went unseen): it says "taken out"
+    page.evaluate("""() => { const r = document.querySelector('[class*="st-key-opt_setsubj_jewelry"]');
+        r.dataset.on = '0'; r.dataset.onWas = '1'; r.dataset.onAt = String(performance.now() - 5000); }""")
+    page.wait_for_timeout(1200)
+    stage = page.evaluate("document.querySelector('.sg-stage .sg-layer[data-t=jewelry] .sg-state').innerText")
+    assert stage.startswith("Chosen"), f"the showcase kept a stale tap: {stage!r}"
