@@ -33,7 +33,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-023 | P2 | Settings, two tabs or two devices | A change in one tab put back settings changed in another | fixed (5c29321) |
 | BUG-024 | P0 | Sign-in (Streamlit Cloud, Safari) | Continue with Google stayed on 'Opening Google…' and never opened Google | fixed (5d01789) — waiting for your check on the iPad |
 | BUG-025 | P0 | Sign-in (Supabase settings) | Google sign-in ended on Supabase's 500 'unexpected_failure' | waiting for you: fix the Site URL in Supabase, then sign in |
-| BUG-026 | P2 | Search | Issue E: the first Enter sometimes didn't search (and could leave the box empty) | fixed |
+| BUG-026 | P2 | Search | Issue E: the first Enter sometimes didn't search (and could leave the box empty) | fixed (0e2e795) |
 
 ## Details
 
@@ -312,7 +312,7 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-026 (P2) — Issue E: the first Enter sometimes didn't search (and could leave the box empty)
 - **Page / flow:** Search
-- **Status:** fixed
+- **Status:** fixed (0e2e795)
 - **Steps to reproduce:** Open search, type a word the keyboard is still suggesting a correction for (e.g. 'fibre' on an iPad), press Enter
 - **Expected:** Results (or "No results for '…'") on the first Enter; the query stays in the box
 - **Actual:** Nothing searched; the empty-state hint stays (on the iPad the box could end up empty). A second Enter, or a word with no pending suggestion ('fabric'), worked
