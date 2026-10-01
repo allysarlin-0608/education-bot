@@ -381,7 +381,8 @@ CSS = f"""
 /* ---------- where a move lands (below the header) ---------- */
 .jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
 [data-testid="stElementContainer"]:has(#coach-place) {{ display: none; }}
-[data-testid="stElementContainer"]:has(#lg-hook), [data-testid="stElementContainer"]:has(#cx-hook) {{ display: none; }}     /* the scroll memory, no box */
+[data-testid="stElementContainer"]:has(#lg-hook), [data-testid="stElementContainer"]:has(#cx-hook) {{ display: none; }}
+[data-testid="stElementContainer"]:has(#keep-clear-hook), [data-testid="stElementContainer"]:has(#search-enter-hook) {{ display: none; }}   /* scripts, no box */     /* the scroll memory, no box */
 [data-testid="stElementContainer"]:has(.jump-anchor) {{ margin-bottom: calc(-1 * var(--space-5)); }}
 html {{ scroll-behavior: smooth; }}
 [data-testid="stAppScrollToBottomContainer"], [data-testid="stMain"] {{ scroll-behavior: smooth; }}

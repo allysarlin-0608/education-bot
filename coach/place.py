@@ -109,3 +109,63 @@ def follow(n=0):
       else if (tries > 0) setTimeout(() => go(tries - 1), 50);
     }})(40);
     </script>"""
+
+
+# Keeping controls clear of the chat box. The box floats at the bottom of
+# the screen; when a redraw puts a new control or message right where it
+# floats (Retry after a failed quiz, the next button, an error), the page
+# moves up just enough to show it. Only new elements count, so it never
+# fights her own scrolling. A field or button that gets focus under the box
+# (Tab, or a tap that opens the on-screen keyboard) is brought up the same way.
+# (Not CSS scroll-padding: it made the selectboxes' option lists jump.)
+_KEEP_CLEAR = """<div id="keep-clear-hook" hidden></div><script>
+(function () {
+  const w = window.parent, doc = w.document;
+  if (w.__coachKeepClear) return;
+  w.__coachKeepClear = true;
+  const WANT = 'button, textarea, input, [data-testid="stAlert"], [data-testid="stAlertContainer"]';
+  const scroller = (from) => {
+    for (let e = from; e; e = e.parentElement) {
+      const o = getComputedStyle(e).overflowY;
+      if ((o === "auto" || o === "scroll") && e.scrollHeight > e.clientHeight) return e;
+    }
+    return doc.scrollingElement;
+  };
+  let fresh = [], timer = 0;
+  const settle = () => {
+    timer = 0;
+    const dock = doc.querySelector(".st-key-chat_dock");
+    const items = fresh.filter((e) => e.isConnected); fresh = [];
+    if (!dock || !items.length) return;
+    const d = dock.getBoundingClientRect();
+    let need = 0, top = Infinity;
+    for (const e of items) {
+      // only the page's own content: never a dropdown, popover or dialog opened over it
+      if (dock.contains(e) || !e.closest('[data-testid="stMain"]')
+          || e.closest('[role="dialog"], [role="listbox"], [data-baseweb="popover"], [data-testid="stPopoverBody"]')) continue;
+      const r = e.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2 || r.top > d.bottom || r.bottom < d.top - 2) continue;
+      need = Math.max(need, r.bottom - d.top + 16);
+      top = Math.min(top, r.top);
+    }
+    if (need > 0 && top - need > 64) scroller(dock).scrollBy({ top: need, behavior: "smooth" });
+  };
+  // a field or button focused under the box (Tab; a tap that opens the on-screen keyboard)
+  doc.addEventListener("focusin", (ev) => {
+    const t = ev.target;
+    if (t && t.matches && t.matches(WANT)) { fresh.push(t); if (!timer) timer = w.setTimeout(settle, 250); }
+  }, true);
+  new w.MutationObserver((list) => {
+    for (const m of list) for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      if (n.matches && n.matches(WANT)) fresh.push(n);
+      if (n.querySelectorAll) fresh.push(...n.querySelectorAll(WANT));
+    }
+    if (fresh.length && !timer) timer = w.setTimeout(settle, 150);
+  }).observe(doc.body, { childList: true, subtree: true });
+})();
+</script>"""
+
+
+def keep_clear() -> str:
+    return _KEEP_CLEAR

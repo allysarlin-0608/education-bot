@@ -39,7 +39,8 @@ def _enter_after_composition() -> None:
     the text box, so the first search did nothing (on an iPad the box could
     even end up empty). Such an Enter is remembered and sent again as soon
     as the keyboard settles the word, so the search runs on the first Enter."""
-    st.html("<script>(function(){"
+    st.html('<div id="search-enter-hook" hidden></div>'
+            "<script>(function(){"
             "const docs=[document];try{if(window.parent&&window.parent.document!==document)docs.push(window.parent.document)}catch(e){}"
             f"const SEL='input[placeholder=\"{SEARCH_PLACEHOLDER}\"]';"
             "for(const d of docs){if(d.__gnSearchEnter)continue;d.__gnSearchEnter=true;"

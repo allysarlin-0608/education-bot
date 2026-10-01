@@ -34,6 +34,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-024 | P0 | Sign-in (Streamlit Cloud, Safari) | Continue with Google stayed on 'Opening Google…' and never opened Google | fixed (5d01789) — waiting for your check on the iPad |
 | BUG-025 | P0 | Sign-in (Supabase settings) | Google sign-in ended on Supabase's 500 'unexpected_failure' | waiting for you: fix the Site URL in Supabase, then sign in |
 | BUG-026 | P2 | Search | Issue E: the first Enter sometimes didn't search (and could leave the box empty) | fixed (0e2e795) |
+| BUG-027 | P2 | Today (chat box) | Issue F: the floating chat box covered Retry (and other new controls) | fixed |
 
 ## Details
 
@@ -320,3 +321,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** A small script in the search dialog remembers such an Enter and sends it again when the keyboard settles the word; the last query is selected on reopening so a new word replaces it instead of being glued to it; empty result now says No results for '…'
 - **Files changed:** coach/topnav.py, tests/e2e/test_nav.py
 - **Covered by:** tests/e2e/test_nav.py::test_the_first_enter_always_searches (20/20, twice)
+
+### BUG-027 (P2) — Issue F: the floating chat box covered Retry (and other new controls)
+- **Page / flow:** Today (chat box)
+- **Status:** fixed
+- **Steps to reproduce:** Today: tap 'Take the quiz' low on the screen; the quiz fails → Retry appears where the chat box floats
+- **Expected:** Every button, field and message she needs is visible above the chat box
+- **Actual:** Retry under the box until she scrolled (measured: 1024: Retry 678-722, box from 696; 390: Retry 723-767, box from 715)
+- **Root cause:** The box floats over the page (sticky); a redraw that puts a new control in that strip leaves it there, and nothing made focus avoid it. (At the very end of the page the box already takes its own place.)
+- **Fix:** A small observer brings a newly drawn control, message or focused field up just above the box (never one in a dropdown, popover or dialog, never her own scrolling). CSS scroll-padding was tried first and removed: it made selectbox option lists jump
+- **Files changed:** coach/place.py, gnosis.py, coach/style.py, tests/e2e/test_chat_bar.py
+- **Covered by:** tests/e2e/test_chat_bar.py: end of Today in lesson/quiz/result at 390, 768, 1180, 1440 and 1024x420 (keyboard open); Retry brought into view at 390 and 1024; screenshots docs/audit/screens/chat_bar/

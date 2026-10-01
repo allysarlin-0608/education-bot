@@ -1,6 +1,6 @@
 import streamlit as st
 
-from coach import auth, settings, sidebar, style, topnav, ui
+from coach import auth, place, settings, sidebar, style, topnav, ui
 
 st.set_page_config(
     page_title="GNOSIS",
@@ -44,6 +44,7 @@ if target is not None and target.url_path != page.url_path:
 if st.session_state.get("lq_page") != page.url_path:
     st.session_state.account_menu = False      # a menu choice that changed the page closes the menu
 topnav.render(pages, st.session_state.coach_log)
+st.html(place.keep_clear(), unsafe_allow_javascript=True)     # new controls never hide under the chat box
 # Progress bars flow in on arriving at a page, not on every rerun.
 st.session_state.lq_entering = st.session_state.get("lq_page") != page.url_path
 st.session_state.lq_page = page.url_path
