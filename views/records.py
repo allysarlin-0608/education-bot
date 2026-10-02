@@ -42,14 +42,23 @@ def go(ym, day=None, way="none"):
     st.rerun()
 
 
-def lesson_rows(lessons):
-    """The day's lessons, one line each: passed or not, number, title, quiz."""
+def _day(iso):
+    d = date.fromisoformat(iso)
+    return f"{d:%b} {d.day}"
+
+
+def lesson_rows(e):
+    """The day's lessons, one line each: passed or not, number, title, quiz.
+    A lesson carried over from an earlier day shows its quiz from there and
+    says so; one passed on a later day says when."""
     rows = []
-    for s in lessons:
-        q = s.get("quiz") or {}
+    for s in e["lessons"]:
+        q = curriculum.content(log, e["topic"], s).get("quiz") or {}
         score = f'{q["best"]}%' if q.get("best") is not None else ""
+        note = (f" · from {_day(s['from'])}" if s.get("from") else
+                f" · passed on {_day(s['passed_on'])}" if s.get("passed_on") else "")
         rows.append(f'<li class="{"done" if s["completed"] else "open"}"><span class="n">{s["n"]}</span>'
-                    f'<span class="t">{escape(s["title"])}</span><span class="q">{score}</span></li>')
+                    f'<span class="t">{escape(s["title"])}{escape(note)}</span><span class="q">{score}</span></li>')
     st.html(f'<ol class="lesson-rows">{"".join(rows)}</ol>')
 
 
@@ -65,8 +74,9 @@ def show_entry(e, where):
         done_count = sum(1 for s in e["lessons"] if s["completed"])
         st.caption(f"{core.TOPICS[e['topic']]} · Lessons {min(ns)}–{max(ns)} · {e['level']} · "
                    f"{done_count} of {len(ns)} passed")
-        lesson_rows(e["lessons"])
-        readable = {s["n"]: s for s in e["lessons"] if s.get("lesson")}
+        lesson_rows(e)
+        readable = {s["n"]: curriculum.content(log, e["topic"], s) for s in e["lessons"]}
+        readable = {n: s for n, s in readable.items() if s.get("lesson")}
         if readable:
             pick = st.pills("Read a lesson", list(readable), format_func=lambda n: f"Lesson {n}",
                             key=f"read_{key}", label_visibility="collapsed")

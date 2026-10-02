@@ -173,10 +173,10 @@ def start_lesson(p):
     idle(p.page)
 
 
-def take_quiz(p, correct=True):
+def take_quiz(p, correct=True, start="Take the quiz"):
     """Answer the (fake) quiz: all right, or all wrong."""
     page = p.page
-    button(p, "Take the quiz", wait=False)
+    button(p, start, wait=False)
     assert wait_text(page, "Submit answers", 40), "the quiz didn't appear"
     idle(page)
     groups = page.locator('[data-testid="stRadio"]')

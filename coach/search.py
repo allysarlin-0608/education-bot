@@ -40,6 +40,8 @@ def find(log: dict, query: str, limit: int = 30) -> list:
     for e in log["entries"]:
         subject = core.TOPICS.get(e["topic"], e["topic"])
         for s in e.get("lessons") or []:
+            if s.get("from"):           # carried over: found on the day it was written
+                continue
             text = _plain(s.get("lesson", ""))
             if _hit(words, s.get("title"), s.get("unit"), subject, text):
                 where = s.get("title", "") + " " + s.get("unit", "")

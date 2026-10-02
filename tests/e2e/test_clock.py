@@ -115,3 +115,68 @@ def test_three_rotations_never_repeat_a_passed_lesson(public_app, pages, clock):
     assert later[0] == min(n for n in range(1, 20) if n not in passed), fashion
     # one entry per day and subject, each keeping its own lessons
     assert len({(e["date"], e["topic"]) for e in saved}) == len(saved) == 6
+
+
+def test_a_lesson_not_passed_continues_the_next_day_on_the_same_record(public_app, pages, clock):
+    """D2: Lesson 1 is written and failed on day 1; on day 2 it comes back as
+    it was (not written again), only a new quiz is made, and passing it
+    writes the quiz and the chat back to day 1's lesson. Day 2 gets the
+    credit (streak); day 1 stays not completed and says when it was passed.
+    No lesson shows twice in Progress or search."""
+    covers("D-daily-save_entry", "W-daily-start_this_lesson")
+    app = public_app
+    clock(D, "02:00:00")
+    p = pages(width=1440)
+    email = f"carry{next(_n)}-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=email)
+    flows.onboard(p, pace="Light")                      # one lesson a day, one subject
+    flows.open_app(p, app)
+    page = p.page
+    flows.start_lesson(p)
+    page.get_by_placeholder("Ask about Lesson").fill("Why don't we feel it?")
+    page.keyboard.press("Enter")
+    assert flows.wait_text(page, "Good question", 30)
+    flows.idle(page)
+    flows.take_quiz(p, correct=False)                   # not passed on day 1
+    nxt = D + timedelta(days=1)
+    clock(nxt, "02:00:00")
+    app.reset_calls()
+    flows.open_app(p, app)
+    assert flows.wait_text(page, f"{nxt:%B} {nxt.day}")
+    text = page.evaluate("document.body.innerText")
+    assert "Start this lesson" not in text and "Key Idea" in text, "the lesson comes back as it was"
+    assert "Good question" in text, "with its chat"
+    page.get_by_placeholder("Ask about Lesson").fill("And at the poles?")
+    page.keyboard.press("Enter")
+    assert flows.wait_text(page, "And at the poles?", 30)
+    flows.idle(page)
+    flows.take_quiz(p, correct=True, start="Try a new quiz")
+    assert app.calls("lesson") == [], "the lesson wasn't written again"
+    saved = entries(app, email)
+    assert [e["date"] for e in saved] == [D.isoformat(), nxt.isoformat()]
+    load = lambda e: e["lessons"] if not isinstance(e["lessons"], str) else json.loads(e["lessons"])  # noqa: E731
+    first, second = load(saved[0])[0], load(saved[1])[0]
+    assert first["lesson"] and not first["completed"] and first["passed_on"] == nxt.isoformat()
+    assert [m["content"] for m in first["followups"] if m["role"] == "user"] == ["Why don't we feel it?", "And at the poles?"]
+    assert first["quiz"]["attempts"] == 2 and first["quiz"]["best"] == 100, first["quiz"]
+    assert second["from"] == D.isoformat() and second["completed"] is True
+    assert not second.get("lesson") and not second.get("followups") and not second.get("quiz"), "no copy"
+    assert saved[1]["completed"] is True and saved[0]["completed"] is False
+    flows.button(p, "See today's summary →")
+    assert flows.wait_text(page, "Current streak: 1 day")
+    assert "· 100%" in page.evaluate("document.body.innerText"), "the summary shows the quiz from the original"
+    # Progress: each lesson once per day, with where it came from / when it was passed
+    flows.open_app(p, app, "/records")
+    page.get_by_role("radio", name="Sessions").or_(page.get_by_role("button", name="Sessions", exact=True)).first.click()
+    assert flows.wait_text(page, "2 sessions", 10)
+    for d in (D, nxt):
+        flows.open_panel(p, f"{d:%b} {d.day}, {d.year}")
+    text = page.evaluate("document.body.innerText")
+    assert f"from {D:%b} {D.day}" in text and f"passed on {nxt:%b} {nxt.day}" in text
+    # search: the lesson is found once, on the day it was written
+    flows.button(p, "Search", exact=False)
+    box = page.get_by_placeholder("Lessons, subjects, books, your notes…")
+    box.fill("rotation")
+    box.press("Enter")
+    flows.idle(page)
+    assert flows.wait_text(page, "1 result", 5)

@@ -9,7 +9,15 @@ positions in the file (1-based), so lessons are only ever appended.
 A day's lessons live in that day's entry, entry["lessons"]: a list of
 {"n", "title", "unit", "kickoff", "lesson", "followups", "completed", "quiz"}.
 A lesson is completed by passing its quiz (coach/quiz.py); the day is
-complete once every lesson in it is completed."""
+complete once every lesson in it is completed.
+
+A lesson not passed on its day isn't written again: on a later day its
+slot is a link, {"n", "title", "unit", "from": that first day, "completed"}
+with no content of its own. The lesson, its chat and every quiz attempt
+stay on the original slot (origin()); "completed" on the link is the day
+it was passed (streaks count that day), while the original day stays not
+completed and its slot gets "passed_on"."""
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -89,6 +97,50 @@ def new_slot(topic: str, n: int) -> dict:
             "kickoff": "", "lesson": "", "followups": [], "completed": False, "quiz": None}
 
 
+def _written_before(log: dict, topic: str, n: int):
+    """(entry, slot) holding lesson n's content, not passed: the latest one
+    (from before links existed a lesson could have been written twice)."""
+    found = None
+    for e in log["entries"]:
+        if e["topic"] != topic:
+            continue
+        for slot in e.get("lessons") or []:
+            if (slot["n"] == n and slot.get("lesson") and not slot.get("from")
+                    and not slot.get("completed") and not slot.get("passed_on")):
+                if found is None or e["date"] >= found[0]["date"]:
+                    found = (e, slot)
+    return found
+
+
+def plan_slot(log: dict, topic: str, n: int) -> dict:
+    """A slot for lesson n on a new day: a link to where it was already
+    written (not passed), or a fresh slot."""
+    slot = new_slot(topic, n)
+    before = _written_before(log, topic, n)
+    if before is not None:
+        slot["from"] = before[0]["date"]
+    return slot
+
+
+def origin(log: dict, topic: str, slot: dict):
+    """For a link: (entry, slot) of the lesson it points to, or None (a slot
+    holding its own lesson, or a link whose day isn't in the log)."""
+    if not slot.get("from"):
+        return None
+    for e in log["entries"]:
+        if e["topic"] == topic and e["date"] == slot["from"]:
+            for s in e.get("lessons") or []:
+                if s["n"] == slot["n"] and not s.get("from"):
+                    return e, s
+    return None
+
+
+def content(log: dict, topic: str, slot: dict) -> dict:
+    """The slot whose lesson, chat and quizzes to show for this one."""
+    found = origin(log, topic, slot)
+    return found[1] if found else slot
+
+
 def unit_progress(log: dict, topic: str) -> dict:
     """The unit she is in now (the one holding her next lesson, or the last
     unit once everything written is done) and how far through it she is."""
@@ -129,7 +181,7 @@ def day_plan(log: dict, topic: str, entry, count: int = PER_DAY) -> list:
     her daily pace (settings)."""
     if entry is not None and entry.get("lessons"):
         return fit(log, topic, refresh_titles(topic, entry["lessons"]), count)
-    return [new_slot(topic, n) for n in next_numbers(log, topic, count)]
+    return [plan_slot(log, topic, n) for n in next_numbers(log, topic, count)]
 
 
 def _touched(slot: dict) -> bool:
@@ -145,7 +197,7 @@ def fit(log: dict, topic: str, slots: list, count: int) -> list:
     kept = [s for k, s in enumerate(slots) if k < count or _touched(s)]
     have = {s["n"] for s in kept}
     extra = [n for n in next_numbers(log, topic, count + len(have)) if n not in have]
-    kept += [new_slot(topic, n) for n in extra[:max(0, count - len(kept))]]
+    kept += [plan_slot(log, topic, n) for n in extra[:max(0, count - len(kept))]]
     return sorted(kept, key=lambda s: s["n"])
 
 
@@ -200,4 +252,16 @@ def parse_slots(data) -> list:
             "completed": bool(s.get("completed")),
             "quiz": quiz.parse_saved(s.get("quiz")),
         })
+        for field in ("from", "passed_on"):         # a link's first day; the day a lesson was passed later
+            if _is_date(s.get(field)):
+                slots[-1][field] = s[field]
+        if slots[-1].get("from"):                   # a link holds no content of its own
+            slots[-1].update(kickoff="", lesson="", followups=[], quiz=None)
     return slots
+
+
+def _is_date(value) -> bool:
+    try:
+        return isinstance(value, str) and bool(date.fromisoformat(value))
+    except ValueError:
+        return False

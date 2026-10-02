@@ -148,3 +148,29 @@ def test_lessons_are_finished_strictly_in_order():
     assert curriculum.blocking(slots, 2)["n"] == 1          # lesson 3 still waits for lesson 1
     slots[0]["completed"] = True
     assert curriculum.blocking(slots, 2) is None
+
+
+def test_a_lesson_not_passed_is_linked_not_written_again_and_survives_a_backup():
+    """D2: the next day's slot for an unpassed, written lesson is a link to
+    it; the link keeps no content, and a backup round trip keeps both marks."""
+    import json
+
+    from coach import core
+    first = curriculum.new_slot("philosophy", 1)
+    first.update(lesson="【Key Idea】 x", kickoff="k", followups=[{"role": "user", "content": "q"}])
+    log = {"entries": [{"date": "2026-10-14", "topic": "philosophy", "lessons": [first]}], "books": []}
+    nxt = curriculum.day_plan(log, "philosophy", None, 1)[0]
+    assert nxt["from"] == "2026-10-14" and nxt["lesson"] == "" and nxt["quiz"] is None
+    entry, slot = curriculum.origin(log, "philosophy", nxt)
+    assert slot is first and curriculum.content(log, "philosophy", nxt) is first
+    nxt["completed"], first["passed_on"] = True, "2026-10-15"
+    log["entries"].append({"date": "2026-10-15", "topic": "philosophy", "lessons": [nxt]})
+    assert curriculum.next_numbers(log, "philosophy", 1) == [2]          # passed: never scheduled again
+    restored = core.parse_log(json.loads(json.dumps(log)))
+    a, b = restored["entries"][0]["lessons"][0], restored["entries"][1]["lessons"][0]
+    assert a["passed_on"] == "2026-10-15" and not a["completed"] and a["lesson"]
+    assert b["from"] == "2026-10-14" and b["completed"] and b["lesson"] == "" and b["followups"] == []
+    # a lesson never written (no content) isn't linked: it's simply written on the day
+    log2 = {"entries": [{"date": "2026-10-14", "topic": "philosophy",
+                         "lessons": [curriculum.new_slot("philosophy", 1)]}], "books": []}
+    assert "from" not in curriculum.day_plan(log2, "philosophy", None, 1)[0]

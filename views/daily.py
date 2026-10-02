@@ -42,6 +42,20 @@ def day_entry():
     return entry
 
 
+def work(entry, i):
+    """(the entry to save, the slot holding the lesson) for lesson i of the
+    day: for a lesson carried over from an earlier day, its original slot
+    there (curriculum.origin): its chat and quizzes are written back to it."""
+    found = curriculum.origin(log, topic, entry["lessons"][i])
+    return found if found else (entry, entry["lessons"][i])
+
+
+def save(entry, owner):
+    """Save the day, and the earlier day a carried-over lesson belongs to."""
+    ok = ui.save_entry(log, entry)
+    return (ui.save_entry(log, owner) if owner is not entry else True) and ok
+
+
 def failed(kind, error, slot, **payload):
     """Remember a failed call so the page can show a friendly message and
     a Retry button that repeats it (the raw error only goes to the log)."""
@@ -51,7 +65,7 @@ def failed(kind, error, slot, **payload):
 
 def run_kickoff(i):
     entry = day_entry()
-    slot = entry["lessons"][i]
+    owner, slot = work(entry, i)
     if curriculum.blocking(entry["lessons"], i):     # strictly in order
         st.rerun()
     chat = get_chat(slot)
@@ -79,7 +93,7 @@ def run_kickoff(i):
 
 def run_followup(i, text):
     entry = day_entry()
-    slot = entry["lessons"][i]
+    owner, slot = work(entry, i)
     chat = get_chat(slot)
     asked = chat + [{"role": "user", "content": text}]     # kept only once answered (as in run_kickoff)
     n = st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
@@ -94,7 +108,7 @@ def run_followup(i, text):
         failed("followup", error, slot, i=i, text=text)
     chat += [asked[-1], {"role": "assistant", "content": core.finalize_reply(reply, lesson=False, topic=topic)}]
     slot["followups"] = chat[2:]               # everything after the lesson
-    ui.save_entry(log, entry)
+    save(entry, owner)
     st.session_state.coach_scroll = (place.LATEST, False)      # and stays on it after the redraw
     st.rerun()                                 # show the checked text, not the raw stream
 
@@ -103,14 +117,14 @@ def run_quiz(i):
     """Write a fresh quiz for lesson i (a new set on every retake), checked
     answer by answer (coach/quizgen.py)."""
     entry = day_entry()
-    slot = entry["lessons"][i]
+    owner, slot = work(entry, i)
     if curriculum.blocking(entry["lessons"], i):     # strictly in order
         st.rerun()
     questions, error = quizgen.make(slot, f"{topic} lesson {slot['n']}", step=st.spinner)
     if questions is None:
         failed("quiz", error, slot, i=i)
     slot["quiz"] = quiz.new(questions, slot.get("quiz"))
-    ui.save_entry(log, entry)
+    save(entry, owner)
     st.rerun()
 
 
@@ -258,11 +272,11 @@ if i is None:
         streak = core.current_streak(log, ui.today())
         st.caption(f"All {len(plan)} lessons passed. Current streak: {streak} {'day' if streak == 1 else 'days'}.")
         for s in plan:
-            score = (s.get("quiz") or {}).get("score")
+            score = (curriculum.content(log, topic, s).get("quiz") or {}).get("score")
             st.markdown(f"✓ **Lesson {s['n']}:** {s['title']}" + (f" · {score}%" if score is not None else ""))
     st.stop()
 
-slot = plan[i]
+slot = curriculum.content(log, topic, plan[i])     # a lesson carried over: its original
 # Reviewing an earlier lesson: say so, with the way back to the current one.
 if i != now:
     with st.container(key="review_bar", horizontal=True, vertical_alignment="center"):
@@ -270,7 +284,7 @@ if i != now:
         way = steps.arrow(i, now)               # the arrow (drawn by CSS) points to where it goes
         if now is not None:
             if st.button(f"Back to Lesson {plan[now]['n']}", key=f"back_to_current_{way}"):
-                open_lesson(now, anchor="current-quiz" if plan[now].get("lesson") else "current-lesson",
+                open_lesson(now, anchor="current-quiz" if curriculum.content(log, topic, plan[now]).get("lesson") else "current-lesson",
                             restore=True)
         elif st.button("Back to today's summary", key=f"back_to_current_{way}"):
             open_lesson(None, anchor="top")
@@ -308,7 +322,8 @@ reply_spot = st.container()     # a new question and its answer appear here, und
 
 st.divider()
 entry = day_entry()
-slot = entry["lessons"][i]
+owner, slot = work(entry, i)
+passed_here = entry["lessons"][i]["completed"]     # (a carried-over lesson: passed on this day)
 
 
 def show_results(q, missed_only=False):
@@ -342,25 +357,27 @@ def conclude(i):
     """Every question is marked: score it; a pass finishes the lesson. She
     stays on the lesson to read the explanations; Next lesson moves on."""
     entry = day_entry()
-    slot = entry["lessons"][i]
+    owner, slot = work(entry, i)
     score = quiz.finish(slot["quiz"])
     if quiz.passed(score):
-        slot["completed"] = True
+        entry["lessons"][i]["completed"] = True
+        if owner is not entry:          # the original day stays as it was; the lesson notes when
+            slot["passed_on"] = today.isoformat()
         entry["completed"] = curriculum.day_complete(entry["lessons"])
         st.session_state.coach_toast = f"Passed with {score}%."
-    ui.save_entry(log, entry)
+    save(entry, owner)
     st.rerun()
 
 
 def run_grading(i):
     """Have the model mark the short answers, then score the quiz."""
     entry = day_entry()
-    slot = entry["lessons"][i]
+    owner, slot = work(entry, i)
     system, messages = quiz.grading_request(slot["quiz"])
     with st.spinner("Marking your answers…"):
         data, error = llm.ask_json(system, messages)
     if error or not quiz.apply_grading(slot["quiz"], data):
-        ui.save_entry(log, entry)               # keep her answers; Retry marks them
+        save(entry, owner)               # keep her answers; Retry marks them
         failed("grade", error or llm.FAILED, slot, i=i)
     conclude(i)
 
@@ -398,7 +415,7 @@ def answer_sheet(i, q):
             draft[k] = st.text_area(label, value=draft[k], key=key, height=90,
                                     placeholder="Answer in a sentence or two, in your own words")
     if draft != saved:
-        ui.save_entry(log, day_entry())         # every answer is saved as she gives it
+        save(day_entry(), work(day_entry(), i)[0])      # every answer is saved as she gives it
     submit = st.empty()
     if not submit.button("Submit answers", type="primary", use_container_width=True, key=f"submit_{q['id']}"):
         return
@@ -411,8 +428,9 @@ def answer_sheet(i, q):
         st.warning("Answer every question first (still open: " + ", ".join(map(str, missing)) + ").")
         return
     submit.empty()
-    if quiz.submit(entry["lessons"][i]["quiz"], answers):
-        ui.save_entry(log, entry)
+    owner, slot = work(entry, i)
+    if quiz.submit(slot["quiz"], answers):
+        save(entry, owner)
         run_grading(i)
     conclude(i)
 
@@ -423,7 +441,7 @@ def answer_sheet(i, q):
 st.html('<div class="jump-anchor" id="current-quiz"></div>')
 st.markdown("#### Quiz")
 q = slot.get("quiz")
-if slot["completed"]:
+if passed_here:
     if q and quiz.passed(q.get("score")):
         st.markdown("**" + progress_bar.rolled(f"quiz_pass_{q['id']}", f"Passed with {q['score']}%") + "** · "
                     + progress_bar.rolled(f"quiz_points_{q['id']}", f"{quiz.points(q)} points."), unsafe_allow_html=True)
