@@ -228,11 +228,18 @@ def completed_dates(log: dict) -> set:
     return {date.fromisoformat(e["date"]) for e in log["entries"] if e.get("completed")}
 
 
+def streak_dates(log: dict) -> set:
+    """Days that count for a streak: at least one lesson passed that day
+    (a whole day finished, for sessions from before the syllabus)."""
+    return {date.fromisoformat(e["date"]) for e in log["entries"]
+            if e.get("completed") or any(s.get("completed") for s in e.get("lessons") or [])}
+
+
 def current_streak(log: dict, today: date) -> int:
-    """Consecutive completed days ending today. If today isn't done yet the
-    streak still counts through yesterday, so it never reads as broken
-    before she's had a chance to finish today."""
-    done = completed_dates(log)
+    """Consecutive days ending today with a lesson passed. If none is passed
+    today yet the streak still counts through yesterday, so it never reads
+    as broken before she's had a chance to study today."""
+    done = streak_dates(log)
     day = today if today in done else today - timedelta(days=1)
     streak = 0
     while day in done:
@@ -443,7 +450,7 @@ LEVEL_STARTS = {"Beginner": 1, "Intermediate": 4, "Advanced": 8}
 
 
 def longest_streak(log: dict) -> int:
-    done = sorted(completed_dates(log))
+    done = sorted(streak_dates(log))
     best = run = 0
     prev = None
     for day in done:

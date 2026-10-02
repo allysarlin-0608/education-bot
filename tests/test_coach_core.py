@@ -148,3 +148,14 @@ def test_calendar_weeks_statuses():
     assert statuses[date(2026, 9, 22)] == "started"
     assert statuses[WED] == "none"
     assert statuses[date(2026, 9, 24)] == "future"
+
+
+def test_one_lesson_passed_counts_the_day_for_the_streak():
+    """A day counts as soon as one lesson is passed, even if others are left."""
+    passed = {"n": 1, "completed": True}
+    open_ = {"n": 2, "completed": False}
+    log = {"entries": [{"date": "2026-10-01", "topic": "fashion", "completed": False, "lessons": [passed, open_]},
+                       {"date": "2026-10-02", "topic": "fashion", "completed": False, "lessons": [passed, open_]},
+                       {"date": "2026-09-29", "topic": "fashion", "completed": False, "lessons": [open_]}]}
+    assert core.current_streak(log, date(2026, 10, 2)) == 2
+    assert core.longest_streak(log) == 2
