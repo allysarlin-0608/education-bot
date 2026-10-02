@@ -365,6 +365,9 @@ def conclude(i):
             slot["passed_on"] = today.isoformat()
         entry["completed"] = curriculum.day_complete(entry["lessons"])
         st.session_state.coach_toast = f"Passed with {score}%."
+        # the page goes to the result, so Next lesson is in view (not under the chat box)
+        st.session_state.coach_scroll = ("current-quiz", False)
+        st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
     save(entry, owner)
     st.rerun()
 

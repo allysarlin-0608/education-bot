@@ -107,3 +107,31 @@ def test_a_retry_that_appears_under_the_chat_box_is_brought_into_view(public_app
     covered = [x for x in page.evaluate(UNDER) if x.startswith(("Retry", "The coach"))]
     app.set_llm()
     assert not covered, f"under the chat box: {covered}"
+
+
+@pytest.mark.parametrize("width,height", [(390, 844), (1180, 820), (1440, 900)])
+def test_next_lesson_after_a_pass_is_in_view_above_the_chat_box(public_app, pages, width, height):
+    """After passing a quiz, Next lesson is on screen and clear of the chat
+    box without scrolling."""
+    covers("W-daily-next_lesson")
+    app = public_app
+    p = pages(width=width, height=height)
+    flows.sign_in(p, app, email=f"bar{next(_n)}-{int(time.time() * 1000)}@example.com")
+    flows.onboard(p)                                   # three lessons a day: a pass offers Next lesson
+    flows.open_app(p, app)
+    app.set_llm()
+    flows.start_lesson(p)
+    page = p.page
+
+    def at_the_bottom(page):                           # she taps Submit at the end of the page, just above the box
+        at_end(page)
+        page.wait_for_timeout(300)
+    app.set_llm(delay=1.5)                             # marking takes a moment, as with the real model
+    flows.take_quiz(p, correct=True, before_submit=at_the_bottom)
+    app.set_llm()
+    page.wait_for_timeout(1500)                        # (the smooth scroll)
+    box = page.evaluate("""() => { const b = [...document.querySelectorAll('button')].find(x => x.innerText.includes('Next lesson'));
+        const d = document.querySelector('.st-key-chat_dock').getBoundingClientRect();
+        if (!b) return null; const r = b.getBoundingClientRect(); return {top: r.top, bottom: r.bottom, dock: d.top}; }""")
+    assert box is not None, "no Next lesson button"
+    assert box["top"] >= 0 and box["bottom"] <= box["dock"] - 48, f"Next lesson is hidden or near the chat box: {box}"

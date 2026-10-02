@@ -173,7 +173,7 @@ def start_lesson(p):
     idle(p.page)
 
 
-def take_quiz(p, correct=True, start="Take the quiz"):
+def take_quiz(p, correct=True, start="Take the quiz", before_submit=None):
     """Answer the (fake) quiz: all right, or all wrong."""
     page = p.page
     button(p, start, wait=False)
@@ -195,6 +195,8 @@ def take_quiz(p, correct=True, start="Take the quiz"):
         page.keyboard.press("Tab")
         page.wait_for_timeout(150)
     idle(page)
+    if before_submit:
+        before_submit(page)
     button(p, "Submit answers", wait=False)
     assert wait_text(page, "Passed with" if correct else "You need 80%", 40), "the quiz result didn't show"
     idle(page)
