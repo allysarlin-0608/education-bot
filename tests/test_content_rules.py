@@ -145,4 +145,5 @@ def test_the_note_only_credits_what_she_really_did():
     from pathlib import Path
     prompt = (Path(__file__).resolve().parents[1] / "coach" / "prompts" / "core.md").read_text(encoding="utf-8")
     note = next(line for line in prompt.splitlines() if line.startswith("【Note】"))
-    assert "只肯定學習紀錄裡她真的做過的事" in note and "不能說成她做的" in note
+    assert "只肯定學習紀錄裡她真的做過的事" in note and "不能說成她做過" in note
+    assert "今天的任務和例子不能說成她做過" in note and "you've already" in note           # today's task is never treated as done
