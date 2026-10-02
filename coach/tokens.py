@@ -16,6 +16,8 @@ import re
 # minute (a lesson, then a quick follow-up) may hit a 429, which llm.py
 # waits out and retries.
 REQUEST_BUDGET = 5500        # system + history + max_tokens, estimated (~30% high)
+MINUTE_LIMIT = 8000          # Groq's tokens per minute for the key (llm.py paces requests to it)
+CALIBRATION = 0.77           # real tokens per estimated token (7,391 / 9,584, below)
 MESSAGE_OVERHEAD = 4         # role markers etc. per message
 REQUEST_OVERHEAD = 3
 
@@ -32,6 +34,12 @@ CJK = re.compile(r"[⺀-鿿豈-﫿＀-￯　-〿]")
 def estimate(text: str) -> int:
     cjk = len(CJK.findall(text))
     return math.ceil(cjk * 1.0 + (len(text) - cjk) * 0.3)
+
+
+def calibrated(estimated: int) -> int:
+    """An estimate brought down to the real count, for pacing (where being
+    30% high would make people wait for nothing)."""
+    return math.ceil(estimated * CALIBRATION)
 
 
 def estimate_request(system: str, messages: list, max_tokens: int) -> int:

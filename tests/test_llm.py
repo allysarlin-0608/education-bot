@@ -150,3 +150,57 @@ def test_every_request_sets_a_bounded_max_tokens_and_fits(monkeypatch, waits):
 def test_no_key_message(monkeypatch):
     monkeypatch.setattr(llm, "get_client", lambda: None)
     assert llm.ask_json(SYSTEM, MSGS) == (None, llm.NO_KEY)
+
+
+def _used(total, text='{"ok": 1}'):
+    reply = _json_reply(text)
+    reply.usage = types.SimpleNamespace(total_tokens=total)
+    return reply
+
+
+def test_a_request_that_would_go_over_the_minute_waits_instead_of_being_refused(monkeypatch):
+    """Issue A (A5): the per-minute allowance is kept here, so the quiz after
+    a lesson waits a few seconds rather than meeting a 429."""
+    # covers: S-groq_tpm_limit
+    clock = {"t": 1000.0}
+    slept = []
+    monkeypatch.setattr(llm, "_sleep", lambda s: (slept.append(s), clock.__setitem__("t", clock["t"] + s)))
+    monkeypatch.setattr(llm, "_now", lambda: clock["t"])
+    client = use(monkeypatch, FakeClient([_used(6000), _used(1000), _used(1000)]))
+    assert llm.ask_json(SYSTEM, MSGS, max_tokens=900) == ({"ok": 1}, None)       # 6000 really used
+    assert slept == []
+    clock["t"] += 50                                                           # 10 s before it ages out
+    assert llm.ask_json(SYSTEM, MSGS, max_tokens=2400) == ({"ok": 1}, None)
+    assert len(slept) == 1 and 10 <= slept[0] <= 11, slept
+    assert len(client.calls) == 2
+    # within the allowance: no wait
+    slept.clear()
+    assert llm.ask_json(SYSTEM, MSGS, max_tokens=900) == ({"ok": 1}, None)
+    assert slept == []
+
+
+def test_a_wait_longer_than_the_cap_is_not_made(monkeypatch):
+    """Pacing never holds a request past MAX_WAIT_SECONDS: it goes, and a 429
+    (if it comes) is retried as before."""
+    clock = {"t": 1000.0}
+    slept = []
+    monkeypatch.setattr(llm, "_sleep", lambda s: (slept.append(s), clock.__setitem__("t", clock["t"] + s)))
+    monkeypatch.setattr(llm, "_now", lambda: clock["t"])
+    use(monkeypatch, FakeClient([_used(7900), _used(500)]))
+    llm.ask_json(SYSTEM, MSGS, max_tokens=50)
+    clock["t"] += 5                                                            # 55 s still to go
+    assert llm.ask_json(SYSTEM, MSGS, max_tokens=900) == ({"ok": 1}, None)
+    assert slept == []
+
+
+def test_a_refused_request_does_not_count_against_the_minute(monkeypatch, waits):
+    use(monkeypatch, FakeClient([status_error(groq.RateLimitError, 429, retry_after=1), _used(100)]))
+    assert llm.ask_json(SYSTEM, MSGS) == ({"ok": 1}, None)
+    assert [t for _, t in llm._window] == [0, 100]
+
+
+def test_a_reply_cut_off_can_be_salvaged_without_asking_again(monkeypatch, waits):
+    client = use(monkeypatch, FakeClient([_json_reply('{"questions": [{"a": 1}, {"a": 2}, {"a"')]))
+    data, error = llm.ask_json(SYSTEM, MSGS, salvage=lambda text: {"questions": [{"a": 1}, {"a": 2}]})
+    assert (data, error) == ({"questions": [{"a": 1}, {"a": 2}]}, None)
+    assert len(client.calls) == 1

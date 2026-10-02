@@ -5,7 +5,9 @@ the daily allowance, JSON parsing); only the network call is replaced. What
 the "model" does is read from a control file on every call, so a test can
 make it fail, be slow, or return tricky content:
 
-  {"mode": "ok" | "413" | "429" | "500" | "timeout" | "empty" | "invalid" | "broken_stream" | "malformed_quiz",
+  {"mode": "ok" | "413" | "429" | "500" | "timeout" | "empty" | "invalid" | "broken_stream"
+           | "malformed_quiz"        # one question has 3 options
+           | "truncated_quiz",       # the reply stops at the limit, two thirds of the way through
    "fail_times": 1,          # fail this many calls, then behave (default: always)
    "delay": 0.0,             # seconds before answering
    "chunk_delay": 0.0,       # seconds between streamed pieces (a slow stream)
@@ -17,6 +19,7 @@ Every call is appended to calls.jsonl (kind, time), so tests can count them.
 """
 import json
 import os
+import re
 import threading
 import time
 import types
@@ -97,10 +100,18 @@ def _reply(kind: str, messages: list, ctl: dict) -> str:
     last = messages[-1]["content"] if messages else ""
     if kind == "quiz":
         return json.dumps(_quiz(inject))
-    if kind == "quiz_rewrite":
-        return json.dumps({"questions": [{"type": "choice", "question": "Which way does Earth spin?",
-                                          "options": ["West to east", "East to west", "North to south", "It doesn't"],
-                                          "answer": 0, "why": "That's why the Sun rises in the east."}]})
+    if kind == "quiz_rewrite":           # as many of each kind as asked for
+        system = messages[0]["content"]
+        wanted = {k: int(n) for n, k in re.findall(r'(\d+) "(choice|match|short)"', system.split("The kinds are")[0])}
+        full = _quiz(inject)["questions"]
+        out = [{"type": "choice", "question": "Which way does Earth spin?",
+                "options": ["West to east", "East to west", "North to south", "It doesn't"],
+                "answer": 0, "why": "That's why the Sun rises in the east."}][:wanted.get("choice", 0)]
+        out += [dict(q, question=f"Again: {q['question']}") for q in full
+                if q["type"] == "choice"][:max(0, wanted.get("choice", 0) - 1)]
+        out += [dict(q, question="Pair these up.") for q in full if q["type"] == "match"][:wanted.get("match", 0)]
+        out += [dict(q, question=f"In a sentence: {q['question']}") for q in full if q["type"] == "short"][:wanted.get("short", 0)]
+        return json.dumps({"questions": out})
     if kind == "quiz_check":
         flag = ctl.get("quiz_flag_first") and not (STATE / "flagged_once").exists()
         if flag:
@@ -173,6 +184,8 @@ class FakeGroq:
             q = json.loads(text)                     # valid JSON, but one question has 3 options
             q["questions"][0]["options"] = q["questions"][0]["options"][:3]
             text = json.dumps(q)
+        if failing and mode == "truncated_quiz" and kind == "quiz":
+            text = text[:len(text) * 2 // 3]
         usage = types.SimpleNamespace(total_tokens=max(1, len(text) // 4))
         if stream:
             words = text.split(" ") if text else []
@@ -187,5 +200,6 @@ class FakeGroq:
                     yield _chunk(w + (" " if k < len(words) - 1 else ""))
                 yield _chunk("", finish="stop")
             return gen()
+        cut = failing and mode == "truncated_quiz" and kind == "quiz"
         return types.SimpleNamespace(usage=usage, choices=[types.SimpleNamespace(
-            message=types.SimpleNamespace(content=text), finish_reason="stop")])
+            message=types.SimpleNamespace(content=text), finish_reason="length" if cut else "stop")])

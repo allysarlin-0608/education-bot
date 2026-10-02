@@ -10,7 +10,7 @@ pytestmark = pytest.mark.smoke
 @pytest.mark.parametrize("mode", ["public", "personal"])
 def test_new_person_learns_one_lesson(mode, pages, request):
     covers("W-setup-get_started", "W-daily-start_this_lesson", "W-daily-take_the_quiz", "AI-daily-stream_reply",
-           "AI-daily-ask_json", "AI-daily-ask_json-2", "D-setup-save_settings-2", "D-daily-save_entry",
+           "AI-quizgen-ask_json", "AI-quizgen-ask_json-3", "D-setup-save_settings-2", "D-daily-save_entry",
            # the servers are configured only through these, so both modes working covers them
            "S-supabase_url", "S-supabase_key", "S-coach_log_path", "S-coach_settings_path", "D-auth-touch_user")
     app = request.getfixturevalue(f"{mode}_app")

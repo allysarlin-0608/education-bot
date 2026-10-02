@@ -48,7 +48,7 @@ def test_a_whole_day(mode, pages, request):
     covers("W-daily-next_lesson", "W-daily-next_lesson-2", "W-daily-see_the_quiz", "W-daily-key", "W-daily-keys_j",
            "W-daily-key-2", "W-daily-submit", "D-daily-save_entry-3", "D-daily-save_entry-4",
            "D-daily-save_entry-5", "D-daily-save_entry-6", "D-daily-save_entry-7",
-           "W-daily-take_the_quiz_if_q_is_none_else_try_a_ne", "AI-daily-ask_json-4", "D-ui-save_entry")
+           "W-daily-take_the_quiz_if_q_is_none_else_try_a_ne", "AI-daily-ask_json", "D-ui-save_entry")
     app = request.getfixturevalue(f"{mode}_app")
     if mode == "personal":
         (app.state / "learning_log.json").unlink(missing_ok=True)
@@ -133,7 +133,7 @@ def test_submitting_with_open_questions_names_them(public_app, pages):
 
 
 def test_marking_fails_then_mark_my_answers(public_app, pages):
-    covers("W-daily-mark_my_answers", "W-daily-coach_retry", "AI-daily-ask_json-3")
+    covers("W-daily-mark_my_answers", "W-daily-coach_retry", "AI-quizgen-ask_json-4")
     app = public_app
     p, email = fresh(app, pages)
     flows.start_lesson(p)

@@ -20,7 +20,9 @@ A lesson's quiz lives in its slot, slot["quiz"]:
  question is marked, "attempts", "best", "draft": answers given so far,
  saved as she goes, until she submits}. Quizzes saved before question
 kinds existed are all multiple choice."""
+import json
 import random
+import re
 import uuid
 
 QUESTIONS = 10
@@ -29,6 +31,8 @@ PAIRS = 4
 PASS_MARK = 80          # percent
 MIX = {"choice": 7, "match": 1, "short": 2}
 CHECK_ROUNDS = 2        # rewrite-and-recheck rounds before giving up
+RECOVERIES = 2          # extra calls when the questions come back incomplete (views/daily.py)
+FILL_AT_MOST = 4        # up to this many missing: ask for just those; more: the whole quiz again
 
 SYSTEM = f"""You write a short quiz that checks whether a learner really understood one lesson.
 
@@ -91,27 +95,78 @@ def _text(value) -> str:
     return str(value).strip() if isinstance(value, (str, int, float)) and not isinstance(value, bool) else ""
 
 
+_LABEL = re.compile(r"^\(?([A-Da-d1-4])[).:]\s+")
+
+
+def _answer_index(answer, options):
+    """The keyed answer as an index into options: an index, a numeric
+    string, an option letter ("B"), or the option's own text."""
+    if isinstance(answer, bool):
+        return None
+    if isinstance(answer, int):
+        return answer if 0 <= answer < len(options) else None
+    text = _text(answer)
+    if text.isdigit():
+        return int(text) if int(text) < len(options) else None
+    if len(text) == 1 and text.upper() in "ABCD"[:len(options)]:
+        return "ABCD".index(text.upper())
+    folded = [o.casefold() for o in options]
+    text = _LABEL.sub("", text).casefold()
+    return folded.index(text) if text and folded.count(text) == 1 else None
+
+
 def _choice(item, rng):
-    question, options, answer = _text(item.get("question")), item.get("options"), item.get("answer")
-    if not question or not isinstance(options, list) or len(options) != OPTIONS:
+    """A multiple-choice question, or None. Small slips are repaired here
+    rather than costing a new quiz: "A) " labels on every option, the answer
+    given as a letter or as the option's text, a repeated option, or more
+    than four options (the extra wrong ones are dropped)."""
+    question, options = _text(item.get("question")), item.get("options")
+    if not question or not isinstance(options, list) or len(options) < OPTIONS:
         return None
     options = [_text(o) for o in options]
-    if not all(options) or len(set(options)) != OPTIONS:
+    if not all(options):
         return None
-    if not isinstance(answer, int) or isinstance(answer, bool) or not 0 <= answer < OPTIONS:
+    if all(_LABEL.match(o) for o in options):
+        options = [_LABEL.sub("", o) for o in options]
+    answer = _answer_index(item.get("answer"), options)
+    if answer is None:
         return None
     correct = options[answer]
+    if sum(o.casefold() == correct.casefold() for o in options) > 1:
+        return None
+    wrong = []
+    for o in options:
+        if o.casefold() != correct.casefold() and o.casefold() not in {w.casefold() for w in wrong}:
+            wrong.append(o)
+    if len(wrong) < OPTIONS - 1:
+        return None
+    options = [correct] + wrong[:OPTIONS - 1]
     rng.shuffle(options)          # models like to put the answer first
     return {"type": "choice", "question": question, "options": options,
             "answer": options.index(correct), "why": _text(item.get("why"))}
 
 
+def _pair(p):
+    if isinstance(p, (list, tuple)) and len(p) == 2:
+        return list(p)
+    if isinstance(p, dict) and len(p) == 2:
+        return list(p.values())
+    return None
+
+
 def _match(item, rng):
+    """A matching question, or None. Pairs may come as [term, meaning],
+    {"term": .., "meaning": ..} or one {term: meaning} object; more than
+    four pairs are cut to the first four."""
     pairs = item.get("pairs")
-    if not isinstance(pairs, list) or len(pairs) != PAIRS:
+    if isinstance(pairs, dict):
+        pairs = [[k, v] for k, v in pairs.items()]
+    if not isinstance(pairs, list):
         return None
-    if not all(isinstance(p, list) and len(p) == 2 for p in pairs):
+    pairs = [_pair(p) for p in pairs]
+    if None in pairs or len(pairs) < PAIRS:
         return None
+    pairs = pairs[:PAIRS]
     left = [_text(p[0]) for p in pairs]
     right = [_text(p[1]) for p in pairs]
     if not all(left + right) or len(set(left)) != PAIRS or len(set(right)) != PAIRS:
@@ -124,7 +179,8 @@ def _match(item, rng):
 
 
 def _short(item, rng):
-    question, answer = _text(item.get("question")), _text(item.get("answer"))
+    question = _text(item.get("question"))
+    answer = _text(item.get("answer")) or _text(item.get("model_answer"))
     if not question or not answer:
         return None
     return {"type": "short", "question": question, "answer": answer, "why": _text(item.get("why"))}
@@ -137,11 +193,37 @@ def parse(data, rng=random) -> list:
     """The quiz's questions from the model's JSON, or None if there aren't
     QUESTIONS usable ones. Multiple choice comes first, then matching,
     then short answers."""
-    questions = parse_items(data, rng)
-    if len(questions) < QUESTIONS:
+    return assemble(parse_items(data, rng))
+
+
+def assemble(questions: list):
+    """QUESTIONS of the usable questions, in the MIX where they allow it
+    (then any kind), repeats left out; None if there aren't enough."""
+    seen, unique = set(), []
+    for q in questions:
+        if q["question"].casefold() not in seen:
+            seen.add(q["question"].casefold())
+            unique.append(q)
+    picked = []
+    for kind, n in MIX.items():
+        picked += [q for q in unique if q["type"] == kind][:n]
+    picked += [q for q in unique if q not in picked][:QUESTIONS - len(picked)]
+    if len(picked) < QUESTIONS:
         return None
     order = list(KINDS)
-    return sorted(questions[:QUESTIONS], key=lambda q: order.index(q["type"]))
+    return sorted(picked, key=lambda q: order.index(q["type"]))
+
+
+def missing(questions: list) -> list:
+    """The kinds still needed to make a full quiz of these questions (the
+    MIX's gaps, short and match first), e.g. ["short", "choice"]."""
+    have = {q["question"].casefold(): q["type"] for q in questions}
+    need = QUESTIONS - len(have)
+    gaps = []
+    for kind in ("short", "match", "choice"):
+        gaps += [kind] * max(0, MIX[kind] - sum(1 for t in have.values() if t == kind))
+    gaps += ["choice"] * need
+    return gaps[:max(0, need)]
 
 
 def _describe(k: int, q: dict) -> str:
@@ -172,23 +254,80 @@ def problems(data, n: int):
     return out
 
 
-def rewrite_request(slot: dict, questions: list, flagged: dict):
-    """(system, messages) asking for replacements for the flagged questions,
-    same kinds, different content."""
-    kinds = [questions[k]["type"] for k in sorted(flagged)]
+def _more_request(slot: dict, kinds: list, notes: str):
     wanted = ", ".join(f'{kinds.count(t)} "{t}"' for t in KINDS if t in kinds)
-    avoid = "\n".join(f"- {questions[k]['question']} (problem: {issue})" for k, issue in sorted(flagged.items()))
-    keep = "\n".join(f"- {q['question']}" for k, q in enumerate(questions) if k not in flagged)
     system = SYSTEM.split("Reply with JSON only")[0].replace(
         f"Write exactly {QUESTIONS} questions about the lesson you are given, in English, in this mix:",
-        f"Write exactly {len(flagged)} replacement questions ({wanted}) about the lesson you are given, "
+        f"Write exactly {len(kinds)} replacement questions ({wanted}) about the lesson you are given, "
         "in English. The kinds are:")
     system += ("Reply with JSON only, in the same shape as before: "
                '{"questions": [{"type": "choice" | "match" | "short", ...}]}.')
-    user = (f"Lesson {slot['n']}: {slot['title']}\n\n{slot['lesson']}\n\n"
-            f"These questions had problems; write different ones:\n{avoid}\n\n"
-            f"Don't repeat the questions already in the quiz:\n{keep}")
-    return system, [{"role": "user", "content": user}]
+    return system, [{"role": "user", "content": f"Lesson {slot['n']}: {slot['title']}\n\n{slot['lesson']}\n\n{notes}"}]
+
+
+def rewrite_request(slot: dict, questions: list, flagged: dict):
+    """(system, messages) asking for replacements for the flagged questions,
+    same kinds, different content."""
+    avoid = "\n".join(f"- {questions[k]['question']} (problem: {issue})" for k, issue in sorted(flagged.items()))
+    keep = "\n".join(f"- {q['question']}" for k, q in enumerate(questions) if k not in flagged)
+    return _more_request(slot, [questions[k]["type"] for k in sorted(flagged)],
+                         f"These questions had problems; write different ones:\n{avoid}\n\n"
+                         f"Don't repeat the questions already in the quiz:\n{keep}")
+
+
+def fill_request(slot: dict, questions: list):
+    """(system, messages) asking only for the questions a quiz still lacks
+    (missing()), when some of the model's questions couldn't be used."""
+    keep = "\n".join(f"- {q['question']}" for q in questions) or "- (none yet)"
+    return _more_request(slot, missing(questions),
+                         f"Don't repeat the questions already in the quiz:\n{keep}")
+
+
+def salvage(text: str):
+    """The complete questions in a reply that was cut off before its JSON
+    closed (the reply limit), as {"questions": [...]}, or None."""
+    start = (text or "").find("[", (text or "").find('"questions"'))
+    if '"questions"' not in (text or "") or start < 0:
+        return None
+    items, depth, begin, in_str, escape = [], 0, None, False, False
+    for k in range(start + 1, len(text)):
+        c = text[k]
+        if in_str:
+            if escape:
+                escape = False
+            elif c == "\\":
+                escape = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == "{":
+            begin = k if depth == 0 else begin
+            depth += 1
+        elif c == "}" and depth:
+            depth -= 1
+            if depth == 0:
+                try:
+                    items.append(json.loads(text[begin:k + 1]))
+                except ValueError:
+                    pass
+        elif c == "]" and depth == 0:
+            break
+    return {"questions": items} if items else None
+
+
+def _kind(item) -> str:
+    """The question's kind: its "type", or what its fields show when the
+    type is missing or unknown ("multiple_choice", "matching"…)."""
+    kind = item.get("type")
+    if kind in KINDS:
+        return kind
+    if "pairs" in item:
+        return "match"
+    if "options" in item or kind is None:
+        return "choice"
+    return "short"
 
 
 def parse_items(data, rng=random) -> list:
@@ -197,8 +336,7 @@ def parse_items(data, rng=random) -> list:
     out = []
     for item in items if isinstance(items, list) else []:
         if isinstance(item, dict):
-            kind = item.get("type", "choice")
-            q = KINDS[kind](item, rng) if kind in KINDS else None
+            q = KINDS[_kind(item)](item, rng)
             if q:
                 out.append(q)
     return out
@@ -369,5 +507,5 @@ def why_unusable(data) -> str:
         return f"no questions list (keys: {sorted(data)[:5] if isinstance(data, dict) else type(data).__name__})"
     usable = parse_items(data, random.Random(0))
     kinds = {k: sum(1 for q in usable if q["type"] == k) for k in KINDS}
-    given = {k: sum(1 for i in items if isinstance(i, dict) and i.get("type", "choice") == k) for k in KINDS}
+    given = {k: sum(1 for i in items if isinstance(i, dict) and _kind(i) == k) for k in KINDS}
     return f"{len(usable)} usable of {len(items)} given (usable {kinds}, given {given}; {QUESTIONS} needed)"

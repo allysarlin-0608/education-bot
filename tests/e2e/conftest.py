@@ -73,7 +73,10 @@ class App:
         self.procs = []
         env = dict(os.environ, E2E_STATE_DIR=str(self.state), PYTHONUNBUFFERED="1",
                    STREAMLIT_SERVER_COOKIE_SECRET="e2e-cookie-secret-0123456789abcdef-0123456789",
-                   STREAMLIT_BROWSER_GATHER_USAGE_STATS="false")
+                   STREAMLIT_BROWSER_GATHER_USAGE_STATS="false",
+                   # one server here serves many people's lessons a minute; the
+                   # per-minute pacing itself is tested in tests/test_llm.py
+                   GROQ_TPM_LIMIT="10000000")
         secrets = {"GROQ_API_KEY": "fake-key-for-tests"}
         if mode == "public":
             self.fake_port = _free_port()

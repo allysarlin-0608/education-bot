@@ -4,10 +4,13 @@ Every request is fitted to tokens.REQUEST_BUDGET before it is sent, rate
 limits are retried with backoff, and failures reach the user only as a
 short friendly sentence; the details go to the log (Streamlit Cloud:
 Manage app → logs)."""
+import collections
 import json
 import logging
+import os
 import random
 import re
+import threading
 import time
 
 import streamlit as st
@@ -78,6 +81,49 @@ def _wait_seconds(error, attempt: int) -> float:
     return min(wait + random.uniform(0, 0.5), MAX_WAIT_SECONDS)
 
 
+# Groq's free tier allows tokens.MINUTE_LIMIT tokens per minute for the
+# whole key, and refuses (429) a request that would go over. Every request
+# this server sends is noted here (its estimate, then its real use once
+# known), and a request that wouldn't fit waits for the oldest to age out
+# of the minute instead of being refused. Shared by every session.
+_window = collections.deque()          # [sent_at, tokens], oldest first
+_window_lock = threading.Lock()
+
+
+def _minute_limit() -> int:
+    try:
+        return int(os.environ.get("GROQ_TPM_LIMIT", tokens.MINUTE_LIMIT))
+    except ValueError:
+        return tokens.MINUTE_LIMIT
+
+
+def _reserve(requested: int, deadline: float) -> list:
+    """Wait (within the deadline, at most MAX_WAIT_SECONDS) until this
+    request fits in the minute's allowance, then note it. Returns its record."""
+    limit = _minute_limit()
+    while True:
+        with _window_lock:
+            now = _now()
+            while _window and _window[0][0] <= now - 60:
+                _window.popleft()
+            used, wait = sum(t for _, t in _window), 0.0
+            if used + requested > limit:
+                freed = used
+                for sent, t in _window:            # until enough has aged out
+                    freed -= t
+                    wait = sent + 60 - now
+                    if freed + requested <= limit:
+                        break
+            if wait <= 0 or wait > MAX_WAIT_SECONDS or now + wait + REQUEST_TIMEOUT / 4 >= deadline:
+                if wait > 0:
+                    logger.info("minute allowance: %d used + %d requested > %d; sending anyway", used, requested, limit)
+                record = [now, requested]
+                _window.append(record)
+                return record
+        logger.info("minute allowance: %d used + %d requested > %d; waiting %.1fs", used, requested, limit, wait)
+        _sleep(wait + 0.2)
+
+
 def _create(client, **kwargs):
     """client.chat.completions.create with retries. Raises CoachError.
     Every call made is counted against the person's daily allowance
@@ -85,14 +131,21 @@ def _create(client, **kwargs):
     request's estimate while a streamed reply is still coming)."""
     from coach import quota
     deadline = _now() + TOTAL_SECONDS
+    requested = tokens.calibrated(tokens.estimate_request("", kwargs.get("messages", []), 0)) \
+        + kwargs.get("max_completion_tokens", 0)
     for attempt in range(MAX_RETRIES + 1):
+        record = _reserve(requested, deadline)
         try:
             resp = client.chat.completions.create(**kwargs)
             usage = getattr(resp, "usage", None)
-            quota.record(getattr(usage, "total_tokens", None)
-                         or tokens.estimate_request("", kwargs.get("messages", []), kwargs.get("max_completion_tokens", 0)))
+            used = getattr(usage, "total_tokens", None)
+            if isinstance(used, int):
+                record[1] = used          # what the minute really counts once the reply is in
+            quota.record(used or tokens.estimate_request("", kwargs.get("messages", []), kwargs.get("max_completion_tokens", 0)))
             return resp
         except Exception as e:   # noqa: BLE001 - every failure is mapped below
+            if _status(e) in (400, 413, 429):
+                record[1] = 0             # refused outright: nothing was used
             status = _status(e)
             wait = _wait_seconds(e, attempt) if _retryable(e) else 0
             if _retryable(e) and attempt < MAX_RETRIES and _now() + wait + REQUEST_TIMEOUT / 4 < deadline:
@@ -173,9 +226,11 @@ def parse_json(text: str):
     return data if isinstance(data, dict) else None
 
 
-def ask_json(system, messages, max_tokens=tokens.JSON_MAX_TOKENS):
+def ask_json(system, messages, max_tokens=tokens.JSON_MAX_TOKENS, salvage=None):
     """Ask for a JSON object (non-streaming). Returns (data, None) or
-    (None, friendly_error)."""
+    (None, friendly_error). salvage(text) may make something usable of a
+    reply that can't be read whole (e.g. one cut off at max_tokens: the
+    quiz keeps its complete questions) instead of asking again."""
     from coach import quota
     if quota.over_limit():
         return None, LIMIT
@@ -197,9 +252,13 @@ def ask_json(system, messages, max_tokens=tokens.JSON_MAX_TOKENS):
         except CoachError as e:
             return None, str(e)
         data = parse_json(resp.choices[0].message.content)
+        how = "read" if data is not None else "UNREADABLE"
+        if data is None and salvage is not None:
+            data = salvage(resp.choices[0].message.content)
+            how = "SALVAGED" if data is not None else how
         usage = getattr(resp, "usage", None)
         logger.info("json call %s in %.1fs: prompt %s + reply %s tokens, finish_reason=%s",
-                    "read" if data is not None else "UNREADABLE", _now() - started,
+                    how, _now() - started,
                     getattr(usage, "prompt_tokens", "?"), getattr(usage, "completion_tokens", "?"),
                     resp.choices[0].finish_reason)
         if data is not None:

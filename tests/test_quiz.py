@@ -138,3 +138,65 @@ def test_prompt_demands_correct_unique_answers():
     for rule in ("factually correct in the real world", "only correct option", "don't ask",
                  "No two options may both be defensible", "true answer must be\n  among the options"):
         assert rule in quiz.SYSTEM, rule
+
+
+def test_small_slips_are_repaired_not_thrown_away():
+    """Issue A (A3): the repairs that keep a question instead of failing the quiz."""
+    rng = random.Random(1)
+    lettered = {"type": "choice", "question": "Which?", "options": ["A) Gold", "B) Lead", "C) Tin", "D) Iron"], "answer": "A"}
+    q = quiz.parse_items({"questions": [lettered]}, rng)[0]
+    assert sorted(q["options"]) == ["Gold", "Iron", "Lead", "Tin"] and q["options"][q["answer"]] == "Gold"
+    by_text = {"type": "choice", "question": "Which?", "options": ["Gold", "Lead", "Tin", "Iron"], "answer": "lead"}
+    q = quiz.parse_items({"questions": [by_text]}, rng)[0]
+    assert q["options"][q["answer"]] == "Lead"
+    five = {"type": "choice", "question": "Which?", "options": ["Gold", "Lead", "Tin", "Iron", "Zinc"], "answer": 4}
+    q = quiz.parse_items({"questions": [five]}, rng)[0]
+    assert len(q["options"]) == 4 and q["options"][q["answer"]] == "Zinc"
+    repeated = {"type": "choice", "question": "Which?", "options": ["Gold", "Lead", "lead", "Tin", "Iron"], "answer": 0}
+    q = quiz.parse_items({"questions": [repeated]}, rng)[0]
+    assert sorted(q["options"]) == ["Gold", "Iron", "Lead", "Tin"]
+    pairs = {"type": "matching", "question": "Match.", "pairs": [{"term": f"t{j}", "meaning": f"m{j}"} for j in range(5)]}
+    q = quiz.parse_items({"questions": [pairs]}, rng)[0]
+    assert q["type"] == "match" and q["left"] == ["t0", "t1", "t2", "t3"]
+    assert quiz.parse_items({"questions": [{"type": "short_answer", "question": "Why?", "model_answer": "Because."}]})[0]["type"] == "short"
+    # still refused: what can't be repaired without guessing
+    for bad in ({"type": "choice", "question": "Q", "options": ["a", "b", "c"], "answer": 0},            # 3 options
+                {"type": "choice", "question": "Q", "options": ["a", "b", "c", "d"], "answer": 7},       # no such answer
+                {"type": "choice", "question": "Q", "options": ["a", "A", "b", "c", "d"], "answer": 0},  # answer twice
+                {"type": "choice", "question": "Q", "options": ["a", "b", "c", "d"], "answer": "e"}):
+        assert quiz.parse_items({"questions": [bad]}) == [], bad
+
+
+def test_a_quiz_short_of_questions_asks_only_for_what_is_missing():
+    """Issue A (A2): keep the usable questions, ask for the missing kinds only."""
+    reply = model_reply()
+    broken = [k for k, item in enumerate(reply["questions"]) if item["type"] in ("short", "choice")][:2]
+    kinds = sorted(reply["questions"][k]["type"] for k in broken)
+    for k in broken:
+        reply["questions"][k]["options" if reply["questions"][k]["type"] == "choice" else "answer"] = []
+    usable = quiz.parse_items(reply)
+    assert len(usable) == 8 and quiz.assemble(usable) is None
+    assert sorted(quiz.missing(usable)) == kinds
+    system, messages = quiz.fill_request({"n": 2, "title": "Orbits", "lesson": "Lesson text."}, usable)
+    assert "Write exactly 2 replacement questions" in system and "Lesson text." in messages[0]["content"]
+    assert all(q["question"] in messages[0]["content"] for q in usable)       # don't repeat these
+    fresh = [{"type": "choice", "question": "New C?", "options": ["w", "x", "y", "z"], "answer": 1},
+             {"type": "short", "question": "New S?", "answer": "Model."}]
+    done = quiz.assemble(usable + quiz.parse_items({"questions": fresh}))
+    assert [q["type"] for q in done] == ["choice"] * 7 + ["match"] + ["short"] * 2
+    # a question repeated by the model counts once
+    assert quiz.assemble(usable + usable) is None
+    assert quiz.missing(quiz.parse(model_reply())) == []
+
+
+def test_a_reply_cut_off_keeps_its_complete_questions():
+    """Issue A: a quiz cut off at the reply limit isn't thrown away whole."""
+    import json
+    text = json.dumps(model_reply())
+    cut = text[:text.index('"type"', len(text) // 2) - 3]          # mid-list, inside nothing
+    assert quiz.salvage(cut + ', {"type": "choice", "question": "Half {a} \\"b\\" [c')["questions"]
+    kept = quiz.parse_items(quiz.salvage(cut))
+    assert 0 < len(kept) < 10
+    assert quiz.salvage("no json at all") is None and quiz.salvage('{"questions": [') is None
+    tricky = '{"questions": [{"type": "short", "question": "Is } a brace? \\"yes\\"", "answer": "Yes {"}, {"ty'
+    assert quiz.salvage(tricky)["questions"][0]["answer"] == "Yes {"

@@ -1,8 +1,6 @@
-import time
-
 import streamlit as st
 
-from coach import auth, core, curriculum, lesson_view, llm, place, progress_bar, quiz, settings, steps, tokens, ui
+from coach import auth, core, curriculum, lesson_view, llm, place, progress_bar, quiz, quizgen, settings, steps, tokens, ui
 
 log = st.session_state.coach_log
 config = ui.config()        # her subjects, daily pace and starting levels
@@ -102,53 +100,21 @@ def run_followup(i, text):
 
 
 def run_quiz(i):
-    """Write a fresh quiz for lesson i (a new set on every retake), have a
-    second call check every keyed answer, and rewrite any question that
-    fails the check, until the whole quiz passes."""
+    """Write a fresh quiz for lesson i (a new set on every retake), checked
+    answer by answer (coach/quizgen.py)."""
     entry = day_entry()
     slot = entry["lessons"][i]
     if curriculum.blocking(entry["lessons"], i):     # strictly in order
         st.rerun()
-    started = time.monotonic()
-    system, messages = quiz.request(slot)
-    with st.spinner("Writing your quiz…"):
-        data, error = llm.ask_json(system, messages, max_tokens=tokens.QUIZ_MAX_TOKENS)
-    questions = quiz.parse(data) if data else None
-    if error or questions is None:
-        llm.logger.warning("quiz for %s lesson %s failed after %.1fs: %s", topic, slot["n"], time.monotonic() - started,
-                           error or f"unusable quiz: {quiz.why_unusable(data)}")
-        failed("quiz", error or llm.FAILED, slot, i=i)
-    for attempt in range(quiz.CHECK_ROUNDS + 1):
-        system, messages = quiz.check_request(questions)
-        with st.spinner("Checking every answer…"):
-            data, error = llm.ask_json(system, messages)
-        flagged = quiz.problems(data, len(questions)) if data else None
-        if error or flagged is None:
-            llm.logger.warning("quiz check for %s lesson %s failed after %.1fs: %s", topic, slot["n"],
-                               time.monotonic() - started, error or f"unreadable verdict: {str(data)[:200]}")
-            failed("quiz", error or llm.FAILED, slot, i=i)
-        # the rejection rate of every check, flagged or not (criterion 1.5)
-        llm.logger.info("quiz check round %d: %d of %d questions rejected%s", attempt + 1, len(flagged),
-                        len(questions), f" {flagged}" if flagged else "")
-        if not flagged:
-            break
-        if attempt == quiz.CHECK_ROUNDS:
-            llm.logger.warning("quiz for %s lesson %s gave up: still %d flagged after %d rewrites",
-                               topic, slot["n"], len(flagged), quiz.CHECK_ROUNDS)
-            failed("quiz", "I couldn't write a quiz whose answers I'm sure of this time. Try again.", slot, i=i)
-        system, messages = quiz.rewrite_request(slot, questions, flagged)
-        with st.spinner(f"Rewriting {len(flagged)} {'question' if len(flagged) == 1 else 'questions'}…"):
-            data, error = llm.ask_json(system, messages, max_tokens=tokens.QUIZ_MAX_TOKENS)
-        fresh = quiz.replace(questions, flagged, quiz.parse_items(data)) if data else None
-        if error or fresh is None:
-            llm.logger.warning("quiz rewrite for %s lesson %s failed: %s", topic, slot["n"],
-                               error or f"replacements don't fit: {quiz.why_unusable(data)}")
-            failed("quiz", error or llm.FAILED, slot, i=i)
-        questions = fresh
-    llm.logger.info("quiz for %s lesson %s ready in %.1fs", topic, slot["n"], time.monotonic() - started)
+    questions, error = quizgen.make(slot, f"{topic} lesson {slot['n']}", step=st.spinner)
+    if questions is None:
+        failed("quiz", error, slot, i=i)
     slot["quiz"] = quiz.new(questions, slot.get("quiz"))
     ui.save_entry(log, entry)
     st.rerun()
+
+
+PREPARING = "Preparing your quiz…"
 
 
 def show_retry(slot, kinds):
@@ -158,12 +124,17 @@ def show_retry(slot, kinds):
     retry = st.session_state.get("coach_retry")
     if not retry or retry["key"] != chat_key(slot) or retry["kind"] not in kinds:
         return False
-    st.warning(retry["error"])
-    if st.button("Retry", key=f"coach_retry_{retry['kind']}"):
+    spot = st.empty()           # the message and its Retry give way while it runs (no second click)
+    with spot.container():
+        st.warning(retry["error"])
+        again = st.button("Retry", key=f"coach_retry_{retry['kind']}")
+    if again:
         st.session_state.coach_retry = None
+        spot.empty()
         if retry["kind"] == "kickoff":
             run_kickoff(retry["i"])
         elif retry["kind"] == "quiz":
+            spot.button(PREPARING, disabled=True, type="primary", use_container_width=True, key="quiz_preparing")
             run_quiz(retry["i"])
         elif retry["kind"] == "grade":
             run_grading(retry["i"])
@@ -491,9 +462,9 @@ elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
         st.caption(f"{quiz.QUESTIONS} questions on this lesson: multiple choice, matching and short answers. "
                    f"Score {quiz.PASS_MARK}% or more to finish it.")
     retrying = show_retry(slot, ("quiz",))
-    take = st.empty()               # hidden while the quiz is being written
+    take = st.empty()               # can't be pressed again while the quiz is being written
     if not retrying and take.button("Take the quiz" if q is None else "Try a new quiz", type="primary", use_container_width=True):
-        take.empty()
+        take.button(PREPARING, disabled=True, type="primary", use_container_width=True, key="quiz_preparing")
         st.session_state.coach_retry = None
         run_quiz(i)
 else:
