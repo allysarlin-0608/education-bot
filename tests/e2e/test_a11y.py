@@ -29,8 +29,6 @@ NAMELESS = """() => {
     .map(e => e.outerHTML.slice(0, 160));
 }"""
 
-# BUG-016 (waiting for a decision): dimmed on purpose; measured separately below
-DIMMED = '[class*="st-key-step_"][class*="_locked"], [class*="st-key-cal_20"][class*="_future"], [class*="st-key-cal_20"][class*="_out"]'
 
 CONTRAST = """(skip) => {
   const parse = c => { const m = c.match(/rgba?\\(([^)]+)\\)/); if (!m) return null;
@@ -95,7 +93,7 @@ def test_names_and_contrast_on_every_page(public_app, pages, scheme):
         assert flows.wait_text(p.page, marker, 15), path
         p.page.wait_for_timeout(600)                     # entrance motion settles
         nameless = p.page.evaluate(NAMELESS)
-        low = p.page.evaluate(CONTRAST, DIMMED)
+        low = p.page.evaluate(CONTRAST, "")
         if nameless or low:
             problems[path] = {"no name": nameless[:8], "contrast": low[:12]}
     assert not problems, problems
@@ -155,9 +153,8 @@ def test_reduced_motion_turns_movement_off(public_app, pages):
     assert not moving, f"still animated with reduced motion: {moving}"
 
 
-@pytest.mark.xfail(strict=True, reason="BUG-016: locked steps and future/other-month days are dimmed below 4.5:1 "
-                                       "on purpose; waiting for a decision")
 def test_dimmed_states_contrast(public_app, pages):
+    """BUG-016: locked steps and future or other-month days read at 4.5:1."""
     covers("W-records-name", "W-daily-name")
     app = public_app
     p = person(app, pages)

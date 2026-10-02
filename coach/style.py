@@ -582,7 +582,8 @@ LIQUID = """
 [class*="st-key-step_"][class*="_completed"] button p::after { content: "✓"; font-size: 10px; margin-left: 2px; }
 [class*="st-key-step_"][class*="_current"] button p { color: var(--label); font-weight: 600; }
 [class*="st-key-step_"][class*="_locked"] button { cursor: default; }
-[class*="st-key-step_"][class*="_locked"] button p { opacity: 0.35; }
+/* locked: the lightest grey that still reads at 4.5:1 (BUG-016), not a fade */
+[class*="st-key-step_"][class*="_locked"] button p { color: var(--label-3); font-weight: 400; }
 [class*="st-key-lesson_steps"] button [data-testid="stMarkdownContainer"] { overflow: visible !important; }
 [class*="st-key-lesson_steps"] button p { position: relative; }
 [class*="st-key-step_"][class*="_viewing"] button p::before {      /* 3px under the number */
@@ -855,10 +856,13 @@ PROGRESS = """
 [class*="st-key-cal_20"][class*="_done_"] .stButton button { color: var(--label); }
 [class*="st-key-cal_20"][class*="_done_"] .stButton button::after { background: var(--label); }
 [class*="st-key-cal_20"][class*="_partial_"] .stButton button { color: var(--label-2); }
-[class*="st-key-cal_20"][class*="_out"] .stButton button { opacity: 0.4; }
-/* days to come: faint, but open to a tap (the day says what's planned) */
-[class*="st-key-cal_20"][class*="_future_"] .stButton button { opacity: 0.45; }
-[class*="st-key-cal_20"][class*="_future_"][class*="_sel"] .stButton button { opacity: 0.8; }
+/* the neighbouring months' days and days to come: the lightest grey that
+   still reads at 4.5:1 (BUG-016), not a fade; still open to a tap (the day
+   says what's planned). Only the activity mark under an outside day fades. */
+[class*="st-key-cal_20"][class*="_out"] .stButton button { color: var(--label-3); }
+[class*="st-key-cal_20"][class*="_out"] .stButton button::after { opacity: 0.4; }
+[class*="st-key-cal_20"][class*="_future_"] .stButton button { color: var(--label-3); }
+[class*="st-key-cal_20"][class*="_future_"][class*="_sel"] .stButton button { color: var(--label-2); }
 [class*="st-key-cal_20"][class*="_today"] .stButton button p { font-weight: 700; color: var(--strong); }
 @media (hover: hover) { [class*="st-key-cal_20"]:not([class*="_sel"]) .stButton button:not(:disabled):not([data-picking]):hover { background: var(--glass); border: none; box-shadow: none; } }
 /* the day picked: glass with a fine ink ring, so it reads at a glance. A
