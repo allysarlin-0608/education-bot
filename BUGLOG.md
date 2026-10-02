@@ -18,12 +18,12 @@ Status: open · fixed (commit) · needs decision.
 | BUG-008 | P1 | Progress / Backup and restore (import) | Any size of file was read into memory on import | fixed (d58ade9) |
 | BUG-009 | P1 | Today / lesson and chat | Leaving while a lesson streamed left a lesson-less day with the quiz offered | fixed (aadd4a9) |
 | BUG-010 | P2 | Deploy | Four dependencies were unpinned | fixed (95fc0e4) |
-| BUG-011 | P2 | Personal mode / password gate | Unlimited password attempts on the personal app | open — needs your decision |
+| BUG-011 | P2 | Personal mode / password gate | Unlimited password attempts on the personal app | fixed (b3359f1) |
 | BUG-012 | P2 | Account menu (public) | Choosing Settings from the account menu left the menu open over the Settings page | fixed (8316212) |
 | BUG-013 | P2 | Settings / browser Back | Back from Settings needed several presses (the page added history entries) | fixed (e17f376) |
 | BUG-014 | P3 | Reading / plan preview | 'Adjust a day yourself' closed after every move | fixed (07d6c41) |
 | BUG-015 | P2 | Every page (captions) | Caption text fell below 4.5:1 contrast | fixed (171c5a7) |
-| BUG-016 | P3 | Today steps / Progress calendar | Locked lesson steps and future or other-month calendar days are 1.7-1.8:1 | open — needs your decision |
+| BUG-016 | P3 | Today steps / Progress calendar | Locked lesson steps and future or other-month calendar days are 1.7-1.8:1 | fixed (a32027b) |
 | BUG-017 | P2 | Top bar (every page) | The account menu and the app menu showed no keyboard focus | fixed (c1d4902) |
 | BUG-018 | P2 | Today (and every page) after a save error | After a save error, the next click closed the open panels | fixed (a675a1d) |
 | BUG-019 | P2 | Reading / talking with the coach | Leaving while the coach checked a message left it unanswered with no way to resend | fixed (e0078c8) |
@@ -36,6 +36,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-026 | P2 | Search | Issue E: the first Enter sometimes didn't search (and could leave the box empty) | fixed (0e2e795) |
 | BUG-027 | P2 | Today (chat box) | Issue F: the floating chat box covered Retry (and other new controls) | fixed (aa01909) |
 | BUG-028 | P1 | Settings (subject showcase) | Issue C: the showcase said 'Not chosen' for a subject Starting level listed as chosen | fixed (18e3af0) |
+| BUG-029 | P0 | Today / quiz | Issue A: the first 'Take the quiz' often failed with 'didn't manage' | fixed (5a998f7) — real-model check pending |
 
 ## Details
 
@@ -149,14 +150,14 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-011 (P2) — Unlimited password attempts on the personal app
 - **Page / flow:** Personal mode / password gate
-- **Status:** open — needs your decision
+- **Status:** fixed (b3359f1) — your decision: (b) automatic unlock after a 15-minute cooldown
 - **Steps to reproduce:** Personal app: submit wrong passwords in a loop (each new session starts fresh)
 - **Expected:** Attempts are limited (1.6 limits not bypassable)
 - **Actual:** No limit or delay; only the password's strength protects the data
 - **Root cause:** require_password compares and reruns; no attempt counter
-- **Fix:** Proposed: a per-server delay after 5 wrong tries (e.g. 30 s, doubling). Changes personal-mode behaviour, so waiting for approval
-- **Files changed:** coach/ui.py (proposed)
-- **Covered by:** to add with the fix
+- **Fix:** Five wrong tries in a row (counted for the whole server, so a new session doesn't reset it) close the gate for 15 minutes; nothing is checked meanwhile, not even the right password; then it opens by itself. A right password resets the count. A server restart also clears it. Trade-off: someone guessing can keep you out for 15 minutes at a time
+- **Files changed:** coach/ui.py
+- **Covered by:** tests/test_app_password.py::test_five_wrong_tries_close_the_gate_for_15_minutes_then_it_opens, ::test_a_right_password_resets_the_count
 
 ### BUG-012 (P2) — Choosing Settings from the account menu left the menu open over the Settings page
 - **Page / flow:** Account menu (public)
@@ -204,14 +205,14 @@ Status: open · fixed (commit) · needs decision.
 
 ### BUG-016 (P3) — Locked lesson steps and future or other-month calendar days are 1.7-1.8:1
 - **Page / flow:** Today steps / Progress calendar
-- **Status:** open — needs your decision
+- **Status:** fixed (a32027b) — your decision: (a) at least 4.5:1
 - **Steps to reproduce:** Today: the numbers of locked lessons; Progress: days after today and days of the neighbouring months
 - **Expected:** 4.5:1 for text (1.7), unless the control is inactive
 - **Actual:** Dimmed by opacity to 1.7:1 (steps) and 1.8:1 (days); both can still be pressed (a message, or the day's card)
-- **Root cause:** The dimming is the design's way of saying 'not yet' / 'not this month'
-- **Fix:** Proposed: dim to the lightest readable grey (--label-3, 4.6:1) instead of opacity, keeping the lock/future meaning with the existing marks. Changes the look, so waiting for approval
-- **Files changed:** coach/style.py (proposed)
-- **Covered by:** tests/e2e/test_a11y.py::test_names_and_contrast_on_every_page
+- **Root cause:** The dimming was done with opacity, which takes the text below 4.5:1
+- **Fix:** The lightest grey that still reads at 4.5:1 (--label-3) instead of opacity; only the activity mark under an outside day still fades
+- **Files changed:** coach/style.py
+- **Covered by:** tests/e2e/test_a11y.py::test_dimmed_states_contrast (no longer an expected failure), ::test_names_and_contrast_on_every_page (no exemption)
 
 ### BUG-017 (P2) — The account menu and the app menu showed no keyboard focus
 - **Page / flow:** Top bar (every page)
@@ -344,3 +345,14 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** A tap's mark counts only while pending (until the row shows the server's answer, at most 2.5 s), and the showcase re-checks after 2.6 s; one helper, settings.chosen_subjects(), reads user_settings.subjects for Settings, Today's schedule (topic_for), Progress and the subject pages
 - **Files changed:** coach/motion.py, coach/settings.py, views/settings.py, tests/e2e/test_settings.py
 - **Covered by:** tests/e2e/test_settings.py::test_add_remove_readd_every_page_agrees, ::test_the_showcase_never_keeps_a_tap_the_server_didnt_take (fails on the old script with exactly 'Not chosen')
+
+### BUG-029 (P0) — Issue A: the first 'Take the quiz' often failed with 'didn't manage'
+- **Page / flow:** Today / quiz
+- **Status:** fixed (5a998f7) — the real-model check (30 quizzes, ≥29 on the first click, p95 < 30 s) runs with the test key over two days
+- **Steps to reproduce:** Take the quiz while the model writes one question with three options, or its reply is cut off at the reply limit (fake: mode=malformed_quiz / truncated_quiz)
+- **Expected:** A quiz on the first click
+- **Actual:** 'The coach didn't manage to reply this time' and a Retry
+- **Root cause:** quiz.parse needed ten usable questions from one reply: a single slip, or a reply cut off by the reply limit (reasoning tokens count against it), threw the whole quiz away; nothing tried again and nothing was logged. Also the lesson, the quiz and its check together can pass 8000 tokens in a minute (429s)
+- **Fix:** Slips repaired where that's safe; complete questions kept from a cut-off reply; only the missing kinds asked for, then the whole quiz again (at most 2 extra calls); requests paced to the minute's allowance; 'Preparing your quiz…' disabled button while it's written (also after Retry). The pipeline is in coach/quizgen.py, measured on the real model by tools/measure_quiz.py
+- **Files changed:** coach/quiz.py, coach/quizgen.py, coach/llm.py, coach/tokens.py, views/daily.py
+- **Covered by:** tests/test_quiz.py, tests/test_quizgen.py, tests/test_llm.py (pacing, salvage), tests/e2e/test_ai.py::test_an_incomplete_quiz_is_completed_on_the_first_click, ::test_the_quiz_button_says_it_is_preparing_and_cannot_be_pressed_again, ::test_retry_after_a_failed_quiz_also_cannot_be_pressed_twice, ::test_thirty_quizzes_in_a_row_each_on_the_first_click (30/30 on the fake model)
