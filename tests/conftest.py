@@ -13,12 +13,14 @@ def pytest_ignore_collect(collection_path, config):
 
 @pytest.fixture(autouse=True)
 def _fresh_server_state():
-    """Each test starts with an empty per-minute token window (llm.py),
-    which is kept for the whole server."""
+    """Each test starts with an empty per-minute token window (llm.py) and
+    no wrong-password count (ui.py): both are kept for the whole server."""
     def clear():
-        llm = sys.modules.get("coach.llm")          # (e2e: the app has its own process)
+        llm, ui = sys.modules.get("coach.llm"), sys.modules.get("coach.ui")   # (e2e: the app has its own process)
         if llm:
             llm._window.clear()
+        if ui:
+            ui._gate.update(failures=0, until=0.0)
     clear()
     yield
     clear()

@@ -85,3 +85,43 @@ def test_a_personal_app_without_a_key_takes_one_and_never_shows_it(monkeypatch):
     box.input("gsk_typed_by_me").run()
     assert at.session_state.api_key == "gsk_typed_by_me"
     assert not any(t.label == "Groq API key" for t in at.text_input), "the box goes once a key is set"
+
+
+def test_five_wrong_tries_close_the_gate_for_15_minutes_then_it_opens(monkeypatch):
+    """BUG-011: after five wrong passwords in a row (any session) nothing is
+    checked for 15 minutes, not even the right one; then it opens by itself."""
+    from coach import ui
+    now = {"t": 1_000_000.0}
+    monkeypatch.setattr(ui, "_clock", lambda: now["t"])
+    monkeypatch.setitem(ui._gate, "failures", 0)
+    monkeypatch.setitem(ui._gate, "until", 0.0)
+    for k in range(5):
+        at, db = start(monkeypatch, "correct horse")            # a new session each time
+        at.text_input[0].input(f"guess {k}").run()
+        at.button[0].click().run()
+    assert at.error[0].value == "Too many wrong tries. Try again in 15 minutes."
+    at, db = start(monkeypatch, "correct horse")
+    assert at.error[0].value.startswith("Too many wrong tries")     # shown to a new session too
+    at.text_input[0].input("correct horse").run()
+    at.button[0].click().run()
+    assert at.error[0].value.startswith("Too many wrong tries") and db.calls == []
+    now["t"] += 14 * 60 + 1
+    at, db = start(monkeypatch, "correct horse")
+    assert at.error[0].value == "Too many wrong tries. Try again in 1 minute."
+    now["t"] += 60
+    at, db = start(monkeypatch, "correct horse")
+    assert not at.error
+    at.text_input[0].input("correct horse").run()
+    at.button[0].click().run()
+    assert not at.exception and not at.error and any(method == "GET" for method, *_ in db.calls)
+
+
+def test_a_right_password_resets_the_count(monkeypatch):
+    from coach import ui
+    monkeypatch.setitem(ui._gate, "failures", 0)
+    monkeypatch.setitem(ui._gate, "until", 0.0)
+    for entered in ("a", "b", "c", "d", "correct horse", "e", "f"):
+        at, _ = start(monkeypatch, "correct horse")
+        at.text_input[0].input(entered).run()
+        at.button[0].click().run()
+    assert ui._gate["failures"] == 2 and ui._gate["until"] == 0.0

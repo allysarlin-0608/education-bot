@@ -1,7 +1,10 @@
 """Streamlit helpers shared by the app's pages."""
 import hmac
 import logging
+import math
 import os
+import threading
+import time
 from datetime import datetime
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
@@ -29,6 +32,40 @@ PASSWORD_MISSING = (
 )
 
 
+# Wrong passwords (BUG-011): after MAX_TRIES in a row the gate closes for
+# COOLDOWN_SECONDS, then opens again by itself. Counted for the whole server,
+# not per session, since a new session costs nothing; a server restart
+# clears it.
+MAX_TRIES = 5
+COOLDOWN_SECONDS = 15 * 60
+_gate = {"failures": 0, "until": 0.0}
+_gate_lock = threading.Lock()
+
+
+def _clock() -> float:
+    return time.time()
+
+
+def _cooling_down() -> float:
+    """Seconds left before passwords are checked again (0: open)."""
+    with _gate_lock:
+        return max(0.0, _gate["until"] - _clock())
+
+
+def _check_password(entered: str, expected: str) -> bool:
+    with _gate_lock:
+        if _gate["until"] > _clock():
+            return False
+        if hmac.compare_digest(entered.encode(), expected.encode()):
+            _gate["failures"] = 0
+            return True
+        _gate["failures"] += 1
+        if _gate["failures"] >= MAX_TRIES:
+            _gate["failures"], _gate["until"] = 0, _clock() + COOLDOWN_SECONDS
+            logger.warning("password gate: %d wrong tries, closed for %d minutes", MAX_TRIES, COOLDOWN_SECONDS // 60)
+        return False
+
+
 def require_password():
     """Basic gate for a public URL: nothing is loaded until the password
     from secrets (APP_PASSWORD) is entered in this session."""
@@ -47,10 +84,14 @@ def require_password():
     with st.form("login"):
         entered = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Enter", type="primary")
-    if submitted:
-        if hmac.compare_digest(entered.encode(), expected.encode()):
-            st.session_state.coach_authed = True
-            st.rerun()
+    if submitted and _check_password(entered, expected):
+        st.session_state.coach_authed = True
+        st.rerun()
+    left = _cooling_down()
+    if left:
+        minutes = math.ceil(left / 60)
+        st.error(f"Too many wrong tries. Try again in {minutes} {'minute' if minutes == 1 else 'minutes'}.")
+    elif submitted:
         st.error("Wrong password. Try again.")
     st.stop()
 
