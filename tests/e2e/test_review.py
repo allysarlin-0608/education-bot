@@ -7,10 +7,17 @@ import json
 import time
 from datetime import date, timedelta
 
+import sys
+from pathlib import Path
+
 import pytest
 
 import flows
 from conftest import covers
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+import seed_history  # noqa: E402
 
 _n = itertools.count()
 D = date(2026, 11, 9)
@@ -65,7 +72,10 @@ def test_review_the_next_day(public_app, pages, clock, width):
     n = len([c for c in cards])
     assert flows.wait_text(page, f"Review · {n} cards due", 10)
     flows.button(p, f"Review · {n} cards due", exact=False)
-    assert "/review" in page.url and flows.wait_text(page, f"{n} left today", 10)
+    assert "/review" in page.url and flows.wait_text(page, f"0 done · {n} to go today", 10)
+    page.wait_for_timeout(600)
+    on = page.evaluate("() => [...document.querySelectorAll('.st-key-topnav [data-cx-on]')].map(a => a.innerText.trim())")
+    assert len(on) == 1 and on[0].endswith("Review"), f"the bar shows the page that is on: {on}"
     # a choice question: wrong on purpose, then right ones
     first = True
     for _ in range(n):
@@ -147,7 +157,7 @@ def test_matching_recall_not_yet_keep_and_show_more(public_app, pages, clock):
                               "lesson": "", "followups": [], "kickoff": "", "lessons": [slot]}])
     flows.open_app(p, app, "/review")
     page = p.page
-    assert flows.wait_text(page, "2 left today", 15)
+    assert flows.wait_text(page, "2 to go today", 15)
     boxes = page.locator('[data-testid="stSelectbox"]')
     flows.choose(p, boxes.nth(0), "The line Earth spins around")
     flows.choose(p, boxes.nth(1), "One trip around the Sun")
@@ -171,3 +181,61 @@ def test_matching_recall_not_yet_keep_and_show_more(public_app, pages, clock):
     flows.button(p, "Keep it")
     flows.idle(page)
     assert flows.wait_text(page, "35 of 35 cards", 10)
+
+
+CONTRAST = """(el) => {
+  const rgb = (c) => { const v = c.match(/[\\d.]+/g).slice(0, 4).map(Number);    // rgb(…) or color(srgb 0-1 …)
+    return c.startsWith('color(') ? v.map((x, i) => i < 3 ? x * 255 : x) : v; };
+  const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  let bg = null;
+  for (let e = el; e && !bg; e = e.parentElement) { const c = rgb(getComputedStyle(e).backgroundColor); if (c.length < 4 || c[3] > 0.5) bg = c; }
+  const fg = rgb(getComputedStyle(el).color);
+  const a = fg.length > 3 ? fg[3] : 1;
+  const mix = fg.slice(0, 3).map((v, i) => v * a + bg[i] * (1 - a));
+  const [l1, l2] = [lum(mix), lum(bg)].sort((x, y) => y - x);
+  return (l1 + 0.05) / (l2 + 0.05);
+}"""
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_lessons_from_before_review_come_back_and_the_bar_says_so(public_app, pages, clock, scheme):
+    covers("W-topnav-p", "W-auth-account_menu")
+    app = public_app
+    first = review_from()
+    clock(first, "02:00:00")
+    p = pages(width=1180, scheme=scheme)
+    email = f"rev{next(_n)}-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=email)
+    flows.onboard(p)
+    app.seed_entries(email, seed_history.build(first - timedelta(days=1), days=8))
+    flows.open_app(p, app)
+    page = p.page
+    assert flows.wait_text(page, "cards due", 10), "old lessons' cards are due on the first day"
+    page.wait_for_timeout(800)
+    dot = page.evaluate("() => [...document.querySelectorAll('.st-key-topnav [data-due]')].map(a => a.innerText.trim())")
+    assert len(dot) == 1 and dot[0].endswith("Review"), dot
+    assert cards_of(app, email) == [], "nothing is written for old lessons before she acts"
+    flows.go(p, app, "Review")
+    assert "/review" in page.url
+    flows.button(p, "Show the answer") if page.locator('[data-testid="stRadio"]').count() == 0 else None
+    if page.get_by_role("button", name="I knew it").count():
+        flows.button(p, "I knew it")
+    else:
+        flows.tap(p, page.locator('[data-testid="stRadio"]').first.locator("label").first)
+        flows.button(p, "Check")
+    flows.idle(page)
+    kept = cards_of(app, email)
+    assert kept and len({c["n"] for c in kept}) == 1, "answering keeps that one lesson's cards"
+    # the account menu reads clearly in either scheme
+    flows.tap(p, page.locator(".st-key-account_menu button").first)
+    assert flows.wait_text(page, email, 10)
+    for sel in (".acct-name", ".acct-email", ".acct-out"):
+        loc = page.locator(sel).first
+        if loc.count() and loc.inner_text().strip():
+            assert loc.evaluate(CONTRAST) >= 4.5, f"{sel} in {scheme}: {loc.evaluate(CONTRAST):.2f}"
+
+
+def review_from():
+    from coach import review
+    return review.LEGACY_FROM

@@ -392,7 +392,7 @@ CSS = f"""
 .jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
 [data-testid="stElementContainer"]:has(#coach-place) {{ display: none; }}
 [data-testid="stElementContainer"]:has(#lg-hook), [data-testid="stElementContainer"]:has(#cx-hook) {{ display: none; }}
-[data-testid="stElementContainer"]:has(#keep-clear-hook), [data-testid="stElementContainer"]:has(#search-enter-hook) {{ display: none; }}   /* scripts, no box */     /* the scroll memory, no box */
+[data-testid="stElementContainer"]:has(#review-due), [data-testid="stElementContainer"]:has(#keep-clear-hook), [data-testid="stElementContainer"]:has(#search-enter-hook) {{ display: none; }}   /* scripts, no box */     /* the scroll memory, no box */
 [data-testid="stElementContainer"]:has(.jump-anchor) {{ margin-bottom: calc(-1 * var(--space-5)); }}
 html {{ scroll-behavior: smooth; }}
 [data-testid="stAppScrollToBottomContainer"], [data-testid="stMain"] {{ scroll-behavior: smooth; }}
@@ -618,6 +618,16 @@ LIQUID = """
 }
 
 /* all of today's lessons done: the summary card */
+/* review: today's pace as a hairline; the collection as quiet rows */
+.rv-pace { margin: var(--space-2) 0 var(--space-4); }
+.rv-line { height: 2px; border-radius: 1px; background: var(--hair); overflow: hidden; }
+.rv-line span { display: block; height: 100%; background: var(--label); transition: width 480ms var(--ease); }
+.rv-pace p { margin: var(--space-2) 0 0; font-size: 0.8125rem; color: var(--label-3); font-variant-numeric: tabular-nums; }
+[class*="st-key-rv_row_"] { padding: var(--space-3) 0; border-bottom: 1px solid var(--hair); gap: var(--space-1) !important; }
+[class*="st-key-rv_row_"] [data-testid="stMarkdownContainer"] p { margin: 0; }
+.st-key-rv_today, .st-key-rv_collection { max-width: 40rem; }
+@media (prefers-reduced-motion: reduce) { .rv-line span { transition: none; } }
+
 /* the day's done: no card, just type and space, settling in once */
 .st-key-day_done { padding: var(--space-6) 0 var(--space-5); }
 .done { max-width: 34rem; animation: done-in 640ms var(--ease) both; }
@@ -1440,6 +1450,11 @@ SETUP = """
   font-variation-settings: "FILL" 0, "wght" 300;     /* as light as the search glass beside it */
 }
 .st-key-topnav [data-testid="stPageLink-NavLink"][data-cx-on] [data-testid="stIconMaterial"] { color: var(--label) !important; }
+/* cards to review: a small dot after Review (or its icon), never a number shouting */
+.st-key-topnav [data-testid="stPageLink-NavLink"][data-due] { position: relative; }
+.st-key-topnav [data-testid="stPageLink-NavLink"][data-due]::after {
+  content: ""; position: absolute; top: 14px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--label);
+}
 @media (max-width: 640px) {
   .st-key-topnav [data-testid="stPageLink-NavLink"] > span:has([data-testid="stIconMaterial"]) { display: inline-flex; align-items: center; margin: 0; }
   .st-key-topnav [data-testid="stPageLink-NavLink"]:has([data-testid="stIconMaterial"]) > span:not(:has([data-testid="stIconMaterial"])) {
@@ -1852,10 +1867,13 @@ ACCOUNT = """
   outline: 1px solid var(--outline) !important; outline-offset: 2px; }
 .acct-who { display: flex; align-items: center; gap: var(--space-3); }
 .acct-pic { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; }
-.acct-out { display: block; padding: 6px 2px; font-size: 0.9375rem; color: var(--label) !important; text-decoration: none !important; }
+/* the menu opens outside the page (like the other floating menus), where the
+   page's colour tokens don't follow dark mode: its text takes the theme's own
+   text colour (currentColor), full strength or a readable 72% for the email */
+.acct-out { display: flex; align-items: center; min-height: 40px; padding: 0 2px; font-size: 0.9375rem; color: currentColor !important; text-decoration: none !important; }
 .acct-out:hover { text-decoration: underline !important; }
-.acct-name { margin: 0; font-weight: 500; color: var(--label); }
-.acct-email { margin: 2px 0 8px; font-size: 0.8125rem; color: var(--label-2); }
+.acct-name { margin: 0; font-weight: 500; color: currentColor; }
+.acct-email { margin: 2px 0 8px; font-size: 0.8125rem; color: rgb(from currentColor r g b / 0.72); }
 
 /* ---------- Settings: Your data ---------- */
 .del-warn { margin: 0 0 8px; font-size: 0.9375rem; color: var(--label); }

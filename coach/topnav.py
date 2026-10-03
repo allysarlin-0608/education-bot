@@ -11,15 +11,22 @@ from datetime import date
 
 import streamlit as st
 
-from coach import auth, search, settings, ui
+from coach import auth, review, search, settings, ui
+
+
+ICONS = {"Review": ":material/replay:", "Reading": ":material/menu_book:", "Settings": ":material/settings:"}
 
 
 def render(pages: list, log: dict) -> None:
     with st.container(key="topnav", horizontal=True, vertical_alignment="center", gap=None):
         with st.container(key="topnav_items", horizontal=True, vertical_alignment="center", gap=None):
             for p in pages:                        # (a subject's world isn't in the bar)
-                # Settings: its name on a wide page, a gear where the bar is narrow (style.py)
-                st.page_link(p, label=p.title, icon=":material/settings:" if p.title == "Settings" else None)
+                # its name on a wide page; where the bar is narrow, Review, Reading and
+                # Settings become icons (style.py), like Search beside them
+                st.page_link(p, label=p.title, icon=ICONS.get(p.title))
+        # cards waiting: a quiet dot on Review (place.py puts it on the link)
+        waiting = len(review.due(log, ui.today()))
+        st.html(f'<div id="review-due" hidden data-n="{waiting}"></div>')
         if st.button("Search", icon=":material/search:", key="nav_search"):
             _search(log)
         if auth.is_public():

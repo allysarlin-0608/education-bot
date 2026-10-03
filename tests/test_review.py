@@ -89,3 +89,49 @@ def test_cards_survive_a_backup_and_bad_ones_are_dropped():
     cards = restored["entries"][0]["lessons"][0]["cards"]
     assert [c["kind"] for c in cards] == ["word"] * 4 + ["point"]
     assert review.saved(restored["entries"][0]["lessons"][0], "Key idea")
+
+
+def test_lessons_from_before_review_give_cards_spread_over_days_without_writing():
+    """Part 1: what she learned before review existed comes back, two
+    lessons' worth a day from LEGACY_FROM, and nothing is stored until she acts."""
+    old = []
+    for k in range(5):
+        s = slot()
+        s["n"] = k + 1
+        s["completed"] = True
+        old.append({"date": f"2026-09-{20 + k}", "topic": "fashion", "completed": True, "lessons": [s]})
+    log = {"entries": old}
+    snapshot = json.dumps(log, sort_keys=True)
+    cards = review.cards(log)
+    assert len(cards) == 5 * (1 + 4)                         # key idea + 4 words each
+    dues = sorted({c["due"] for _, _, c in cards})
+    assert dues == [str(review.LEGACY_FROM + timedelta(days=d)) for d in (0, 1, 2)]
+    assert json.dumps(log, sort_keys=True) == snapshot      # worked out, not written
+    assert len(review.due(log, review.LEGACY_FROM)) == 10     # two lessons' worth on the first day
+    # answering one keeps that lesson's cards; the other lessons keep their days
+    e, s, c = review.due(log, review.LEGACY_FROM)[0]
+    review.keep(log, s)
+    review.grade(review.find(log, c["id"])[2], True, review.LEGACY_FROM)
+    assert len(s["cards"]) == 5 and len(review.cards(log)) == 25
+    assert sorted({c["due"] for _, s2, c in review.cards(log) if s2 is not s}) == dues
+    # a lesson concluded after review began has its own cards: no old ones on top
+    new = slot()
+    new["completed"] = True
+    review.add_words(new, D, "fashion")
+    log["entries"].append({"date": D.isoformat(), "topic": "fashion", "completed": True, "lessons": [new]})
+    assert len(review.cards(log)) == 25 + 4
+
+
+def test_the_same_word_in_two_lessons_is_two_cards_each_answered_on_its_own():
+    a, b = slot(), slot()
+    b["n"] = 2
+    review.add_words(a, D, "fashion")
+    review.add_words(b, D, "fashion")
+    ids = [c["id"] for c in a["cards"] + b["cards"]]
+    assert len(set(ids)) == len(ids) == 8
+    log = {"entries": [{"date": D.isoformat(), "topic": "fashion", "completed": True, "lessons": [a, b]}]}
+    later = D + timedelta(days=1)
+    for _ in range(8):                          # every due card can be answered and leaves the list
+        _, _, c = review.due(log, later)[0]
+        review.grade(review.find(log, c["id"])[2], True, later)
+    assert review.due(log, later) == []

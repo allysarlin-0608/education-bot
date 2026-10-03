@@ -14,6 +14,8 @@ log = st.session_state.coach_log
 today = ui.today()
 st.html('<div id="review-page"></div>')
 st.markdown("## Review")
+st.caption("What you've learned comes back just before you'd forget it: a day later, then further apart "
+           "each time you know it. A few minutes a day; your lessons never wait for it.")
 
 VIEWS = ["Today", "Collection"]
 st.session_state.setdefault("rv_view", "Today")
@@ -26,6 +28,9 @@ def holder(card_id):
     found = review.find(log, card_id)
     if found is not None:
         ui.refresh_entry(log, date.fromisoformat(found[0]["date"]), found[0]["topic"])
+        found = review.find(log, card_id)
+    if found is not None and "cards" not in found[1]:     # from before review: keep that lesson's cards now
+        review.keep(log, found[1])
         found = review.find(log, card_id)
     return found
 
@@ -111,12 +116,21 @@ def feedback(card, right):
         st.caption(f"{card['front']}: {card['back']}" + (f" — {card['example']}" if card.get("example") else ""))
 
 
+def pace(left):
+    """How far through today's cards: a hairline and a few words."""
+    done = review.reviewed_today(log, today)
+    share = done / (done + left) if done + left else 1
+    st.html(f'<div class="rv-pace"><div class="rv-line"><span style="width:{share * 100:.0f}%"></span></div>'
+            f'<p>{done} done · {left} to go today</p></div>')
+
+
 def today_view():
     current = st.session_state.get("rv_current")
     found = review.find(log, current["id"]) if current else None
     due = review.due(log, today)
     if found is not None:
         card = found[2]
+        pace(len(due))
         st.caption(source(card))
         st.markdown(f"### {card['front'] if card['kind'] != 'question' else card['question']['question']}")
         feedback(card, current["right"])
@@ -145,7 +159,8 @@ def today_view():
             st.switch_page("views/daily.py")
         return
     _, _, card = due[0]
-    st.caption(f"{len(due)} left today · {source(card)}")
+    pace(len(due))
+    st.caption(source(card))
     if card["kind"] == "question":
         show_question(card, card["question"])
     elif card["kind"] == "word":
@@ -174,7 +189,9 @@ def collection_view():
         return
     with st.container(key="rv_tools"):
         query = st.text_input("Search your collection", key="rv_query", placeholder="A word, a question, a subject…")
-        kind = st.pills("Kind", list(FILTERS), key="rv_kind", default="All", label_visibility="collapsed") or "All"
+        counts = {name: sum(1 for _, _, c in everything if k is None or c["kind"] == k) for name, k in FILTERS.items()}
+        kind = st.pills("Kind", list(FILTERS), key="rv_kind", default="All", label_visibility="collapsed",
+                        format_func=lambda name: f"{name} {counts[name]}") or "All"
     found = review.search(log, query, FILTERS[kind])
     paused = sum(1 for _, _, c in everything if c["paused"])
     st.caption(f"{len(found)} of {len(everything)} cards" + (f" · {paused} paused" if paused else ""))
@@ -186,8 +203,7 @@ def collection_view():
         with st.container(key=f"rv_row_{c['id']}"):
             st.markdown(f"**{c['front']}**")
             st.caption(f"{source(c)} · " + ("paused" if c["paused"] else f"next review {when(c['due'])}"))
-            if c["kind"] != "question":
-                st.markdown(c["back"])
+            st.markdown(c["back"] if c["kind"] != "question" else f"Answer: {c['back']}")
             confirm = st.session_state.get("rv_confirm") == c["id"]
             with st.container(horizontal=True, key=f"rv_acts_{c['id']}"):
                 if confirm:

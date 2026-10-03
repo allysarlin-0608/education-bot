@@ -22,7 +22,8 @@ if not settings.onboarded(config):
     st.navigation([st.Page("views/setup.py", title="Welcome", default=True)], position="hidden").run()
     st.stop()
 
-pages = [st.Page("views/daily.py", title="Today", default=True)]
+pages = [st.Page("views/daily.py", title="Today", default=True),
+         st.Page("views/review.py", title="Review", url_path="review")]     # part of every day: in the bar
 if settings.reading_on(config):             # no reading plan: no Reading page at all
     pages.append(st.Page("views/reading.py", title="Reading"))
 pages += [
@@ -31,16 +32,14 @@ pages += [
 ]
 # each subject's world: one page, reached from the subject (not from the bar)
 world = st.Page("views/world.py", title="Subject", url_path="subject")
-# review: reached from Today (when cards are due) and from Progress, not from the bar
-review_page = st.Page("views/review.py", title="Review", url_path="review")
 # Streamlit does the routing; the pages are shown by the connected control
 # at the top of every page (coach/topnav.py), not as a list in the sidebar
-page = st.navigation(pages + [world, review_page], position="hidden")
+page = st.navigation(pages + [world], position="hidden")
 if (entering := st.session_state.pop("enter_world", None)):     # setup just finished: into the first day's subject
     st.switch_page(world, query_params={"subject": entering})
 # just signed in after a refresh or a link: back to the page the address named, with its subject
 asked = st.session_state.pop("coach_asked_path", None)
-target = next((p for p in pages + [world, review_page] if asked and p.url_path == asked), None)
+target = next((p for p in pages + [world] if asked and p.url_path == asked), None)
 if target is not None and target.url_path != page.url_path:
     st.switch_page(target, query_params=st.query_params.to_dict())
 if st.session_state.get("lq_page") != page.url_path:

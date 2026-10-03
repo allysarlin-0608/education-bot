@@ -199,7 +199,8 @@ with st.container(key=f"enter_{topic}", horizontal=True):      # into the day's 
 due_now = review.due(log, today)
 if due_now:
     with st.container(key="review_entry"):
-        if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due",
+        minutes = max(1, round(len(due_now) * 0.4))
+        if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due · about {minutes} min",
                      type="tertiary", key="today_review", icon=":material/replay:"):
             st.switch_page("views/review.py")
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
@@ -354,6 +355,7 @@ if points:
                          icon=":material/check:" if kept else None, type="tertiary"):
                 entry = day_entry()
                 owner, held = work(entry, i)
+                review.keep(log, held)
                 review.save_point(held, label, text, today, topic)
                 if save(entry, owner):
                     st.toast(f"Saved for review: {label}")
@@ -398,9 +400,11 @@ def conclude(i):
     entry = day_entry()
     owner, slot = work(entry, i)
     score = quiz.finish(slot["quiz"])
+    review.keep(log, slot)                                   # (a lesson from before review: its old cards first)
     review.add_missed(slot, slot["quiz"], today, topic)      # what she missed comes back in a few days
     if quiz.passed(score):
-        review.add_words(slot, today, topic)                 # and the lesson's words, once it's passed
+        review.add_key_idea(slot, today, topic)              # and, once it's passed, its key idea and words
+        review.add_words(slot, today, topic)
         entry["lessons"][i]["completed"] = True
         if owner is not entry:          # the original day stays as it was; the lesson notes when
             slot["passed_on"] = today.isoformat()

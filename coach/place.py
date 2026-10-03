@@ -177,6 +177,15 @@ _KEEP_CLEAR = """<div id="keep-clear-hook" hidden></div><script>
       const b = doc.querySelector(sel);
       if (b && b.getAttribute("aria-label") !== name) b.setAttribute("aria-label", name);
     }
+    // cards due: a dot on Review in the bar (the number is for screen readers)
+    const due = doc.getElementById("review-due");
+    const link = [...doc.querySelectorAll('.st-key-topnav [data-testid="stPageLink-NavLink"]')]
+      .find((a) => /\/review\/?$/.test(new URL(a.getAttribute("href") || "/", w.location.href).pathname));
+    if (link) {
+      const n = due ? +due.dataset.n : 0;
+      if (n > 0 && link.dataset.due !== String(n)) { link.dataset.due = String(n); link.setAttribute("aria-label", `Review, ${n} due`); }
+      if (!n && link.dataset.due) { delete link.dataset.due; link.removeAttribute("aria-label"); }
+    }
     const dock = doc.querySelector(".st-key-chat_dock");
     if (!dock) { ["--dock-h", "--kb"].forEach((v) => root.style.removeProperty(v)); return; }
     const slot = dock.parentElement.getBoundingClientRect();
