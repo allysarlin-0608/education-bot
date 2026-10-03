@@ -211,12 +211,26 @@ def fit(log: dict, topic: str, slots: list, count: int) -> list:
     return sorted(kept, key=lambda s: s["n"])
 
 
-def merge_carried(mine: dict, stored: dict, ns, today: date) -> None:
-    """`mine` (this session's copy of an earlier day) becomes the day as
-    stored, with this session's copy of lessons `ns` (the ones carried to
-    today and worked on here). Their review cards are the stored ones plus
-    those made today: Today makes cards, it never grades or deletes them,
-    so a stored card's state (graded or deleted elsewhere) always wins.
+def progress_of(slot: dict) -> tuple:
+    """How far a lesson has got, in order: passed, quiz attempts, a quiz,
+    written, questions asked. Saves never move a lesson back along it."""
+    q = slot.get("quiz") or {}
+    return (bool(slot.get("completed") or slot.get("passed_on")), q.get("attempts") or 0, bool(q),
+            bool(slot.get("lesson")), len(slot.get("followups") or []))
+
+
+def merge_day(mine: dict, stored: dict, ns, today: date, keep=(), recount=False) -> None:
+    """`mine` (this session's copy of a day, which may be old: another tab or
+    device may have saved since) written into the day as stored now, in place.
+    - lessons `ns` (the ones this page worked on): this page's copy, unless
+      the stored one has got further (passed, a newer quiz attempt...); then
+      the stored one, so progress is never undone (ISS-024);
+    - their review cards: the stored ones (graded or deleted elsewhere win)
+      plus the cards this page made today (pages only add cards);
+    - every other lesson, and the day's other fields: as stored, except the
+      fields in `keep` (what this page changed, e.g. her thoughts);
+    - with `recount` (today's day), completed when its lessons are; an
+      earlier day keeps its own (a lesson carried on is passed later, there).
     The lesson objects of `ns` stay the same objects (pages hold them)."""
     own = {s["n"]: s for s in mine["lessons"] if s["n"] in ns}
     lessons = []
@@ -225,12 +239,20 @@ def merge_carried(mine: dict, stored: dict, ns, today: date) -> None:
         if m is None:
             lessons.append(s)
             continue
-        if "cards" in s:
+        if progress_of(s) > progress_of(m):
+            m.clear()
+            m.update(s)
+        elif "cards" in s:
             have = {c["id"] for c in s["cards"]}
             m["cards"] = s["cards"] + [c for c in m.get("cards") or []
                                        if c["id"] not in have and c.get("added") == today.isoformat()]
         lessons.append(m)
-    mine.update({k: v for k, v in stored.items() if k != "lessons"}, lessons=lessons)
+    lessons += [m for n, m in own.items() if n not in {s["n"] for s in stored["lessons"]}]
+    lessons.sort(key=lambda s: s["n"])
+    kept = {k: mine[k] for k in keep if k in mine}
+    mine.update({k: v for k, v in stored.items() if k != "lessons"}, lessons=lessons, **kept)
+    if recount:
+        mine["completed"] = day_complete(lessons)
 
 
 def blocking(slots: list, i: int):

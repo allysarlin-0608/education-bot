@@ -100,7 +100,7 @@ def show_entry(e, where):
     )
     if st.button("Save my thoughts", key=f"rec_save_{key}"):
         e["reflection"] = reflection.strip()
-        if ui.save_entry(log, e):
+        if ui.save_day(log, e, [], keep=("reflection",)):    # her thoughts, into the day as stored now
             st.toast("Saved.")
         else:
             ui.show_pending_error()

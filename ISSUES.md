@@ -30,6 +30,10 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 | ISS-021 | P2 | Data / two devices | The quiz sheet saved a carried lesson's day from an old copy, undoing review grades made elsewhere | fixed |
 | ISS-022 | P2 | Today / Progress | A question or quiz that failed (or a lesson cut off) left an unsaved day counted as studied | fixed |
 | ISS-023 | P2 | Sidebar | The sidebar and bar could show an older count than Today on the same screen | fixed |
+| ISS-024 | P1 | Data | Work a save failed on (a lesson written, a quiz passed) was replaced by the older stored day on the next run | fixed |
+| ISS-025 | P2 | Data / two tabs | The quiz sheet (today's day) and Progress → Save my thoughts wrote an old copy of the whole day | fixed |
+| ISS-026 | P2 | Settings | A data download gathered earlier stayed until saved, out of date | fixed |
+| ISS-027 | P2 | Data (local mode) | A log file of the wrong shape crashed every page; settings files shared one temporary file | fixed |
 
 ## Details
 
@@ -90,3 +94,9 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 - **ISS-022 (generalises ISS-013):** one rule in `ui.refresh_entry`: a copy of a day that was never saved and has nothing done in it (`curriculum.worked_on`) is dropped, whichever action made it. Test: `test_pages_smoke.py::test_a_day_made_by_a_question_that_got_no_reply_is_dropped`.
 - **ISS-023:** today's day is re-read once at the start of every run (gnosis.py), before the bar, the sidebar and the page.
 - **Decided, not changed:** a day with only a reading check-in counts as completed (reading counts like any subject, as designed); if a lesson is also started that day, the day is completed when that lesson's day is.
+
+### ISS-024 … ISS-027 — found by the third independent review
+- **System cause (ISS-010, -021, -025):** a save wrote this session's whole copy of a day, and that copy can be old (another tab or device, a fragment that doesn't re-read). **One rule now, for every lesson save:** the day is written into what is stored now (`ui.save_day` → `curriculum.merge_day`); a lesson's stored copy wins when it has got further (`curriculum.progress_of`: passed, quiz attempts, quiz, written, questions), so progress is never undone; stored review cards win, this page only adds today's new ones; the day's other fields stay as stored except what the page changed (her thoughts). Tests: `test_curriculum.py::test_a_save_from_an_old_copy_never_undoes_a_pass_made_elsewhere`, `::test_thoughts_saved_from_progress_keep_what_was_saved_since`.
+- **ISS-024:** a failed save marks the day unsaved; the re-read at the start of a run leaves an unsaved day as it is until a save succeeds. Test: `test_pages_smoke.py::test_work_a_save_failed_on_is_kept_until_it_is_saved` (fails without the guard).
+- **ISS-026:** the gathered download is dropped when she leaves the page.
+- **ISS-027:** reading a damaged log (not JSON, the wrong shape, not text) is a `StorageError` with a clear message, never a crash, and nothing is written over it; every local JSON file is written through one writer (`core.write_json`: its own temporary file, swapped in whole). Test: `test_storage.py::test_a_damaged_file_is_a_clear_error_not_a_crash`.

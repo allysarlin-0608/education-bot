@@ -178,3 +178,20 @@ def test_a_day_made_by_a_question_that_got_no_reply_is_dropped(monkeypatch, tmp_
     made["lessons"] = curriculum.day_plan(log, "philosophy", None, 3)    # links to yesterday's lessons
     loads(at, "views/daily.py")
     assert [e["date"] for e in at.session_state["coach_log"]["entries"]] == [entries[0]["date"]]
+
+
+def test_work_a_save_failed_on_is_kept_until_it_is_saved(monkeypatch, tmp_path):
+    """ISS-024: a lesson written but not saved (the database was down) was
+    replaced by the older stored day on the very next run."""
+    entries = seed_history.build(ui.today() + timedelta(days=1), days=1, topics=("philosophy",),
+                                 gaps=(), partial=(1,))
+    for s in entries[0]["lessons"][1:]:
+        s.update(kickoff="", lesson="", completed=False, quiz=None)
+    at = app(monkeypatch, tmp_path, subjects=("philosophy",), entries=entries)
+    loads(at, "views/daily.py")
+    day = next(e for e in at.session_state["coach_log"]["entries"] if e["date"] == ui.today().isoformat())
+    day["lessons"][1]["lesson"] = "written, then the save failed"
+    at.session_state["coach_unsaved"] = {(day["date"], day["topic"])}      # what ui.save_entry records
+    loads(at, "views/daily.py")
+    day = next(e for e in at.session_state["coach_log"]["entries"] if e["date"] == ui.today().isoformat())
+    assert day["lessons"][1]["lesson"] == "written, then the save failed"

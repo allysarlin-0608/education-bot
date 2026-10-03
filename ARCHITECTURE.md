@@ -52,8 +52,10 @@ answer, pass, save thoughts) call `day_entry()` (ISS-003), and a start that
 fails leaves nothing behind (a never-saved day with nothing done is dropped
 on the next run, ISS-022). Every save writes one entry onto what is stored
 now; each run first re-reads today (gnosis.py), Today also each day a
-carried lesson began, and a carried lesson is saved into its day as stored
-(`curriculum.merge_carried`).
+carried lesson began. Lesson saves are merges, not overwrites: a day is
+written into the day as stored now (`ui.save_day` → `curriculum.merge_day`),
+a lesson never moves back (`progress_of`), stored review cards win. A day a
+save failed on is kept as it is (not re-read) until a save succeeds.
 
 One definition per number, in `core`: a day studied (any entry), a day
 completed (every entry that day completed), lessons passed (`lessons_in`),

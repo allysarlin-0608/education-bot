@@ -49,6 +49,7 @@ if target is not None and target.url_path != page.url_path:
     st.switch_page(target, query_params=st.query_params.to_dict())
 if st.session_state.get("lq_page") != page.url_path:
     st.session_state.account_menu = False      # a menu choice that changed the page closes the menu
+    st.session_state.pop("data_export", None)  # a data download gathered earlier is out of date once she moves on (ISS-026)
 # today's day as stored now (another tab or device may have moved on), read
 # before the bar and the sidebar so they and the page show the same day
 ui.refresh_entry(st.session_state.coach_log, ui.today(), ui.topic_for(ui.today()))

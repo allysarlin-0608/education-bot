@@ -192,8 +192,44 @@ def test_a_carried_lesson_saved_from_an_old_copy_keeps_what_another_device_did()
                       cards=[card("q1", "2026-10-03", box=1)])          # q1 graded, q2 deleted on the phone
     stored = {"date": "2026-10-03", "topic": "cosmos", "reflection": "written on the phone",
               "lessons": [dict(curriculum.new_slot("cosmos", 3), completed=True), phone_slot]}
-    curriculum.merge_carried(mine, stored, [4], today)
+    curriculum.merge_day(mine, stored, [4], today)
     four = mine["lessons"][1]
     assert four is mine_slot and four["quiz"] == {"draft": ["mine"]}           # this page's answers
     assert [(c["id"], c["box"]) for c in four["cards"]] == [("q1", 1), ("new", 0)]
     assert mine["lessons"][0]["completed"] and mine["reflection"] == "written on the phone"
+
+
+def test_a_save_from_an_old_copy_never_undoes_a_pass_made_elsewhere():
+    """ISS-025: two tabs on lesson 2's quiz; she passes it on B; on A she
+    changes an answer, and A's old copy of the day overwrote the pass."""
+    from datetime import date
+    today = date(2026, 10, 4)
+    old = dict(curriculum.new_slot("cosmos", 2), lesson="L", quiz={"attempts": 0, "draft": ["a"]})
+    mine = {"date": "2026-10-04", "topic": "cosmos", "completed": False, "reflection": "",
+            "lessons": [dict(curriculum.new_slot("cosmos", 1), lesson="L", completed=True), old]}
+    passed = dict(curriculum.new_slot("cosmos", 2), lesson="L", completed=True, quiz={"attempts": 1, "score": 90})
+    stored = {"date": "2026-10-04", "topic": "cosmos", "completed": True, "reflection": "from B",
+              "lessons": [dict(curriculum.new_slot("cosmos", 1), lesson="L", completed=True), passed]}
+    curriculum.merge_day(mine, stored, [1, 2], today, recount=True)
+    assert mine["lessons"][1] is old and old["completed"] and old["quiz"]["score"] == 90     # B's pass stays
+    assert mine["completed"] and mine["reflection"] == "from B"
+    # and her own newer work still goes in: a quiz answered here, not yet elsewhere
+    ahead = dict(curriculum.new_slot("cosmos", 3), lesson="L", quiz={"attempts": 1})
+    behind = dict(curriculum.new_slot("cosmos", 3), lesson="L", quiz={"attempts": 0})
+    mine2 = {"date": "d", "topic": "cosmos", "lessons": [ahead]}
+    curriculum.merge_day(mine2, {"date": "d", "topic": "cosmos", "lessons": [behind]}, [3], today)
+    assert mine2["lessons"][0]["quiz"] == {"attempts": 1}
+
+
+def test_thoughts_saved_from_progress_keep_what_was_saved_since():
+    """ISS-025 (b): Progress → a day → Save my thoughts wrote the session's
+    old copy of that day, losing a carried lesson's pass and its cards."""
+    from datetime import date
+    mine = {"date": "2026-10-01", "topic": "cosmos", "reflection": "my thoughts",
+            "lessons": [dict(curriculum.new_slot("cosmos", 4), lesson="L")]}
+    stored = {"date": "2026-10-01", "topic": "cosmos", "reflection": "",
+              "lessons": [dict(curriculum.new_slot("cosmos", 4), lesson="L", passed_on="2026-10-03",
+                               cards=[{"id": "c"}])]}
+    curriculum.merge_day(mine, stored, [], date(2026, 10, 4), keep=("reflection",))
+    assert mine["reflection"] == "my thoughts"
+    assert mine["lessons"][0]["passed_on"] == "2026-10-03" and mine["lessons"][0]["cards"] == [{"id": "c"}]

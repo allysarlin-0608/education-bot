@@ -338,3 +338,16 @@ def test_a_file_that_cant_be_read_is_never_saved_over(tmp_path):
         store.save_entry(log, core.start_entry(log, date(2026, 10, 3), "philosophy"))
     assert path.read_text() == damaged                    # left as it was, for repair
     assert not list(tmp_path.glob("*.tmp"))
+
+
+@pytest.mark.parametrize("content", [b"[]", b'{"entries": 5}', b"\xff\xfe not text"], ids=["a list", "wrong shape", "not text"])
+def test_a_damaged_file_is_a_clear_error_not_a_crash(tmp_path, content):
+    """ISS-027: a log file of the wrong shape raised a raw ValueError on every page."""
+    (tmp_path / "log.json").write_bytes(content)
+    store = storage.FileStore(tmp_path / "log.json")
+    with pytest.raises(storage.StorageError):
+        store.load()
+    log = core.empty_log()
+    with pytest.raises(storage.StorageError):
+        store.save_entry(log, core.start_entry(log, date(2026, 10, 3), "philosophy"))
+    assert (tmp_path / "log.json").read_bytes() == content

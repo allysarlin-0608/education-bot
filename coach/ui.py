@@ -265,11 +265,14 @@ def save_entry(log, entry):
     """Save one entry. Returns True on success; on failure the error is
     kept for show_pending_error() so it survives the st.rerun() that
     usually follows a save."""
+    unsaved = st.session_state.setdefault("coach_unsaved", set())
     try:
         st.session_state.coach_store.save_entry(log, entry)
     except storage.StorageError as e:
         st.session_state.coach_save_error = f"This wasn't saved ({e}). Try again in a moment."
+        unsaved.add((entry["date"], entry["topic"]))     # kept as it is until a save succeeds
         return False
+    unsaved.discard((entry["date"], entry["topic"]))
     return True
 
 
@@ -319,6 +322,8 @@ def refresh_entry(log, day, topic):
         return
     mine = next((k for k, e in enumerate(log["entries"])
                  if e["date"] == day.isoformat() and e["topic"] == topic), None)
+    if (day.isoformat(), topic) in st.session_state.get("coach_unsaved", ()):
+        return          # this session's copy holds work a save failed on: the next save sends it (ISS-024)
     if stored is None and mine is not None and not curriculum.worked_on(log["entries"][mine]):
         # made by an action that then failed or was cut off (a lesson that
         # couldn't be written, a question with no reply): never saved, nothing
@@ -336,20 +341,19 @@ def refresh_entry(log, day, topic):
         del st.session_state.coach_chats[key]          # rebuilt from the stored lessons
 
 
-def save_carried(log, owner, ns) -> bool:
-    """Save the earlier day a carried lesson belongs to, written into that day
-    as stored now: this page's copy of lessons `ns` goes in, everything else
-    (other lessons, its review cards graded on another device) stays as
-    stored. This page only adds cards on the day it runs, so of its cards
-    only today's new ones are added (ISS-021)."""
+def save_day(log, entry, ns, keep=(), recount=False) -> bool:
+    """Save a day this page changed, written into the day as stored now
+    (curriculum.merge_day): this page's copy may be old (another tab or
+    device, a fragment that didn't re-read it), and a whole-row save of it
+    would undo what was saved since (ISS-021, ISS-025)."""
     try:
-        stored = st.session_state.coach_store.load_entry(owner["date"], owner["topic"])
+        stored = st.session_state.coach_store.load_entry(entry["date"], entry["topic"])
     except storage.StorageError as e:
-        logger.warning("couldn't re-read %s %s (%s); saving this session's copy", owner["date"], owner["topic"], e)
+        logger.warning("couldn't re-read %s %s (%s); saving this session's copy", entry["date"], entry["topic"], e)
         stored = None
     if stored is not None:
-        curriculum.merge_carried(owner, stored, ns, today())
-    return save_entry(log, owner)
+        curriculum.merge_day(entry, stored, ns, today(), keep=keep, recount=recount)
+    return save_entry(log, entry)
 
 
 def refresh_books(log):

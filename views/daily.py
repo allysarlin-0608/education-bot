@@ -66,14 +66,14 @@ def work(entry, i):
 
 
 def save(entry, owner):
-    """Save the day, and the earlier day a carried-over lesson belongs to
-    (written into it as stored now: the quiz sheet saves from a fragment,
-    which doesn't re-read that day first, ISS-021)."""
-    ok = ui.save_entry(log, entry)
+    """Save the day, and the earlier day a carried-over lesson belongs to,
+    each written into the day as stored now (ui.save_day): the quiz sheet
+    saves from a fragment, which doesn't re-read either day first."""
+    ok = ui.save_day(log, entry, [s["n"] for s in entry["lessons"]], recount=True)
     if owner is entry:
         return ok
     carried = [s["n"] for s in entry["lessons"] if s.get("from") == owner["date"]]
-    return ui.save_carried(log, owner, carried) and ok
+    return ui.save_day(log, owner, carried) and ok
 
 
 def failed(kind, error, slot, **payload):

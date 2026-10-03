@@ -227,10 +227,7 @@ class FileStore(_Scope):
     def _write_rows(self, table: str, rows: list) -> None:
         path = self._table_path(table)
         try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_suffix(".tmp")
-            tmp.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
-            tmp.replace(path)
+            core.write_json(path, rows)
         except OSError as e:
             logger.error("saving %s failed: %s", table, e)
             raise StorageError("this couldn't be written to a file") from e
@@ -252,10 +249,7 @@ class FileStore(_Scope):
 
     def _write_settings(self, rows: list) -> None:
         try:
-            self.settings_path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = self.settings_path.with_suffix(".tmp")
-            tmp.write_text(json.dumps({"user_settings": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
-            tmp.replace(self.settings_path)
+            core.write_json(self.settings_path, {"user_settings": rows})
         except OSError as e:
             logger.error("saving settings failed: %s", e)
             raise StorageError("your settings couldn't be written to a file") from e
@@ -267,7 +261,8 @@ class FileStore(_Scope):
         self._write_settings(rows)
 
     def load(self) -> dict:
-        return core.load_log(self._log_path())
+        with _FILE_LOCK:
+            return self._stored()
 
     def load_entry(self, day: str, topic: str):
         """The stored entry for one day and subject, or None."""
@@ -293,7 +288,7 @@ class FileStore(_Scope):
             return core.empty_log()
         try:
             return core.parse_log(json.loads(path.read_text(encoding="utf-8")))
-        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        except (ValueError, UnicodeDecodeError) as e:    # (not JSON, or not the shape of a log)
             logger.error("the local log %s can't be read (%s); nothing was written", path, e)
             raise StorageError("the records file can't be read, so nothing was saved over it") from e
 

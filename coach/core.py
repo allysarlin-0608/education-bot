@@ -176,13 +176,18 @@ def parse_followups(data) -> list:
 
 
 def save_log(log: dict, path: Path = DEFAULT_LOG_PATH) -> None:
+    write_json(path, log)
+
+
+def write_json(path, data) -> None:
+    """Write a JSON file whole: a temporary file of its own (two saves never
+    share one), then swapped in, so a reader never sees half a file."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    # a temporary file of its own (two saves never share one), then swapped in whole
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(json.dumps(log, ensure_ascii=False, indent=2))
+            f.write(json.dumps(data, ensure_ascii=False, indent=2))
         os.replace(tmp, path)
     except BaseException:
         Path(tmp).unlink(missing_ok=True)
