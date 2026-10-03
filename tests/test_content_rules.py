@@ -147,3 +147,23 @@ def test_the_note_only_credits_what_she_really_did():
     note = next(line for line in prompt.splitlines() if line.startswith("【Note】"))
     assert "只肯定學習紀錄裡她真的做過的事" in note and "不能說成她做過" in note
     assert "今天的任務和例子不能說成她做過" in note and "you've already" in note           # today's task is never treated as done
+
+
+def test_a_note_claiming_what_she_has_not_done_is_replaced_by_a_true_one():
+    """Issue 2: "You've already gathered…" about today's task never reaches her."""
+    from coach import core
+    lesson = ("【Topic】: Fibres\n\n【Today's Task】: Look at three labels.\n\n"
+              "【Note】: You've already gathered the fibre info from three pieces of clothing — great work!\n\n"
+              + core.CLOSING_LINE)
+    fixed = core.truthful_note(lesson, "Your first lesson in Fashion & Clothing. One clear idea is enough for today.")
+    assert "gathered" not in fixed and "Your first lesson in Fashion" in fixed and fixed.endswith(core.CLOSING_LINE)
+    assert "Look at three labels." in fixed
+    fine = lesson.replace("You've already gathered the fibre info from three pieces of clothing — great work!",
+                          "Fibre labels are a quick way to start.")
+    assert core.truthful_note(fine, "x") == fine
+    assert core.truthful_note(lesson.replace("You've already gathered", "**You gathered"), "F").count("F") >= 1
+    log = {"entries": [{"date": "2026-10-02", "topic": "fashion", "completed": False,
+                        "lessons": [{"n": 1, "completed": True}]}]}
+    from datetime import date
+    assert core.note_fact(log, "fashion", date(2026, 10, 3), 2) == \
+        "Lesson 2 of Fashion & Clothing, building on the 1 you've passed so far."

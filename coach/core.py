@@ -311,6 +311,37 @@ def finalize_reply(text: str, lesson: bool, topic: str = None) -> str:
     return text
 
 
+# The Note may only mention what really happened. The prompt says so, but a
+# model can still write "You've already gathered…" about today's task; such
+# a sentence is replaced with one built from her record (note_fact).
+NOTE_BLOCK = re.compile(r"(【[^】\n]*(?:Note|叮嚀|提醒)[^】\n]*】\**\s*[:：]?\s*)(.+?)(?=\n\s*\**【|\n\s*Take the quiz|\Z)",
+                        re.DOTALL)
+CLAIM = re.compile(r"\byou(?:'ve|’ve| have| had| already| did| were)\b|\byou(?: just)? (?:noticed|gathered|collected|wrote|"
+                   r"tried|completed|finished|looked|compared|watched|explored|made|took|spent|found|picked|chose|"
+                   r"listed|observed|checked|sorted|noted|started)\b", re.IGNORECASE)
+
+
+def note_fact(log: dict, topic: str, today: date, n: int) -> str:
+    """A true sentence for the Note: from her record, nothing she hasn't done."""
+    from coach import curriculum
+    streak = current_streak(log, today)
+    passed = len(curriculum.completed_numbers(log, topic))
+    if streak >= 2:
+        return f"{streak} days in a row with a lesson passed. Lesson {n} is today's next step."
+    if passed:
+        return f"Lesson {n} of {TOPICS[topic]}, building on the {passed} you've passed so far."
+    return f"Your first lesson in {TOPICS[topic]}. One clear idea is enough for today."
+
+
+def truthful_note(text: str, fact: str) -> str:
+    """The lesson with its Note replaced by `fact` if the Note claims she did
+    something (she has only just opened the lesson)."""
+    match = NOTE_BLOCK.search(text)
+    if not match or not CLAIM.search(match.group(2)):
+        return text
+    return text[:match.start(2)] + fact + text[match.end(2):]
+
+
 # ------------------------------------------------------------
 # Parsing the coach's lesson blocks
 # ------------------------------------------------------------

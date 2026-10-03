@@ -80,7 +80,8 @@ def run_kickoff(i):
     )
     if error:
         failed("kickoff", error, slot, i=i)
-    lesson = core.finalize_reply(lesson, lesson=True, topic=topic)
+    lesson = core.truthful_note(core.finalize_reply(lesson, lesson=True, topic=topic),
+                                core.note_fact(log, topic, today, slot["n"]))
     chat += [{"role": "user", "content": kickoff}, {"role": "assistant", "content": lesson}]
     slot["kickoff"], slot["lesson"] = kickoff, lesson
     first, last = entry["lessons"][0]["n"], entry["lessons"][-1]["n"]
