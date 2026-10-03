@@ -92,6 +92,11 @@ def test_names_and_contrast_on_every_page(public_app, pages, scheme):
         flows.open_app(p, app, path)
         assert flows.wait_text(p.page, marker, 15), path
         p.page.wait_for_timeout(600)                     # entrance motion settles
+        try:                                             # (a slow machine: wait for every finite motion to end)
+            p.page.wait_for_function("""() => document.getAnimations().every(a =>
+                a.playState !== 'running' || a.effect.getComputedTiming().iterations === Infinity)""", timeout=5000)
+        except Exception:
+            pass
         nameless = p.page.evaluate(NAMELESS)
         low = p.page.evaluate(CONTRAST, "")
         if nameless or low:

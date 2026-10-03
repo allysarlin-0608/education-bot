@@ -1,81 +1,20 @@
 {
- "01_signin_820_light": {
-  "small": [
-   "Main menu 26x26",
-   "visibility 30x15"
-  ]
- },
- "02_today_new_820_light": {
-  "small": [
-   "Main menu 26x26"
-  ]
- },
- "03_lesson_820_light": {
-  "small": [
-   "Main menu 26x26",
-   "Send message 30x30"
-  ]
- },
  "04_quiz_820_light": {
   "small": [
-   "Main menu 26x26",
    "Open 30x42",
    "Open 30x42",
    "Open 30x42",
-   "Open 30x42",
-   "Send message 30x30"
-  ]
- },
- "05_quiz_failed_820_light": {
-  "small": [
-   "Main menu 26x26",
-   "Send message 30x30"
-  ]
- },
- "06_passed_820_light": {
-  "small": [
-   "Main menu 26x26",
-   "Send message 30x30",
-   "Close 14x14"
-  ]
- },
- "07_done_820_light": {
-  "small": [
-   "Main menu 26x26",
-   "Close 14x14"
-  ]
- },
- "08_review_820_light": {
-  "small": [
-   "Main menu 26x26",
-   "Today 67x30",
-   "Collection 90x30"
-  ]
- },
- "09_progress_820_light": {
-  "small": [
-   "Main menu 26x26",
-   "Lesson 1 78x30",
-   "Lesson 2 78x30",
-   "Lesson 3 78x30"
+   "Open 30x42"
   ]
  },
  "10_settings_820_light": {
   "small": [
-   "Main menu 26x26",
    "Add a 14-day reading pla 13x13"
-  ]
- },
- "11_reading_820_light": {
-  "small": [
-   "Main menu 26x26"
   ]
  },
  "12_search_820_light": {
   "small": [
-   "Main menu 26x26",
-   "Dismiss 16x6",
-   "Close 18x18"
+   "Dismiss 16x6"
   ]
  }
 }
