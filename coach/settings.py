@@ -196,12 +196,19 @@ def start_day(s: dict, tz) -> date:
     return when.astimezone(tz).date() if when.tzinfo else when.date()
 
 
-def topic_for(s: dict, day: date, tz) -> str:
+def topic_for(s: dict, day: date, tz, log: dict | None = None) -> str:
     """The subject for `day`: her subjects take turns, one a day, in the
-    order she chose them, starting with the first on the day she set up."""
+    order she chose them, starting with the first on the day she set up.
+    A day she has already started keeps its subject: adding a subject in
+    Settings shifts the turns, and must not swap the day under her (ISS-005)."""
     subjects = chosen_subjects(s)
     if is_legacy(s) or not subjects:
         return core.scheduled_topic(day)
+    if log:
+        started = [e["topic"] for e in log["entries"]
+                   if e["date"] == day.isoformat() and e.get("lessons") and e["topic"] in subjects]
+        if started:
+            return started[0]
     return subjects[(day - start_day(s, tz)).days % len(subjects)]
 
 

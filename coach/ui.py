@@ -202,8 +202,9 @@ def save_settings(new: dict) -> bool:
 
 
 def topic_for(day):
-    """The subject for a day, from her settings."""
-    return settings.topic_for(config(), day, TIMEZONE)
+    """The subject for a day, from her settings (and, for a day already
+    started, the subject she started)."""
+    return settings.topic_for(config(), day, TIMEZONE, st.session_state.get("coach_log"))
 
 
 WORLD_PAGE = "views/world.py"

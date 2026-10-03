@@ -11,6 +11,8 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 | ISS-002 | P2 | Code | `coach/place.py` had an invalid escape (`\/`) in a string: a warning now, an error in a later Python | fixed |
 | ISS-003 | P1 | Today / Progress numbers | Only opening Today counted the day as "studied" when a lesson was carried over from the day before | fixed |
 | ISS-004 | P2 | Security | Backup uploads could be up to 200 MB (Streamlit's default) | fixed |
+| ISS-005 | P1 | Settings / Today | Adding a subject mid-day shifted the turns and swapped today's subject after the day had started | fixed |
+| ISS-006 | P2 | Visual system | Lines, corners and surfaces had no global rule: 13 border values (0.5px and 1px mixed, the input edge used for dividers), 24 corner radii, shadows on surfaces that don't float | fixed |
 
 ## Details
 
@@ -37,3 +39,15 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 
 ### ISS-004 (P2) — Backup uploads were limited only by Streamlit's 200 MB default
 - **Fix:** `server.maxUploadSize = 20` (a year of lessons is about 2 MB)
+
+### ISS-005 (P1) — Adding a subject swapped the day she had started
+- **Where:** Settings → Subjects (add one) → Today
+- **Reproduce:** two subjects, day 3 (philosophy's turn), pass a lesson, add a third subject → Today shows Fashion, a second subject the same day
+- **Root cause:** the day's subject was computed from the settings alone (`days since setup % number of subjects`), so any change to the list moved every day, today included
+- **Fix:** `settings.topic_for` takes the record: a day already started keeps the subject she started, if it is still one of hers; the new turns apply from the next day. Every page reads the subject through `ui.topic_for`, the one caller.
+- **Verified:** `tests/test_settings.py::test_a_day_already_started_keeps_its_subject_when_one_is_added` (fails before the fix)
+
+### ISS-006 (P2) — No global rule for lines, corners and surfaces
+- **Root cause:** each page added its own border (0.5px or 1px, `--hair`, `--field-edge`, `--bk-sep` or a literal colour) and radius (10 to 28px), so the same kind of line looked different across pages and dividers used the input-edge colour
+- **Fix (one rule, in `coach/style.py` `:root`, documented in ARCHITECTURE.md):** three line levels, all 1px — `--line-1` structural, `--line-2` secondary, `--line-3` interactive; `--surface` a tint with no shadow for quiet surfaces (day detail, the reader, the shelf); corners on one scale (12 controls / 16 surfaces / 20 floating / pill for segmented controls). Every 0.5px line and literal border colour is now a token; the old names (`--hair`, `--field-edge`) point at the new levels.
+- **Verified:** screenshots at 390 / 820 / 1180 / 1440 light and dark; contrast and keyboard checks; visual baselines updated after review

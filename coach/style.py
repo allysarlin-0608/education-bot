@@ -29,10 +29,23 @@ CSS = f"""
   --env: light-dark(#FFFFFF, #000000);          /* pure white or pure black, nothing else */
   --label: light-dark(#141414, #EDEDED); --label-2: light-dark(#5C5C5C, #9B9B9B);
   --label-3: light-dark(#737373, #7C7C7C);   /* 4.5:1 or more on white, the off-white cards and black */ --strong: light-dark(#000000, #FFFFFF);
-  --hair: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.07));
+  /* LINES: three levels, all 1px, never decoration (Quiet Precision).
+     --line-1 structural: separates sections, the header, a list from what follows
+     --line-2 secondary: rows inside a list, quieter than the section around them
+     --line-3 interactive: the edge of something to type into or press
+              (fields, outlined buttons); focus and selection add --outline.
+     A line is drawn only where it says where one thing ends; a surface that
+     needs a line and a fill and a shadow is two too many. Surfaces are a
+     tint (--surface) with no shadow; only what floats above the page
+     (menus, the dock, dialogs, toasts) is lifted. */
+  --line-1: light-dark(rgba(0, 0, 0, 0.09), rgba(255, 255, 255, 0.1));
+  --line-2: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.065));
+  --line-3: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.16));
+  --surface: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.05));   /* grey text (--label-3) stays 4.5:1 on it */
+  --hair: var(--line-2);
   --wash: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
   --field: light-dark(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.03));
-  --field-edge: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.12));
+  --field-edge: var(--line-3);
   --field-focus: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.5));
   --chrome: light-dark(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.02));
   --sidebar: light-dark(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.015));
@@ -85,7 +98,10 @@ CSS = f"""
   --glass-depth-soft: var(--optic);
 
   /* geometry */
-  --radius-small: 16px; --radius-medium: 24px; --radius-large: 28px; --radius-pill: 999px;
+  /* CORNERS: controls (buttons, fields) small; quiet surfaces and images
+     medium; what floats (dialogs, menus, the chat input) large; pill only
+     for segmented controls, tags and dots. Lines and bars are square. */
+  --radius-small: 12px; --radius-medium: 16px; --radius-large: 20px; --radius-pill: 999px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
   --control: 44px;
@@ -136,7 +152,7 @@ CSS = f"""
 }}
 [data-testid="stSidebar"] {{
   background: var(--env);                /* a plain surface, so the page links stay readable over the page on a phone */
-  border-right: 1px solid var(--hair);
+  border-right: 1px solid var(--line-1);
 }}
 
 /* ---------- page ---------- */
@@ -170,7 +186,7 @@ CSS = f"""
 /* Streamlit fades captions to 60%; --label-3 is already the lightest grey that reads at 4.5:1 */
 [data-testid="stCaptionContainer"], .stApp small {{ color: var(--label-3); opacity: 1; }}
 .stApp a {{ color: var(--label); text-underline-offset: 0.2em; text-decoration-color: var(--label-3); }}
-.stApp hr {{ border-color: var(--hair); margin: var(--space-6) 0; }}
+.stApp hr {{ border-color: var(--line-1); margin: var(--space-6) 0; }}
 .stApp [data-testid="stMarkdownContainer"] strong {{ font-weight: 600; }}
 [data-testid="stWidgetLabel"] p {{ font-size: 0.8125rem; color: var(--label-2); }}
 
@@ -304,7 +320,7 @@ CSS = f"""
 
 /* ---------- disclosure: hairlines only ---------- */
 [data-testid="stExpander"] details {{
-  background: transparent; border: none; border-radius: 0; border-bottom: 1px solid var(--hair);
+  background: transparent; border: none; border-radius: 0; border-bottom: 1px solid var(--line-1);
 }}
 [data-testid="stExpander"] summary {{ min-height: var(--control); transition: color var(--t-micro) var(--ease); }}
 @media (hover: hover) {{ [data-testid="stExpander"] summary:hover {{ color: var(--strong); }} }}
@@ -402,7 +418,7 @@ html {{ scroll-behavior: smooth; }}
    its text kept to a comfortable measure, not a box of its own */
 [class*="st-key-lcard_"] {{
   padding: var(--space-5) 0 0; border-radius: 0; background: none; box-shadow: none;
-  border-top: 0.5px solid var(--field-edge); gap: var(--space-3);
+  border-top: 1px solid var(--line-1); gap: var(--space-3);
 }}
 [class*="st-key-lcard_"] [data-testid="stMarkdownContainer"] {{ max-width: 42rem; }}
 [class*="st-key-lcard_"] .lcard-title {{
@@ -421,7 +437,7 @@ html {{ scroll-behavior: smooth; }}
 /* ---------- lesson tables: hairlines, no fills ---------- */
 .stApp [data-testid="stMarkdownContainer"] table {{ border-collapse: collapse; width: 100%; font-size: 0.875rem; }}
 .stApp [data-testid="stMarkdownContainer"] th, .stApp [data-testid="stMarkdownContainer"] td {{
-  border: none !important; border-bottom: 1px solid var(--hair) !important;
+  border: none !important; border-bottom: 1px solid var(--line-1) !important;
   background: transparent !important; padding: var(--space-2) var(--space-3); text-align: left;
   word-break: keep-all;   /* short Chinese terms stay on one line on phones */
 }}
@@ -637,7 +653,7 @@ LIQUID = """
 .cm-eyebrow { margin: var(--space-6) 0 var(--space-1); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
 .cm-head { margin: var(--space-2) 0 var(--space-5); }
 .cm-head p { margin: var(--space-2) 0 0; font-size: 0.875rem; color: var(--label-2); }
-.st-key-cm_next { gap: var(--space-3) !important; padding-bottom: var(--space-4); border-bottom: 1px solid var(--hair); }
+.st-key-cm_next { gap: var(--space-3) !important; padding-bottom: var(--space-4); border-bottom: 1px solid var(--line-1); }
 .st-key-cm_links { flex-wrap: wrap; gap: var(--space-1) var(--space-4) !important; }
 .st-key-cm_links > * { width: auto !important; flex: 0 0 auto !important; }
 .st-key-cm_path { gap: var(--space-2) !important; }
@@ -700,7 +716,7 @@ LIQUID = """
 .st-key-review_bar [data-testid="stButton"] button::before {
   content: ""; position: absolute; inset: 4px 0; z-index: -1; box-sizing: border-box; border-radius: 999px;
   background: light-dark(#FFFFFF, #1C1C1E);
-  border: 0.5px solid light-dark(rgba(60, 60, 67, 0.18), rgba(235, 235, 245, 0.18));
+  border: 1px solid var(--line-1);
 }
 .st-key-review_bar [data-testid="stButton"] button p { font-size: 13px; color: var(--label); }
 [class*="st-key-back_to_current_up"] button p::before { content: "↑"; font-size: 12px; margin-right: 6px; }
@@ -712,7 +728,7 @@ LIQUID = """
 .lqv { --p: var(--to); display: flex; gap: 18px; align-items: stretch; margin: 0; }
 .lqv-tube {
   position: relative; flex: none; width: 44px; height: 140px; box-sizing: border-box;
-  border-radius: 15px;
+  border-radius: var(--radius-medium);
   background: linear-gradient(90deg, var(--lq-glass-top), var(--lq-glass-bottom));
   box-shadow: inset 1px 0 1px -1px var(--lq-edge-hi), inset -1px 0 1px -1px var(--lq-edge-lo),
               inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 0 6px -2px var(--lq-edge-near);
@@ -759,7 +775,7 @@ LIQUID = """
 }
 .lqv-pct .unit { font-size: 0.5em; margin-left: 2px; color: var(--label-2); }
 .lqv-count { font-size: 0.75rem; color: var(--label-3); margin-top: 6px; font-variant-numeric: tabular-nums; }
-.sb-rule { border: none; height: 0.5px; background: var(--field-edge); margin: 32px 0 22px; }
+.sb-rule { border: none; height: 1px; background: var(--line-1); margin: 32px 0 22px; }
 .sb-book { font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 400; font-size: 1.0625rem; line-height: 1.25; color: var(--label); margin-top: 8px; }
 .sb-author { font-size: 0.8125rem; color: var(--label-2); margin-top: 3px; }
 .sb-quiet { font-size: 0.8125rem; color: var(--label-3); margin-top: 8px; }
@@ -904,7 +920,7 @@ PROGRESS = """
 [class*="st-key-calw_"] [data-testid="stButton"], [class*="st-key-calw_"] button { width: 100%; }
 [class*="st-key-cal_20"] .stButton button {
   position: relative; height: 56px; min-height: 44px; padding: 0 0 12px !important;
-  border: none; border-radius: 14px; background: transparent; box-shadow: none;
+  border: none; border-radius: var(--radius-small); background: transparent; box-shadow: none;
   backdrop-filter: none; -webkit-backdrop-filter: none; color: var(--label-3);
   transition: background-color 320ms var(--ease), box-shadow 320ms var(--ease), color 320ms var(--ease);
 }
@@ -956,7 +972,7 @@ PROGRESS = """
 /* ---------- the day picked ---------- */
 [class*="st-key-prog_day_"] {
   gap: var(--space-2) !important; padding: var(--space-5);
-  border-radius: var(--radius-medium); background: var(--glass); box-shadow: var(--optic);
+  border-radius: var(--radius-medium); background: var(--surface); box-shadow: none;
   animation: rise-in var(--t-space) var(--ease) backwards; scroll-margin: 88px 0 16px;
 }
 [class*="st-key-prog_day_"] h4 { padding: 0 0 2px !important; }
@@ -980,7 +996,7 @@ PROGRESS = """
 /* one lesson to read, a section at a time */
 [class*="st-key-reader_"] {
   gap: var(--space-2) !important; padding: var(--space-4) var(--space-4) var(--space-3);
-  border-radius: 18px; background: var(--glass); box-shadow: var(--optic);
+  border-radius: var(--radius-medium); background: var(--surface); box-shadow: none;
   animation: fade-in 420ms var(--ease) 80ms backwards;
 }
 /* the section grows with its text: the page is the one thing that scrolls */
@@ -1185,8 +1201,7 @@ BOOKS = """
 /* the bookshelf: one light surface, a row per book, 0.5px lines between */
 .bk-empty { margin: 0; font-size: 0.875rem; color: var(--label-3); }
 .bk-shelf {
-  --bk-sep: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.14));
-  border-radius: var(--radius-small); background: light-dark(rgba(0, 0, 0, 0.028), rgba(255, 255, 255, 0.05));
+  border-radius: var(--radius-medium); background: var(--surface);
   overflow: hidden; corner-shape: superellipse(1.6);
 }
 .bk-book > summary {
@@ -1198,7 +1213,7 @@ BOOKS = """
 .bk-book > summary::-webkit-details-marker { display: none; }
 .bk-book > summary::marker { content: ""; }
 .bk-book + .bk-book > summary {       /* the line starts where the text does */
-  background: linear-gradient(var(--bk-sep), var(--bk-sep)) 16px 0 / calc(100% - 16px) 0.5px no-repeat;
+  background: linear-gradient(var(--line-2), var(--line-2)) 16px 0 / calc(100% - 16px) 1px no-repeat;
 }
 .bk-book > summary:active { background-color: var(--wash); }
 @media (hover: hover) { .bk-book > summary:hover { background-color: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.03)); } }
@@ -1218,7 +1233,7 @@ BOOKS = """
 .bk-days li {
   display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto; grid-template-areas: "d r s" ". w w";
   column-gap: 12px; align-items: baseline;
-  padding: 10px 0; font-size: 0.8125rem; line-height: 1.45; border-top: 0.5px solid var(--bk-sep); margin: 0;
+  padding: 10px 0; font-size: 0.8125rem; line-height: 1.45; border-top: 1px solid var(--line-2); margin: 0;
 }
 .bk-d { grid-area: d; } .bk-r { grid-area: r; } .bk-s { grid-area: s; } .bk-days .bk-words { grid-area: w; }
 @container (max-width: 380px) {
@@ -1230,7 +1245,7 @@ BOOKS = """
 .bk-s { color: var(--label-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .bk-days li.rest .bk-r, .bk-days li.rest .bk-s, .bk-days li.unread .bk-s { color: var(--label-3); }
 .bk-words { margin: 4px 0 0 !important; color: var(--label-2); font-size: 0.8125rem; line-height: 1.55; }
-.bk-wrap { border-top: 0.5px solid var(--bk-sep); padding-top: 10px; display: grid; gap: 4px; }
+.bk-wrap { border-top: 1px solid var(--line-2); padding-top: 10px; display: grid; gap: 4px; }
 .bk-wrap p, .bk-wrap li { font-size: 0.875rem; line-height: 1.6; margin: 0 0 6px; color: var(--label); }
 .bk-wrap ul { margin: 0 0 6px; padding-left: 1.2em; }
 
@@ -1262,7 +1277,7 @@ BOOKS = """
 .st-key-start_book button {
   position: relative; width: auto; min-height: 36px; height: 36px; padding: 0 16px !important;
   border-radius: 999px; background: transparent !important; box-shadow: none !important;
-  border: 0.5px solid light-dark(rgba(60, 60, 67, 0.36), rgba(235, 235, 245, 0.3)) !important;
+  border: 1px solid var(--line-3) !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
 .st-key-start_book button::after { content: ""; position: absolute; inset: -5px -2px; }
@@ -1287,7 +1302,7 @@ BOOKS = """
 @starting-style { .bk-open:has(> .bk-more[open]) .bk-days li.later { block-size: 0; opacity: 0; padding-block: 0; } }
 .bk-more > summary {
   display: flex; align-items: center; min-height: 44px; cursor: pointer; list-style: none;
-  font-size: 0.8125rem; color: var(--label-2); border-top: 0.5px solid var(--bk-sep);
+  font-size: 0.8125rem; color: var(--label-2); border-top: 1px solid var(--line-2);
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
 .bk-more > summary::-webkit-details-marker { display: none; }
@@ -1357,7 +1372,7 @@ NAV = """
    all sit on the header's glass, over one hairline at its lower edge. The
    page that is on is marked by a thin line on that edge, under its word,
    and the line travels (coach/motion.py). */
-[data-testid="stHeader"] { height: 56px; min-height: 56px; box-shadow: inset 0 -0.5px 0 var(--field-edge); }
+[data-testid="stHeader"] { height: 56px; min-height: 56px; box-shadow: inset 0 -1px 0 var(--line-1); }
 [data-testid="stLayoutWrapper"]:has(> .st-key-topnav) {
   position: fixed; top: 0; left: var(--cx-main, 50%); transform: translateX(-50%); z-index: 999990; width: auto !important;
   transition: left var(--t-layout) var(--ease-layout);    /* follows the page as the sidebar opens and closes */
@@ -1385,7 +1400,7 @@ NAV = """
 /* Search: in the same row, after a short upright hairline */
 .st-key-nav_search { position: relative; margin-left: 8px; display: flex; align-items: center; }
 .st-key-nav_search::before {
-  content: ""; position: absolute; left: -4px; top: 50%; height: 14px; margin-top: -7px; width: 0.5px; background: var(--field-edge);
+  content: ""; position: absolute; left: -4px; top: 50%; height: 14px; margin-top: -7px; width: 1px; background: var(--line-2);
 }
 .st-key-nav_search button {
   position: relative; width: 44px; min-width: 44px; height: 56px; min-height: 56px; padding: 0 !important;
@@ -1448,7 +1463,7 @@ NAV = """
 
 /* ---------- Search ---------- */
 .st-key-search_results { gap: 0 !important; }
-[class*="st-key-sres_"] { position: relative; gap: 0 !important; border-top: 0.5px solid var(--hair); border-radius: 10px; transition: background-color var(--t-micro) var(--ease); }
+[class*="st-key-sres_"] { position: relative; gap: 0 !important; border-top: 1px solid var(--line-2); border-radius: var(--radius-small); transition: background-color var(--t-micro) var(--ease); }
 .sr { display: grid; gap: 2px; padding: 12px 8px; }
 .sr-t { font-size: 0.9375rem; font-weight: 500; color: var(--label); }
 .sr-m { font-size: 0.75rem; color: var(--label-3); }
@@ -1551,9 +1566,9 @@ SETUP = """
 @media (hover: hover) { .stMainBlockContainer:is(:has(#setup-page), :has(#settings-page)) .stButton button[kind="tertiary"]:hover { color: var(--label); } }
 
 /* ---------- a list of options: one row each; the whole row is the button ---------- */
-[class*="st-key-optlist_"] { gap: 0 !important; border-bottom: 0.5px solid var(--field-edge); }
+[class*="st-key-optlist_"] { gap: 0 !important; border-bottom: 1px solid var(--line-1); }
 [class*="st-key-opt_"] {
-  position: relative; gap: 0 !important; border-top: 0.5px solid var(--field-edge);
+  position: relative; gap: 0 !important; border-top: 1px solid var(--line-1);
   transition: background-color var(--t-micro) var(--ease);
 }
 .opt { display: grid; grid-template-columns: minmax(0, 1fr) 20px; column-gap: var(--space-4); row-gap: 2px;
@@ -1590,7 +1605,7 @@ SETUP = """
 [class*="st-key-opt_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -1px; }
 
 /* ---------- Level: a subject at a time ---------- */
-[class*="st-key-ob_subject_"] { gap: var(--space-3) !important; padding-top: var(--space-4); border-top: 0.5px solid var(--field-edge); }
+[class*="st-key-ob_subject_"] { gap: var(--space-3) !important; padding-top: var(--space-4); border-top: 1px solid var(--line-1); }
 .ob-subject { margin: 0; font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.375rem; line-height: 1.25; color: var(--label); }
 /* the two ways to start: the same switch as Progress's */
 [class*="st-key-sw_"] [data-testid="stButtonGroup"], [class*="st-key-sw_"] [data-testid="stButtonGroup"] > div { width: 100%; }
@@ -1620,12 +1635,12 @@ SETUP = """
 .pq-result span { font-size: 0.8125rem; color: var(--label-2); }
 
 /* ---------- Reading: the toggle on a hairline ---------- */
-.st-key-ob_toggle { border-top: 0.5px solid var(--field-edge); border-bottom: 0.5px solid var(--field-edge); padding: 6px 0 6px 2px; }
+.st-key-ob_toggle { border-top: 1px solid var(--line-1); border-bottom: 1px solid var(--line-1); padding: 6px 0 6px 2px; }
 
 /* ---------- Summary: a quiet list of what she chose ---------- */
-.ob-summary { margin: 0 !important; padding: 0 !important; border-top: 0.5px solid var(--field-edge); }
+.ob-summary { margin: 0 !important; padding: 0 !important; border-top: 1px solid var(--line-1); }
 .ob-summary dd, .ob-summary dt { margin: 0 !important; padding-left: 0 !important; }
-.ob-summary > div { margin: 0 !important; display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: var(--space-4); padding: 16px 0; border-bottom: 0.5px solid var(--field-edge); }
+.ob-summary > div { margin: 0 !important; display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: var(--space-4); padding: 16px 0; border-bottom: 1px solid var(--line-1); }
 .ob-summary dt { font-size: 0.8125rem; line-height: 1.5; color: var(--label-2); padding-top: 1px; }
 .ob-summary dd { margin: 0; display: grid; gap: 4px; font-size: 0.9375rem; line-height: 1.45; color: var(--label); }
 .ob-summary small { font-size: 0.8125rem; color: var(--label-2); }
@@ -1637,7 +1652,7 @@ SETUP = """
 }
 
 /* ---------- Settings: sections on hairlines; wide, the name beside its controls ---------- */
-[class*="st-key-set_sec_"] { gap: var(--space-4) !important; padding-top: var(--space-5); border-top: 0.5px solid var(--field-edge); }
+[class*="st-key-set_sec_"] { gap: var(--space-4) !important; padding-top: var(--space-5); border-top: 1px solid var(--line-1); }
 [class*="st-key-set_sec_"] h4 { padding-top: 0 !important; }
 /* the section's hairline is the list's top edge: no second line under it */
 [class*="st-key-set_sec_"] [class*="st-key-optlist_"] [class*="st-key-opt_"]:first-child,
@@ -1688,7 +1703,7 @@ LENS = """
 :root[data-refract] { --lens-optics: url(#lg-lens); --lens-optics-live: url(#lg-lens-live); }
 :root[data-refract][data-scheme="dark"] { --lens-optics: url(#lg-lens-dim); --lens-optics-live: url(#lg-lens-live-dim); }
 .cx-pill.cx-lens {
-  z-index: 3; pointer-events: none; border-radius: 14px; corner-shape: superellipse(1.6);
+  z-index: 3; pointer-events: none; border-radius: var(--radius-small); corner-shape: superellipse(1.6);
   background: var(--lens-fill); box-shadow: var(--lens-rim);
   backdrop-filter: var(--lens-optics); -webkit-backdrop-filter: none;
 }
@@ -1713,7 +1728,7 @@ LENS = """
 @media (hover: hover) { [class*="st-key-opt_"]:not([class*="__dis"]):hover { background: transparent; }
   [class*="st-key-optlist_"] [class*="st-key-opt_"]:not([class*="__dis"]):not([data-cx-on]):hover .opt-t { color: var(--label); } }
 [class*="st-key-opt_"]:not([class*="__dis"]):has(button:active) { background: transparent; }
-[class*="st-key-opt_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -3px; border-radius: 12px; }
+[class*="st-key-opt_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -3px; border-radius: var(--radius-small); }
 /* chosen, in a list of several: the check, and under it the day in the rotation */
 .opt-mark { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: auto; min-width: 32px; height: auto; min-height: 20px; }
 .opt-mark::after { left: 50%; margin-left: -3px; top: 2px; }
@@ -1777,7 +1792,7 @@ LENS = """
 }
 
 /* ---------- the stage: the subject in focus, large ---------- */
-.sg-stage { position: relative; height: min(76vh, 700px); min-height: 460px; overflow: hidden; border-radius: 22px; corner-shape: superellipse(1.6); isolation: isolate; }
+.sg-stage { position: relative; height: min(76vh, 700px); min-height: 460px; overflow: hidden; border-radius: var(--radius-large); corner-shape: superellipse(1.6); isolation: isolate; }
 .sg-layer { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
   opacity: 0; visibility: hidden; transition: opacity var(--t-layout) var(--ease), visibility 0s linear var(--t-layout); }
 .sg-art {
@@ -1882,7 +1897,7 @@ ACCOUNT = """
 .st-key-signin [data-testid="stForm"] [data-testid="stVerticalBlock"] { gap: var(--space-4); }
 /* Continue with Google: a quiet outlined control, the same height as the others */
 .si-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box;
-  min-height: var(--control); border-radius: var(--radius-small); border: 0.5px solid var(--field-edge);
+  min-height: var(--control); border-radius: var(--radius-small); border: 1px solid var(--line-3);
   color: var(--label) !important; text-decoration: none !important; font-weight: 500; font-size: 0.9375rem;
   transition: background-color .2s ease, opacity .2s ease; }
 .si-google:hover { background: var(--wash); }
@@ -1890,7 +1905,7 @@ ACCOUNT = """
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath fill='%234285F4' d='M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z'/%3E%3Cpath fill='%2334A853' d='M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z'/%3E%3Cpath fill='%23FBBC05' d='M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.05l3.01-2.33z'/%3E%3Cpath fill='%23EA4335' d='M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z'/%3E%3C/svg%3E") center / contain no-repeat; }
 .si-google.is-busy, .si-google.is-off { opacity: .55; pointer-events: none; }
 .si-or { display: flex; align-items: center; gap: var(--space-3); margin: 0; font-size: 0.8125rem; color: var(--label-3); }
-.si-or::before, .si-or::after { content: ""; flex: 1; border-top: 0.5px solid var(--hair); }
+.si-or::before, .si-or::after { content: ""; flex: 1; border-top: 1px solid var(--line-2); }
 .st-key-si_links { gap: var(--space-4) !important; flex-wrap: wrap; align-items: center; }
 .st-key-si_links > * { flex: 0 0 auto !important; width: auto !important; }
 .st-key-signin .stButton button[kind="tertiary"] { padding: 0 2px; min-height: 32px; color: var(--label-2);
@@ -1901,7 +1916,7 @@ ACCOUNT = """
 /* ---------- the account menu at the bar's right end ---------- */
 .st-key-account_menu button { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 50%;
   font-size: 0.8125rem; font-weight: 500; color: var(--label); background: var(--wash) !important;
-  border: 0.5px solid var(--field-edge) !important; box-shadow: none !important; margin-left: var(--space-3); }
+  border: 1px solid var(--line-3) !important; box-shadow: none !important; margin-left: var(--space-3); }
 .st-key-account_menu button [data-testid="stIconMaterial"] { display: none; }
 /* a keyboard user sees where they are here too (as on every other control) */
 .st-key-account_menu button:focus-visible, [data-testid="stMainMenuButton"]:focus-visible {
@@ -1968,7 +1983,7 @@ WORLDS = """
 .st-key-w_object { position: relative; align-self: stretch; gap: 0 !important; }
 .w-object {
   position: relative; height: min(62vh, 620px); background: center / cover no-repeat; transform-origin: center;
-  filter: grayscale(1) contrast(1.06); border-radius: 22px; corner-shape: superellipse(1.6);
+  filter: grayscale(1) contrast(1.06); border-radius: var(--radius-large); corner-shape: superellipse(1.6);
   -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
   mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
 }
@@ -1990,7 +2005,7 @@ WORLDS = """
 /* ---------- below: where she is, what's next, lately ---------- */
 [class*="st-key-w_sec_"] {
   display: grid !important; grid-template-columns: 10rem minmax(0, 1fr); column-gap: var(--space-6); align-items: start;
-  padding-top: var(--space-5); border-top: 0.5px solid var(--field-edge); gap: var(--space-4) !important;
+  padding-top: var(--space-5); border-top: 1px solid var(--line-1); gap: var(--space-4) !important;
 }
 [class*="st-key-w_sec_"] > * { width: auto !important; min-width: 0; }
 .st-key-w_sec_where { margin-top: var(--space-7); }
@@ -2002,14 +2017,14 @@ WORLDS = """
 .w-line { position: relative; height: 2px; border-radius: 2px; background: var(--field-edge); overflow: hidden; max-width: 28rem; }
 .w-line i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--label); border-radius: 2px; }
 .w-list { list-style: none; margin: 0; padding: 0; display: grid; }
-.w-list li { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: var(--space-3); padding: 10px 0; border-bottom: 0.5px solid var(--hair); font-size: 0.9375rem; color: var(--label); }
+.w-list li { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: var(--space-3); padding: 10px 0; border-bottom: 1px solid var(--line-2); font-size: 0.9375rem; color: var(--label); }
 .w-list li:last-child { border-bottom: none; }
 .w-list .n, .w-list .d { color: var(--label-3); font-size: 0.8125rem; font-variant-numeric: tabular-nums; padding-top: 2px; }
 /* her other subjects: each its own room, entered by its object */
 .st-key-w_others { gap: var(--space-5) !important; flex-wrap: wrap; justify-content: flex-start !important; }
 .st-key-w_others > * { flex: 0 0 auto !important; width: auto !important; }
 .st-key-w_others [class*="st-key-enter_"] { position: relative; width: 168px !important; flex: 0 0 168px !important; gap: 8px !important; }
-.w-thumb { height: 112px; border-radius: 14px; corner-shape: superellipse(1.6); background: center / cover no-repeat;
+.w-thumb { height: 112px; border-radius: var(--radius-medium); corner-shape: superellipse(1.6); background: center / cover no-repeat;
   filter: grayscale(1) contrast(1.04); transition: transform var(--t-state) var(--ease); }
 :root[data-scheme="dark"] .w-thumb { filter: grayscale(1) contrast(1.04) brightness(0.84); }
 .w-thumb.no-art { background: var(--wash); }
@@ -2019,7 +2034,7 @@ WORLDS = """
 .st-key-w_others [class*="st-key-enter_"] [data-testid="stElementContainer"]:has(.stButton) *:not(button) { position: static !important; }
 .st-key-w_others [class*="st-key-enter_"] .stButton button { position: absolute !important; inset: 0; width: 100%; height: 100%; opacity: 0; z-index: 2; }
 @media (hover: hover) { .st-key-w_others [class*="st-key-enter_"]:hover .w-thumb { transform: scale(1.02); } }
-.st-key-w_others [class*="st-key-enter_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: 4px; border-radius: 14px; }
+.st-key-w_others [class*="st-key-enter_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: 4px; border-radius: var(--radius-medium); }
 
 /* the ways in, elsewhere: quiet words with an arrow */
 [class*="st-key-enter_"] .stButton button[kind="tertiary"],

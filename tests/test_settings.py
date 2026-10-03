@@ -36,6 +36,23 @@ def test_rotation_follows_a_new_selection():
         ["philosophy", "fashion", "philosophy"]
 
 
+def test_a_day_already_started_keeps_its_subject_when_one_is_added():
+    """ISS-005: adding a third subject shifted the turns, and Today swapped
+    to another subject after she had started (or finished) the day."""
+    s = done(["philosophy", "investing"])
+    day = date(2026, 9, 28)                                  # day 3: philosophy's turn
+    log = {"entries": [{"date": day.isoformat(), "topic": "philosophy", "lessons": [{"n": 1, "completed": True}]}]}
+    s2 = settings.change(s, settings.now_iso(), subjects=["philosophy", "investing", "fashion"])
+    assert settings.topic_for(s2, day, TZ) == "fashion"      # the turns did move
+    assert settings.topic_for(s2, day, TZ, log) == "philosophy"
+    assert settings.topic_for(s2, day + timedelta(days=1), TZ, log) == "philosophy"   # (the new turns from tomorrow)
+    # a subject she took out doesn't hold the day
+    s3 = settings.change(s, settings.now_iso(), subjects=["investing"])
+    assert settings.topic_for(s3, day, TZ, log) == "investing"
+    # a day only looked at (no entry) follows the turns
+    assert settings.topic_for(s2, day, TZ, {"entries": []}) == "fashion"
+
+
 def test_setup_day_is_her_local_day():
     # 17:00 UTC on the 25th is already the 26th in Taipei
     s = done(["cosmos", "fashion"], when="2026-09-25T17:00:00+00:00")
