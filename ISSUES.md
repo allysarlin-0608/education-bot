@@ -9,6 +9,8 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 |---|---|---|---|---|
 | ISS-001 | P0 | Deploy / architecture | Course map crash (`ui.open_course`): new pages ran on an old module after an update (BUG-030), and nothing checked before a push | fixed |
 | ISS-002 | P2 | Code | `coach/place.py` had an invalid escape (`\/`) in a string: a warning now, an error in a later Python | fixed |
+| ISS-003 | P1 | Today / Progress numbers | Only opening Today counted the day as "studied" when a lesson was carried over from the day before | fixed |
+| ISS-004 | P2 | Security | Backup uploads could be up to 200 MB (Streamlit's default) | fixed |
 
 ## Details
 
@@ -25,3 +27,13 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 - **Where:** `coach/place.py` (the review dot's link match)
 - **Root cause:** a JS regex `/\/review\/?$/` written inside a normal Python string
 - **Fix:** a plain path comparison; `tests/test_references.py::test_no_file_relies_on_something_python_is_retiring` compiles every app file with warnings as errors
+
+### ISS-003 (P1) — Opening Today made it a "day studied"
+- **Where:** Progress → Days studied (and the calendar) after opening Today with a lesson carried over from an earlier day
+- **Reproduce:** a learner's last lesson not passed; next day only open Today → Days studied grows by one (e2e: 11 instead of 10)
+- **Root cause:** the page drew its quiz section from `day_entry()`, which creates today's entry in the record; with a carried lesson the page reaches that line on load, so viewing alone created the day
+- **Fix:** the page draws from `shown_entry()` (the stored entry or the planned day, never added to the record); only actions call `day_entry()` (saving thoughts now too)
+- **Verified:** `tests/e2e/test_personas.py` (day 10 and two weeks away: Days studied 10, streaks 10 / 0); Today and multi-day suites green
+
+### ISS-004 (P2) — Backup uploads were limited only by Streamlit's 200 MB default
+- **Fix:** `server.maxUploadSize = 20` (a year of lessons is about 2 MB)

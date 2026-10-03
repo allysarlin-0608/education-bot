@@ -73,6 +73,7 @@ chartCategoricalColors = ["#F2F2F2", "#BFBFBF", "#8C8C8C", "#595959"]
 
 [server]
 enableStaticServing = true
+maxUploadSize = 20          # MB: a backup of a year's lessons is about 2 MB
 
 [client]
 toolbarMode = "viewer"

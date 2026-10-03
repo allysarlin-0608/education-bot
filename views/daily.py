@@ -45,6 +45,18 @@ def day_entry():
     return entry
 
 
+def shown_entry():
+    """Today's entry for drawing the page: the stored one, or the day as
+    planned. Unlike day_entry() it adds nothing to her record: only doing
+    something (a lesson, an answer, a note) makes the day one she studied."""
+    e = core.find_entry(log, today, topic)
+    if e is None:
+        return {"date": today.isoformat(), "topic": topic, "lessons": plan, "completed": False, "reflection": ""}
+    if [s["n"] for s in e["lessons"]] != [s["n"] for s in plan]:
+        return {**e, "lessons": plan, "completed": curriculum.day_complete(plan)}
+    return e
+
+
 def work(entry, i):
     """(the entry to save, the slot holding the lesson) for lesson i of the
     day: for a lesson carried over from an earlier day, its original slot
@@ -365,7 +377,7 @@ if points:
                 st.rerun()
 
 st.divider()
-entry = day_entry()
+entry = shown_entry()
 owner, slot = work(entry, i)
 passed_here = entry["lessons"][i]["completed"]     # (a carried-over lesson: passed on this day)
 
@@ -554,6 +566,7 @@ with st.expander("My thoughts on the question to explore (optional, the coach pi
         key=f"reflection_{today.isoformat()}_{topic}",
     )
     if st.button("Save my thoughts"):
+        entry = day_entry()
         entry["reflection"] = reflection.strip()
         if ui.save_entry(log, entry):
             st.toast("Saved.")     # a toast isn't hidden behind the chat input
