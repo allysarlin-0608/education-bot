@@ -284,7 +284,7 @@ if i is None:
     for s in plan:
         score = (curriculum.content(log, topic, s).get("quiz") or {}).get("score")
         rows.append(f'<li><span class="n">{s["n"]}</span><span class="t">{escape(s["title"])}</span>'
-                    f'<span class="q">{f"· {score}%" if score is not None else ""}</span></li>')
+                    f'<span class="q">{f"{score}%" if score is not None else ""}</span></li>')
     tomorrow = today + timedelta(days=1)
     t_next = ui.topic_for(tomorrow)
     upcoming = curriculum.next_numbers(log, t_next, settings.units(config)) if t_next in core.TOPICS else []

@@ -315,10 +315,14 @@ CSS = f"""
   border: 1px solid var(--field-edge); border-radius: var(--radius-small);
 }}
 [data-testid="stAlertContainer"] [data-testid="stAlertDynamicIcon"] {{ display: none; }}
+/* rendered outside .stApp like the floating menus, so (as for those) the fill
+   is the theme's text color inverted: dark behind light text in dark mode */
 [data-testid="stToast"] {{
-  background: color-mix(in srgb, var(--env) 97%, transparent) !important; border: none;
-  border-radius: var(--radius-medium); box-shadow: var(--optic), var(--lift);
+  background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.97) !important; border: none;
+  border-radius: var(--radius-medium); box-shadow: 0 0 0 1px rgb(from currentColor r g b / 0.08), var(--lift);
 }}
+/* the lesson reads at a comfortable line length on wide screens */
+[data-testid="stChatMessage"] :is(p, li, blockquote) {{ max-width: 68ch; }}
 
 /* ---------- conversation ---------- */
 [data-testid^="stChatMessageAvatar"] {{ display: none; }}
@@ -620,8 +624,8 @@ LIQUID = """
 .done-eyebrow { margin: 0 0 var(--space-2); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
 .done h3 { margin: 0; padding: 0; font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.1; }
 .done-sub { margin: var(--space-3) 0 var(--space-5); color: var(--label-2); }
-.done-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--hair); }
-.done-list li { display: flex; gap: var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-bottom: 1px solid var(--hair); }
+.done-list { list-style: none; margin: 0 !important; padding: 0 !important; border-top: 1px solid var(--hair); }
+.done-list li { margin: 0 !important; display: flex; gap: var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-bottom: 1px solid var(--hair); }
 .done-list .n { min-width: 1.5rem; font-variant-numeric: tabular-nums; color: var(--label-3); }
 .done-list .t { flex: 1; }
 .done-list .q { color: var(--label-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -1005,6 +1009,15 @@ TOUCH = """
    and no double-tap-to-zoom wait on anything tappable */
 .stApp, [data-trigger] { -webkit-tap-highlight-color: transparent; }
 button, a, summary, label, input, textarea, [role="tab"], [role="option"], [data-baseweb="select"] { touch-action: manipulation; }
+/* big enough for a finger (40px or more), on every screen: the app menu, the
+   side panel's toggles, send, the password eye, toast and dialog close, and
+   the segmented choices and pills (Review / Collection, Lesson 1 2 3) */
+[data-testid="stMainMenuButton"], [data-testid="stExpandSidebarButton"],
+[data-testid="stSidebarCollapseButton"] button, [data-testid="stChatInputSubmitButton"],
+[data-testid="stTextInputRootElement"] button, [data-testid="stToast"] button, [role="dialog"] button[aria-label="Close"] {
+  min-width: 40px !important; min-height: 40px !important;
+}
+[data-testid="stButtonGroup"] button { min-height: 40px; }
 /* scrolling a focused field into view (or moving to a lesson) stops clear
    of the header above and the chat box below */
 [data-testid="stMain"] { scroll-padding: 72px 0 112px; }

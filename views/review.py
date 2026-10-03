@@ -219,4 +219,7 @@ def collection_view():
 
 
 with st.container(key=f"rv_{view.lower()}"):
-    today_view() if view == "Today" else collection_view()
+    if view == "Today":
+        today_view()
+    else:
+        collection_view()

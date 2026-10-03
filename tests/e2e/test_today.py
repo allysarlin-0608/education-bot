@@ -78,7 +78,8 @@ def test_a_whole_day(mode, pages, request):
     stored = lessons_of(entries[0])
     assert entries[0]["completed"] is True
     assert len(stored) == n and all(s["completed"] and s["quiz"]["score"] == 100 for s in stored)
-    assert t.count("· 100%") == n, "the summary's scores are the stored ones"
+    scores = p.page.evaluate("() => [...document.querySelectorAll('.done-list .q')].map(e => e.innerText.trim())")
+    assert scores == ["100%"] * n, "the summary's scores are the stored ones"
 
 
 def test_a_failed_quiz_shows_what_was_missed_and_a_new_set(public_app, pages):

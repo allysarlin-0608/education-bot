@@ -1,0 +1,92 @@
+{
+ "01_signin_390_light": {
+  "small": [
+   "Main menu 26x26",
+   "visibility 30x15"
+  ]
+ },
+ "02_today_new_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26"
+  ]
+ },
+ "03_lesson_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26",
+   "Send message 30x30"
+  ]
+ },
+ "04_quiz_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26",
+   "Open 30x42",
+   "Open 30x42",
+   "Open 30x42",
+   "Open 30x42",
+   "Send message 30x30"
+  ]
+ },
+ "05_quiz_failed_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26",
+   "Send message 30x30"
+  ]
+ },
+ "06_passed_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26",
+   "Send message 30x30",
+   "Close 14x14"
+  ]
+ },
+ "07_done_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26",
+   "Close 14x14"
+  ]
+ },
+ "08_review_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26",
+   "Today 67x30",
+   "Collection 90x30"
+  ]
+ },
+ "09_progress_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26",
+   "Lesson 1 78x30",
+   "Lesson 2 78x30",
+   "Lesson 3 78x30"
+  ]
+ },
+ "10_settings_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26",
+   "Add a 14-day reading pla 13x13"
+  ]
+ },
+ "11_reading_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26"
+  ]
+ },
+ "12_search_390_light": {
+  "small": [
+   "keyboard_double_arrow_ri 26x26",
+   "Main menu 26x26",
+   "Dismiss 16x6",
+   "Close 18x18"
+  ]
+ }
+}

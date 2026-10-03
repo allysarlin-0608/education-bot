@@ -170,6 +170,13 @@ _KEEP_CLEAR = """<div id="keep-clear-hook" hidden></div><script>
   let fitting = 0, sized = null;
   const fit = () => {
     fitting = 0;
+    // the side panel's toggles only show an icon's name ("keyboard_double_arrow_right"): say what they do
+    for (const [sel, name] of [['[data-testid="stExpandSidebarButton"]', "Open the side panel"],
+                               ['[data-testid="stSidebarCollapseButton"] button', "Close the side panel"],
+                               [".st-key-account_menu button", "Your account"]]) {
+      const b = doc.querySelector(sel);
+      if (b && b.getAttribute("aria-label") !== name) b.setAttribute("aria-label", name);
+    }
     const dock = doc.querySelector(".st-key-chat_dock");
     if (!dock) { ["--dock-h", "--kb"].forEach((v) => root.style.removeProperty(v)); return; }
     const slot = dock.parentElement.getBoundingClientRect();

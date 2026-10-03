@@ -164,7 +164,8 @@ def test_a_lesson_not_passed_continues_the_next_day_on_the_same_record(public_ap
     assert saved[1]["completed"] is True and saved[0]["completed"] is False
     flows.button(p, "See today's summary →")
     assert flows.wait_text(page, "Current streak: 1 day")
-    assert "· 100%" in page.evaluate("document.body.innerText"), "the summary shows the quiz from the original"
+    assert page.evaluate("() => [...document.querySelectorAll('.done-list .q')].map(e => e.innerText.trim())") == ["100%"], \
+        "the summary shows the quiz from the original"
     # Progress: each lesson once per day, with where it came from / when it was passed
     flows.open_app(p, app, "/records")
     page.get_by_role("radio", name="Sessions").or_(page.get_by_role("button", name="Sessions", exact=True)).first.click()
