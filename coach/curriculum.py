@@ -219,14 +219,17 @@ def progress_of(slot: dict) -> tuple:
             bool(slot.get("lesson")), len(slot.get("followups") or []))
 
 
-def merge_day(mine: dict, stored: dict, ns, today: date, keep=(), recount=False) -> None:
+def merge_day(mine: dict, stored: dict, ns, since, keep=(), recount=False) -> None:
     """`mine` (this session's copy of a day, which may be old: another tab or
     device may have saved since) written into the day as stored now, in place.
     - lessons `ns` (the ones this page worked on): this page's copy, unless
       the stored one has got further (passed, a newer quiz attempt...); then
       the stored one, so progress is never undone (ISS-024);
     - their review cards: the stored ones (graded or deleted elsewhere win)
-      plus the cards this page made today (pages only add cards);
+      plus the cards this page made: those added on or after `since` (the
+      day the page was opened, not the clock: a quiz submitted after
+      midnight, ISS-028), or, with `since` None (work a save failed on,
+      kept as this session holds it), every card the store doesn't have;
     - every other lesson, and the day's other fields: as stored, except the
       fields in `keep` (what this page changed, e.g. her thoughts);
     - with `recount` (today's day), completed when its lessons are; an
@@ -244,8 +247,8 @@ def merge_day(mine: dict, stored: dict, ns, today: date, keep=(), recount=False)
             m.update(s)
         elif "cards" in s:
             have = {c["id"] for c in s["cards"]}
-            m["cards"] = s["cards"] + [c for c in m.get("cards") or []
-                                       if c["id"] not in have and c.get("added") == today.isoformat()]
+            m["cards"] = s["cards"] + [c for c in m.get("cards") or [] if c["id"] not in have
+                                       and (since is None or c.get("added", "") >= since.isoformat())]
         lessons.append(m)
     lessons += [m for n, m in own.items() if n not in {s["n"] for s in stored["lessons"]}]
     lessons.sort(key=lambda s: s["n"])

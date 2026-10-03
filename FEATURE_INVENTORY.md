@@ -93,28 +93,28 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 | W-daily-my_thoughts_on_the_question_to_explore_o | expander | views/daily.py:569 | My thoughts on the question to explore (optional, the coach picks it u |  |  | ✅ |
 | W-daily-reflection | text_area | views/daily.py:570 | Question to explore | reflection_{…}_{…} |  | ✅ |
 | W-daily-save_my_thoughts | button | views/daily.py:576 | Save my thoughts |  |  | ✅ |
-| W-daily-ask_about_lesson | chat_input | views/daily.py:589 | Ask about Lesson {…}… |  |  | ✅ |
-| W-records-read | pills | views/records.py:81 | Read a lesson | read_{…} |  | ✅ |
-| W-records-rec_reflection | text_area | views/records.py:95 | My thoughts | rec_reflection_{…} |  | ✅ |
-| W-records-rec_save | button | views/records.py:101 | Save my thoughts | rec_save_{…} |  | ✅ |
-| W-records-rec_lesson | toggle | views/records.py:107 | Read the lesson | rec_lesson_{…} |  | ✅ |
-| W-records-prog_review_open | button | views/records.py:133 | f"Review collection · {len(deck)} {('card' if len(deck) == 1 else 'car | prog_review_open |  | ✅ |
-| W-records-sessions_topic | selectbox | views/records.py:196 | Subject | sessions_topic |  | ✅ |
-| W-records-x | expander | views/records.py:215 | {…} {…}, {…} {…}, {…} · {…} |  |  | ✅ |
-| W-records-oncal | button | views/records.py:216 | Show on the calendar | oncal_{…}_{…} |  | ✅ |
-| W-records-sessions_more | button | views/records.py:222 | Show {…} more of {…} | sessions_more |  | ✅ |
-| W-records-prog_world | button | views/records.py:245 | Enter {…} | prog_world_{…} |  | ✅ |
-| W-records-prog_course | button | views/records.py:248 | Course map | prog_course_{…} |  | ✅ |
-| W-records-views_reading_py | page_link | views/records.py:253 | views/reading.py |  |  | ✅ |
-| W-records-cal_prev | button | views/records.py:268 | ‹ | cal_prev |  | ✅ |
-| W-records-cal_today | button | views/records.py:270 | Today | cal_today |  | ✅ |
-| W-records-cal_next | button | views/records.py:272 | › | cal_next |  | ✅ |
-| W-records-name | button | views/records.py:295 | str(d['date'].day) | name |  | ✅ |
-| W-records-prog_view | segmented_control | views/records.py:309 | Show | prog_view |  | ✅ |
-| W-records-backup_and_restore | expander | views/records.py:320 | Backup and restore |  |  | ✅ |
-| W-records-download_a_backup | download_button | views/records.py:327 | Download a backup |  |  | ✅ |
-| W-records-import_a_backup | file_uploader | views/records.py:333 | Import a backup |  |  | ✅ |
-| W-records-replace_my_records_with_this_backup | button | views/records.py:334 | Replace my records with this backup |  |  | ✅ |
+| W-daily-ask_about_lesson | chat_input | views/daily.py:591 | Ask about Lesson {…}… |  |  | ✅ |
+| W-records-read | pills | views/records.py:83 | Read a lesson | read_{…} |  | ✅ |
+| W-records-rec_reflection | text_area | views/records.py:97 | My thoughts | rec_reflection_{…} |  | ✅ |
+| W-records-rec_save | button | views/records.py:103 | Save my thoughts | rec_save_{…} |  | ✅ |
+| W-records-rec_lesson | toggle | views/records.py:109 | Read the lesson | rec_lesson_{…} |  | ✅ |
+| W-records-prog_review_open | button | views/records.py:135 | f"Review collection · {len(deck)} {('card' if len(deck) == 1 else 'car | prog_review_open |  | ✅ |
+| W-records-sessions_topic | selectbox | views/records.py:198 | Subject | sessions_topic |  | ✅ |
+| W-records-x | expander | views/records.py:217 | {…} {…}, {…} {…}, {…} · {…} |  |  | ✅ |
+| W-records-oncal | button | views/records.py:218 | Show on the calendar | oncal_{…}_{…} |  | ✅ |
+| W-records-sessions_more | button | views/records.py:224 | Show {…} more of {…} | sessions_more |  | ✅ |
+| W-records-prog_world | button | views/records.py:247 | Enter {…} | prog_world_{…} |  | ✅ |
+| W-records-prog_course | button | views/records.py:250 | Course map | prog_course_{…} |  | ✅ |
+| W-records-views_reading_py | page_link | views/records.py:255 | views/reading.py |  |  | ✅ |
+| W-records-cal_prev | button | views/records.py:270 | ‹ | cal_prev |  | ✅ |
+| W-records-cal_today | button | views/records.py:272 | Today | cal_today |  | ✅ |
+| W-records-cal_next | button | views/records.py:274 | › | cal_next |  | ✅ |
+| W-records-name | button | views/records.py:297 | str(d['date'].day) | name |  | ✅ |
+| W-records-prog_view | segmented_control | views/records.py:311 | Show | prog_view |  | ✅ |
+| W-records-backup_and_restore | expander | views/records.py:322 | Backup and restore |  |  | ✅ |
+| W-records-download_a_backup | download_button | views/records.py:329 | Download a backup |  |  | ✅ |
+| W-records-import_a_backup | file_uploader | views/records.py:335 | Import a backup |  |  | ✅ |
+| W-records-replace_my_records_with_this_backup | button | views/records.py:336 | Replace my records with this backup |  |  | ✅ |
 | W-review-rv_view | segmented_control | views/review.py:22 | Show | rv_view |  | ✅ |
 | W-review-key | radio | views/review.py:72 | q['question'] | key |  | ✅ |
 | W-review-check | button | views/review.py:74 | Check | {…}_check |  | ✅ |
@@ -172,8 +172,8 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 | D-daily-save_day | save_day | views/daily.py:72 | log |  |  | ✅ |
 | D-daily-save_day-2 | save_day | views/daily.py:76 | log |  |  | ✅ |
 | D-daily-save_entry | save_entry | views/daily.py:111 | log |  |  | ✅ |
-| D-daily-save_entry-2 | save_entry | views/daily.py:579 | log |  |  | ✅ |
-| D-records-save_day | save_day | views/records.py:103 | log |  |  | ✅ |
+| D-daily-save_entry-2 | save_entry | views/daily.py:581 | log |  |  | ✅ |
+| D-records-save_day | save_day | views/records.py:105 | log |  |  | ✅ |
 | D-review-save_entry | save_entry | views/review.py:44 | log |  |  | ✅ |
 | D-review-save_entry-2 | save_entry | views/review.py:214 | log |  |  | ✅ |
 | D-review-save_entry-3 | save_entry | views/review.py:226 | log |  |  | ✅ |

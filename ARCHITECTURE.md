@@ -56,10 +56,11 @@ carried lesson began. Lesson saves are merges, not overwrites: a day is
 written into the day as stored now (`ui.save_day` → `curriculum.merge_day`),
 a lesson never moves back (`progress_of`), stored review cards win. A day a
 save failed on is kept as it is (not re-read) until a save succeeds.
+Progress re-reads the whole record on arrival (its figures and backup).
 
 One definition per number, in `core`: a day studied (any entry), a day
 completed (every entry that day completed), lessons passed (`lessons_in`),
-a streak day (a lesson passed). Progress, the calendar, the month line and
+a streak day (a lesson passed, or a reading check-in). Progress, the calendar, the month line and
 the sidebar all use them.
 
 ## Configuration

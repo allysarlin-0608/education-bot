@@ -195,3 +195,28 @@ def test_work_a_save_failed_on_is_kept_until_it_is_saved(monkeypatch, tmp_path):
     loads(at, "views/daily.py")
     day = next(e for e in at.session_state["coach_log"]["entries"] if e["date"] == ui.today().isoformat())
     assert day["lessons"][1]["lesson"] == "written, then the save failed"
+
+
+
+def test_saving_empty_thoughts_makes_no_day(monkeypatch, tmp_path):
+    """ISS-029: Save my thoughts with nothing written, before any lesson, saved
+    an empty day: Days studied +1 and today's subject fixed."""
+    entries = seed_history.build(ui.today(), days=1, topics=("philosophy",), gaps=(), partial=(1,))
+    at = app(monkeypatch, tmp_path, subjects=("philosophy",), entries=entries)   # a lesson carried from yesterday
+    loads(at, "views/daily.py")
+    next(b for b in at.button if b.label == "Save my thoughts").click().run()
+    assert not at.exception, [e.value for e in at.exception]
+    today = ui.today().isoformat()
+    assert all(e["date"] != today for e in at.session_state["coach_log"]["entries"])
+    assert all(e["date"] != today for e in json.loads((tmp_path / "log.json").read_text())["entries"])
+
+
+def test_progress_shows_what_another_device_saved_since(monkeypatch, tmp_path):
+    """ISS-030: Progress (its figures and its backup) showed this session's
+    copy of the record, older than what another device had saved."""
+    at = app(monkeypatch, tmp_path, history=False)
+    loads(at, "views/daily.py")
+    elsewhere = seed_history.build(ui.today(), days=2, topics=("philosophy",), gaps=(), partial=())
+    (tmp_path / "log.json").write_text(json.dumps({"version": 1, "entries": elsewhere, "books": []}))
+    loads(at, "views/records.py")
+    assert len(at.session_state["coach_log"]["entries"]) == 2

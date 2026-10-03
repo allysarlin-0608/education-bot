@@ -15,6 +15,8 @@ import streamlit as st
 
 from coach import core, curriculum, history, lesson_view, progress_bar, review, rolling, settings, ui
 
+if st.session_state.get("lq_entering"):          # arriving here: her whole record as stored now (ISS-030)
+    ui.refresh_log(st.session_state.coach_log)
 log = st.session_state.coach_log
 today = ui.today()
 config = ui.config()

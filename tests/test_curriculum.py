@@ -233,3 +233,23 @@ def test_thoughts_saved_from_progress_keep_what_was_saved_since():
     curriculum.merge_day(mine, stored, [], date(2026, 10, 4), keep=("reflection",))
     assert mine["reflection"] == "my thoughts"
     assert mine["lessons"][0]["passed_on"] == "2026-10-03" and mine["lessons"][0]["cards"] == [{"id": "c"}]
+
+
+
+def test_cards_made_by_a_quiz_submitted_after_midnight_are_kept():
+    """ISS-028: the page (opened on the 3rd) made its cards dated the 3rd; the
+    save compared them with the clock (the 4th) and dropped them all."""
+    from datetime import date
+    opened = date(2026, 10, 3)
+    made = {"id": "q", "kind": "question", "added": "2026-10-03"}
+    mine = {"date": "2026-10-03", "topic": "cosmos", "lessons": [dict(curriculum.new_slot("cosmos", 1), lesson="L",
+                                                                      quiz={"attempts": 1}, cards=[made])]}
+    stored = {"date": "2026-10-03", "topic": "cosmos", "lessons": [dict(curriculum.new_slot("cosmos", 1), lesson="L")]}
+    curriculum.merge_day(mine, stored, [1], opened)
+    assert mine["lessons"][0]["cards"] == [made]
+    # work a save failed on (since None): every card the store doesn't have
+    mine2 = {"date": "2026-10-01", "topic": "cosmos", "lessons": [dict(curriculum.new_slot("cosmos", 1), lesson="L",
+                                                                       cards=[dict(made, added="2026-10-01")])]}
+    stored2 = {"date": "2026-10-01", "topic": "cosmos", "lessons": [dict(curriculum.new_slot("cosmos", 1), lesson="L")]}
+    curriculum.merge_day(mine2, stored2, [1], None)
+    assert [c["id"] for c in mine2["lessons"][0]["cards"]] == ["q"]

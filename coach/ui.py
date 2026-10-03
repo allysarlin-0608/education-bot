@@ -341,7 +341,25 @@ def refresh_entry(log, day, topic):
         del st.session_state.coach_chats[key]          # rebuilt from the stored lessons
 
 
-def save_day(log, entry, ns, keep=(), recount=False) -> bool:
+def refresh_log(log) -> None:
+    """Her whole record as stored now, in place of this session's copy (another
+    tab or device may have moved on since it was loaded): for pages that show
+    or hand out all of it (Progress, its backup). Days a save failed on stay as
+    this session holds them (ISS-024)."""
+    try:
+        stored = st.session_state.coach_store.load()
+    except storage.StorageError as e:
+        logger.warning("couldn't re-read the records (%s); using this session's copy", e)
+        return
+    unsaved = st.session_state.get("coach_unsaved", set())
+    mine = {(e["date"], e["topic"]): e for e in log["entries"] if (e["date"], e["topic"]) in unsaved}
+    entries = [e for e in stored["entries"] if (e["date"], e["topic"]) not in mine] + list(mine.values())
+    log["entries"] = sorted(entries, key=lambda e: (e["date"], e["topic"]))
+    log["books"] = stored["books"]
+    st.session_state.coach_chats = {}          # rebuilt from the records as now stored
+
+
+def save_day(log, entry, ns, keep=(), recount=False, page_day=None) -> bool:
     """Save a day this page changed, written into the day as stored now
     (curriculum.merge_day): this page's copy may be old (another tab or
     device, a fragment that didn't re-read it), and a whole-row save of it
@@ -352,7 +370,9 @@ def save_day(log, entry, ns, keep=(), recount=False) -> bool:
         logger.warning("couldn't re-read %s %s (%s); saving this session's copy", entry["date"], entry["topic"], e)
         stored = None
     if stored is not None:
-        curriculum.merge_day(entry, stored, ns, today(), keep=keep, recount=recount)
+        unsaved = (entry["date"], entry["topic"]) in st.session_state.get("coach_unsaved", ())
+        since = None if unsaved else (page_day or today())       # the day the page made its cards on
+        curriculum.merge_day(entry, stored, ns, since, keep=keep, recount=recount)
     return save_entry(log, entry)
 
 

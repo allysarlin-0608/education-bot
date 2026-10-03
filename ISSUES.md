@@ -34,6 +34,9 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 | ISS-025 | P2 | Data / two tabs | The quiz sheet (today's day) and Progress → Save my thoughts wrote an old copy of the whole day | fixed |
 | ISS-026 | P2 | Settings | A data download gathered earlier stayed until saved, out of date | fixed |
 | ISS-027 | P2 | Data (local mode) | A log file of the wrong shape crashed every page; settings files shared one temporary file | fixed |
+| ISS-028 | P2 | Review | Cards made by a quiz submitted after midnight were dropped by the save | fixed |
+| ISS-029 | P2 | Today / Progress | Saving empty thoughts made a day (Days studied +1, today's subject fixed) | fixed |
+| ISS-030 | P2 | Progress | Progress and its backup showed this session's copy of the record, older than another device's saves | fixed |
 
 ## Details
 
@@ -100,3 +103,9 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 - **ISS-024:** a failed save marks the day unsaved; the re-read at the start of a run leaves an unsaved day as it is until a save succeeds. Test: `test_pages_smoke.py::test_work_a_save_failed_on_is_kept_until_it_is_saved` (fails without the guard).
 - **ISS-026:** the gathered download is dropped when she leaves the page.
 - **ISS-027:** reading a damaged log (not JSON, the wrong shape, not text) is a `StorageError` with a clear message, never a crash, and nothing is written over it; every local JSON file is written through one writer (`core.write_json`: its own temporary file, swapped in whole). Test: `test_storage.py::test_a_damaged_file_is_a_clear_error_not_a_crash`.
+
+### ISS-028 … ISS-030 — found by the fourth independent review
+- **ISS-028:** a merge kept the page's new cards only if dated "today" by the clock; a quiz opened before midnight and submitted after it made cards dated the day before. Cards are now compared with the day the page was opened (`page_day`), and a day a save failed on keeps every card the store doesn't have. Test: `test_curriculum.py::test_cards_made_by_a_quiz_submitted_after_midnight_are_kept`.
+- **ISS-029:** Save my thoughts with nothing written and no day yet saves nothing. Test: `test_pages_smoke.py::test_saving_empty_thoughts_makes_no_day` (fails without the guard).
+- **ISS-030:** arriving at Progress re-reads the whole record (`ui.refresh_log`, keeping days a save failed on). Test: `test_pages_smoke.py::test_progress_shows_what_another_device_saved_since` (fails without it).
+- **Doc:** ARCHITECTURE.md now says a reading check-in counts as a streak day, as the code always did.

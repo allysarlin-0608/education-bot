@@ -69,11 +69,11 @@ def save(entry, owner):
     """Save the day, and the earlier day a carried-over lesson belongs to,
     each written into the day as stored now (ui.save_day): the quiz sheet
     saves from a fragment, which doesn't re-read either day first."""
-    ok = ui.save_day(log, entry, [s["n"] for s in entry["lessons"]], recount=True)
+    ok = ui.save_day(log, entry, [s["n"] for s in entry["lessons"]], recount=True, page_day=today)
     if owner is entry:
         return ok
     carried = [s["n"] for s in entry["lessons"] if s.get("from") == owner["date"]]
-    return ui.save_day(log, owner, carried) and ok
+    return ui.save_day(log, owner, carried, page_day=today) and ok
 
 
 def failed(kind, error, slot, **payload):
@@ -574,6 +574,8 @@ with st.expander("My thoughts on the question to explore (optional, the coach pi
         key=f"reflection_{today.isoformat()}_{topic}",
     )
     if st.button("Save my thoughts"):
+        if not reflection.strip() and core.find_entry(log, today, topic) is None:
+            st.rerun()          # nothing written and no day yet: nothing to save, no day made (ISS-029)
         entry = day_entry()
         entry["reflection"] = reflection.strip()
         if ui.save_entry(log, entry):
