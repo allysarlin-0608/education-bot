@@ -37,6 +37,7 @@ Status: open · fixed (commit) · needs decision.
 | BUG-027 | P2 | Today (chat box) | Issue F: the floating chat box covered Retry (and other new controls) | fixed (aa01909) |
 | BUG-028 | P1 | Settings (subject showcase) | Issue C: the showcase said 'Not chosen' for a subject Starting level listed as chosen | fixed (18e3af0) |
 | BUG-029 | P0 | Today / quiz | Issue A: the first 'Take the quiz' often failed with 'didn't manage' | fixed (5a998f7) — real-model check pending |
+| BUG-030 | P0 | Course map (Today, Progress → Subjects) | AttributeError: ui.open_course: new pages ran on an old copy of coach.ui after an update | fixed — see commit |
 
 ## Details
 
@@ -356,3 +357,13 @@ Status: open · fixed (commit) · needs decision.
 - **Fix:** Slips repaired where that's safe; complete questions kept from a cut-off reply; only the missing kinds asked for, then the whole quiz again (at most 2 extra calls); requests paced to the minute's allowance; 'Preparing your quiz…' disabled button while it's written (also after Retry). The pipeline is in coach/quizgen.py, measured on the real model by tools/measure_quiz.py
 - **Files changed:** coach/quiz.py, coach/quizgen.py, coach/llm.py, coach/tokens.py, views/daily.py
 - **Covered by:** tests/test_quiz.py, tests/test_quizgen.py, tests/test_llm.py (pacing, salvage), tests/e2e/test_ai.py::test_an_incomplete_quiz_is_completed_on_the_first_click, ::test_the_quiz_button_says_it_is_preparing_and_cannot_be_pressed_again, ::test_retry_after_a_failed_quiz_also_cannot_be_pressed_twice, ::test_thirty_quizzes_in_a_row_each_on_the_first_click (30/30 on the fake model)
+
+### BUG-030 (P0) — Course map: AttributeError … ui.open_course
+- **Page / flow:** Today → Course map, Progress → Subjects → Course map (test site)
+- **Steps to reproduce:** An update reaches the running server while nobody is on the site; then open a page that uses the new code
+- **Expected:** The new code, whole
+- **Actual:** AttributeError: module 'coach.ui' has no attribute 'open_course'
+- **Root cause:** Streamlit reads each page file afresh on every run but keeps imported modules (coach.ui, …) in memory; it only reloads them for sessions open at the moment files change. coach.ui is also imported at server start (coach.routes). So an update that landed with no one on the site gave new pages (calling ui.open_course) on the old coach.ui. Reproduced with a minimal Streamlit app; the code in the repository was complete
+- **Fix:** coach/__init__.py notes each module's file time when it loads; freshen() at the top of every run drops every coach module (except the server's routes) when any file is newer, so the run loads the new code whole; sessions rebuild their store with it (ui.make_store)
+- **Files changed:** coach/__init__.py, gnosis.py, coach/ui.py
+- **Covered by:** tests/test_freshen.py; tests/e2e/test_course.py::test_every_way_in_on_every_device (390/820/1180/1440)

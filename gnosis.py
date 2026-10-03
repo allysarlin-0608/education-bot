@@ -1,6 +1,9 @@
 import streamlit as st
 
-from coach import auth, place, settings, sidebar, style, topnav, ui
+import coach
+
+coach.freshen()     # an update that landed while nobody was here: load the new code whole, not half of it
+from coach import auth, place, settings, sidebar, style, topnav, ui  # noqa: E402
 
 st.set_page_config(
     page_title="GNOSIS",

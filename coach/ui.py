@@ -109,11 +109,14 @@ CACHED = ("coach_log", "coach_chats", "coach_settings")
 def make_store():
     """The session's store (once per session). public: scoped to whoever is
     signed in, asked afresh on every call (auth.get_current_user_id)."""
+    import coach
     from coach import auth
-    if st.session_state.get("coach_state_version") != STATE_VERSION:
+    # (new code loaded since this session began: its store and records are rebuilt by it too)
+    version = (STATE_VERSION, coach.GENERATION)
+    if st.session_state.get("coach_state_version") != version:
         for key in ("coach_store", *CACHED):
             st.session_state.pop(key, None)
-        st.session_state.coach_state_version = STATE_VERSION
+        st.session_state.coach_state_version = version
     if "coach_store" not in st.session_state:
         public = auth.is_public()
         try:

@@ -103,18 +103,18 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 | W-records-x | expander | views/records.py:215 | {…} {…}, {…} {…}, {…} · {…} |  |  | ✅ |
 | W-records-oncal | button | views/records.py:216 | Show on the calendar | oncal_{…}_{…} |  | ✅ |
 | W-records-sessions_more | button | views/records.py:222 | Show {…} more of {…} | sessions_more |  | ✅ |
-| W-records-prog_world | button | views/records.py:248 | Enter {…} | prog_world_{…} |  | ✅ |
-| W-records-prog_course | button | views/records.py:251 | Course map | prog_course_{…} |  | ✅ |
-| W-records-views_reading_py | page_link | views/records.py:256 | views/reading.py |  |  | ✅ |
-| W-records-cal_prev | button | views/records.py:271 | ‹ | cal_prev |  | ✅ |
-| W-records-cal_today | button | views/records.py:273 | Today | cal_today |  | ✅ |
-| W-records-cal_next | button | views/records.py:275 | › | cal_next |  | ✅ |
-| W-records-name | button | views/records.py:298 | str(d['date'].day) | name |  | ✅ |
-| W-records-prog_view | segmented_control | views/records.py:312 | Show | prog_view |  | ✅ |
-| W-records-backup_and_restore | expander | views/records.py:323 | Backup and restore |  |  | ✅ |
-| W-records-download_a_backup | download_button | views/records.py:330 | Download a backup |  |  | ✅ |
-| W-records-import_a_backup | file_uploader | views/records.py:336 | Import a backup |  |  | ✅ |
-| W-records-replace_my_records_with_this_backup | button | views/records.py:337 | Replace my records with this backup |  |  | ✅ |
+| W-records-prog_world | button | views/records.py:245 | Enter {…} | prog_world_{…} |  | ✅ |
+| W-records-prog_course | button | views/records.py:248 | Course map | prog_course_{…} |  | ✅ |
+| W-records-views_reading_py | page_link | views/records.py:253 | views/reading.py |  |  | ✅ |
+| W-records-cal_prev | button | views/records.py:268 | ‹ | cal_prev |  | ✅ |
+| W-records-cal_today | button | views/records.py:270 | Today | cal_today |  | ✅ |
+| W-records-cal_next | button | views/records.py:272 | › | cal_next |  | ✅ |
+| W-records-name | button | views/records.py:295 | str(d['date'].day) | name |  | ✅ |
+| W-records-prog_view | segmented_control | views/records.py:309 | Show | prog_view |  | ✅ |
+| W-records-backup_and_restore | expander | views/records.py:320 | Backup and restore |  |  | ✅ |
+| W-records-download_a_backup | download_button | views/records.py:327 | Download a backup |  |  | ✅ |
+| W-records-import_a_backup | file_uploader | views/records.py:333 | Import a backup |  |  | ✅ |
+| W-records-replace_my_records_with_this_backup | button | views/records.py:334 | Replace my records with this backup |  |  | ✅ |
 | W-review-rv_view | segmented_control | views/review.py:22 | Show | rv_view |  | ✅ |
 | W-review-key | radio | views/review.py:72 | q['question'] | key |  | ✅ |
 | W-review-check | button | views/review.py:74 | Check | {…}_check |  | ✅ |
@@ -164,10 +164,10 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 | D-quota-add_usage | add_usage | coach/quota.py:58 | ui.today().isoformat() |  |  | ✅ |
 | D-reading-save_book | save_book | coach/reading.py:128 | log |  |  | ✅ |
 | D-reading-save_entry | save_entry | coach/reading.py:467 | log |  |  | ✅ |
-| D-ui-save_settings | save_settings | coach/ui.py:193 | new |  |  | ✅ |
-| D-ui-save_entry | save_entry | coach/ui.py:248 | log |  |  | ✅ |
-| D-ui-save_book | save_book | coach/ui.py:258 | log |  |  | ✅ |
-| D-ui-replace | replace | coach/ui.py:278 | log |  |  | ✅ |
+| D-ui-save_settings | save_settings | coach/ui.py:196 | new |  |  | ✅ |
+| D-ui-save_entry | save_entry | coach/ui.py:251 | log |  |  | ✅ |
+| D-ui-save_book | save_book | coach/ui.py:261 | log |  |  | ✅ |
+| D-ui-replace | replace | coach/ui.py:281 | log |  |  | ✅ |
 | D-daily-save_entry | save_entry | views/daily.py:58 | log |  |  | ✅ |
 | D-daily-save_entry-2 | save_entry | views/daily.py:59 | log |  |  | ✅ |
 | D-daily-save_entry-3 | save_entry | views/daily.py:94 | log |  |  | ✅ |
@@ -214,5 +214,5 @@ A test covers an item by naming its ID (`covers("ID")` or `# covers: ID`).
 | S-supabase_url | get_setting | coach/supa_auth.py:32 | SUPABASE_URL |  |  | ✅ |
 | S-supabase_key | get_setting | coach/supa_auth.py:36 | SUPABASE_KEY |  |  | ✅ |
 | S-app_password | get_setting | coach/ui.py:79 | APP_PASSWORD |  |  | ✅ |
-| S-groq_api_key | get_setting | coach/ui.py:141 | GROQ_API_KEY |  |  | ✅ |
-| S-coach_user_id | get_setting | coach/ui.py:160 | COACH_USER_ID |  |  | ✅ |
+| S-groq_api_key | get_setting | coach/ui.py:144 | GROQ_API_KEY |  |  | ✅ |
+| S-coach_user_id | get_setting | coach/ui.py:163 | COACH_USER_ID |  |  | ✅ |

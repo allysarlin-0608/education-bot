@@ -172,6 +172,3 @@ with st.container(key="cm_path"):
                     f'<span>Lessons {u["first"]}–{u["last"]}</span></p><ol start="{u["first"]}">'
                     + "".join(f"<li>{escape(x['title'])}</li>" for x in u["lessons"]) + "</ol></div>"
                     for u in later) + "</div>")
-        if m["written"] < m["total"]:
-            st.caption(f"The course runs to {m['total']:,} lessons; {m['written']} are written so far and the "
-                       "rest are added as you go.")

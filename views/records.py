@@ -227,9 +227,6 @@ def view_sessions():
 
 def view_subjects():
     """Each subject and the topic (unit) she is in now; Reading links to its page."""
-    st.caption(f"Each subject has {curriculum.TOTAL:,} lessons taken in order: 1–{curriculum.LEVEL_SIZE:,} "
-               f"Beginner, {curriculum.LEVEL_SIZE + 1:,}–{2 * curriculum.LEVEL_SIZE:,} Intermediate, the rest "
-               f"Advanced, or your starting level where that's higher. The bar is the topic you're in now.")
     shown = subjects + (["reading"] if settings.reading_on(config) else [])
     with st.container(key="subj_list"):
         for key in shown:

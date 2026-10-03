@@ -119,3 +119,57 @@ def test_the_ways_in_and_a_subject_that_is_not_today(public_app, pages, clock):
     assert flows.wait_text(page, "Finished ·", 10)
     flows.open_panel(p, "Finished ·")
     assert page.locator('[class*="st-key-cm_row_"][class*="_done"] button').count() > 10
+
+
+@pytest.mark.parametrize("width", [390, 820, 1180, 1440])
+def test_every_way_in_on_every_device(public_app, pages, clock, width):
+    """Today, Progress → Subjects, Settings and the subject's world all open
+    the map; on it: the units, a finished lesson read again, and Continue."""
+    covers("W-daily-today_course", "W-records-prog_course", "W-settings-set_course", "W-world-w_course")
+    app = public_app
+    clock(D, "02:00:00")
+    p = pages(width=width)
+    email = f"cm{next(_n)}-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=email)
+    flows.onboard(p, subjects=("Fashion & Clothing",))
+    from seed_history import build
+    app.seed_entries(email, build(D - timedelta(days=1), days=8, topics=("fashion",)))
+    page = p.page
+
+    def on_map():
+        assert "/course" in page.url and "subject=fashion" in page.url, page.url
+        assert flows.wait_text(page, "lessons passed", 15)
+        assert "Traceback" not in text(p) and "Error" not in text(p)
+
+    flows.open_app(p, app)                                          # Today
+    flows.button(p, "Course map", exact=False)
+    on_map()
+    flows.open_app(p, app, "/records")                              # Progress → Subjects
+    page.get_by_role("radio", name="Subjects").or_(page.get_by_role("button", name="Subjects", exact=True)).first.click()
+    flows.idle(page)
+    page.locator(".st-key-prog_course_fashion button").click()
+    flows.idle(page)
+    on_map()
+    flows.open_app(p, app, "/settings")                             # Settings
+    flows.button(p, "Course map", exact=False)
+    on_map()
+    flows.open_app(p, app, "/subject?subject=fashion")              # the subject's world
+    flows.button(p, "Course map", exact=False)
+    on_map()
+    # the map: where she is, the finished topic folded, a finished lesson read again, back to the current one
+    assert "YOU ARE HERE" in text(p).upper()
+    flows.open_panel(p, "Finished ·")
+    row = page.locator('[class*="st-key-cm_row_"][class*="_done"] button').first
+    row.scroll_into_view_if_needed()
+    flows.tap(p, row)
+    dialog = page.get_by_role("dialog")
+    dialog.wait_for(timeout=10000)
+    assert "Lesson" in dialog.inner_text() and "passed" in dialog.inner_text()
+    assert dialog.evaluate("d => d.getBoundingClientRect().right <= window.innerWidth + 1"), "the lesson fits the screen"
+    dialog.get_by_role("tab", name="Quiz").click()
+    assert flows.wait_text(page, "Last attempt:", 5)
+    page.keyboard.press("Escape")
+    flows.idle(page)
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways scroll"
+    flows.button(p, "Continue · Lesson", exact=False)
+    assert flows.wait_text(page, "Start this lesson", 15), "Continue goes back to the current lesson"
