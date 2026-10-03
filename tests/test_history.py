@@ -45,3 +45,29 @@ def test_amount_steps():
     assert history.amount({"done": 1, "total": 5}) == 1
     assert history.amount({"done": 5, "total": 5}) == 5
     assert history.amount({"done": 0, "total": 0}) == 0
+
+
+def test_streak_days_completed_studied_calendar_agree_with_a_lesson_passed_a_day_later():
+    """Issue 1: one rule for the whole Progress page. Oct 1: lesson 1 written,
+    not passed. Oct 2: it's passed there (D2 link) plus lesson 2 not passed.
+    Oct 3: every lesson of the day passed."""
+    from datetime import date
+
+    from coach import core, history
+    first = {"n": 1, "title": "t", "unit": "", "lesson": "x", "completed": False, "passed_on": "2026-10-02"}
+    link = {"n": 1, "title": "t", "unit": "", "lesson": "", "from": "2026-10-01", "completed": True}
+    open2 = {"n": 2, "title": "t", "unit": "", "lesson": "y", "completed": False}
+    done3 = {"n": 3, "title": "t", "unit": "", "lesson": "z", "completed": True}
+    log = {"entries": [
+        {"date": "2026-10-01", "topic": "fashion", "completed": False, "lessons": [first]},
+        {"date": "2026-10-02", "topic": "fashion", "completed": False, "lessons": [link, open2]},
+        {"date": "2026-10-03", "topic": "fashion", "completed": True, "lessons": [done3]}]}
+    today = date(2026, 10, 3)
+    assert core.current_streak(log, today) == 2                  # Oct 2 and 3: a lesson passed each day
+    assert core.longest_streak(log) == 2
+    assert len(core.completed_dates(log)) == 1                   # only Oct 3 finished every lesson
+    assert len({e["date"] for e in log["entries"]}) == 3         # studied all three days
+    stats = [history.day_stats(log, date(2026, 10, d), today) for d in (1, 2, 3)]
+    assert [s["status"] for s in stats] == ["partial", "partial", "done"]
+    assert [s["done"] for s in stats] == [0, 1, 1]               # the lesson counts once, on Oct 2
+    assert history.month_summary(log, 2026, 10, today)["lessons"] == 2
