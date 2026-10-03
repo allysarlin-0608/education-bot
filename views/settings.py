@@ -211,16 +211,23 @@ def cancel_delete() -> None:
 if auth.is_public():
     with st.container(key="set_sec_data"):
         st.markdown("#### Your data")
-        store = st.session_state.coach_store
-
-        def mine() -> str:
-            """Gathered when she presses Download (every row she has), not on
-            every click on this page (ISS-015)."""
-            return json.dumps(store.export_my_data(), ensure_ascii=False, indent=2, default=str)
-
+        # Her data is gathered when she asks for it, in this run (where who
+        # she is is known: a deferred download runs on another thread, signed
+        # in as no one, ISS-019), not on every click on this page (ISS-015).
+        if st.session_state.pop("data_wanted", False):
+            try:
+                st.session_state.data_export = json.dumps(
+                    st.session_state.coach_store.export_my_data(), ensure_ascii=False, indent=2, default=str)
+            except storage.StorageError as e:
+                st.html(f'<p class="ob-note">Couldn\'t gather your data ({escape(str(e))}). Try again in a moment.</p>')
         with st.container(key="data_actions", horizontal=True, vertical_alignment="center"):
-            st.download_button("Download my data", mine, file_name="gnosis-data.json",
-                               mime="application/json", key="data_download")
+            if st.session_state.get("data_export") is None:
+                st.button("Download my data", key="data_prepare",
+                          on_click=lambda: st.session_state.update(data_wanted=True))
+            else:
+                st.download_button("Save my data as a file", st.session_state.data_export,
+                                   file_name="gnosis-data.json", mime="application/json", key="data_download",
+                                   on_click=lambda: st.session_state.pop("data_export", None))
             st.button("Delete my account", key="data_delete", type="tertiary", on_click=ask_delete)
         if st.session_state.get("del_open"):
             with st.container(key="del_confirm_box"):

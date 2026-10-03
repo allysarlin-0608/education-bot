@@ -14,7 +14,7 @@ SECRET = "Zanzibar-quokka private note"
 
 
 def test_two_accounts_never_see_each_other(public_app, pages):
-    covers("W-topnav-nav_search", "W-settings-data_download")
+    covers("W-topnav-nav_search", "W-settings-data_download", "W-settings-data_prepare")
     app = public_app
     a, b = pages(width=1180), pages(width=1180)
     ea = f"alice{next(_n)}-{int(time.time() * 1000)}@example.com"
@@ -52,8 +52,9 @@ def test_two_accounts_never_see_each_other(public_app, pages):
     assert not seen, f"Alice's data reached Bob on {seen}"
     # Bob's own data download holds only Bob
     flows.open_app(b, app, "/settings")
+    b.page.get_by_role("button", name="Download my data").click()      # gathered now, as her
     with b.page.expect_download() as dl:
-        b.page.get_by_role("button", name="Download my data").click()
+        b.page.get_by_role("button", name="Save my data as a file").click()
     data = json.loads(open(dl.value.path()).read())
     blob = json.dumps(data)
     assert SECRET not in blob and ea not in blob and eb in blob

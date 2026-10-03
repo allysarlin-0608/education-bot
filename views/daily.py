@@ -66,9 +66,14 @@ def work(entry, i):
 
 
 def save(entry, owner):
-    """Save the day, and the earlier day a carried-over lesson belongs to."""
+    """Save the day, and the earlier day a carried-over lesson belongs to
+    (written into it as stored now: the quiz sheet saves from a fragment,
+    which doesn't re-read that day first, ISS-021)."""
     ok = ui.save_entry(log, entry)
-    return (ui.save_entry(log, owner) if owner is not entry else True) and ok
+    if owner is entry:
+        return ok
+    carried = [s["n"] for s in entry["lessons"] if s.get("from") == owner["date"]]
+    return ui.save_carried(log, owner, carried) and ok
 
 
 def failed(kind, error, slot, **payload):
@@ -79,7 +84,6 @@ def failed(kind, error, slot, **payload):
 
 
 def run_kickoff(i):
-    new_day = core.find_entry(log, today, topic) is None
     entry = day_entry()
     owner, slot = work(entry, i)
     if curriculum.blocking(entry["lessons"], i):     # strictly in order
@@ -95,9 +99,7 @@ def run_kickoff(i):
         [{"role": "user", "content": kickoff}], max_tokens=tokens.LESSON_MAX_TOKENS,
     )
     if error:
-        if new_day:             # nothing was saved: the day isn't one she studied (ISS-013)
-            log["entries"].remove(entry)
-        failed("kickoff", error, slot, i=i)
+        failed("kickoff", error, slot, i=i)       # (the day it made is dropped on the rerun: ui.refresh_entry)
     lesson = core.truthful_note(core.finalize_reply(lesson, lesson=True, topic=topic),
                                 core.note_fact(log, topic, today, slot["n"]))
     chat += [{"role": "user", "content": kickoff}, {"role": "assistant", "content": lesson}]
@@ -227,8 +229,7 @@ if "date" in st.query_params or "topic" in st.query_params:     # links from the
 if st.session_state.get("coach_toast"):           # set just before a rerun, shown after it
     st.toast(st.session_state.pop("coach_toast"))
 
-ui.refresh_entry(log, today, topic)          # another tab may have moved on since this page loaded
-entry = core.find_entry(log, today, topic)
+entry = core.find_entry(log, today, topic)      # (re-read as stored at the start of this run: gnosis.py)
 # a lesson carried over is written back to the day it began (work()): that
 # day is refreshed too, or a save here would put an old copy of it back (ISS-010)
 for began in sorted({s["from"] for s in curriculum.day_plan(log, topic, entry, settings.units(config)) if s.get("from")}):

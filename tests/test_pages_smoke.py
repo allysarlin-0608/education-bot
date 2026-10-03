@@ -164,3 +164,17 @@ def test_a_lesson_that_couldnt_be_written_leaves_no_day_behind(monkeypatch, tmp_
     assert not at.exception, [e.value for e in at.exception]
     assert at.session_state["coach_log"]["entries"] == []
     assert at.session_state["coach_retry"]["kind"] == "kickoff"           # and she can try again
+
+
+def test_a_day_made_by_a_question_that_got_no_reply_is_dropped(monkeypatch, tmp_path):
+    """ISS-013, every path: a carried lesson's question or quiz that failed
+    (or a lesson cut off mid-way) had made today's day in memory only."""
+    from coach import core, curriculum
+    entries = seed_history.build(ui.today(), days=1, topics=("philosophy",), gaps=(), partial=(1,))
+    at = app(monkeypatch, tmp_path, subjects=("philosophy",), entries=entries)
+    loads(at, "views/daily.py")
+    log = at.session_state["coach_log"]
+    made = core.start_entry(log, ui.today(), "philosophy")             # what day_entry() does first
+    made["lessons"] = curriculum.day_plan(log, "philosophy", None, 3)    # links to yesterday's lessons
+    loads(at, "views/daily.py")
+    assert [e["date"] for e in at.session_state["coach_log"]["entries"]] == [entries[0]["date"]]

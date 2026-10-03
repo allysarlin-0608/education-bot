@@ -319,6 +319,12 @@ def refresh_entry(log, day, topic):
         return
     mine = next((k for k, e in enumerate(log["entries"])
                  if e["date"] == day.isoformat() and e["topic"] == topic), None)
+    if stored is None and mine is not None and not curriculum.worked_on(log["entries"][mine]):
+        # made by an action that then failed or was cut off (a lesson that
+        # couldn't be written, a question with no reply): never saved, nothing
+        # done, so not a day she studied (ISS-013)
+        del log["entries"][mine]
+        return
     if stored is None or (mine is not None and log["entries"][mine] == stored):
         return
     if mine is None:
@@ -328,6 +334,22 @@ def refresh_entry(log, day, topic):
         log["entries"][mine] = stored
     for key in [k for k in st.session_state.coach_chats if k.startswith(f"{day.isoformat()}|{topic}|")]:
         del st.session_state.coach_chats[key]          # rebuilt from the stored lessons
+
+
+def save_carried(log, owner, ns) -> bool:
+    """Save the earlier day a carried lesson belongs to, written into that day
+    as stored now: this page's copy of lessons `ns` goes in, everything else
+    (other lessons, its review cards graded on another device) stays as
+    stored. This page only adds cards on the day it runs, so of its cards
+    only today's new ones are added (ISS-021)."""
+    try:
+        stored = st.session_state.coach_store.load_entry(owner["date"], owner["topic"])
+    except storage.StorageError as e:
+        logger.warning("couldn't re-read %s %s (%s); saving this session's copy", owner["date"], owner["topic"], e)
+        stored = None
+    if stored is not None:
+        curriculum.merge_carried(owner, stored, ns, today())
+    return save_entry(log, owner)
 
 
 def refresh_books(log):

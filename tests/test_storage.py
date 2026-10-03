@@ -322,3 +322,19 @@ def test_file_store_keeps_what_another_tab_saved(tmp_path):
     stored = store.load()
     assert [(x["date"], x["topic"]) for x in stored["entries"]] == [("2026-10-02", "cosmos"), ("2026-10-03", "philosophy")]
     assert [b["id"] for b in stored["books"]] == [book["id"]]
+
+
+def test_a_file_that_cant_be_read_is_never_saved_over(tmp_path):
+    """ISS-020: a damaged file was read as empty, and the next save kept only
+    the one entry it was saving."""
+    store = storage.FileStore(tmp_path / "log.json")
+    log = core.empty_log()
+    for d in (1, 2):
+        store.save_entry(log, core.start_entry(log, date(2026, 10, d), "philosophy"))
+    path = tmp_path / "log.json"
+    damaged = path.read_text()[:-5]
+    path.write_text(damaged)
+    with pytest.raises(storage.StorageError):
+        store.save_entry(log, core.start_entry(log, date(2026, 10, 3), "philosophy"))
+    assert path.read_text() == damaged                    # left as it was, for repair
+    assert not list(tmp_path.glob("*.tmp"))

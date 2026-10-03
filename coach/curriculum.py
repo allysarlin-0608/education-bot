@@ -191,6 +191,13 @@ def _touched(slot: dict) -> bool:
     return bool(slot.get("completed") or slot.get("lesson") or slot.get("quiz"))
 
 
+def worked_on(entry: dict) -> bool:
+    """Anything done on this day's own record: a lesson written, a quiz,
+    a question asked, a lesson passed, her thoughts."""
+    return bool(entry.get("completed") or (entry.get("reflection") or "").strip() or any(
+        _touched(s) or s.get("followups") for s in entry.get("lessons") or []))
+
+
 def fit(log: dict, topic: str, slots: list, count: int) -> list:
     """A day already started, after her pace changed: the lessons she has
     begun or finished stay; untouched ones past the new count go, and new
@@ -202,6 +209,28 @@ def fit(log: dict, topic: str, slots: list, count: int) -> list:
     extra = [n for n in next_numbers(log, topic, count + len(have)) if n not in have]
     kept += [plan_slot(log, topic, n) for n in extra[:max(0, count - len(kept))]]
     return sorted(kept, key=lambda s: s["n"])
+
+
+def merge_carried(mine: dict, stored: dict, ns, today: date) -> None:
+    """`mine` (this session's copy of an earlier day) becomes the day as
+    stored, with this session's copy of lessons `ns` (the ones carried to
+    today and worked on here). Their review cards are the stored ones plus
+    those made today: Today makes cards, it never grades or deletes them,
+    so a stored card's state (graded or deleted elsewhere) always wins.
+    The lesson objects of `ns` stay the same objects (pages hold them)."""
+    own = {s["n"]: s for s in mine["lessons"] if s["n"] in ns}
+    lessons = []
+    for s in stored["lessons"]:
+        m = own.get(s["n"])
+        if m is None:
+            lessons.append(s)
+            continue
+        if "cards" in s:
+            have = {c["id"] for c in s["cards"]}
+            m["cards"] = s["cards"] + [c for c in m.get("cards") or []
+                                       if c["id"] not in have and c.get("added") == today.isoformat()]
+        lessons.append(m)
+    mine.update({k: v for k, v in stored.items() if k != "lessons"}, lessons=lessons)
 
 
 def blocking(slots: list, i: int):

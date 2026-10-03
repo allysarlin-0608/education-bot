@@ -25,6 +25,11 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 | ISS-016 | P2 | AI / reliability | The longest lesson prompt was 14 tokens from the request limit (an uncaught error past it) | fixed |
 | ISS-017 | P2 | Tests | The page smoke test never loaded its seeded history (the log path was fixed at import) | fixed |
 | ISS-018 | P2 | Wording | A subject's count read "of 3,000 overall" on Progress but "of 260 written so far" elsewhere | fixed |
+| ISS-019 | P1 | Settings / data | "Download my data" failed when signed in (my ISS-015 fix ran the export where no one is signed in) | fixed |
+| ISS-020 | P2 | Data (local mode) | A damaged local file was read as empty, and the next save kept only one entry | fixed |
+| ISS-021 | P2 | Data / two devices | The quiz sheet saved a carried lesson's day from an old copy, undoing review grades made elsewhere | fixed |
+| ISS-022 | P2 | Today / Progress | A question or quiz that failed (or a lesson cut off) left an unsaved day counted as studied | fixed |
+| ISS-023 | P2 | Sidebar | The sidebar and bar could show an older count than Today on the same screen | fixed |
 
 ## Details
 
@@ -77,3 +82,11 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 - **ISS-016:** shorter clips on the history lines; a test builds the worst case for every subject and requires 150 tokens of room. Test: `test_coach_core.py::test_the_longest_lesson_prompt_fits_the_request_with_room`.
 - **ISS-017:** `FileStore` reads `COACH_LOG_PATH` when it is made; the smoke test asserts the history it seeded is loaded.
 - **ISS-018:** Progress → Subjects uses "N of M written so far", as the subject page does.
+
+### ISS-019 … ISS-023 — found by the second independent review
+- **ISS-019 (P1, a regression from ISS-015):** Streamlit's deferred download runs on a separate thread, where nobody is signed in, so the export failed. The export is now gathered in the page run when she presses Download my data, then saved with a second press (no export on other clicks). e2e: `test_privacy.py`, `test_settings.py::test_download_my_data_is_only_mine` updated to the two presses.
+- **ISS-020:** saving into a file that can't be read now stops with an error and leaves the file as it is; saves to the local file take a lock and each write has its own temporary file. Test: `test_storage.py::test_a_file_that_cant_be_read_is_never_saved_over`.
+- **ISS-021:** a carried lesson's day is saved by writing this page's copy of that lesson into the day as stored now; stored review cards win, only cards made today are added (`curriculum.merge_carried`). Test: `test_curriculum.py::test_a_carried_lesson_saved_from_an_old_copy_keeps_what_another_device_did`.
+- **ISS-022 (generalises ISS-013):** one rule in `ui.refresh_entry`: a copy of a day that was never saved and has nothing done in it (`curriculum.worked_on`) is dropped, whichever action made it. Test: `test_pages_smoke.py::test_a_day_made_by_a_question_that_got_no_reply_is_dropped`.
+- **ISS-023:** today's day is re-read once at the start of every run (gnosis.py), before the bar, the sidebar and the page.
+- **Decided, not changed:** a day with only a reading check-in counts as completed (reading counts like any subject, as designed); if a lesson is also started that day, the day is completed when that lesson's day is.

@@ -20,6 +20,7 @@ Two layouts:
 import json
 import logging
 import os
+import threading
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -139,6 +140,8 @@ BOOKS_TABLE_MISSING = (
 
 
 logger = logging.getLogger("coach.storage")
+# one save at a time to a local file: every tab is a thread of one process
+_FILE_LOCK = threading.Lock()
 
 SETTINGS_COLUMNS = ("user_id", "subjects", "units_per_day", "subject_levels", "reading_enabled",
                     "onboarding", "onboarded_at", "updated_at")
@@ -281,15 +284,29 @@ class FileStore(_Scope):
             logger.error("saving the local log failed: %s", e)
             raise StorageError("the records couldn't be written to a file") from e
 
+    def _stored(self) -> dict:
+        """What is stored now, to write one change into. A file that can't be
+        read is never taken for an empty one: that would save over
+        everything in it with this one change (ISS-020)."""
+        path = self._log_path()
+        if not path.exists():
+            return core.empty_log()
+        try:
+            return core.parse_log(json.loads(path.read_text(encoding="utf-8")))
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            logger.error("the local log %s can't be read (%s); nothing was written", path, e)
+            raise StorageError("the records file can't be read, so nothing was saved over it") from e
+
     def save_entry(self, log: dict, entry: dict) -> None:
         """Write this one entry into what is stored now (as the database
         does): another tab's entries and books are kept, not overwritten
         by this tab's older copy of the whole log (ISS-009)."""
-        stored = self.load()
-        key = (entry["date"], entry["topic"])
-        stored["entries"] = [e for e in stored["entries"] if (e["date"], e["topic"]) != key] + [entry]
-        stored["entries"].sort(key=lambda e: (e["date"], e["topic"]))
-        self._write(stored)
+        with _FILE_LOCK:
+            stored = self._stored()
+            key = (entry["date"], entry["topic"])
+            stored["entries"] = [e for e in stored["entries"] if (e["date"], e["topic"]) != key] + [entry]
+            stored["entries"].sort(key=lambda e: (e["date"], e["topic"]))
+            self._write(stored)
 
     # ---- accounts (scoped only) ----
     def touch_user(self, email: str, name: str, picture: str = "") -> None:
@@ -361,12 +378,14 @@ class FileStore(_Scope):
         return any(r["email"] == email.lower() for r in self._rows(ADMINS_TABLE))
 
     def save_book(self, log: dict, book: dict) -> None:
-        stored = self.load()
-        stored["books"] = [b for b in stored["books"] if b["id"] != book["id"]] + [book]
-        self._write(stored)
+        with _FILE_LOCK:
+            stored = self._stored()
+            stored["books"] = [b for b in stored["books"] if b["id"] != book["id"]] + [book]
+            self._write(stored)
 
     def replace(self, log: dict) -> None:
-        self._write(log)
+        with _FILE_LOCK:
+            self._write(log)
 
 
 class SupabaseStore(_Scope):

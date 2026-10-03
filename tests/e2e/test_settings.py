@@ -153,8 +153,9 @@ def test_download_my_data_is_only_mine(public_app, pages):
     flows.start_lesson(other)
     other.close()
     p, email = person(app, pages)
+    p.page.get_by_role("button", name="Download my data").click()      # gathered now, as her
     with p.page.expect_download() as dl:
-        p.page.get_by_role("button", name="Download my data").click()
+        p.page.get_by_role("button", name="Save my data as a file").click()
     data = json.loads(open(dl.value.path()).read())
     _, uid = dump_user(app, email)
     blob = json.dumps(data)

@@ -4,6 +4,7 @@ the model. Nothing in here imports Streamlit, so it can be unit tested."""
 import json
 import os
 import re
+import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -177,9 +178,15 @@ def parse_followups(data) -> list:
 def save_log(log: dict, path: Path = DEFAULT_LOG_PATH) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding="utf-8")
-    tmp.replace(path)
+    # a temporary file of its own (two saves never share one), then swapped in whole
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(log, ensure_ascii=False, indent=2))
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
 
 
 def find_entry(log: dict, day: date, topic: str):

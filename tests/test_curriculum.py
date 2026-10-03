@@ -174,3 +174,26 @@ def test_a_lesson_not_passed_is_linked_not_written_again_and_survives_a_backup()
     log2 = {"entries": [{"date": "2026-10-14", "topic": "philosophy",
                          "lessons": [curriculum.new_slot("philosophy", 1)]}], "books": []}
     assert "from" not in curriculum.day_plan(log2, "philosophy", None, 1)[0]
+
+
+def test_a_carried_lesson_saved_from_an_old_copy_keeps_what_another_device_did():
+    """ISS-021: the quiz sheet saved the day a carried lesson began from this
+    session's copy, undoing review grades made on the phone meanwhile."""
+    from datetime import date
+    today = date(2026, 10, 4)
+    def card(cid, added, box=0):
+        return {"id": cid, "kind": "question", "front": cid, "back": "b", "box": box, "due": "2026-10-04",
+                "added": added, "last": None, "reviews": 0, "lapses": 0, "paused": False}
+    mine_slot = dict(curriculum.new_slot("cosmos", 4), lesson="L", quiz={"draft": ["mine"]},
+                     cards=[card("q1", "2026-10-03"), card("q2", "2026-10-03"), card("new", "2026-10-04")])
+    mine = {"date": "2026-10-03", "topic": "cosmos", "reflection": "",
+            "lessons": [curriculum.new_slot("cosmos", 3), mine_slot]}
+    phone_slot = dict(curriculum.new_slot("cosmos", 4), lesson="L", quiz={"draft": []},
+                      cards=[card("q1", "2026-10-03", box=1)])          # q1 graded, q2 deleted on the phone
+    stored = {"date": "2026-10-03", "topic": "cosmos", "reflection": "written on the phone",
+              "lessons": [dict(curriculum.new_slot("cosmos", 3), completed=True), phone_slot]}
+    curriculum.merge_carried(mine, stored, [4], today)
+    four = mine["lessons"][1]
+    assert four is mine_slot and four["quiz"] == {"draft": ["mine"]}           # this page's answers
+    assert [(c["id"], c["box"]) for c in four["cards"]] == [("q1", 1), ("new", 0)]
+    assert mine["lessons"][0]["completed"] and mine["reflection"] == "written on the phone"
