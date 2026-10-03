@@ -141,7 +141,8 @@ def _create(client, **kwargs):
             used = getattr(usage, "total_tokens", None)
             if isinstance(used, int):
                 record[1] = used          # what the minute really counts once the reply is in
-            quota.record(used or tokens.estimate_request("", kwargs.get("messages", []), kwargs.get("max_completion_tokens", 0)))
+            if not kwargs.get("stream"):  # a streamed reply is counted when it ends (stream_text)
+                quota.record(used or tokens.estimate_request("", kwargs.get("messages", []), kwargs.get("max_completion_tokens", 0)))
             return resp
         except Exception as e:   # noqa: BLE001 - every failure is mapped below
             if _status(e) in (400, 413, 429):
@@ -177,18 +178,27 @@ def stream_text(system, messages, max_tokens):
     client = get_client()
     if client is None:
         raise CoachError(NO_KEY)
+    prepared = _prepare(system, messages, max_tokens)
     stream = _create(
         client,
         model=MODEL_NAME,
-        messages=_prepare(system, messages, max_tokens),
+        messages=prepared,
         max_completion_tokens=max_tokens,
         reasoning_effort="low",
         stream=True,
     )
     produced = False
     finish = None
+    used = None
     try:
         for chunk in stream:
+            # Groq sends the reply's real usage with the last chunk; without
+            # it the call counts as its estimate with every token it may use
+            usage = getattr(getattr(chunk, "x_groq", None), "usage", None) or getattr(chunk, "usage", None)
+            if isinstance(getattr(usage, "total_tokens", None), int):
+                used = usage.total_tokens
+            if not chunk.choices:
+                continue
             choice = chunk.choices[0]
             finish = choice.finish_reason or finish
             if choice.delta.content:
@@ -197,6 +207,8 @@ def stream_text(system, messages, max_tokens):
     except Exception as e:   # noqa: BLE001
         logger.error("groq stream broke off: %s", e)
         raise CoachError(FAILED) from e
+    finally:
+        quota.record(used if used is not None else tokens.estimate_request("", prepared, max_tokens))
     if not produced:
         logger.error("groq returned no text (finish_reason=%s)", finish)
         raise CoachError(FAILED)

@@ -42,7 +42,8 @@ def pick_subject(topic: str) -> None:
 
 
 def pick_pace(n: int) -> None:
-    update(units_per_day=n)
+    if update(units_per_day=n):
+        ui.refit_today(n)
 
 
 def set_reading() -> None:
@@ -210,15 +211,16 @@ def cancel_delete() -> None:
 if auth.is_public():
     with st.container(key="set_sec_data"):
         st.markdown("#### Your data")
-        try:
-            mine = json.dumps(st.session_state.coach_store.export_my_data(), ensure_ascii=False, indent=2, default=str)
-        except storage.StorageError as e:
-            mine = None
-            st.html(f'<p class="ob-note">Couldn\'t gather your data ({escape(str(e))}). Refresh in a moment.</p>')
+        store = st.session_state.coach_store
+
+        def mine() -> str:
+            """Gathered when she presses Download (every row she has), not on
+            every click on this page (ISS-015)."""
+            return json.dumps(store.export_my_data(), ensure_ascii=False, indent=2, default=str)
+
         with st.container(key="data_actions", horizontal=True, vertical_alignment="center"):
-            if mine is not None:
-                st.download_button("Download my data", mine, file_name="gnosis-data.json",
-                                   mime="application/json", key="data_download")
+            st.download_button("Download my data", mine, file_name="gnosis-data.json",
+                               mime="application/json", key="data_download")
             st.button("Delete my account", key="data_delete", type="tertiary", on_click=ask_delete)
         if st.session_state.get("del_open"):
             with st.container(key="del_confirm_box"):

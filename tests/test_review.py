@@ -22,6 +22,13 @@ def slot():
     return s
 
 
+def old_slot():
+    """A lesson saved before review existed: no "cards" key."""
+    s = slot()
+    s.pop("cards", None)
+    return s
+
+
 def test_sources_vocabulary_and_points_are_read_from_the_lesson():
     assert review.vocabulary(LESSON)[0] == ("fibre", "a thin thread", "Cotton is a fibre.")
     assert len(review.vocabulary(LESSON)) == 4
@@ -96,7 +103,7 @@ def test_lessons_from_before_review_give_cards_spread_over_days_without_writing(
     lessons' worth a day from LEGACY_FROM, and nothing is stored until she acts."""
     old = []
     for k in range(5):
-        s = slot()
+        s = old_slot()
         s["n"] = k + 1
         s["completed"] = True
         old.append({"date": f"2026-09-{20 + k}", "topic": "fashion", "completed": True, "lessons": [s]})
@@ -135,3 +142,37 @@ def test_the_same_word_in_two_lessons_is_two_cards_each_answered_on_its_own():
         _, _, c = review.due(log, later)[0]
         review.grade(review.find(log, c["id"])[2], True, later)
     assert review.due(log, later) == []
+
+
+def test_a_new_lessons_missed_questions_come_back_tomorrow_whatever_came_before():
+    """ISS-007: a first quiz on a new lesson was taken for a lesson from
+    before review, so its missed questions got a backfill date weeks out."""
+    history = []
+    for k in range(40):                                   # 40 old lessons passed
+        s = old_slot()
+        s["n"], s["completed"] = k + 1, True
+        history.append({"date": (D - timedelta(days=60 - k)).isoformat(), "topic": "fashion", "lessons": [s]})
+    new = curriculum.new_slot("fashion", 41)
+    new["lesson"] = LESSON
+    log = {"entries": history + [{"date": D.isoformat(), "topic": "fashion", "lessons": [new]}]}
+    new["quiz"] = q = quiz.new(quiz.parse(model_reply()))
+    answers = right_answers(q)
+    answers[0] = (answers[0] + 1) % 4
+    quiz.submit(q, answers)
+    review.keep(log, new)                                 # what conclude() does first
+    review.add_missed(new, q, D, "fashion")
+    assert [c["due"] for c in new["cards"]] == [(D + timedelta(days=1)).isoformat()]
+
+
+def test_cards_she_deleted_stay_deleted_after_a_save():
+    """ISS-008: no cards left was saved as [], read back as "never had any",
+    and the lesson's cards were worked out again."""
+    s = old_slot()
+    s["completed"] = True
+    log = {"version": 1, "entries": [{"date": D.isoformat(), "topic": "fashion", "lessons": [s]}], "books": []}
+    assert review.cards(log)
+    review.keep(log, s)
+    for c in list(s["cards"]):
+        review.remove(s, c["id"])
+    restored = core.parse_log(json.loads(json.dumps(log)))
+    assert review.cards(restored) == []

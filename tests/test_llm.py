@@ -204,3 +204,20 @@ def test_a_reply_cut_off_can_be_salvaged_without_asking_again(monkeypatch, waits
     data, error = llm.ask_json(SYSTEM, MSGS, salvage=lambda text: {"questions": [{"a": 1}, {"a": 2}]})
     assert (data, error) == ({"questions": [{"a": 1}, {"a": 2}]}, None)
     assert len(client.calls) == 1
+
+
+def test_a_streamed_reply_counts_what_it_used_not_its_ceiling(monkeypatch, waits):
+    """ISS-014: a streamed lesson was counted as its estimate plus every token
+    it could have used (about 5,000), whatever it really used."""
+    from coach import quota
+    recorded = []
+    monkeypatch.setattr(quota, "record", recorded.append)
+    monkeypatch.setattr(quota, "over_limit", lambda: False)
+    last = types.SimpleNamespace(choices=[], x_groq=types.SimpleNamespace(usage=types.SimpleNamespace(total_tokens=1234)))
+    use(monkeypatch, FakeClient([iter([chunk("好"), chunk("的", "stop"), last])]))
+    assert "".join(llm.stream_text(SYSTEM, MSGS, 4000)) == "好的"
+    assert recorded == [1234]
+    # no usage sent: the estimate, still counted once
+    use(monkeypatch, FakeClient([iter([chunk("好", "stop")])]))
+    list(llm.stream_text(SYSTEM, MSGS, 4000))
+    assert len(recorded) == 2 and recorded[1] >= 4000

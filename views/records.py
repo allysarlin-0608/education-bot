@@ -112,7 +112,7 @@ def show_entry(e, where):
 # ============================================================
 # OVERVIEW: the whole picture in one row
 # ============================================================
-lessons_passed = sum(sum(1 for s in e.get("lessons", []) if s["completed"]) for e in log["entries"])
+lessons_passed = core.lessons_passed(log)
 figures = {
     "Current streak": days(core.current_streak(log, today)),
     "Longest streak": days(core.longest_streak(log)),
@@ -237,7 +237,7 @@ def view_subjects():
                 level = core.lesson_level(min(p["done"] + 1, curriculum.TOTAL), settings.start_level(config, key))
                 progress_bar.render(
                     f"course_{key}", label, unit["done"], unit["total"],
-                    f"{p['done']:,} of {p['total']:,} overall · {level}",
+                    f"{p['done']:,} of {p['written']:,} written so far · {level}",     # as on its world page and course map
                     label="", compact=True, topic=unit["unit"],
                 )
                 with st.container(key=f"prog_links_{key}", horizontal=True):

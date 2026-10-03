@@ -144,7 +144,7 @@ def test_subjects_view_and_its_world(public_app, pages):
     flows.idle(p.page)
     from coach import curriculum
     prog = curriculum.progress({"entries": entries, "books": []}, "philosophy")
-    assert flows.wait_text(p.page, f"{prog['done']:,} of {prog['total']:,} overall", 5), "the subject's count"
+    assert flows.wait_text(p.page, f"{prog['done']:,} of {prog['written']:,} written so far", 5), "the subject's count"
     flows.button(p, "Enter Philosophy", exact=False)
     assert "subject=philosophy" in p.page.url
 

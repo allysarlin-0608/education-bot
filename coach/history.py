@@ -16,17 +16,11 @@ def day_stats(log: dict, day: date, today: date) -> dict:
     before the syllabus counts as one session), whether it was completed,
     and the subjects studied."""
     entries = entries_on(log, day)
-    done = total = 0
-    for e in entries:
-        if e.get("lessons"):
-            total += len(e["lessons"])
-            done += sum(1 for s in e["lessons"] if s["completed"])
-        else:
-            total += 1
-            done += 1 if e.get("completed") else 0
+    done = sum(core.lessons_in(e)[0] for e in entries)
+    total = sum(core.lessons_in(e)[1] for e in entries)
     if day > today:
         status = "future"
-    elif entries and all(e.get("completed") for e in entries):
+    elif entries and day in core.completed_dates({"entries": entries}):
         status = "done"
     elif entries:
         status = "partial"

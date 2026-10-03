@@ -305,3 +305,20 @@ def test_levels_saved_in_chinese_by_older_versions_are_read_in_english():
         {"date": "2026-09-02", "topic": "fashion", "session_number": 5, "level": "中階"},
     ]})
     assert [e["level"] for e in log["entries"]] == ["Advanced", "Intermediate"]
+
+
+def test_file_store_keeps_what_another_tab_saved(tmp_path):
+    """ISS-009: a save from a tab loaded earlier wrote its whole (older) log
+    and wiped what another tab had saved since."""
+    store = storage.FileStore(tmp_path / "log.json")
+    tab_a, tab_b = store.load(), store.load()
+    e = core.start_entry(tab_b, date(2026, 10, 3), "philosophy")
+    store.save_entry(tab_b, e)                         # tab B: today's lesson
+    book = books.new_book(date(2026, 10, 3))
+    tab_a["books"].append(book)
+    store.save_book(tab_a, book)                       # tab A (older copy): a book
+    e2 = core.start_entry(tab_a, date(2026, 10, 2), "cosmos")
+    store.save_entry(tab_a, e2)                        # and an entry of its own
+    stored = store.load()
+    assert [(x["date"], x["topic"]) for x in stored["entries"]] == [("2026-10-02", "cosmos"), ("2026-10-03", "philosophy")]
+    assert [b["id"] for b in stored["books"]] == [book["id"]]

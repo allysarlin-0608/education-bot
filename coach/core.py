@@ -225,7 +225,27 @@ def start_entry(log: dict, day: date, topic: str) -> dict:
 
 
 def completed_dates(log: dict) -> set:
-    return {date.fromisoformat(e["date"]) for e in log["entries"] if e.get("completed")}
+    """Days completed: every entry that day completed (its lessons, and a
+    reading check-in if there was one). The one definition Progress's
+    figure, its calendar and its month line all use (ISS-012)."""
+    by_day = {}
+    for e in log["entries"]:
+        by_day.setdefault(e["date"], []).append(bool(e.get("completed")))
+    return {date.fromisoformat(d) for d, done in by_day.items() if all(done)}
+
+
+def lessons_in(entry: dict) -> tuple:
+    """(passed, planned) lessons in one entry. A reading check-in is a day's
+    reading, not a lesson; a session from before the syllabus is one."""
+    if entry["topic"] == "reading":
+        return 0, 0
+    if entry.get("lessons"):
+        return sum(1 for s in entry["lessons"] if s.get("completed")), len(entry["lessons"])
+    return (1 if entry.get("completed") else 0), 1
+
+
+def lessons_passed(log: dict) -> int:
+    return sum(lessons_in(e)[0] for e in log["entries"])
 
 
 def streak_dates(log: dict) -> set:
@@ -432,13 +452,13 @@ def build_history_context(log: dict, topic: str, today: date, slot: dict = None,
         lines.append("- 這個主題學過的內容（避免重複）：")
         for e in past[-5:]:
             status = "已完成" if e.get("completed") else "未打勾"
-            lines.append(f"  - {e['date']}：{_clip(e.get('title') or '（無標題）', 50)}（{status}）")
+            lines.append(f"  - {e['date']}：{_clip(e.get('title') or '（無標題）', 30)}（{status}）")
         # Clipped so the whole request stays inside tokens.REQUEST_BUDGET.
         last = past[-1]
         if last.get("followup_question"):
-            lines.append(f"- 上次留給她的延伸提問：{_clip(last['followup_question'], 120)}")
+            lines.append(f"- 上次留給她的延伸提問：{_clip(last['followup_question'], 80)}")
         if last.get("reflection"):
-            lines.append(f"- 她對上次延伸提問的回應：{_clip(last['reflection'], 150)}")
+            lines.append(f"- 她對上次延伸提問的回應：{_clip(last['reflection'], 100)}")
 
     lines.append("- App 已自動記錄學習軌跡，不用再問她要不要記錄。")
     return "\n".join(lines)

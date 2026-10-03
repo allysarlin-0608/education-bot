@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from html import escape
 
 import streamlit as st
@@ -79,6 +79,7 @@ def failed(kind, error, slot, **payload):
 
 
 def run_kickoff(i):
+    new_day = core.find_entry(log, today, topic) is None
     entry = day_entry()
     owner, slot = work(entry, i)
     if curriculum.blocking(entry["lessons"], i):     # strictly in order
@@ -94,6 +95,8 @@ def run_kickoff(i):
         [{"role": "user", "content": kickoff}], max_tokens=tokens.LESSON_MAX_TOKENS,
     )
     if error:
+        if new_day:             # nothing was saved: the day isn't one she studied (ISS-013)
+            log["entries"].remove(entry)
         failed("kickoff", error, slot, i=i)
     lesson = core.truthful_note(core.finalize_reply(lesson, lesson=True, topic=topic),
                                 core.note_fact(log, topic, today, slot["n"]))
@@ -226,6 +229,10 @@ if st.session_state.get("coach_toast"):           # set just before a rerun, sho
 
 ui.refresh_entry(log, today, topic)          # another tab may have moved on since this page loaded
 entry = core.find_entry(log, today, topic)
+# a lesson carried over is written back to the day it began (work()): that
+# day is refreshed too, or a save here would put an old copy of it back (ISS-010)
+for began in sorted({s["from"] for s in curriculum.day_plan(log, topic, entry, settings.units(config)) if s.get("from")}):
+    ui.refresh_entry(log, date.fromisoformat(began), topic)
 plan = curriculum.day_plan(log, topic, entry, settings.units(config))
 
 store = st.session_state.coach_store

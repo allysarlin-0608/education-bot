@@ -194,10 +194,12 @@ class _Scope:
 class FileStore(_Scope):
     name = "file"
 
-    def __init__(self, path=core.DEFAULT_LOG_PATH, settings_path=None, scoped=False, current_user=None):
-        self.path = path
+    def __init__(self, path=None, settings_path=None, scoped=False, current_user=None):
+        # read when the store is made, like the settings path below (not when
+        # the module was first imported)
+        self.path = Path(path or os.environ.get("COACH_LOG_PATH") or core.DEFAULT_LOG_PATH)
         self.settings_path = Path(settings_path or os.environ.get("COACH_SETTINGS_PATH")
-                                  or Path(path).with_name("user_settings.json"))
+                                  or self.path.with_name("user_settings.json"))
         self.scoped = scoped
         self.current_user = current_user
 
@@ -272,12 +274,22 @@ class FileStore(_Scope):
         """The stored books (normalized), for pages that must build on them."""
         return self.load()["books"]
 
-    def save_entry(self, log: dict, entry: dict) -> None:
+    def _write(self, log: dict) -> None:
         try:
             core.save_log(log, self._log_path())
         except OSError as e:
             logger.error("saving the local log failed: %s", e)
             raise StorageError("the records couldn't be written to a file") from e
+
+    def save_entry(self, log: dict, entry: dict) -> None:
+        """Write this one entry into what is stored now (as the database
+        does): another tab's entries and books are kept, not overwritten
+        by this tab's older copy of the whole log (ISS-009)."""
+        stored = self.load()
+        key = (entry["date"], entry["topic"])
+        stored["entries"] = [e for e in stored["entries"] if (e["date"], e["topic"]) != key] + [entry]
+        stored["entries"].sort(key=lambda e: (e["date"], e["topic"]))
+        self._write(stored)
 
     # ---- accounts (scoped only) ----
     def touch_user(self, email: str, name: str, picture: str = "") -> None:
@@ -349,10 +361,12 @@ class FileStore(_Scope):
         return any(r["email"] == email.lower() for r in self._rows(ADMINS_TABLE))
 
     def save_book(self, log: dict, book: dict) -> None:
-        self.save_entry(log, None)
+        stored = self.load()
+        stored["books"] = [b for b in stored["books"] if b["id"] != book["id"]] + [book]
+        self._write(stored)
 
     def replace(self, log: dict) -> None:
-        self.save_entry(log, None)
+        self._write(log)
 
 
 class SupabaseStore(_Scope):

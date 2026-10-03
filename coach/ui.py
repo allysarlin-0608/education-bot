@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 import streamlit as st
 
-from coach import settings, storage
+from coach import core, curriculum, settings, storage
 
 logger = logging.getLogger("coach.ui")
 TIMEZONE = ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))
@@ -199,6 +199,23 @@ def save_settings(new: dict) -> bool:
         return False
     st.session_state.coach_settings = new
     return True
+
+
+def refit_today(count: int) -> None:
+    """Her pace changed: today's day, if started, takes the new number of
+    lessons now and is saved (curriculum.fit keeps what she began), so
+    Today, Progress and the calendar read the same day."""
+    log, day = st.session_state.coach_log, today()
+    topic = topic_for(day)
+    refresh_entry(log, day, topic)
+    entry = core.find_entry(log, day, topic)
+    if not entry or not entry.get("lessons"):
+        return
+    fitted = curriculum.fit(log, topic, entry["lessons"], count)
+    if [s["n"] for s in fitted] != [s["n"] for s in entry["lessons"]]:
+        entry["lessons"] = fitted
+        entry["completed"] = curriculum.day_complete(fitted)
+        save_entry(log, entry)
 
 
 def topic_for(day):

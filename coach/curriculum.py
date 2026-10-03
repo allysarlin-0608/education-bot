@@ -93,8 +93,10 @@ def next_numbers(log: dict, topic: str, count: int = PER_DAY) -> list:
 
 def new_slot(topic: str, n: int) -> dict:
     info = lesson(topic, n)
+    # "cards" from the start: a lesson written since review began makes its own
+    # cards; only lessons without the key are worked out as old ones (review.legacy)
     return {"n": n, "title": info["title"], "unit": info["unit"],
-            "kickoff": "", "lesson": "", "followups": [], "completed": False, "quiz": None}
+            "kickoff": "", "lesson": "", "followups": [], "completed": False, "quiz": None, "cards": []}
 
 
 def _written_before(log: dict, topic: str, n: int):
@@ -119,6 +121,7 @@ def plan_slot(log: dict, topic: str, n: int) -> dict:
     before = _written_before(log, topic, n)
     if before is not None:
         slot["from"] = before[0]["date"]
+        del slot["cards"]                   # a link holds no content of its own
     return slot
 
 
@@ -256,9 +259,8 @@ def parse_slots(data) -> list:
             if _is_date(s.get(field)):
                 slots[-1][field] = s[field]
         from coach import review
-        cards = review.parse_cards(s.get("cards"))
-        if cards:
-            slots[-1]["cards"] = cards
+        if isinstance(s.get("cards"), list):        # kept even when empty: no cards left is not "never had any"
+            slots[-1]["cards"] = review.parse_cards(s["cards"])
         if slots[-1].get("from"):                   # a link holds no content of its own
             slots[-1].update(kickoff="", lesson="", followups=[], quiz=None)
             slots[-1].pop("cards", None)

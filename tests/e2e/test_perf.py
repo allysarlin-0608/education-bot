@@ -146,7 +146,7 @@ def test_progress_views(public_app, learner):
     flows.idle(page)
     xs = []
     for k in range(N):
-        view, marker = [("Sessions", "sessions"), ("Subjects", " overall"), ("Day", "Completed")][k % 3]
+        view, marker = [("Sessions", "sessions"), ("Subjects", " written so far"), ("Day", "Completed")][k % 3]
         t0 = time.time()
         page.get_by_role("radio", name=view).or_(page.get_by_role("button", name=view, exact=True)).first.click()
         until(page, text_has(page, marker))

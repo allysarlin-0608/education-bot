@@ -13,6 +13,18 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 | ISS-004 | P2 | Security | Backup uploads could be up to 200 MB (Streamlit's default) | fixed |
 | ISS-005 | P1 | Settings / Today | Adding a subject mid-day shifted the turns and swapped today's subject after the day had started | fixed |
 | ISS-006 | P2 | Visual system | Lines, corners and surfaces had no global rule: 13 border values (0.5px and 1px mixed, the input edge used for dividers), 24 corner radii, shadows on surfaces that don't float | fixed |
+| ISS-007 | P1 | Review | A new lesson's missed questions came back weeks late (taken for a lesson from before review) | fixed |
+| ISS-008 | P1 | Review | Cards she deleted came back after a save (no cards left was read as "never had any") | fixed |
+| ISS-009 | P1 | Data (local mode) | A save from an older tab wrote its whole log, wiping another tab's work | fixed |
+| ISS-010 | P1 | Data / two devices | A carried-over lesson's day was saved from this session's old copy | fixed |
+| ISS-011 | P1 | Settings / Progress | After a pace change mid-day, Today said the day was done and Progress never agreed | fixed |
+| ISS-012 | P1 | Progress numbers | On a reading day, Days completed / the calendar / the month line disagreed, and a check-in counted as a lesson | fixed |
+| ISS-013 | P2 | Today / Progress | A lesson that failed to start left the day counted as studied until a reload | fixed |
+| ISS-014 | P2 | AI allowance | Streamed replies were counted at their maximum (~5,000 tokens) instead of what they used | fixed |
+| ISS-015 | P2 | Performance | Settings gathered all her data (5 requests) on every click | fixed |
+| ISS-016 | P2 | AI / reliability | The longest lesson prompt was 14 tokens from the request limit (an uncaught error past it) | fixed |
+| ISS-017 | P2 | Tests | The page smoke test never loaded its seeded history (the log path was fixed at import) | fixed |
+| ISS-018 | P2 | Wording | A subject's count read "of 3,000 overall" on Progress but "of 260 written so far" elsewhere | fixed |
 
 ## Details
 
@@ -51,3 +63,17 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 - **Root cause:** each page added its own border (0.5px or 1px, `--hair`, `--field-edge`, `--bk-sep` or a literal colour) and radius (10 to 28px), so the same kind of line looked different across pages and dividers used the input-edge colour
 - **Fix (one rule, in `coach/style.py` `:root`, documented in ARCHITECTURE.md):** three line levels, all 1px — `--line-1` structural, `--line-2` secondary, `--line-3` interactive; `--surface` a tint with no shadow for quiet surfaces (day detail, the reader, the shelf); corners on one scale (12 controls / 16 surfaces / 20 floating / pill for segmented controls). Every 0.5px line and literal border colour is now a token; the old names (`--hair`, `--field-edge`) point at the new levels.
 - **Verified:** screenshots at 390 / 820 / 1180 / 1440 light and dark; contrast and keyboard checks; visual baselines updated after review
+
+### ISS-007 … ISS-018 — found by the independent review (a separate agent, fresh eyes)
+Each one reproduced (the regression test fails before the fix, passes after) and fixed at its cause:
+- **ISS-007 / ISS-008:** whether a lesson is "from before review" was read from a missing `cards` key, which both a new lesson and a lesson with every card deleted also had (an empty list was dropped on load). New lessons now carry `cards: []` from the start (`curriculum.new_slot`), and an empty list is kept on load. Tests: `test_review.py::test_a_new_lessons_missed_questions_come_back_tomorrow_whatever_came_before`, `::test_cards_she_deleted_stay_deleted_after_a_save`.
+- **ISS-009:** the file store now writes one entry / one book into what is stored, like the database does. Test: `test_storage.py::test_file_store_keeps_what_another_tab_saved`.
+- **ISS-010:** Today refreshes the day each carried lesson began, not only today. Test: `test_pages_smoke.py::test_a_carried_lesson_is_read_fresh_from_the_day_it_began`.
+- **ISS-011:** changing the pace refits and saves today's started day (`ui.refit_today`), so every page reads the same stored day. Test: `test_pages_smoke.py::test_a_new_pace_reshapes_the_day_already_started_everywhere`.
+- **ISS-012:** one definition of a completed day (every entry that day completed) and of lessons passed (`core.lessons_in`; a reading check-in is not a lesson), used by the figure, the calendar and the month line. Test: `test_history.py::test_a_day_with_reading_reads_the_same_in_every_figure`.
+- **ISS-013:** a failed Start removes the day it had just made in memory. Test: `test_pages_smoke.py::test_a_lesson_that_couldnt_be_written_leaves_no_day_behind`.
+- **ISS-014:** a streamed reply is counted when it ends, with Groq's reported usage (the estimate only when none comes). Test: `test_llm.py::test_a_streamed_reply_counts_what_it_used_not_its_ceiling`.
+- **ISS-015:** the data download is gathered when pressed (Streamlit's deferred download).
+- **ISS-016:** shorter clips on the history lines; a test builds the worst case for every subject and requires 150 tokens of room. Test: `test_coach_core.py::test_the_longest_lesson_prompt_fits_the_request_with_room`.
+- **ISS-017:** `FileStore` reads `COACH_LOG_PATH` when it is made; the smoke test asserts the history it seeded is loaded.
+- **ISS-018:** Progress → Subjects uses "N of M written so far", as the subject page does.

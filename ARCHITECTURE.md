@@ -27,7 +27,9 @@ the model.
   review system are worked out from the record (`review.LEGACY_FROM`) and
   stored only when acted on.
 - **user_settings**: subjects, lessons per day, levels, reading on/off,
-  onboarding. Changes to the plan apply from the next day.
+  onboarding. A day already started keeps its subject when subjects change
+  (the new turns start tomorrow); a new pace reshapes today's remaining
+  lessons at once and saves the day (`ui.refit_today`).
 - **reading_books**, **ai_usage**, **allowed_users** (invites), **app_admins**.
 - Row-level security: every table is read and written only as the signed-in
   user; `ai_usage` only grows (a security-definer function adds to it).
@@ -46,7 +48,14 @@ the model.
    own (`topnav.py`), the chat dock is placed by `place.py`.
 
 Pages never create a day's entry by being viewed: only actions (start,
-answer, pass, save thoughts) call `day_entry()` (ISS-003).
+answer, pass, save thoughts) call `day_entry()` (ISS-003), and a start that
+fails takes it back out (ISS-013). Every save writes one entry onto what is
+stored now; Today first re-reads today and each day a carried lesson began.
+
+One definition per number, in `core`: a day studied (any entry), a day
+completed (every entry that day completed), lessons passed (`lessons_in`),
+a streak day (a lesson passed). Progress, the calendar, the month line and
+the sidebar all use them.
 
 ## Configuration
 

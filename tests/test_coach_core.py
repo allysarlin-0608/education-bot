@@ -1,6 +1,8 @@
 from datetime import date
 
-from coach import core
+import pytest
+
+from coach import core, curriculum, settings
 
 WED = date(2026, 9, 23)
 
@@ -159,3 +161,23 @@ def test_one_lesson_passed_counts_the_day_for_the_streak():
                        {"date": "2026-09-29", "topic": "fashion", "completed": False, "lessons": [open_]}]}
     assert core.current_streak(log, date(2026, 10, 2)) == 2
     assert core.longest_streak(log) == 2
+
+
+@pytest.mark.parametrize("topic", [t for t in settings.SUBJECTS if curriculum.has_syllabus(t)])
+def test_the_longest_lesson_prompt_fits_the_request_with_room(topic):
+    """ISS-016: the system prompt must fit the request budget whatever her
+    history holds (long titles, a long reflection, in Chinese, which costs
+    the most tokens per character); it was 14 tokens from the limit."""
+    from datetime import date, timedelta
+    from coach import tokens
+    today = date(2026, 10, 20)
+    log = {"entries": [{"date": (today - timedelta(days=k + 1)).isoformat(), "topic": topic, "completed": False,
+                        "title": "長" * 300, "followup_question": "問" * 300, "reflection": "想" * 900,
+                        "lessons": []} for k in range(8)], "books": []}
+    longest = max(range(1, curriculum.written(topic) + 1),
+                  key=lambda n: len(curriculum.lesson(topic, n)["title"]) + len(curriculum.lesson(topic, n)["unit"]))
+    slot = curriculum.new_slot(topic, longest)
+    system = core.build_system_prompt(log, topic, today, slot=slot)
+    kickoff = core.build_kickoff_message(topic, today, slot=slot)
+    need = tokens.estimate_request(system, [{"role": "user", "content": kickoff}], tokens.LESSON_MAX_TOKENS)
+    assert need <= tokens.REQUEST_BUDGET - 150, need

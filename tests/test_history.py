@@ -71,3 +71,21 @@ def test_streak_days_completed_studied_calendar_agree_with_a_lesson_passed_a_day
     assert [s["status"] for s in stats] == ["partial", "partial", "done"]
     assert [s["done"] for s in stats] == [0, 1, 1]               # the lesson counts once, on Oct 2
     assert history.month_summary(log, 2026, 10, today)["lessons"] == 2
+
+
+def test_a_day_with_reading_reads_the_same_in_every_figure():
+    """ISS-012: 1 of 3 lessons passed plus a reading check-in: the top figure
+    said the day was completed, the calendar Partly done; the month counted
+    the check-in as a lesson."""
+    from coach import core
+    log = {"entries": [entry("2026-10-01", done=1, total=3),
+                       {"date": "2026-10-01", "topic": "reading", "completed": True, "lessons": []},
+                       {"date": "2026-10-02", "topic": "reading", "completed": True, "lessons": []}], "books": []}
+    today = date(2026, 10, 3)
+    assert history.day_stats(log, date(2026, 10, 1), today)["status"] == "partial"
+    assert date(2026, 10, 1) not in core.completed_dates(log)
+    assert history.day_stats(log, date(2026, 10, 2), today)["status"] == "done"      # a reading day alone
+    assert core.completed_dates(log) == {date(2026, 10, 2)}
+    month = history.month_summary(log, 2026, 10, today)
+    assert month["completed"] == len(core.completed_dates(log))
+    assert month["lessons"] == core.lessons_passed(log) == 1
