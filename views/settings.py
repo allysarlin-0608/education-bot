@@ -93,10 +93,13 @@ with st.container(key="set_sec_subjects"):
     with st.container(key="set_grid_subjects"):
         with st.container(key="set_stage"):
             st.html(stage.html(focus, "setsubj"))
-            with st.container(key=f"enter_{focus}", horizontal=True):
-                if st.button(f"Enter {visuals.subject(focus)['title']}", type="tertiary", key="set_world",
-                             icon=":material/arrow_outward:"):
-                    ui.enter_world(focus)
+            with st.container(key="set_links", horizontal=True):
+                with st.container(key=f"enter_{focus}", horizontal=True):
+                    if st.button(f"Enter {visuals.subject(focus)['title']}", type="tertiary", key="set_world",
+                                 icon=":material/arrow_outward:"):
+                        ui.enter_world(focus)
+                if st.button("Course map", type="tertiary", key="set_course", icon=":material/route:"):
+                    ui.open_course(focus)
         with st.container(key="set_body"):
             choices.rows("setsubj", stage.rows(), chosen, pick_subject, multi=True,
                          full=len(chosen) >= settings.MAX_SUBJECTS, focus=focus, style="index")

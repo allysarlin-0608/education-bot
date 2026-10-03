@@ -7,9 +7,8 @@ import itertools
 import json
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -65,6 +64,9 @@ def shot(p, name, problems):
 @pytest.mark.parametrize("width", list(SIZES))
 def test_every_screen(public_app, pages, width, scheme):
     app = public_app
+    from coach import review
+    day = review.LEGACY_FROM + timedelta(days=1)       # old lessons' review cards are due
+    app.set_clock(day, "02:00:00")
     problems = {}
     tag = f"{width}_{scheme}"
     p = pages(width=width, height=SIZES[width], scheme=scheme)
@@ -97,11 +99,19 @@ def test_every_screen(public_app, pages, width, scheme):
     flows.button(p, "See today's summary →")
     shot(p, f"07_done_{tag}", problems)
     # history, for Progress, Review and search
-    today = datetime.now(ZoneInfo("Asia/Taipei")).date()
-    entries = seed_history.build(today - timedelta(days=1), days=40)
+    entries = seed_history.build(day - timedelta(days=1), days=40)
     app.seed_entries(email, entries)
+    flows.open_app(p, app)
+    shot(p, f"07b_today_review_due_{tag}", problems)
     flows.open_app(p, app, "/review")
     shot(p, f"08_review_{tag}", problems)
+    p.page.get_by_role("button", name="Collection").or_(p.page.get_by_role("radio", name="Collection")).first.click()
+    shot(p, f"08b_collection_{tag}", problems)
+    flows.open_app(p, app, "/course?subject=fashion")
+    shot(p, f"13_course_{tag}", problems)
+    flows.open_app(p, app, "/course?subject=philosophy")     # (the seeded history: many lessons passed)
+    flows.open_panel(p, "Finished ·")
+    shot(p, f"13b_course_finished_{tag}", problems)
     flows.open_app(p, app, "/records")
     shot(p, f"09_progress_{tag}", problems)
     flows.open_app(p, app, "/settings")
@@ -115,3 +125,10 @@ def test_every_screen(public_app, pages, width, scheme):
     shot(p, f"12_search_{tag}", problems)
     (SHOTS / f"problems_{tag}.json").write_text(json.dumps(problems, indent=1))
     assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v}, problems
+
+
+
+@pytest.fixture(autouse=True)
+def _real_clock_after(public_app):
+    yield
+    public_app.set_clock(None)

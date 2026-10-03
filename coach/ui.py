@@ -214,6 +214,24 @@ def enter_world(topic: str):
     st.switch_page(WORLD_PAGE, query_params={"subject": topic})
 
 
+COURSE_PAGE = "views/course.py"
+
+
+def open_course(topic: str):
+    """A subject's course map (views/course.py), named in the address."""
+    st.switch_page(COURSE_PAGE, query_params={"subject": topic})
+
+
+def next_study_day(topic: str):
+    """The next day, from today, that the rotation gives to this subject."""
+    from datetime import timedelta
+    day = today()
+    for k in range(0, 8):
+        if topic_for(day + timedelta(days=k)) == topic:
+            return day + timedelta(days=k)
+    return None
+
+
 def today():
     return datetime.now(TIMEZONE).date()
 

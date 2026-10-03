@@ -14,7 +14,8 @@ import streamlit as st
 from coach import auth, review, search, settings, ui
 
 
-ICONS = {"Review": ":material/replay:", "Reading": ":material/menu_book:", "Settings": ":material/settings:"}
+ICONS = {"Review": ":material/replay:", "Reading": ":material/menu_book:", "Progress": ":material/insights:",
+         "Settings": ":material/settings:"}
 
 
 def render(pages: list, log: dict) -> None:

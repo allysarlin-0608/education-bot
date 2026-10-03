@@ -32,14 +32,16 @@ pages += [
 ]
 # each subject's world: one page, reached from the subject (not from the bar)
 world = st.Page("views/world.py", title="Subject", url_path="subject")
+# each subject's course map: reached wherever a subject is named (Today, Progress, Settings, its world)
+course_map = st.Page("views/course.py", title="Course", url_path="course")
 # Streamlit does the routing; the pages are shown by the connected control
 # at the top of every page (coach/topnav.py), not as a list in the sidebar
-page = st.navigation(pages + [world], position="hidden")
+page = st.navigation(pages + [world, course_map], position="hidden")
 if (entering := st.session_state.pop("enter_world", None)):     # setup just finished: into the first day's subject
     st.switch_page(world, query_params={"subject": entering})
 # just signed in after a refresh or a link: back to the page the address named, with its subject
 asked = st.session_state.pop("coach_asked_path", None)
-target = next((p for p in pages + [world] if asked and p.url_path == asked), None)
+target = next((p for p in pages + [world, course_map] if asked and p.url_path == asked), None)
 if target is not None and target.url_path != page.url_path:
     st.switch_page(target, query_params=st.query_params.to_dict())
 if st.session_state.get("lq_page") != page.url_path:

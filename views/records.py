@@ -243,10 +243,13 @@ def view_subjects():
                     f"{p['done']:,} of {p['total']:,} overall · {level}",
                     label="", compact=True, topic=unit["unit"],
                 )
-                with st.container(key=f"enter_{key}", horizontal=True):     # into its world
-                    if st.button(f"Enter {label}", type="tertiary", key=f"prog_world_{key}",
-                                 icon=":material/arrow_outward:"):
-                        ui.enter_world(key)
+                with st.container(key=f"prog_links_{key}", horizontal=True):
+                    with st.container(key=f"enter_{key}", horizontal=True):     # into its world
+                        if st.button(f"Enter {label}", type="tertiary", key=f"prog_world_{key}",
+                                     icon=":material/arrow_outward:"):
+                            ui.enter_world(key)
+                    if st.button("Course map", type="tertiary", key=f"prog_course_{key}", icon=":material/route:"):
+                        ui.open_course(key)
                 continue
             # Reading has no syllabus: one line, the books finished, and the way to the shelf
             finished = sum(1 for b in log["books"] if b["status"] == "finished")
