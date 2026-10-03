@@ -140,7 +140,7 @@ def test_layout(dated, browser, account, width, scheme):
 def test_a_short_window_keyboard_open(dated, browser, account, width, height):
     """An on-screen keyboard leaves a short window: the chat box must not
     sit over the text box she is typing in, or over the lesson's last lines."""
-    covers("W-daily-ask_about_lesson_report_your_progress_or")
+    covers("W-daily-ask_about_lesson")
     p = open_page(browser, dated, account, width, "light", "/", "Start this lesson", height=height)
     page = p.page
     box = page.locator(".st-key-chat_dock textarea")

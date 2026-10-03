@@ -45,7 +45,7 @@ def at_end(page):
 
 @pytest.mark.parametrize("width,height", [(390, 844), (768, 1024), (1180, 820), (1440, 900), (1024, 420)])
 def test_the_end_of_today_is_never_under_the_chat_box(public_app, pages, width, height):
-    covers("W-daily-ask_about_lesson_report_your_progress_or")
+    covers("W-daily-ask_about_lesson")
     app = public_app
     SHOTS.mkdir(parents=True, exist_ok=True)
     p = pages(width=width)                          # set up at the device's usual height

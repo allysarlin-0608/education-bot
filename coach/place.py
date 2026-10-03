@@ -162,7 +162,33 @@ _KEEP_CLEAR = """<div id="keep-clear-hook" hidden></div><script>
       if (n.querySelectorAll) fresh.push(...n.querySelectorAll(WANT));
     }
     if (fresh.length && !timer) timer = w.setTimeout(settle, 150);
+    queueFit();
   }).observe(doc.body, { childList: true, subtree: true });
+  // the chat box's band: its column (from its empty slot in the page), its
+  // height and the keyboard's, which the page's scrolling area leaves free
+  const root = doc.documentElement;
+  let fitting = 0, sized = null;
+  const fit = () => {
+    fitting = 0;
+    const dock = doc.querySelector(".st-key-chat_dock");
+    if (!dock) { ["--dock-h", "--kb"].forEach((v) => root.style.removeProperty(v)); return; }
+    const slot = dock.parentElement.getBoundingClientRect();
+    const vv = w.visualViewport;
+    const kb = vv ? Math.max(0, Math.round(w.innerHeight - vv.height - vv.offsetTop)) : 0;
+    dock.style.setProperty("--dock-left", `${Math.round(slot.left)}px`);
+    dock.style.setProperty("--dock-width", `${Math.round(slot.width)}px`);
+    root.style.setProperty("--dock-h", `${Math.ceil(dock.getBoundingClientRect().height)}px`);
+    root.style.setProperty("--kb", `${kb}px`);
+    if (sized !== dock) {               // a new box (another page): follow its size as she types
+      sized = dock;
+      new w.ResizeObserver(queueFit).observe(dock);
+      new w.ResizeObserver(queueFit).observe(dock.parentElement.parentElement);
+    }
+  };
+  function queueFit() { if (!fitting) fitting = w.requestAnimationFrame(fit); }
+  w.addEventListener("resize", queueFit);
+  if (w.visualViewport) { w.visualViewport.addEventListener("resize", queueFit); w.visualViewport.addEventListener("scroll", queueFit); }
+  queueFit();
 })();
 </script>"""
 

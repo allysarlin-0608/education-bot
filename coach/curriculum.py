@@ -255,8 +255,13 @@ def parse_slots(data) -> list:
         for field in ("from", "passed_on"):         # a link's first day; the day a lesson was passed later
             if _is_date(s.get(field)):
                 slots[-1][field] = s[field]
+        from coach import review
+        cards = review.parse_cards(s.get("cards"))
+        if cards:
+            slots[-1]["cards"] = cards
         if slots[-1].get("from"):                   # a link holds no content of its own
             slots[-1].update(kickoff="", lesson="", followups=[], quiz=None)
+            slots[-1].pop("cards", None)
     return slots
 
 

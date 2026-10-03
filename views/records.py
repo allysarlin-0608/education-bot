@@ -13,7 +13,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import core, curriculum, history, lesson_view, progress_bar, rolling, settings, ui
+from coach import core, curriculum, history, lesson_view, progress_bar, review, rolling, settings, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -125,6 +125,16 @@ st.html('<div class="figures">' + "".join(          # numbers roll when they cha
     f'<div class="figure"><div class="figure-label">{label}</div>'
     f'<div class="figure-value">{rolling.html(value, before.get(label.replace(" ", "_")))}</div></div>'
     for label, value in figures.items()) + "</div>")
+
+# her review collection (coach/review.py): one quiet way in
+if (deck := review.cards(log)):
+    waiting = len(review.due(log, today))
+    with st.container(key="prog_review"):
+        if st.button(f"Review collection · {len(deck)} {'card' if len(deck) == 1 else 'cards'}"
+                     + (f" · {waiting} due today" if waiting else ""), type="tertiary", key="prog_review_open",
+                     icon=":material/replay:"):
+            st.session_state.rv_view = "Today" if waiting else "Collection"
+            st.switch_page("views/review.py")
 
 # the month and day shown: today if she has studied today, otherwise the last day she did
 now = (today.year, today.month)

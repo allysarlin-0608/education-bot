@@ -1,6 +1,9 @@
+from datetime import timedelta
+from html import escape
+
 import streamlit as st
 
-from coach import auth, core, curriculum, lesson_view, llm, place, progress_bar, quiz, quizgen, settings, steps, tokens, ui
+from coach import auth, core, curriculum, lesson_view, llm, place, progress_bar, quiz, quizgen, review, settings, steps, tokens, ui
 
 log = st.session_state.coach_log
 config = ui.config()        # her subjects, daily pace and starting levels
@@ -192,6 +195,13 @@ st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
 with st.container(key=f"enter_{topic}", horizontal=True):      # into the day's subject, its world
     if st.button(f"Enter {core.TOPICS[topic]}", type="tertiary", key="today_world", icon=":material/arrow_outward:"):
         ui.enter_world(topic)
+# review: noticed when something is due, never in the way of the day's lesson
+due_now = review.due(log, today)
+if due_now:
+    with st.container(key="review_entry"):
+        if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due",
+                     type="tertiary", key="today_review", icon=":material/replay:"):
+            st.switch_page("views/review.py")
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
 
@@ -268,13 +278,25 @@ st.html(place.html(chat_key(plan[i]) if i is not None else f"{today.isoformat()}
 # ALL DONE: the day's summary
 # ============================================================
 if i is None:
+    # a calm moment: what she did, the streak, and what tomorrow holds
+    streak = core.current_streak(log, ui.today())
+    rows = []
+    for s in plan:
+        score = (curriculum.content(log, topic, s).get("quiz") or {}).get("score")
+        rows.append(f'<li><span class="n">{s["n"]}</span><span class="t">{escape(s["title"])}</span>'
+                    f'<span class="q">{f"· {score}%" if score is not None else ""}</span></li>')
+    tomorrow = today + timedelta(days=1)
+    t_next = ui.topic_for(tomorrow)
+    upcoming = curriculum.next_numbers(log, t_next, settings.units(config)) if t_next in core.TOPICS else []
+    ahead = (f"Tomorrow · {core.TOPICS[t_next]} · "
+             + (f"Lesson {upcoming[0]}" if len(upcoming) == 1 else f"Lessons {upcoming[0]}–{upcoming[-1]}")
+             if upcoming else "")
     with st.container(key="day_done"):
-        st.markdown("### Today's done")
-        streak = core.current_streak(log, ui.today())
-        st.caption(f"All {len(plan)} lessons passed. Current streak: {streak} {'day' if streak == 1 else 'days'}.")
-        for s in plan:
-            score = (curriculum.content(log, topic, s).get("quiz") or {}).get("score")
-            st.markdown(f"✓ **Lesson {s['n']}:** {s['title']}" + (f" · {score}%" if score is not None else ""))
+        st.html(f'<div class="done"><p class="done-eyebrow">Complete</p><h3>Today\'s done</h3>'
+                f'<p class="done-sub">All {len(plan)} {"lesson" if len(plan) == 1 else "lessons"} passed. '
+                f'Current streak: {streak} {"day" if streak == 1 else "days"}.</p>'
+                f'<ol class="done-list">{"".join(rows)}</ol>'
+                + (f'<p class="done-next">{escape(ahead)}</p>' if ahead else "") + '</div>')
     st.stop()
 
 slot = curriculum.content(log, topic, plan[i])     # a lesson carried over: its original
@@ -321,6 +343,22 @@ for k, message in enumerate(chat[1:], start=1):   # the kickoff line is shown as
             st.markdown(message["content"])
 reply_spot = st.container()     # a new question and its answer appear here, under the others
 
+# Key points she wants back later (review): the Key Idea and each Deep Dive point
+points = review.key_points(slot.get("lesson", ""))
+if points:
+    with st.popover("Save for review", icon=":material/bookmark_add:", key=f"save_menu_{slot['n']}"):
+        st.caption("A saved point comes back in Review tomorrow, then further apart each time you know it.")
+        for k, (label, text) in enumerate(points):
+            kept = review.saved(slot, label)
+            if st.button(label, key=f"save_point_{slot['n']}_{k}", disabled=kept, help=text[:240],
+                         icon=":material/check:" if kept else None, type="tertiary"):
+                entry = day_entry()
+                owner, held = work(entry, i)
+                review.save_point(held, label, text, today, topic)
+                if save(entry, owner):
+                    st.toast(f"Saved for review: {label}")
+                st.rerun()
+
 st.divider()
 entry = day_entry()
 owner, slot = work(entry, i)
@@ -360,7 +398,9 @@ def conclude(i):
     entry = day_entry()
     owner, slot = work(entry, i)
     score = quiz.finish(slot["quiz"])
+    review.add_missed(slot, slot["quiz"], today, topic)      # what she missed comes back in a few days
     if quiz.passed(score):
+        review.add_words(slot, today, topic)                 # and the lesson's words, once it's passed
         entry["lessons"][i]["completed"] = True
         if owner is not entry:          # the original day stays as it was; the lesson notes when
             slot["passed_on"] = today.isoformat()
@@ -518,7 +558,7 @@ show_retry(slot, ("followup",))
 # (it sticks there with CSS). It isn't Streamlit's own bottom bar: that one
 # keeps the page scrolled to the end, so Today wouldn't open at the top.
 with st.container(key="chat_dock"):
-    prompt = st.chat_input(f"Ask about Lesson {slot['n']}, report your progress, or just talk it through…")
+    prompt = st.chat_input(f"Ask about Lesson {slot['n']}…")
 if prompt is not None and prompt.strip():
     st.session_state.coach_retry = None
     with reply_spot:

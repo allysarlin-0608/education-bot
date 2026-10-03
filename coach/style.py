@@ -365,14 +365,20 @@ CSS = f"""
 }}
 [data-testid="stChatInputSubmitButton"]:not(:disabled) {{ background: var(--label) !important; color: var(--env) !important; }}
 [data-testid="stChatInputSubmitButton"]:not(:disabled):active {{ transform: scale(0.92); transition-duration: var(--t-press); }}
-/* the chat box stays at the bottom of the screen while she scrolls; at the end of the page it sits in its place */
-[data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock), .st-key-chat_dock {{
-  position: sticky; bottom: max(var(--space-4), env(safe-area-inset-bottom)); z-index: 40;   /* clear of the iPhone's home bar */
+/* The chat box has its own band at the bottom of the screen, under the page
+   rather than over it: the page's scrolling area ends just above the band
+   (--dock-h, --kb: the box's height and the on-screen keyboard, kept by
+   coach/place.py), so no button or line of text can ever sit under the box.
+   Its place in the page (an empty, zero-height slot) gives its column. */
+[data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock) {{ height: 0; min-height: 0; margin: 0 !important; }}
+.st-key-chat_dock {{
+  position: fixed; z-index: 40; bottom: calc(max(var(--space-4), env(safe-area-inset-bottom)) + var(--kb, 0px));   /* clear of the iPhone's home bar */
+  left: var(--dock-left, var(--space-4)); width: var(--dock-width, calc(100% - 2 * var(--space-4)));
 }}
-/* on a page shorter than the screen it still sits at the bottom, not right under the text */
-.stMainBlockContainer:has(.st-key-chat_dock) {{ min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; box-sizing: border-box; }}
-.stMainBlockContainer:has(.st-key-chat_dock) > [data-testid="stVerticalBlock"] {{ flex: 1; }}
-[data-testid="stLayoutWrapper"]:has(> .st-key-chat_dock) {{ margin-top: auto; }}
+[data-testid="stMain"]:has(.st-key-chat_dock) {{
+  height: calc(100% - var(--dock-h, 56px) - var(--kb, 0px) - max(var(--space-4), env(safe-area-inset-bottom)) - var(--space-3)) !important;
+  flex: none !important;
+}}
 
 /* ---------- progress: a hairline filling with light ---------- */
 [data-testid="stProgress"] [role="progressbar"],
@@ -608,13 +614,20 @@ LIQUID = """
 }
 
 /* all of today's lessons done: the summary card */
-.st-key-day_done {
-  gap: var(--space-2) !important; padding: var(--space-5); border-radius: var(--radius-large);
-  background: var(--glass); box-shadow: var(--optic-strong);
-}
-.st-key-day_done h3 { padding: 0 0 var(--space-1); line-height: 1.25; }
-.st-key-day_done [data-testid="stCaptionContainer"] { margin-bottom: var(--space-2); }
-.st-key-day_done [data-testid="stMarkdownContainer"] p { margin: 0; }
+/* the day's done: no card, just type and space, settling in once */
+.st-key-day_done { padding: var(--space-6) 0 var(--space-5); }
+.done { max-width: 34rem; animation: done-in 640ms var(--ease) both; }
+.done-eyebrow { margin: 0 0 var(--space-2); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
+.done h3 { margin: 0; padding: 0; font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.1; }
+.done-sub { margin: var(--space-3) 0 var(--space-5); color: var(--label-2); }
+.done-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--hair); }
+.done-list li { display: flex; gap: var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-bottom: 1px solid var(--hair); }
+.done-list .n { min-width: 1.5rem; font-variant-numeric: tabular-nums; color: var(--label-3); }
+.done-list .t { flex: 1; }
+.done-list .q { color: var(--label-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.done-next { margin: var(--space-5) 0 0; color: var(--label-2); }
+@keyframes done-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .done { animation: none; } }
 
 /* reviewing an earlier lesson: a quiet bar above its title */
 .st-key-review_bar {

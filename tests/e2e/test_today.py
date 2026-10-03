@@ -178,7 +178,7 @@ def test_reflection_is_saved(public_app, pages):
 
 
 def test_chat_reply_is_saved_with_the_lesson(public_app, pages):
-    covers("W-daily-ask_about_lesson_report_your_progress_or", "D-daily-save_entry-2", "AI-daily-stream_reply-2")
+    covers("W-daily-ask_about_lesson", "D-daily-save_entry-2", "AI-daily-stream_reply-2")
     app = public_app
     p, email = fresh(app, pages)
     flows.start_lesson(p)
@@ -194,7 +194,7 @@ def test_chat_reply_is_saved_with_the_lesson(public_app, pages):
 
 
 def test_blank_chat_message_is_ignored(public_app, pages):
-    covers("W-daily-ask_about_lesson_report_your_progress_or")
+    covers("W-daily-ask_about_lesson")
     app = public_app
     p, email = fresh(app, pages)
     flows.start_lesson(p)
