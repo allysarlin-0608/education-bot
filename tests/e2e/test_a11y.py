@@ -79,7 +79,8 @@ def person(app, pages, scheme="light", width=1440, reading=True, **kw):
 
 
 PAGES = [("/", "Start this lesson"), ("/records", "Backup and restore"), ("/settings", "Daily pace"),
-         ("/reading", "Start a new book"), ("/subject?subject=philosophy", "Where you are")]
+         ("/reading", "Start a new book"), ("/subject?subject=philosophy", "Where you are"),
+         ("/review", "Nothing to review yet"), ("/course?subject=philosophy", "lessons passed")]
 
 
 @pytest.mark.parametrize("scheme", ["light", "dark"])
@@ -170,3 +171,37 @@ def test_dimmed_states_contrast(public_app, pages):
         p.page.wait_for_timeout(600)
         low += [x for x in p.page.evaluate(CONTRAST, "") if x]
     assert not low, low
+
+
+@pytest.mark.parametrize("path,must", [("/review", ("Review", "Today")),
+                                       ("/course?subject=philosophy", ("Continue", "Enter Philosophy"))])
+def test_keyboard_on_review_and_the_course_map(public_app, pages, path, must):
+    """Tab reaches each page's own controls, each with a visible ring."""
+    covers("W-review-rv_view", "W-course-cm_continue")
+    app = public_app
+    p = person(app, pages)
+    flows.open_app(p, app, path)
+    page = p.page
+    page.mouse.click(5, 300)
+    reached, invisible = [], []
+    for _ in range(50):
+        page.keyboard.press("Tab")
+        info = page.evaluate("""() => { const e = document.activeElement; if (!e || e === document.body) return null;
+            const drawn = x => { const s = getComputedStyle(x);
+                return (s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0) || (s.boxShadow && s.boxShadow !== 'none'); };
+            let ring = drawn(e) || [...e.querySelectorAll('*')].some(drawn);
+            for (let a = e.parentElement, k = 0; a && k < 3 && !ring; a = a.parentElement, k++) ring = drawn(a);
+            return {name: (e.getAttribute('aria-label') || e.innerText || e.tagName).trim().slice(0, 40), ring,
+                    within: !!e.closest('[data-baseweb]'), html: e.outerHTML.slice(0, 120)}; }""")
+        if not info:
+            continue
+        reached.append(info["name"])
+        if not info["ring"] and not info["within"]:
+            invisible.append(info["name"] + " :: " + info["html"])
+    for m in must:
+        assert any(m in r for r in reached), f"Tab never reaches {m!r}: {reached}"
+    assert not invisible, f"focused without a visible ring: {sorted(set(invisible))}"
+    if path == "/review":          # a choice of two is one stop for Tab; the arrow keys move within it
+        page.locator('[data-testid="stButtonGroup"] button').first.focus()
+        page.keyboard.press("ArrowRight")
+        assert page.evaluate("() => document.activeElement.innerText.trim()") == "Collection"
