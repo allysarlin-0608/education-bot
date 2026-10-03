@@ -123,7 +123,7 @@ def test_a_lesson_not_passed_continues_the_next_day_on_the_same_record(public_ap
     writes the quiz and the chat back to day 1's lesson. Day 2 gets the
     credit (streak); day 1 stays not completed and says when it was passed.
     No lesson shows twice in Progress or search."""
-    covers("D-daily-save_entry", "W-daily-start_this_lesson")
+    covers("D-daily-save_entry", "W-daily-start_this_lesson", "D-daily-save_day-2")
     app = public_app
     clock(D, "02:00:00")
     p = pages(width=1440)

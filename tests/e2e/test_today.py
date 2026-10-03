@@ -47,7 +47,7 @@ def lessons_of(entry):
 def test_a_whole_day(mode, pages, request):
     covers("W-daily-next_lesson", "W-daily-next_lesson-2", "W-daily-see_the_quiz", "W-daily-key", "W-daily-keys_j",
            "W-daily-key-2", "W-daily-submit", "D-daily-save_entry-3", "D-daily-save_entry-4",
-           "D-daily-save_entry-5", "D-daily-save_entry-6", "D-daily-save_entry-7",
+           "D-daily-save_entry-5", "D-daily-save_entry-6", "D-daily-save_entry-7", "D-daily-save_day",
            "W-daily-take_the_quiz_if_q_is_none_else_try_a_ne", "AI-daily-ask_json", "D-ui-save_entry")
     app = request.getfixturevalue(f"{mode}_app")
     if mode == "personal":

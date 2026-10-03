@@ -19,7 +19,7 @@ WIDGETS = {"button", "text_input", "text_area", "radio", "selectbox", "toggle", 
            "form", "form_submit_button", "file_uploader", "checkbox", "segmented_control", "pills",
            "download_button", "page_link", "popover", "slider", "number_input", "tabs", "link_button",
            "multiselect"}
-WRITES = {"save_entry", "save_book", "save_settings", "replace", "touch_user", "add_invite", "remove_invite",
+WRITES = {"save_entry", "save_day", "save_book", "save_settings", "replace", "touch_user", "add_invite", "remove_invite",
           "add_usage", "delete_my_account"}
 AI = {"ask_json", "stream_reply", "stream_text"}
 

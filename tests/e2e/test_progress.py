@@ -150,7 +150,7 @@ def test_subjects_view_and_its_world(public_app, pages):
 
 
 def test_a_legacy_session_keeps_its_thoughts(public_app, pages):
-    covers("W-records-rec_reflection", "W-records-rec_save", "W-records-rec_lesson", "D-records-save_entry")
+    covers("W-records-rec_reflection", "W-records-rec_save", "W-records-rec_lesson", "D-records-save_entry", "D-records-save_day")
     app = public_app
     p, email, _ = with_history(app, pages, legacy=True)
     p.page.get_by_role("radio", name="Sessions").or_(p.page.get_by_role("button", name="Sessions", exact=True)).first.click()
