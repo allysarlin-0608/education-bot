@@ -132,6 +132,12 @@ def write(items, cov):
 if __name__ == "__main__":
     items = scan()
     cov = covered_ids()
+    if "--check" in sys.argv:          # (before a push: say what's uncovered, write nothing)
+        missing = [i["id"] for i in items if i["id"] not in cov]
+        for m in missing:
+            print("UNCOVERED", m)
+        print(f"{len(items)} items, {len(items) - len(missing)} covered")
+        sys.exit(1 if missing else 0)
     done, total = write(items, cov)
     print(f"{total} items, {done} covered")
     if "--coverage" in sys.argv:
