@@ -52,6 +52,9 @@ if st.session_state.get("lq_page") != page.url_path:
     st.session_state.pop("data_export", None)  # a data download gathered earlier is out of date once she moves on (ISS-026)
 # today's day as stored now (another tab or device may have moved on), read
 # before the bar and the sidebar so they and the page show the same day
+fresh = st.session_state.pop("coach_log_fresh", False)
+if page.url_path == "records" and st.session_state.get("lq_page") != page.url_path and not fresh:
+    ui.refresh_log(st.session_state.coach_log)   # arriving at Progress: her whole record as stored now (ISS-030)
 ui.refresh_entry(st.session_state.coach_log, ui.today(), ui.topic_for(ui.today()))
 topnav.render(pages, st.session_state.coach_log)
 st.html(place.keep_clear(), unsafe_allow_javascript=True)     # new controls never hide under the chat box

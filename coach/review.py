@@ -224,7 +224,10 @@ def find(log: dict, card_id: str):
 
 
 def remove(slot: dict, card_id: str) -> None:
+    """Delete a card, and note its id: a page holding an older copy of the
+    lesson (another tab) then can't bring it back when it saves (ISS-032)."""
     slot["cards"] = [c for c in slot.get("cards") or [] if c["id"] != card_id]
+    slot["removed"] = sorted(set(slot.get("removed") or []) | {card_id})
 
 
 def search(log: dict, query: str, kind: str = None) -> list:

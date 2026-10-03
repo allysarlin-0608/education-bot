@@ -253,3 +253,21 @@ def test_cards_made_by_a_quiz_submitted_after_midnight_are_kept():
     stored2 = {"date": "2026-10-01", "topic": "cosmos", "lessons": [dict(curriculum.new_slot("cosmos", 1), lesson="L")]}
     curriculum.merge_day(mine2, stored2, [1], None)
     assert [c["id"] for c in mine2["lessons"][0]["cards"]] == ["q"]
+
+
+def test_a_card_deleted_in_another_tab_isnt_brought_back_by_a_merge():
+    """ISS-032: tab A holds lesson 1's word card (made today); tab B deletes
+    it; A's quiz sheet saves the day and the card came back."""
+    from datetime import date
+    from coach import review
+    card = {"id": "w1", "kind": "word", "added": "2026-10-04"}
+    in_b = dict(curriculum.new_slot("cosmos", 1), lesson="L", completed=True, cards=[dict(card)])
+    review.remove(in_b, "w1")
+    stored = {"date": "2026-10-04", "topic": "cosmos",
+              "lessons": curriculum.parse_slots([in_b])}                   # as saved and read back
+    mine = {"date": "2026-10-04", "topic": "cosmos",
+            "lessons": [dict(curriculum.new_slot("cosmos", 1), lesson="L", completed=True, cards=[dict(card)])]}
+    curriculum.merge_day(mine, stored, [1], date(2026, 10, 4))
+    assert mine["lessons"][0]["cards"] == [] and mine["lessons"][0]["removed"] == ["w1"]
+    curriculum.merge_day(mine, stored, [1], None)                          # nor from a day a save failed on
+    assert mine["lessons"][0]["cards"] == []

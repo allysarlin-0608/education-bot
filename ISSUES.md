@@ -37,6 +37,9 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 | ISS-028 | P2 | Review | Cards made by a quiz submitted after midnight were dropped by the save | fixed |
 | ISS-029 | P2 | Today / Progress | Saving empty thoughts made a day (Days studied +1, today's subject fixed) | fixed |
 | ISS-030 | P2 | Progress | Progress and its backup showed this session's copy of the record, older than another device's saves | fixed |
+| ISS-031 | P2 | Data / backup | A brief failure reading books on arriving at Progress emptied them (and a backup made then had none) | fixed |
+| ISS-032 | P2 | Review | A card deleted in one tab came back when another tab saved the day | fixed |
+| ISS-033 | P2 | Progress / cost | The record was re-read after the bar was drawn (different numbers), and twice when a session began on Progress | fixed |
 
 ## Details
 
@@ -109,3 +112,8 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 - **ISS-029:** Save my thoughts with nothing written and no day yet saves nothing. Test: `test_pages_smoke.py::test_saving_empty_thoughts_makes_no_day` (fails without the guard).
 - **ISS-030:** arriving at Progress re-reads the whole record (`ui.refresh_log`, keeping days a save failed on). Test: `test_pages_smoke.py::test_progress_shows_what_another_device_saved_since` (fails without it).
 - **Doc:** ARCHITECTURE.md now says a reading check-in counts as a streak day, as the code always did.
+
+### ISS-031 … ISS-033 — found by the fifth independent review
+- **ISS-031:** books that couldn't be read (`books_error`) are kept as this session holds them, never replaced by an empty list. Test: `test_pages_smoke.py::test_books_that_couldnt_be_read_are_not_taken_for_none` (fails without it).
+- **ISS-032:** deleting a card notes its id on its lesson (`removed`, kept through saves and backups); a merge never brings back a card noted there. Test: `test_curriculum.py::test_a_card_deleted_in_another_tab_isnt_brought_back_by_a_merge`.
+- **ISS-033:** the arrival re-read is done in gnosis.py before the bar and sidebar, and skipped when the record was loaded in the same run.

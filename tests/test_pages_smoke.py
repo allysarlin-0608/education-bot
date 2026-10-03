@@ -220,3 +220,18 @@ def test_progress_shows_what_another_device_saved_since(monkeypatch, tmp_path):
     (tmp_path / "log.json").write_text(json.dumps({"version": 1, "entries": elsewhere, "books": []}))
     loads(at, "views/records.py")
     assert len(at.session_state["coach_log"]["entries"]) == 2
+
+
+def test_books_that_couldnt_be_read_are_not_taken_for_none(monkeypatch, tmp_path):
+    """ISS-031: a brief failure reading the books on arriving at Progress
+    emptied them, and a backup made then had no books."""
+    from coach import storage as st_mod
+    at = app(monkeypatch, tmp_path, history=False)
+    loads(at, "views/daily.py")
+    from coach import books
+    book = books.new_book(ui.today())
+    at.session_state["coach_log"]["books"] = [book]
+    store = at.session_state["coach_store"]
+    monkeypatch.setattr(type(store), "books_error", "the books couldn't be read", raising=False)
+    loads(at, "views/records.py")
+    assert [b["id"] for b in at.session_state["coach_log"]["books"]] == [book["id"]]

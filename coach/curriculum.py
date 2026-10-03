@@ -247,8 +247,11 @@ def merge_day(mine: dict, stored: dict, ns, since, keep=(), recount=False) -> No
             m.update(s)
         elif "cards" in s:
             have = {c["id"] for c in s["cards"]}
-            m["cards"] = s["cards"] + [c for c in m.get("cards") or [] if c["id"] not in have
+            removed = set(s.get("removed") or []) | set(m.get("removed") or [])
+            m["cards"] = s["cards"] + [c for c in m.get("cards") or [] if c["id"] not in have | removed
                                        and (since is None or c.get("added", "") >= since.isoformat())]
+            if removed:
+                m["removed"] = sorted(removed)
         lessons.append(m)
     lessons += [m for n, m in own.items() if n not in {s["n"] for s in stored["lessons"]}]
     lessons.sort(key=lambda s: s["n"])
@@ -315,9 +318,12 @@ def parse_slots(data) -> list:
         from coach import review
         if isinstance(s.get("cards"), list):        # kept even when empty: no cards left is not "never had any"
             slots[-1]["cards"] = review.parse_cards(s["cards"])
+        if isinstance(s.get("removed"), list):      # ids of cards she deleted (review.remove)
+            slots[-1]["removed"] = sorted({str(x) for x in s["removed"]})
         if slots[-1].get("from"):                   # a link holds no content of its own
             slots[-1].update(kickoff="", lesson="", followups=[], quiz=None)
             slots[-1].pop("cards", None)
+            slots[-1].pop("removed", None)
     return slots
 
 

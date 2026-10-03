@@ -145,6 +145,7 @@ def init_state():
     if "coach_log" not in st.session_state:
         try:
             st.session_state.coach_log = st.session_state.coach_store.load()
+            st.session_state.coach_log_fresh = True     # (read this run: no second read on arrival)
         except storage.StorageError as e:
             # Don't cache the failure: the next rerun tries to load again.
             st.error(f"Couldn't load your records ({e}). Refresh the page in a moment to try again.")
@@ -355,7 +356,8 @@ def refresh_log(log) -> None:
     mine = {(e["date"], e["topic"]): e for e in log["entries"] if (e["date"], e["topic"]) in unsaved}
     entries = [e for e in stored["entries"] if (e["date"], e["topic"]) not in mine] + list(mine.values())
     log["entries"] = sorted(entries, key=lambda e: (e["date"], e["topic"]))
-    log["books"] = stored["books"]
+    if not getattr(st.session_state.coach_store, "books_error", None):
+        log["books"] = stored["books"]      # (books that couldn't be read aren't "no books", ISS-031)
     st.session_state.coach_chats = {}          # rebuilt from the records as now stored
 
 
