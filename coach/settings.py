@@ -8,9 +8,9 @@ which subject a day is for, how many lessons a day has, the level a
 subject starts at, and whether Reading is on.
 
 Pure functions, no Streamlit, so they can be tested."""
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 
-from coach import catalog, core, paths
+from coach import catalog, clock, core, paths
 
 DEFAULT_USER_ID = "owner"
 
@@ -121,7 +121,7 @@ def onboarded(s: dict) -> bool:
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return clock.now_iso()
 
 
 # ------------------------------------------------------------

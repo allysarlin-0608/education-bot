@@ -21,12 +21,13 @@ import json
 import logging
 import os
 import threading
-from datetime import date, datetime, timezone
+import time
+from datetime import date
 from pathlib import Path
 
 import requests
 
-from coach import core
+from coach import clock, core
 
 TABLE = "learning_entries"
 BOOKS_TABLE = "reading_books"
@@ -41,6 +42,14 @@ PATHS_TABLE_MISSING = (
     "Supabase's SQL Editor, then refresh this page."
 )
 TIMEOUT = 10
+READ_TRIES = 2                       # a read: once more after a transient failure (_request)
+TRANSIENT = (502, 503, 504)          # the gateway, not the request: worth one more try
+RETRY_PAUSE = 0.4                    # seconds
+
+
+def _sleep(seconds: float) -> None:          # (replaced in tests)
+    time.sleep(seconds)
+
 
 # Run once in the Supabase SQL editor. RLS stays on with no policies, so
 # only the secret key (kept server-side in Streamlit secrets) can reach it.
@@ -186,7 +195,7 @@ def _is_secret_key(key: str) -> bool:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return clock.now_iso()
 
 
 class _Scope:
@@ -470,14 +479,28 @@ class SupabaseStore(_Scope):
             headers["Authorization"] = f"Bearer {token}"
         if prefer:
             headers["Prefer"] = prefer
-        try:
-            resp = self.session.request(
-                method, f"{self.base}/{table}", params=params, json=json,
-                headers=headers, timeout=TIMEOUT,
-            )
-        except requests.RequestException as e:
-            logger.error("supabase %s %s unreachable: %s", method, table, e)
-            raise StorageError("can't reach the database right now") from e
+        # A read is asked again once after a moment if the connection dropped
+        # or the database's gateway was briefly unavailable; a write never is
+        # (not every write may safely happen twice: a counter would count twice).
+        tries = READ_TRIES if method == "GET" else 1
+        for attempt in range(1, tries + 1):
+            try:
+                resp = self.session.request(
+                    method, f"{self.base}/{table}", params=params, json=json,
+                    headers=headers, timeout=TIMEOUT,
+                )
+            except requests.RequestException as e:
+                if attempt < tries:
+                    logger.warning("supabase %s %s unreachable (%s); trying once more", method, table, e)
+                    _sleep(RETRY_PAUSE)
+                    continue
+                logger.error("supabase %s %s unreachable: %s", method, table, e)
+                raise StorageError("can't reach the database right now") from e
+            if resp.status_code in TRANSIENT and attempt < tries:
+                logger.warning("supabase %s %s -> %s; trying once more", method, table, resp.status_code)
+                _sleep(RETRY_PAUSE)
+                continue
+            break
         if resp.status_code >= 400:
             logger.error("supabase %s %s -> %s: %s", method, table, resp.status_code, resp.text[:500])
             if resp.status_code == 401 and self.access_token is not None:
@@ -588,7 +611,7 @@ class SupabaseStore(_Scope):
     def _upsert_books(self, book_list: list) -> None:
         if not book_list:
             return
-        now = datetime.now(timezone.utc).isoformat()
+        now = _now()
         self._request(
             "POST",
             params={"on_conflict": "user_id,id" if self.scoped else "id"},

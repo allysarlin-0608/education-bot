@@ -24,8 +24,9 @@ import re
 import time
 
 import streamlit as st
+from streamlit.errors import StreamlitAPIException
 
-from coach import ui
+from coach import appconfig, ui
 
 logger = logging.getLogger("coach.auth")
 
@@ -63,7 +64,7 @@ ERRORS = {  # supa_auth.AuthError codes → what the person reads
 
 
 def mode() -> str:
-    return PUBLIC if ui.get_setting("APP_MODE").strip().lower() == PUBLIC else PERSONAL
+    return PUBLIC if appconfig.get_setting("APP_MODE").strip().lower() == PUBLIC else PERSONAL
 
 
 def is_public() -> bool:
@@ -79,7 +80,7 @@ def identity():
         if not user.get("is_logged_in") or user.get(session_cookie.MARK) != session_cookie.MARK_VERSION:
             return None          # no one, or a cookie this app didn't make (e.g. an old st.login one)
         sub = user.get("sub")
-    except Exception:  # no [auth] configured: st.user has nothing
+    except StreamlitAPIException:  # Streamlit's sign-in not set up here: no one is signed in
         return None
     if not sub:
         return None
@@ -93,7 +94,7 @@ def access_token():
     """The signed-in person's access token (for the database), or None."""
     try:
         return st.user.tokens.get("access") if st.user.get("is_logged_in") else None
-    except Exception:
+    except StreamlitAPIException:  # (as above)
         return None
 
 
@@ -116,8 +117,10 @@ def is_admin() -> bool:
     if who["sub"] not in cache:
         from coach import storage
         store = st.session_state.get("coach_store")
+        if store is None:
+            return False                     # (no store yet: not cached, asked again once there is)
         try:
-            cache[who["sub"]] = bool(store and store.is_admin(who["email"]))
+            cache[who["sub"]] = bool(store.is_admin(who["email"]))
         except storage.StorageError:
             return False                     # not cached: asked again next time
     return cache[who["sub"]]

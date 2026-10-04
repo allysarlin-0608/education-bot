@@ -228,7 +228,6 @@ def test_progress_shows_what_another_device_saved_since(monkeypatch, tmp_path):
 def test_books_that_couldnt_be_read_are_not_taken_for_none(monkeypatch, tmp_path):
     """ISS-031: a brief failure reading the books on arriving at Progress
     emptied them, and a backup made then had no books."""
-    from coach import storage as st_mod
     at = app(monkeypatch, tmp_path, history=False)
     loads(at, "views/daily.py")
     from coach import books

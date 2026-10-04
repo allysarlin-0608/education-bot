@@ -2,16 +2,13 @@
 import hmac
 import logging
 import math
-import os
 import threading
 import time
-from datetime import datetime
 from urllib.parse import urlparse
-from zoneinfo import ZoneInfo
 
 import streamlit as st
 
-from coach import catalog, core, curriculum, settings, storage
+from coach import appconfig, catalog, clock, core, curriculum, settings, storage
 
 logger = logging.getLogger("coach.ui")
 
@@ -30,16 +27,7 @@ def _paths_unreadable() -> bool:
 
 
 catalog.bind(_session_paths, _paths_unreadable)     # every page and callback sees this session's goals (coach/catalog.py)
-TIMEZONE = ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))
-
-
-def get_setting(name: str) -> str:
-    """Read a setting from Streamlit secrets, falling back to env vars."""
-    try:
-        value = st.secrets.get(name, "")
-    except Exception:  # no secrets.toml at all
-        value = ""
-    return value or os.environ.get(name, "")
+TIMEZONE = clock.TIMEZONE        # the learner's timezone (coach/clock.py: the one clock)
 
 
 PASSWORD_MISSING = (
@@ -88,11 +76,10 @@ def require_password():
     if st.session_state.get("coach_authed"):
         return
     # the page she asked for (a refresh, a link): she is taken back to it once in
-    try:
-        st.session_state.setdefault("coach_asked_path", urlparse(st.context.url).path.strip("/").split("/")[-1])
-    except Exception:
-        pass
-    expected = get_setting("APP_PASSWORD")
+    url = st.context.url          # (None where there is no browser page: the page tests)
+    if url:
+        st.session_state.setdefault("coach_asked_path", urlparse(url).path.strip("/").split("/")[-1])
+    expected = appconfig.get_setting("APP_PASSWORD")
     st.markdown("### GNOSIS")
     if not expected:
         st.error(PASSWORD_MISSING)
@@ -137,7 +124,7 @@ def make_store():
         public = auth.is_public()
         try:
             st.session_state.coach_store = storage.make_store(
-                get_setting("SUPABASE_URL"), get_setting("SUPABASE_KEY"),
+                appconfig.get_setting("SUPABASE_URL"), appconfig.get_setting("SUPABASE_KEY"),
                 scoped=public, current_user=auth.get_current_user_id,
                 access_token=auth.access_token if public else None,
             )
@@ -157,7 +144,7 @@ def init_state():
             st.session_state.pop(key, None)
         st.session_state.coach_uid = uid
     if "api_key" not in st.session_state:
-        st.session_state.api_key = get_setting("GROQ_API_KEY")
+        st.session_state.api_key = appconfig.get_setting("GROQ_API_KEY")
     if "coach_log" not in st.session_state:
         try:
             st.session_state.coach_log = st.session_state.coach_store.load()
@@ -177,7 +164,7 @@ def init_state():
 def personal_user_id() -> str:
     """The one user of a personal app (a fixed id, which can be set with
     COACH_USER_ID)."""
-    return get_setting("COACH_USER_ID") or settings.DEFAULT_USER_ID
+    return appconfig.get_setting("COACH_USER_ID") or settings.DEFAULT_USER_ID
 
 
 def user_id():
@@ -271,7 +258,7 @@ def next_study_day(topic: str):
 
 
 def today():
-    return datetime.now(TIMEZONE).date()
+    return clock.today()
 
 
 def using_cloud() -> bool:

@@ -414,3 +414,59 @@ def test_file_store_keeps_goals_and_her_counts(tmp_path):
     assert data["learning_paths"][0]["id"] == g["id"]
     assert sorted((e["event"], e["count"]) for e in data["usage_events"]) == [("lesson_passed", 2), ("visit", 1)]
     assert "text" not in json.dumps(data["usage_events"]), "counts only"
+
+
+# ---------- a database blip ----------
+class Flaky:
+    """The fake database, failing the first `n` requests in a given way."""
+    def __init__(self, fake, n, how):
+        self.fake, self.n, self.how, self.calls = fake, n, how, []
+
+    def request(self, method, url, **kw):
+        self.calls.append(method)
+        if len(self.calls) <= self.n:
+            if self.how == "drop":
+                raise requests.ConnectionError("connection reset by peer")
+            return FakeResponse(self.how, {"message": "gateway"})
+        return self.fake.request(method, url, **kw)
+
+
+@pytest.fixture
+def no_pause(monkeypatch):
+    monkeypatch.setattr(storage, "_sleep", lambda s: None)
+
+
+@pytest.mark.parametrize("how", ["drop", 503, 502, 504])
+def test_a_read_survives_one_blip(no_pause, how):
+    fake = FakePostgrest()
+    flaky = Flaky(fake, 1, how)
+    store = storage.SupabaseStore(URL, KEY, session=flaky)
+    assert store.load()["entries"] == []
+    assert flaky.calls[:2] == ["GET", "GET"]
+
+
+def test_a_read_that_keeps_failing_says_so(no_pause):
+    flaky = Flaky(FakePostgrest(), 99, "drop")
+    with pytest.raises(storage.StorageError, match="can't reach the database"):
+        storage.SupabaseStore(URL, KEY, session=flaky).load()
+    assert flaky.calls == ["GET", "GET"], "once more, not forever"
+
+
+@pytest.mark.parametrize("how", ["drop", 503])
+def test_a_write_is_never_sent_twice(no_pause, how):
+    fake = FakePostgrest()
+    store = storage.SupabaseStore(URL, KEY, session=fake)
+    log = store.load()
+    entry = core.start_entry(log, date(2026, 9, 1), "free")
+    flaky = Flaky(fake, 1, how)
+    store.session = flaky
+    with pytest.raises(storage.StorageError):
+        store.save_entry(log, entry)
+    assert flaky.calls == ["POST"], "a write that may have landed isn't repeated"
+
+
+def test_a_real_refusal_isnt_retried(no_pause):
+    flaky = Flaky(FakePostgrest(), 1, 400)
+    with pytest.raises(storage.StorageError):
+        storage.SupabaseStore(URL, KEY, session=flaky).load()
+    assert flaky.calls == ["GET"]

@@ -4,7 +4,7 @@ import types
 import pytest
 import streamlit
 
-from coach import auth, llm, quota, storage, ui
+from coach import auth, llm, quota, storage
 
 
 @pytest.fixture

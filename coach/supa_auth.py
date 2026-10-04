@@ -11,7 +11,7 @@ import secrets as pysecrets
 
 import requests
 
-from coach import ui
+from coach import appconfig
 
 logger = logging.getLogger("coach.supa_auth")
 TIMEOUT = 15
@@ -29,11 +29,11 @@ class AuthError(Exception):
 
 
 def _base() -> str:
-    return ui.get_setting("SUPABASE_URL").rstrip("/") + "/auth/v1"
+    return appconfig.get_setting("SUPABASE_URL").rstrip("/") + "/auth/v1"
 
 
 def _headers(access_token: str | None = None) -> dict:
-    key = ui.get_setting("SUPABASE_KEY")
+    key = appconfig.get_setting("SUPABASE_KEY")
     h = {"apikey": key, "Content-Type": "application/json"}
     if access_token:
         h["Authorization"] = f"Bearer {access_token}"

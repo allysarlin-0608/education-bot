@@ -4,7 +4,6 @@ backup), and the address can't be used to open the other's data."""
 import itertools
 import json
 import time
-from datetime import date, timedelta
 
 import flows
 from conftest import covers
