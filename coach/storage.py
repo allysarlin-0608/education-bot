@@ -21,12 +21,12 @@ import json
 import logging
 import os
 import threading
-from datetime import date, datetime, timezone
+from datetime import date
 from pathlib import Path
 
 import requests
 
-from coach import core
+from coach import clock, core
 
 TABLE = "learning_entries"
 BOOKS_TABLE = "reading_books"
@@ -186,7 +186,7 @@ def _is_secret_key(key: str) -> bool:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return clock.now_iso()
 
 
 class _Scope:
@@ -588,7 +588,7 @@ class SupabaseStore(_Scope):
     def _upsert_books(self, book_list: list) -> None:
         if not book_list:
             return
-        now = datetime.now(timezone.utc).isoformat()
+        now = _now()
         self._request(
             "POST",
             params={"on_conflict": "user_id,id" if self.scoped else "id"},

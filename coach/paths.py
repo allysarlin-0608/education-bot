@@ -19,7 +19,8 @@ Pure functions: no Streamlit, no storage; the pages and coach/storage.py use
 them."""
 import re
 import secrets
-from datetime import datetime, timezone
+
+from coach import clock
 
 LEVELS = ("Beginner", "Intermediate", "Advanced")
 STATUSES = ("active", "archived")
@@ -75,7 +76,7 @@ def new_id() -> str:
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return clock.now_iso()
 
 
 def _text(value, limit: int) -> str:

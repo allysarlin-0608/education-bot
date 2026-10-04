@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import streamlit as st  # noqa: E402
 
 import fake_groq  # noqa: E402
-from coach import llm, routes, settings, ui  # noqa: E402
+from coach import clock, llm, routes  # noqa: E402
 
 STATE = Path(os.environ["E2E_STATE_DIR"])
 
@@ -34,7 +34,7 @@ def _clock():
         return {}
 
 
-_real_today = ui.today
+_real_today = clock.today
 
 
 def fake_today() -> date:
@@ -49,8 +49,8 @@ def fake_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-ui.today = fake_today
-settings.now_iso = fake_now_iso
+clock.today = fake_today            # the one clock (coach/clock.py): the whole app moves with it
+clock.now_iso = fake_now_iso
 _real_get_client = llm.get_client
 llm.get_client = lambda: fake_groq.FakeGroq() if st.session_state.get("api_key") else None
 llm._sleep = lambda s: time.sleep(min(float(s), 0.05))       # backoff runs, just fast

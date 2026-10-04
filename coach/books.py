@@ -9,6 +9,8 @@ import re
 import uuid
 from datetime import date, timedelta
 
+from coach import clock
+
 DAYS = 14
 
 REVIEW_LABEL = "Review / rest"
@@ -315,11 +317,8 @@ STATUSES = ("setup", "planning", "reading", "finished", "switched")
 
 
 def _local_today() -> date:
-    """The learner's date (COACH_TIMEZONE, as ui.TIMEZONE), not the server's."""
-    import os
-    from datetime import datetime
-    from zoneinfo import ZoneInfo
-    return datetime.now(ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))).date()
+    """The learner's date (coach/clock.py), not the server's."""
+    return clock.today()
 
 
 def _is_day(value) -> bool:

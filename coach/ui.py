@@ -5,13 +5,11 @@ import math
 import os
 import threading
 import time
-from datetime import datetime
 from urllib.parse import urlparse
-from zoneinfo import ZoneInfo
 
 import streamlit as st
 
-from coach import catalog, core, curriculum, settings, storage
+from coach import catalog, clock, core, curriculum, settings, storage
 
 logger = logging.getLogger("coach.ui")
 
@@ -30,7 +28,7 @@ def _paths_unreadable() -> bool:
 
 
 catalog.bind(_session_paths, _paths_unreadable)     # every page and callback sees this session's goals (coach/catalog.py)
-TIMEZONE = ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))
+TIMEZONE = clock.TIMEZONE        # the learner's timezone (coach/clock.py: the one clock)
 
 
 def get_setting(name: str) -> str:
@@ -271,7 +269,7 @@ def next_study_day(topic: str):
 
 
 def today():
-    return datetime.now(TIMEZONE).date()
+    return clock.today()
 
 
 def using_cloud() -> bool:
