@@ -213,8 +213,12 @@ def choose(p, box, text):
     keyboard user would), by tapping the list on a touch screen."""
     page = p.page
     if p.width < TOUCH_W:
-        box.locator("input").first.tap()
         opt = page.get_by_role("option", name=text, exact=True).first
+        for attempt in range(2):        # (ISS-055: in the test browser's touch emulation a list can close
+            box.locator("input").first.tap()       # again at once; a second tap opens it. Open on a real iPhone.)
+            page.wait_for_timeout(300)
+            if opt.is_visible():
+                break
         opt.wait_for(timeout=5000)
         opt.tap()
     else:

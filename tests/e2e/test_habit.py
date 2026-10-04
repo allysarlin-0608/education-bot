@@ -35,10 +35,10 @@ def person(app, pages, width=1180):
 
 
 def day(clock, d, hhmm="10:00"):
-    """Taipei local time hhmm on day d (the clock is set in UTC)."""
+    """Her local time hhmm (Taipei) on her day d: the test clock's date is
+    her date, its time UTC."""
     hh, mm = map(int, hhmm.split(":"))
-    utc = (hh - 8) % 24
-    clock(d if hh >= 8 else d - timedelta(days=1), f"{utc:02d}:{mm:02d}:00")
+    clock(d, f"{(hh - 8) % 24:02d}:{mm:02d}:00")
 
 
 def study(p, app):
@@ -88,6 +88,7 @@ def test_a_long_break_a_warm_welcome_and_a_gentle_day(public_app, pages, clock):
     flows.open_app(p, app)
     assert p.page.locator('[class*="st-key-step_"] button').count() == 1, "one lesson today"
     flows.pass_lesson(p)
+    flows.button(p, "See today's summary →")
     assert flows.wait_text(p.page, "Today's done")
 
 

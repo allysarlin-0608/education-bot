@@ -57,9 +57,12 @@ def install() -> None:
     real_now = clock.now
 
     def fake_now():
+        """The learner's local time on the clock's day: clock.json's date is
+        her date (as fake_today), its time is UTC (converted to hers)."""
         c = _clock()
         if c.get("date"):
-            return datetime.fromisoformat(fake_now_iso()).astimezone(clock.TIMEZONE)
+            local = datetime.fromisoformat(fake_now_iso()).astimezone(clock.TIMEZONE)
+            return datetime.combine(date.fromisoformat(c["date"]), local.timetz())
         return real_now()
     clock.today, clock.now_iso, clock.now = fake_today, fake_now_iso, fake_now
     llm.get_client = lambda: fake_groq.FakeGroq() if st.session_state.get("api_key") else None

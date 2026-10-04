@@ -160,3 +160,6 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 - **ISS-052:** a code reload mid-run could turn a handled database error into a traceback. `coach/errors.py`. Test: `test_reload_errors.py`.
 - **ISS-053:** local file store: two saves at once could lose a settings row; a damaged settings or table file was taken for empty and overwritten. Locked and refused. Tests: `test_storage.py`.
 - **ISS-054:** a malformed secrets file was silent; sign-in reads and the password gate swallowed every exception. Logged / narrowed. Tests: `test_appconfig.py`.
+
+### ISS-055 — open: a quiz answer list closing at once (test browser, phone width)
+- In one long phone-width test (a learner back after a break, on a light day), the third "match" list in a quiz opened and closed again within half a second; the box lost focus, with no rerun or scroll. A second tap opens it. Seen only in the test browser's touch emulation; every other phone-width quiz test passes. The test helper taps again once (tests/e2e/flows.py). **To check on a real iPhone/iPad in Safari** before inviting users.

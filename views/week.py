@@ -35,10 +35,11 @@ def figure(label, value, was=None, unit=""):
 
 span = f"{w['monday']:%B} {w['monday'].day} – {w['end']:%B} {w['end'].day}"
 st.html(f'<p class="wk-span">{escape(span)}{"" if w["over"] or choice == "Last week" else " · so far"}</p>')
+finished = choice == "Last week"          # (a week still going isn't set against a whole one: never a "−18")
 st.html('<div class="figures wk-figures">'
-        + figure("Days you studied", w["days"], w["days_before"])
-        + figure("Lessons passed", w["lessons"], w["lessons_before"])
-        + figure("Quiz average", w["quiz_avg"], w["quiz_avg_before"], "%")
+        + figure("Days you studied", w["days"], w["days_before"] if finished else None)
+        + figure("Lessons passed", w["lessons"], w["lessons_before"] if finished else None)
+        + figure("Quiz average", w["quiz_avg"], w["quiz_avg_before"] if finished else None, "%")
         + figure("Current streak", w["streak"]) + "</div>")
 
 with st.container(key="wk_body"):
