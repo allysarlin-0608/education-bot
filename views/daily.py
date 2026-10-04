@@ -3,8 +3,8 @@ from html import escape
 
 import streamlit as st
 
-from coach import (auth, catalog, core, curriculum, goalmaker, lesson_view, llm, paths, place, progress_bar, quiz,
-                   quizgen, review, settings, steps, tokens, ui, visuals)
+from coach import (auth, catalog, clock, core, curriculum, goalmaker, habit, lesson_view, llm, paths, place,
+                   progress_bar, quiz, quizgen, review, settings, steps, streaks, tokens, ui, visuals)
 
 log = st.session_state.coach_log
 config = ui.config()        # her subjects, daily pace and starting levels
@@ -220,13 +220,73 @@ with st.container(key="today_links", horizontal=True):
     if st.button("Course map", type="tertiary", key="today_course"):   # the whole path
         ui.open_course(topic)
 # review: noticed when something is due, never in the way of the day's lesson
-due_now = review.due(log, today)
+due_now = ui.review_due(log)
 if due_now:
     with st.container(key="review_entry"):
         minutes = max(1, round(len(due_now) * 0.4))
         if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due · about {minutes} min",
                      type="tertiary", key="today_review"):
             st.switch_page("views/review.py")
+# ============================================================
+# COMING BACK (coach/habit.py): a welcome after a break, a light day, her
+# reminder, a milestone just reached, last week in review. Calm, and never
+# more than one or two of them at once.
+# ============================================================
+habits = ui.prefs()
+pace = settings.units(config)
+light = habit.light_today(habits, today)
+studied_today = today in core.streak_dates(log)
+day_done = bool((core.find_entry(log, today, topic) or {}).get("completed"))
+
+
+def set_light(on: bool) -> None:
+    """A light day (one lesson), or back to her pace; today's day follows at once."""
+    if ui.update_prefs(light_day=today.isoformat() if on else ""):
+        ui.refit_today(habit.LIGHT_LESSONS if on else pace)
+
+
+if habit.returning(log, today) and not studied_today:
+    r = habit.recap(log, today)
+    where = (f"Last time you were in {r['name']}: Lesson {r['n']}, “{r['title']}”. " if r else "")
+    with st.container(key="welcome_back"):
+        st.html(f'<p class="hb-eyebrow">Welcome back</p><p class="hb-text">{escape(where)}'
+                "Today can be gentle: one lesson and a few review cards, then see how you feel.</p>")
+        if not light and pace > habit.LIGHT_LESSONS:
+            st.button("Start with one lesson", key="wb_light", on_click=set_light, args=(True,))
+elif not day_done and pace > habit.LIGHT_LESSONS:
+    with st.container(key="light_day", horizontal=True, vertical_alignment="center"):
+        if light:
+            st.html('<p class="hb-text">A light day: one lesson today.</p>')
+            st.button(f"Back to {pace} lessons", key="light_off", type="tertiary", on_click=set_light, args=(False,))
+        else:
+            st.button("Busy today? Make it a light day", key="light_on", type="tertiary",
+                      on_click=set_light, args=(True,))
+
+# her reminder, shown here once its time has come and nothing is studied yet
+if habit.reminder_due(habits, log, clock.now()) and ui.update_prefs(reminded_on=today.isoformat()):
+    ui.record("reminder_shown")
+    habits = ui.prefs()
+if habits.get("reminded_on") == today.isoformat() and not studied_today:
+    st.html(f'<p class="hb-reminder">It\'s past your {escape(habits["reminder_time"])} learning time. '
+            "One short lesson is plenty today.</p>")
+
+# a milestone she has just reached (what she had earned before is not news)
+if not habits.get("seen_init"):
+    ui.update_prefs(seen=[m["key"] for m in habit.milestones(log, today)], seen_init=True)
+elif (fresh := habit.new_milestones(log, today, habits["seen"])):
+    with st.container(key="milestone", horizontal=True, vertical_alignment="center"):
+        more = f" (and {len(fresh) - 1} more on Progress)" if len(fresh) > 1 else ""
+        st.html(f'<p class="hb-text"><span class="hb-eyebrow">Milestone</span>{escape(fresh[-1]["text"])}{escape(more)}</p>')
+        st.button("Thanks", key="ms_seen", type="tertiary",
+                  on_click=lambda: ui.update_prefs(seen=habits["seen"] + [m["key"] for m in fresh]))
+
+# last week, in review: pointed to once a new week has begun
+last_monday = habit.week_of(today) - timedelta(days=7)
+if habits.get("week_seen") != habit.week_key(last_monday) and habit.week(log, last_monday, today)["lessons"]:
+    if st.button("Last week in review", type="tertiary", key="today_week"):
+        st.session_state.wk_which = "Last week"
+        st.switch_page("views/week.py")
+
 # her own goal, before its first lesson: the path made for her, and what today holds
 goal = catalog.path(topic)
 if catalog.is_goal(topic) and goal is None:       # her goal couldn't be read just now (never a lesson in its place)
@@ -246,9 +306,9 @@ if st.session_state.get("coach_toast"):           # set just before a rerun, sho
 entry = core.find_entry(log, today, topic)      # (re-read as stored at the start of this run: gnosis.py)
 # a lesson carried over is written back to the day it began (work()): that
 # day is refreshed too, or a save here would put an old copy of it back (ISS-010)
-for began in sorted({s["from"] for s in curriculum.day_plan(log, topic, entry, settings.units(config)) if s.get("from")}):
+for began in sorted({s["from"] for s in curriculum.day_plan(log, topic, entry, ui.units_today()) if s.get("from")}):
     ui.refresh_entry(log, date.fromisoformat(began), topic)
-plan = curriculum.day_plan(log, topic, entry, settings.units(config))
+plan = curriculum.day_plan(log, topic, entry, ui.units_today())
 
 store = st.session_state.coach_store
 if "lessons" in getattr(store, "missing_columns", ()):
@@ -332,7 +392,8 @@ if i is None:
     with st.container(key="day_done"):
         st.html(f'<div class="done"><p class="done-eyebrow">Complete</p><h3>Today\'s done</h3>'
                 f'<p class="done-sub">All {len(plan)} {"lesson" if len(plan) == 1 else "lessons"} passed. '
-                f'Current streak: {streak} {"day" if streak == 1 else "days"}.</p>'
+                f'Current streak: {streak} {"day" if streak == 1 else "days"}. '
+                f'{escape(streaks.explain(streaks.walk(core.streak_dates(log), today)))}</p>'
                 f'<ol class="done-list">{"".join(rows)}</ol>'
                 + (f'<p class="done-next">{escape(ahead)}</p>' if ahead else "") + '</div>')
     st.stop()
@@ -452,6 +513,10 @@ def conclude(i):
         st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
     if save(entry, owner) and quiz.passed(score):
         ui.record("lesson_passed")
+        p = ui.prefs()                   # a lesson after today's reminder: did the reminder help? (coach/metrics.py)
+        if p.get("reminded_on") == today.isoformat() and p.get("reminder_hit") != today.isoformat():
+            if ui.update_prefs(reminder_hit=today.isoformat()):
+                ui.record("reminded_session")
     st.rerun()
 
 

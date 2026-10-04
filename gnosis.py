@@ -43,14 +43,16 @@ world = st.Page("views/world.py", title="Subject", url_path="subject")
 course_map = st.Page("views/course.py", title="Course", url_path="course")
 # a new goal of her own (Settings → Your goals)
 new_goal = st.Page("views/goal.py", title="New goal", url_path="goal")
+# her week in review (Progress, and Today when a week has just ended)
+week_page = st.Page("views/week.py", title="Your week", url_path="week")
 # Streamlit does the routing; the pages are shown by the connected control
 # at the top of every page (coach/topnav.py), not as a list in the sidebar
-page = st.navigation(pages + [world, course_map, new_goal], position="hidden")
+page = st.navigation(pages + [world, course_map, new_goal, week_page], position="hidden")
 if (entering := st.session_state.pop("enter_world", None)):     # setup just finished: into the first day's subject
     st.switch_page(world, query_params={"subject": entering})
 # just signed in after a refresh or a link: back to the page the address named, with its subject
 asked = st.session_state.pop("coach_asked_path", None)
-target = next((p for p in pages + [world, course_map, new_goal] if asked and p.url_path == asked), None)
+target = next((p for p in pages + [world, course_map, new_goal, week_page] if asked and p.url_path == asked), None)
 if target is not None and target.url_path != page.url_path:
     st.switch_page(target, query_params=st.query_params.to_dict())
 if st.session_state.get("lq_page") != page.url_path:

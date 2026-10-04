@@ -54,7 +54,14 @@ def install() -> None:
         c = _clock()
         return date.fromisoformat(c["date"]) if c.get("date") else real_today()
     fake_today.is_fake = True
-    clock.today, clock.now_iso = fake_today, fake_now_iso
+    real_now = clock.now
+
+    def fake_now():
+        c = _clock()
+        if c.get("date"):
+            return datetime.fromisoformat(fake_now_iso()).astimezone(clock.TIMEZONE)
+        return real_now()
+    clock.today, clock.now_iso, clock.now = fake_today, fake_now_iso, fake_now
     llm.get_client = lambda: fake_groq.FakeGroq() if st.session_state.get("api_key") else None
     llm._sleep = lambda s: time.sleep(min(float(s), 0.05))       # backoff runs, just fast
 

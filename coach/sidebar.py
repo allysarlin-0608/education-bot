@@ -28,7 +28,7 @@ def _reading(log: dict) -> str:
 def render(log: dict) -> None:
     today, config = ui.today(), ui.config()
     topic = ui.topic_for(today)
-    plan = curriculum.day_plan(log, topic, core.find_entry(log, today, topic), settings.units(config))
+    plan = curriculum.day_plan(log, topic, core.find_entry(log, today, topic), ui.units_today())
     done = sum(1 for s in plan if s.get("completed"))
     unit = curriculum.unit_progress(log, topic)["unit"] if curriculum.has_syllabus(topic) else None
     progress_bar.render_vertical(

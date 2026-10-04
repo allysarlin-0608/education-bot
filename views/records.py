@@ -13,7 +13,8 @@ from html import escape
 
 import streamlit as st
 
-from coach import catalog, core, curriculum, history, lesson_view, progress_bar, review, rolling, settings, ui, visuals
+from coach import (catalog, core, curriculum, habit, history, lesson_view, progress_bar, review, rolling, settings,
+                   streaks, ui, visuals)
 
 log = st.session_state.coach_log          # (re-read on arriving here, before the bar: gnosis.py)
 today = ui.today()
@@ -113,9 +114,10 @@ def show_entry(e, where):
 # OVERVIEW: the whole picture in one row
 # ============================================================
 lessons_passed = core.lessons_passed(log)
+streak = streaks.walk(core.streak_dates(log), today)       # (the same walk core.current_streak takes)
 figures = {
     "Current streak": days(core.current_streak(log, today)),
-    "Longest streak": days(core.longest_streak(log)),
+    "Longest streak": days(core.longest_streak(log, today)),
     "Days completed": days(len(core.completed_dates(log))),
     "Days studied": days(len({e['date'] for e in log['entries']})),
     "Lessons passed": f"{lessons_passed:,}",
@@ -126,9 +128,21 @@ st.html('<div class="figures">' + "".join(          # numbers roll when they cha
     f'<div class="figure-value">{rolling.html(value, before.get(label.replace(" ", "_")))}</div></div>'
     for label, value in figures.items()) + "</div>")
 
+# how her streak is kept: rest days, in one calm line, and her week
+with st.container(key="prog_habit", horizontal=True, vertical_alignment="center"):
+    st.html(f'<p class="prog-rest">{escape(streaks.explain(streak))}</p>')
+    if st.button("Your week", type="tertiary", key="prog_week"):
+        st.switch_page("views/week.py")
+
+# the milestones she has reached (coach/habit.py), newest kinds last
+reached = habit.milestones(log, today)
+if reached:
+    with st.expander(f"Milestones · {len(reached)}"):
+        st.html('<ul class="ms-list">' + "".join(f"<li>{escape(m['text'])}</li>" for m in reversed(reached)) + "</ul>")
+
 # her review collection (coach/review.py): one quiet way in
 if (deck := review.cards(log)):
-    waiting = len(review.due(log, today))
+    waiting = len(ui.review_due(log))
     with st.container(key="prog_review"):
         if st.button(f"Review collection · {len(deck)} {'card' if len(deck) == 1 else 'cards'}"
                      + (f" · {waiting} due today" if waiting else ""), type="tertiary", key="prog_review_open"):
@@ -288,6 +302,7 @@ with month_col:
                 for d in week:
                     name = (f"cal_{d['date'].isoformat()}_{d['status']}_a{history.amount(d)}"
                             + ("" if d["in_month"] else "_out") + ("_today" if d["date"] == today else "")
+                            + ("_rest" if d["date"] in streak["rest_days"] else "")
                             + ("_sel" if d["date"] == picked else ""))
                     # (no hover tip: Streamlit draws a second button for it; the day
                     # card says it all once the day is picked)
@@ -297,6 +312,7 @@ with month_col:
                         go(ym, d["date"], way=toward(ym))
     st.html('<div class="cal-key"><span><i class="k-done"></i>Completed</span>'
             '<span><i class="k-part"></i>Partly done</span>'
+            + ('<span><i class="k-rest"></i>Rest day</span>' if streak["rest_days"] else "") +
             '<span>The line under a day grows with the lessons passed</span></div>')
 
 with panel_col:

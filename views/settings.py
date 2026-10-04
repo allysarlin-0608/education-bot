@@ -3,12 +3,14 @@ starts. A change is saved as she makes it (by her user_id) and the other
 pages use it straight away. Levels aren't edited by hand: the placement
 check sets them. Nothing here touches her learning history."""
 import json
+from datetime import time as dtime
 from datetime import timedelta
 from html import escape
 
 import streamlit as st
 
 from coach import auth, catalog, choices, curriculum, metrics, paths, settings, stage, storage, ui, visuals
+from coach import prefs as prefs_
 
 config = ui.config()
 
@@ -187,6 +189,30 @@ if builtin:
                 st.html(f'<p class="ob-note">{escape(catalog.name(t))} now starts at {escape(placed[1])} '
                         f'({placed[2]} of 5 right).</p>')
 
+# ---------- Reminders: a gentle note at her time, if she hasn't studied yet ----------
+def set_reminder() -> None:
+    on = bool(st.session_state.set_rem_on)
+    at = st.session_state.get("set_rem_time")
+    ui.update_prefs(reminder_on=on, reminder_time=at.strftime("%H:%M") if at else prefs_.DEFAULT_TIME)
+
+
+with st.container(key="set_sec_reminders"):
+    st.markdown("#### Reminders")
+    habits = ui.prefs()
+    with st.container(key="ob_toggle_rem"):
+        st.toggle("Remind me to learn", value=habits["reminder_on"], key="set_rem_on", on_change=set_reminder)
+    if habits["reminder_on"]:
+        hh, mm = map(int, habits["reminder_time"].split(":"))
+        st.time_input("At", value=dtime(hh, mm), step=timedelta(minutes=30), key="set_rem_time",
+                      on_change=set_reminder)
+    st.html('<p class="ob-note">'
+            + (f"If you haven't studied by {escape(habits['reminder_time'])}, Today shows a short, friendly note. "
+               "Never more than once a day." if habits["reminder_on"]
+               else "Off. Turn it on for a short, friendly note at a time you choose, once a day at most.")
+            + "</p>")
+    if st.session_state.get("coach_prefs_error"):
+        st.html(f'<p class="ob-note">{escape(st.session_state.coach_prefs_error)}</p>')
+
 # ---------- Reading ----------
 with st.container(key="set_sec_reading"):
     st.markdown("#### Reading")
@@ -264,7 +290,10 @@ if auth.is_admin():
                      metrics.share(m["came_back_next_day"], m["eligible_next_day"])),
                     ("Still active after a week", str(m["active_after_a_week"]),
                      metrics.share(m["active_after_a_week"], m["eligible_week"])),
-                    ("Lessons per learner per week", str(m["lessons_per_learner_week"]), "")]
+                    ("Lessons per learner per week", str(m["lessons_per_learner_week"]), ""),
+                    ("Reminders shown", str(m.get("reminders_shown", 0)), ""),
+                    ("…followed by a lesson that day", str(m.get("reminded_sessions", 0)),
+                     metrics.share(m.get("reminded_sessions", 0), m.get("reminders_shown", 0)))]
             st.html('<dl class="ins-list">' + "".join(
                 f'<div><dt>{escape(a)}</dt><dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c in rows)
                 + "</dl>")

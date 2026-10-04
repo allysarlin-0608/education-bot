@@ -945,6 +945,35 @@ PROGRESS = """
 .cal-key i { display: inline-block; width: 16px; height: 3px; border-radius: 0; }
 .cal-key .k-done { background: var(--label); }
 .cal-key .k-part { background: linear-gradient(90deg, var(--label-2) 50%, var(--track) 50%); }
+/* a rest day (coach/streaks.py): a small open ring where a day's line would be */
+[class*="st-key-cal_20"][class*="_rest"] .stButton button::before {
+  width: 7px; height: 7px; bottom: 10px; left: calc(50% - 3.5px); border-radius: 50%; background: transparent;
+  outline: 1.5px solid var(--label-3); outline-offset: -1.5px; }
+.cal-key .k-rest { width: 7px; height: 7px; border-radius: 50%; outline: 1.5px solid var(--label-3); outline-offset: -1.5px; }
+/* ---------- coming back (views/daily.py): quiet notes, never banners ---------- */
+.st-key-welcome_back { padding: var(--space-4) var(--space-5); border-radius: var(--radius-large); background: var(--surface); gap: var(--space-3) !important; }
+.hb-eyebrow { display: block; margin: 0 0 4px; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
+.hb-text { margin: 0; font-size: 0.9375rem; line-height: 1.55; color: var(--label); }
+.hb-reminder { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--label-2); }
+.st-key-light_day, .st-key-milestone { gap: var(--space-3) !important; flex-wrap: wrap; }
+.st-key-milestone { padding: var(--space-3) var(--space-4); border-radius: var(--radius-large); background: var(--surface); justify-content: space-between; }
+
+/* ---------- her week (views/week.py) ---------- */
+.wk-span { margin: 0 0 var(--space-4); font-size: 0.875rem; color: var(--label-2); }
+.wk-figures .figure small { display: block; margin-top: 2px; font-size: 0.75rem; color: var(--label-3); }
+.st-key-wk_body { gap: var(--space-3) !important; margin-top: var(--space-5); max-width: 44rem; }
+.st-key-wk_body h4 { margin-top: var(--space-5) !important; }
+.wk-note { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--label-2); }
+.wk-idea { margin: 0 0 var(--space-2); font-size: 1rem; line-height: 1.55; color: var(--label); }
+.wk-subject { margin: 0 0 var(--space-3); }
+.wk-name { margin: 0 0 4px; font-size: 0.8125rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--label-3); }
+.wk-subject ul, .wk-review { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; font-size: 0.9375rem; line-height: 1.45; color: var(--label); }
+.wk-review li span { display: block; }
+.wk-review li small { font-size: 0.8125rem; color: var(--label-2); }
+.cm-journey { margin: 0 0 var(--space-4); font-size: 0.875rem; line-height: 1.55; color: var(--label-2); max-width: 44rem; }
+.ms-list { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 0.9375rem; line-height: 1.45; color: var(--label); }
+.prog-rest { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--label-2); }
+.st-key-prog_habit { justify-content: space-between; gap: var(--space-4) !important; flex-wrap: wrap; }
 
 /* ---------- the day picked ---------- */
 [class*="st-key-prog_day_"] {

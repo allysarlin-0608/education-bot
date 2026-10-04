@@ -6,11 +6,12 @@ gathered at the end. A lesson she has written (passed or not) opens to be
 read again with its quiz and her notes; the lesson she is on goes straight
 to Today. Lessons not reached show their titles only: they are written
 when she gets to them, so the map never costs a model call."""
+from datetime import date
 from html import escape
 
 import streamlit as st
 
-from coach import catalog, core, course, curriculum, lesson_view, quiz, settings, ui, visuals
+from coach import catalog, core, course, curriculum, habit, lesson_view, quiz, settings, ui, visuals
 
 log = st.session_state.coach_log
 config = ui.config()
@@ -28,7 +29,7 @@ if asked != topic:
     st.query_params["subject"] = topic
 
 is_today = ui.topic_for(today) == topic
-plan = curriculum.day_plan(log, topic, core.find_entry(log, today, topic), settings.units(config)) if is_today else []
+plan = curriculum.day_plan(log, topic, core.find_entry(log, today, topic), ui.units_today()) if is_today else []
 m = course.build(log, topic, plan)
 level = core.lesson_level(min(m["done"] + 1, curriculum.TOTAL), settings.start_level(config, topic))
 st.html('<div id="course-page"></div>')
@@ -99,6 +100,16 @@ if goal:                    # her goal: what the path is for
 st.html(f'<div class="cm-head"><div class="rv-line"><span style="width:{share * 100:.1f}%"></span></div>'
         f'<p>{m["done"]} of {m["written"]} lessons passed · {level}'
         + (" · more are added as you go" if m["written"] < m["total"] else "") + "</p></div>")
+
+# how far she has come on it: where she started, where she is now (coach/habit.py)
+j = habit.journey(log, topic, settings.start_level(config, topic))
+if j["started"]:
+    began = date.fromisoformat(j["started"])
+    then_now = (f'Started {began:%B} {began.day}, {began.year} at {j["start_level"]} · now {j["done"]} '
+                f'{"lesson" if j["done"] == 1 else "lessons"} passed, in “{j["unit"]}”, at {j["level"]}')
+    trend = (f' · quiz average {j["first_avg"]}% in your first lessons, {j["recent_avg"]}% in your latest'
+             if j["first_avg"] is not None else "")
+    st.html(f'<p class="cm-journey">{escape(then_now + trend)}</p>')
 
 with st.container(key="cm_next"):
     nxt = m["next"]

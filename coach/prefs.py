@@ -14,7 +14,7 @@ SEEN_LIMIT = 200          # milestones remembered (the oldest go first)
 
 def blank() -> dict:
     return {"reminder_on": False, "reminder_time": DEFAULT_TIME, "reminder_email": False,
-            "light_day": "", "seen": [], "week_seen": "", "reminded_on": ""}
+            "light_day": "", "seen": [], "seen_init": False, "week_seen": "", "reminded_on": "", "reminder_hit": ""}
 
 
 def normalize(row) -> dict:
@@ -26,7 +26,8 @@ def normalize(row) -> dict:
     if isinstance(row.get("reminder_time"), str) and TIME.match(row["reminder_time"]):
         p["reminder_time"] = row["reminder_time"]
     p["reminder_email"] = row.get("reminder_email") is True
-    for key in ("light_day", "week_seen", "reminded_on"):
+    p["seen_init"] = row.get("seen_init") is True
+    for key in ("light_day", "week_seen", "reminded_on", "reminder_hit"):
         if isinstance(row.get(key), str) and len(row[key]) <= 12:
             p[key] = row[key]
     if isinstance(row.get("seen"), list):

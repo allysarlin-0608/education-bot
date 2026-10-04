@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 import streamlit as st
 
-from coach import appconfig, catalog, clock, core, curriculum, settings, storage
+from coach import appconfig, catalog, clock, core, curriculum, habit, prefs as prefs_, settings, storage
 
 logger = logging.getLogger("coach.ui")
 
@@ -106,7 +106,7 @@ def require_password():
 STATE_VERSION = 4
 
 
-CACHED = ("coach_log", "coach_chats", "coach_settings")
+CACHED = ("coach_log", "coach_chats", "coach_settings", "coach_prefs")
 
 
 def make_store():
@@ -203,6 +203,63 @@ def save_settings(new: dict) -> bool:
         return False
     st.session_state.coach_settings = new
     return True
+
+
+# ------------------------------------------------------------ her habits
+PREFS_MISSING = ("Reminders and light days need one more table in the database "
+                 "(supabase/goals.sql). Everything else works as usual.")
+
+
+def load_prefs() -> None:
+    """Her habit preferences as stored now (coach/prefs.py). Where they can't
+    be read the defaults are used (reminders off), and saving says why."""
+    store = st.session_state.coach_store
+    try:
+        row = store.load_prefs()
+        st.session_state.coach_prefs_error = None
+    except storage.StorageError as e:
+        logger.warning("couldn't read the habit preferences (%s); using the defaults", e)
+        st.session_state.coach_prefs_error = PREFS_MISSING if e.status == 404 else str(e)
+        row = (st.session_state.get("coach_prefs") or None)
+    st.session_state.coach_prefs = prefs_.normalize(row)
+
+
+def prefs() -> dict:
+    if "coach_prefs" not in st.session_state:
+        load_prefs()
+    return st.session_state.coach_prefs
+
+
+def update_prefs(**fields) -> bool:
+    """Change some preferences, applied onto the row as stored now (another
+    tab or device may have changed others). False, and the reason shown
+    after the rerun, if it couldn't be saved."""
+    load_prefs()
+    if st.session_state.get("coach_prefs_error") == PREFS_MISSING:
+        st.session_state.coach_save_error = PREFS_MISSING
+        return False
+    new = prefs_.normalize(dict(prefs(), **fields))
+    try:
+        st.session_state.coach_store.save_prefs(new)
+    except storage.StorageError as e:
+        st.session_state.coach_save_error = f"That wasn't saved ({e}). Try again in a moment."
+        return False
+    st.session_state.coach_prefs = new
+    return True
+
+
+def units_today() -> int:
+    """Lessons in today's plan: her pace, or one on a light day. Every page
+    that shows today's plan asks here, so they all agree."""
+    return habit.lessons_today(prefs(), today(), settings.units(config()))
+
+
+def review_due(log) -> list:
+    """Today's review cards: a short catch-up on a light or returning day
+    (coach/habit.py). Every page that counts them asks here."""
+    from coach import review
+    day = today()
+    return review.due(log, day, limit=habit.review_limit(log, prefs(), day))
 
 
 def refit_today(count: int) -> None:

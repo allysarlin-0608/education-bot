@@ -11,7 +11,7 @@ from datetime import date
 
 import streamlit as st
 
-from coach import auth, review, search, settings, ui
+from coach import auth, search, settings, ui
 
 
 ICONS = {"Review": ":material/replay:", "Reading": ":material/menu_book:", "Progress": ":material/insights:",
@@ -26,7 +26,7 @@ def render(pages: list, log: dict) -> None:
                 # Settings become icons (style.py), like Search beside them
                 st.page_link(p, label=p.title, icon=ICONS.get(p.title))
         # cards waiting: a quiet dot on Review (place.py puts it on the link)
-        waiting = len(review.due(log, ui.today()))
+        waiting = len(ui.review_due(log))
         st.html(f'<div id="review-due" hidden data-n="{waiting}"></div>')
         if st.button("Search", icon=":material/search:", key="nav_search"):
             _search(log)

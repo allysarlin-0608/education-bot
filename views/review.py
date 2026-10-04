@@ -128,7 +128,7 @@ def pace(left):
 def today_view():
     current = st.session_state.get("rv_current")
     found = review.find(log, current["id"]) if current else None
-    due = review.due(log, today)
+    due = ui.review_due(log)
     if found is not None:
         card = found[2]
         pace(len(due))

@@ -44,6 +44,8 @@ class FakePostgrest:
             return self.settings_request(method, params, json)
         if url == f"{URL}/rest/v1/{storage.PATHS_TABLE}":
             return self.paths_request(method, params, json)
+        if url == f"{URL}/rest/v1/{storage.PREFS_TABLE}":
+            return self.prefs_request(method, params, json)
         assert url == f"{URL}/rest/v1/{storage.TABLE}"
         if method == "GET":
             if params and params.get("select") in self.missing:
@@ -71,6 +73,14 @@ class FakePostgrest:
                 self.rows.clear()
             return FakeResponse(204)
         raise AssertionError(method)
+
+    def prefs_request(self, method, params, json):
+        if self.paths is None:                 # (made by the same goals.sql)
+            return FakeResponse(404, {"code": "42P01", "message": "relation \"public.learner_prefs\" does not exist"})
+        if method == "GET":
+            return FakeResponse(200, [{"data": self.prefs}] if getattr(self, "prefs", None) else [])
+        self.prefs = json[0]["data"]
+        return FakeResponse(201)
 
     def paths_request(self, method, params, json):
         if self.paths is None:
