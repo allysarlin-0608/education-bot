@@ -39,8 +39,10 @@ the model.
   (`curriculum._load`), its name is the path's title; it joins her turns in
   `user_settings.subjects`. Its outline is fixed once its first lesson is
   written (lesson numbers are positions); before that she adjusts it freely.
-- **usage_events** (`goals.sql`): per person, per day, a count of four events
-  (visit, setup_done, goal_created, lesson_passed), added only through
+- **learner_prefs** (`goals.sql`): her habit preferences (Phase 2).
+- **usage_events** (`goals.sql`): per person, per day, a count of six events
+  (visit, setup_done, goal_created, lesson_passed, reminder_shown,
+  reminded_session), added only through
   `add_usage_event()`; admins read totals through `gnosis_metrics()`
   (Settings → Insights). No content is ever kept for these.
 - **reading_books**, **ai_usage**, **allowed_users** (invites), **app_admins**.
@@ -104,6 +106,27 @@ the sidebar all use them.
   prompt is unchanged (`prompts/learner.md` + `core.md`).
 - **Plans** (`plans.py`): what each plan would include; not enforced
   (`ENFORCED = False`), no page mentions plans.
+
+## Coming back (Phase 2)
+
+- **Streaks with rest days** (`streaks.py`): every 7 study days earn a rest
+  day (2 kept at most); a missed day uses one by itself; a longer break ends
+  the streak and keeps the rest days. Worked out from the record every
+  time (never stored), so `core.current_streak`, Progress, Today's done
+  card, the week and the sidebar always agree.
+- **Habit rules** (`habit.py`, pure): a light day (one lesson), the welcome
+  after 3+ days away with a recap, a short review catch-up on light or
+  returning days (`ui.review_due`: every page counts the same cards), the
+  reminder ("due" after her time on a day not yet studied, once a day),
+  the week Monday to Sunday against the week before, milestones, and each
+  subject's start against now. No AI call.
+- **Preferences** (`prefs.py`, table `learner_prefs`, one row each): the
+  reminder, the light day, the milestones and week already seen. Saved
+  whole onto the row as stored now (`ui.update_prefs`); where the table
+  isn't there yet the defaults apply and Settings says why.
+- **Today's lesson count** comes from one place (`ui.units_today`: her pace,
+  or one on a light day), so Today, the sidebar and the course map agree.
+- Email reminders are designed, not switched on (`docs/EMAIL_REMINDERS.md`).
 
 ## Rules the code keeps (and tests that hold them)
 
@@ -171,6 +194,8 @@ All in `coach/style.py`, tokens in `:root`; the existing typefaces are kept.
   inventory check. Runs before every push (`.githooks/pre-push`; enable with
   `git config core.hooksPath .githooks`) and on GitHub
   (`.github/workflows/check.yml`).
+- Coming back: `tests/test_habit.py` (rules over simulated days and weeks),
+  `tests/test_habit_pages.py` (every new page and state), `tests/e2e/test_habit.py`.
 - Goals: `tests/test_goals.py` (paths, catalog, turns, the prompt, the AI
   call rules, the numbers), `tests/test_goal_pages.py` (every goal page and
   flow, no browser), `tests/e2e/test_goals.py` (in a browser).

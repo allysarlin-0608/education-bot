@@ -203,6 +203,46 @@ def test_goal_screens(public_app, pages, width, scheme):
     assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
 
 
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+@pytest.mark.parametrize("width", list(SIZES))
+def test_habit_screens(public_app, pages, width, scheme):
+    """Coming back: a week of lessons, the rest day covering a missed day,
+    the welcome after a break with its light day, the reminder note, the
+    week in review, reminders in Settings, the course map's journey."""
+    from datetime import date
+    app = public_app
+    app.set_llm()
+    problems = {}
+    tag = f"{width}_{scheme}"
+    mon = date(2026, 11, 2)
+    app.set_clock(mon, "02:00:00")
+    p = pages(width=width, height=SIZES[width], scheme=scheme)
+    email = f"hscr{next(_n)}-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=email)
+    flows.onboard(p, subjects=("Philosophy", "Astronomy"), pace="Light")
+    entries = seed_history.build(mon + timedelta(days=8), days=8, topics=("philosophy", "cosmos"), gaps=(), partial=())
+    app.seed_entries(email, entries)
+    app.set_clock(mon + timedelta(days=9), "02:00:00")          # one day missed: a rest day covers it
+    flows.open_app(p, app, "/records")
+    shot(p, f"40_progress_rest_{tag}", problems)
+    flows.open_app(p, app, "/week")
+    shot(p, f"41_week_{tag}", problems)
+    flows.open_app(p, app, "/settings")
+    p.page.get_by_text("Remind me to learn").click()
+    flows.idle(p.page)
+    p.page.locator(".st-key-set_sec_reminders").screenshot(path=str(SHOTS / f"42_reminders_{tag}.png"))
+    app.set_clock(mon + timedelta(days=9), "11:30:00")           # 19:30 in Taipei: past her time
+    flows.open_app(p, app)
+    shot(p, f"43_today_reminder_{tag}", problems)
+    app.set_clock(mon + timedelta(days=20), "02:00:00")          # back after a long break
+    flows.open_app(p, app)
+    shot(p, f"44_welcome_back_{tag}", problems)
+    flows.open_app(p, app, "/course?subject=philosophy")
+    shot(p, f"45_course_journey_{tag}", problems)
+    (SHOTS / f"problems_habit_{tag}.json").write_text(json.dumps(problems, indent=1))
+    assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
+
+
 @pytest.fixture(autouse=True)
 def _real_clock_after(public_app):
     yield

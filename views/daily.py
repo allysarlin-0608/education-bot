@@ -5,6 +5,7 @@ import streamlit as st
 
 from coach import (auth, catalog, clock, core, curriculum, goalmaker, habit, lesson_view, llm, paths, place,
                    progress_bar, quiz, quizgen, review, settings, steps, streaks, tokens, ui, visuals)
+from coach import prefs as prefs_
 
 log = st.session_state.coach_log
 config = ui.config()        # her subjects, daily pace and starting levels
@@ -270,6 +271,12 @@ if habits.get("reminded_on") == today.isoformat() and not studied_today:
     st.html(f'<p class="hb-reminder">It\'s past your {escape(habits["reminder_time"])} learning time. '
             "One short lesson is plenty today.</p>")
 
+def seen_now(keys: list) -> None:
+    """Milestones shown: never again (added to what is stored now)."""
+    ui.load_prefs()
+    ui.update_prefs(seen=prefs_.mark_seen(ui.prefs(), keys)["seen"])
+
+
 # a milestone she has just reached (what she had earned before is not news)
 if not habits.get("seen_init"):
     ui.update_prefs(seen=[m["key"] for m in habit.milestones(log, today)], seen_init=True)
@@ -277,8 +284,7 @@ elif (fresh := habit.new_milestones(log, today, habits["seen"])):
     with st.container(key="milestone", horizontal=True, vertical_alignment="center"):
         more = f" (and {len(fresh) - 1} more on Progress)" if len(fresh) > 1 else ""
         st.html(f'<p class="hb-text"><span class="hb-eyebrow">Milestone</span>{escape(fresh[-1]["text"])}{escape(more)}</p>')
-        st.button("Thanks", key="ms_seen", type="tertiary",
-                  on_click=lambda: ui.update_prefs(seen=habits["seen"] + [m["key"] for m in fresh]))
+        st.button("Thanks", key="ms_seen", type="tertiary", on_click=seen_now, args=([m["key"] for m in fresh],))
 
 # last week, in review: pointed to once a new week has begun
 last_monday = habit.week_of(today) - timedelta(days=7)
