@@ -6,7 +6,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import books, core, curriculum, progress_bar, settings, shelf, steps, ui
+from coach import books, catalog, core, curriculum, progress_bar, settings, shelf, steps, ui
 
 
 def _reading(log: dict) -> str:
@@ -33,6 +33,6 @@ def render(log: dict) -> None:
     unit = curriculum.unit_progress(log, topic)["unit"] if curriculum.has_syllabus(topic) else None
     progress_bar.render_vertical(
         "sidebar_today", f"{core.weekday_name(today)}, {today:%B} {today.day}",
-        core.TOPICS[topic], done, len(plan), where=st.sidebar,
+        catalog.name(topic), done, len(plan), where=st.sidebar,
         topic=unit, count=steps.label(plan) if plan else None,
         after=_reading(log) if settings.reading_on(config) else "")

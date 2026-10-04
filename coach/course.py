@@ -13,7 +13,7 @@ Units are the syllabus's own: "done" when every lesson in them is passed,
 "current" for the one holding her next lesson, "ahead" or "behind" otherwise."""
 from datetime import date
 
-from coach import core, curriculum
+from coach import catalog, core, curriculum
 
 
 def _records(log: dict, topic: str) -> dict:
@@ -93,4 +93,4 @@ def short_date(iso: str) -> str:
 
 
 def subject_name(topic: str) -> str:
-    return core.TOPICS.get(topic, topic)
+    return catalog.name(topic)

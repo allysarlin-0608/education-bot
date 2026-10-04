@@ -75,6 +75,7 @@ def start() -> None:
         st.session_state.ob_problem = str(e)
         return
     if ui.save_settings(done):
+        ui.record("setup_done")
         st.session_state.pop("ob_way", None)
         st.session_state.enter_world = done["subjects"][0]     # into the first day's subject
 

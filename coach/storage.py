@@ -34,6 +34,12 @@ SETTINGS_TABLE = "user_settings"
 USERS_TABLE = "users"
 INVITES_TABLE = "allowed_users"
 USAGE_TABLE = "ai_usage"
+PATHS_TABLE = "learning_paths"
+EVENTS_TABLE = "usage_events"
+PATHS_TABLE_MISSING = (
+    "Supabase doesn't have the learning_paths table yet. Run supabase/goals.sql in "
+    "Supabase's SQL Editor, then refresh this page."
+)
 TIMEOUT = 10
 
 # Run once in the Supabase SQL editor. RLS stays on with no policies, so
@@ -354,7 +360,24 @@ class FileStore(_Scope):
         log = self.load()
         return {"user": self.user_row(), "settings": self.load_settings(),
                 "learning_entries": log["entries"], "reading_books": log.get("books", []),
-                "ai_usage": [r for r in self._rows(USAGE_TABLE) if r["user_id"] == uid]}
+                "learning_paths": log.get("paths", []),
+                "ai_usage": [r for r in self._rows(USAGE_TABLE) if r["user_id"] == uid],
+                "usage_events": [r for r in self._rows(EVENTS_TABLE) if r["user_id"] == uid]}
+
+    def add_event(self, day: str, event: str) -> None:
+        uid = self._uid()
+        with _FILE_LOCK:
+            rows = self._rows(EVENTS_TABLE)
+            row = next((r for r in rows if r["user_id"] == uid and r["day"] == day and r["event"] == event), None)
+            if row is None:
+                rows.append({"user_id": uid, "day": day, "event": event, "count": 1})
+            elif event != "visit":
+                row["count"] += 1
+            self._write_rows(EVENTS_TABLE, rows)
+
+    def metrics(self, since: date, today: date) -> dict:
+        from coach import metrics
+        return metrics.summarize(self._rows(USERS_TABLE), self._rows(EVENTS_TABLE), since, today)
 
     def delete_my_account(self) -> None:
         """Everything of the current user's, gone: the log file, their settings,
@@ -363,6 +386,7 @@ class FileStore(_Scope):
         log_path = self._log_path()
         self._write_settings([r for r in self._settings_rows() if r.get("user_id") != uid])
         self._write_rows(USAGE_TABLE, [r for r in self._rows(USAGE_TABLE) if r["user_id"] != uid])
+        self._write_rows(EVENTS_TABLE, [r for r in self._rows(EVENTS_TABLE) if r["user_id"] != uid])
         self._write_rows(USERS_TABLE, [r for r in self._rows(USERS_TABLE) if r["user_id"] != uid])
         try:
             log_path.unlink(missing_ok=True)
@@ -376,6 +400,14 @@ class FileStore(_Scope):
         with _FILE_LOCK:
             stored = self._stored()
             stored["books"] = [b for b in stored["books"] if b["id"] != book["id"]] + [book]
+            self._write(stored)
+
+    paths_error = None
+
+    def save_path(self, log: dict, path: dict) -> None:
+        with _FILE_LOCK:
+            stored = self._stored()
+            stored["paths"] = [p for p in stored.get("paths", []) if p["id"] != path["id"]] + [path]
             self._write(stored)
 
     def replace(self, log: dict) -> None:
@@ -395,6 +427,8 @@ class SupabaseStore(_Scope):
         self.base = f"{url}/rest/v1"
         # Set when the books table can't be read; the rest keeps working.
         self.books_error = None
+        # the same for her goals (supabase/goals.sql not run yet)
+        self.paths_error = None
         # True when there is no user_settings table yet (settings.sql not run)
         self.settings_missing = False
         # Optional columns Supabase said it doesn't have (their .sql not run
@@ -459,7 +493,36 @@ class SupabaseStore(_Scope):
         return core.parse_log({
             "entries": [{k: v for k, v in row.items() if k in core.ENTRY_FIELDS} for row in rows],
             "books": self._load_books(),
+            "paths": self._load_paths(),
         })
+
+    def _load_paths(self) -> list:
+        try:
+            resp = self._request("GET", params=self._mine({"select": "data", "order": "updated_at.asc"}),
+                                 table=PATHS_TABLE)
+        except StorageError as e:
+            self.paths_error = PATHS_TABLE_MISSING if e.status == 404 else f"Your goals: {e}. Refresh in a moment to try again."
+            return []
+        self.paths_error = None
+        return [row["data"] for row in resp.json()]
+
+    def save_path(self, log: dict, path: dict) -> None:
+        if self.paths_error == PATHS_TABLE_MISSING:
+            raise StorageError("goals can't be saved until supabase/goals.sql is run")
+        self._request("POST", params={"on_conflict": "user_id,id" if self.scoped else "id"},
+                      json=self._own([{"id": path["id"], "data": path, "updated_at": _now()}]),
+                      prefer="resolution=merge-duplicates,return=minimal", table=PATHS_TABLE)
+
+    def add_event(self, day: str, event: str) -> None:
+        """Count one event for the current person (add_usage_event: the person's own row only)."""
+        self._uid()
+        self._request("POST", json={"p_day": day, "p_event": event}, prefer="return=minimal",
+                      table="rpc/add_usage_event")
+
+    def metrics(self, since: date, today: date) -> dict:
+        """The key numbers (gnosis_metrics: totals, admins only)."""
+        self._uid()
+        return self._request("POST", json={"p_since": since.isoformat()}, table="rpc/gnosis_metrics").json()
 
     def load_entry(self, day: str, topic: str):
         """The stored entry for one day and subject (a small read), or None."""
@@ -569,6 +632,17 @@ class SupabaseStore(_Scope):
             if (row["date"], row["topic"]) not in keep:
                 self._request("DELETE", params=self._mine({"date": f"eq.{row['date']}", "topic": f"eq.{row['topic']}"}),
                               prefer="return=minimal")
+        if self.paths_error is None:
+            path_list = log.get("paths", [])
+            if path_list:
+                self._request("POST", params={"on_conflict": "user_id,id" if self.scoped else "id"},
+                              json=self._own([{"id": p["id"], "data": p, "updated_at": _now()} for p in path_list]),
+                              prefer="resolution=merge-duplicates,return=minimal", table=PATHS_TABLE)
+            keep_ids = {p["id"] for p in path_list}
+            for row in self._request("GET", params=self._mine({"select": "id"}), table=PATHS_TABLE).json():
+                if row["id"] not in keep_ids:
+                    self._request("DELETE", params=self._mine({"id": f"eq.{row['id']}"}), prefer="return=minimal",
+                                  table=PATHS_TABLE)
         if self.books_error is None:
             book_list = log.get("books", [])
             self._upsert_books(book_list)
@@ -633,6 +707,9 @@ class SupabaseStore(_Scope):
             "learning_entries": self._request("GET", params={**mine, "order": "date.asc,topic.asc"}).json(),
             "reading_books": [r["data"] for r in
                               self._request("GET", params={**mine, "order": "updated_at.asc"}, table=BOOKS_TABLE).json()],
+            "learning_paths": [] if self.paths_error else
+                              [r["data"] for r in
+                               self._request("GET", params={**mine, "order": "updated_at.asc"}, table=PATHS_TABLE).json()],
             "ai_usage": self._request("GET", params={**mine, "order": "date.asc"}, table=USAGE_TABLE).json(),
         }
 

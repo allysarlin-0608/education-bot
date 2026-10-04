@@ -22,12 +22,14 @@ class FakeResponse:
 class FakePostgrest:
     """Just enough of PostgREST's /rest/v1/<table> behavior for the store."""
 
-    def __init__(self, key=KEY, books_table=True, followups_column=True, missing_columns=(), settings_table=False):
+    def __init__(self, key=KEY, books_table=True, followups_column=True, missing_columns=(), settings_table=False,
+                 paths_table=True):
         self.key = key
         self.settings = {} if settings_table else None
         self.missing = set(missing_columns) | (set() if followups_column else {"followups"})
         self.rows = {}
         self.books = {} if books_table else None
+        self.paths = {} if paths_table else None     # learning_paths (supabase/goals.sql)
         self.calls = []
 
     def request(self, method, url, params=None, json=None, headers=None, timeout=None):
@@ -39,6 +41,8 @@ class FakePostgrest:
             return self.books_request(method, params, json)
         if url == f"{URL}/rest/v1/{storage.SETTINGS_TABLE}":
             return self.settings_request(method, params, json)
+        if url == f"{URL}/rest/v1/{storage.PATHS_TABLE}":
+            return self.paths_request(method, params, json)
         assert url == f"{URL}/rest/v1/{storage.TABLE}"
         if method == "GET":
             if params and params.get("select") in self.missing:
@@ -64,6 +68,22 @@ class FakePostgrest:
                 self.rows.pop((params["date"].removeprefix("eq."), params["topic"].removeprefix("eq.")), None)
             else:
                 self.rows.clear()
+            return FakeResponse(204)
+        raise AssertionError(method)
+
+    def paths_request(self, method, params, json):
+        if self.paths is None:
+            return FakeResponse(404, {"code": "42P01", "message": "relation \"public.learning_paths\" does not exist"})
+        if method == "GET":
+            if params.get("select") == "id":
+                return FakeResponse(200, [{"id": k} for k in self.paths])
+            return FakeResponse(200, [{"data": r["data"]} for r in self.paths.values()])
+        if method == "POST":
+            for row in json:
+                self.paths[row["id"]] = row
+            return FakeResponse(201)
+        if method == "DELETE":
+            self.paths.pop(params["id"].removeprefix("eq."), None)
             return FakeResponse(204)
         raise AssertionError(method)
 

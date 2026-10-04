@@ -34,11 +34,24 @@ DIR = Path(__file__).resolve().parent / "curriculum"
 
 
 def has_syllabus(topic: str) -> bool:
+    """A subject with a syllabus: a built-in one with its file, or one of her goals."""
+    from coach import catalog
+    if catalog.is_goal(topic):
+        return catalog.path(topic) is not None
     return (DIR / f"{topic}.txt").exists()
 
 
-@lru_cache(maxsize=None)
 def _load(topic: str) -> tuple:
+    """(unit, title) for every lesson in order: a goal's from her path, a
+    subject's from its file."""
+    from coach import catalog
+    if catalog.is_goal(topic):
+        return catalog.goal_lessons(topic)
+    return _file_lessons(topic)
+
+
+@lru_cache(maxsize=None)
+def _file_lessons(topic: str) -> tuple:
     lessons, unit = [], ""
     for raw in (DIR / f"{topic}.txt").read_text(encoding="utf-8").splitlines():
         line = raw.strip()

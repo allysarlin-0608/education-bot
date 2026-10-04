@@ -3,7 +3,7 @@ over the log, so they can be tested. Every word she types has to appear
 (in any order, any case); newest first."""
 import re
 
-from coach import core
+from coach import catalog, core
 
 SNIPPET = 90
 
@@ -38,7 +38,7 @@ def find(log: dict, query: str, limit: int = 30) -> list:
         return []
     out = []
     for e in log["entries"]:
-        subject = core.TOPICS.get(e["topic"], e["topic"])
+        subject = catalog.name(e["topic"])
         for s in e.get("lessons") or []:
             if s.get("from"):           # carried over: found on the day it was written
                 continue

@@ -436,7 +436,8 @@ def conclude(i):
         # the page goes to the result, so Next lesson is in view (not under the chat box)
         st.session_state.coach_scroll = ("current-quiz", False)
         st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
-    save(entry, owner)
+    if save(entry, owner) and quiz.passed(score):
+        ui.record("lesson_passed")
     st.rerun()
 
 

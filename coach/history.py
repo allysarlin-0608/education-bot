@@ -3,7 +3,7 @@ Progress page. Pure functions over the log, so they can be tested."""
 import calendar
 from datetime import date
 
-from coach import core
+from coach import catalog, core
 
 
 def entries_on(log: dict, day: date) -> list:
@@ -68,4 +68,4 @@ def amount(stats: dict) -> int:
 
 
 def short_topic(topic: str) -> str:
-    return core.TOPICS[topic].split(" ")[0].rstrip(",&")
+    return catalog.name(topic).split(" ")[0].rstrip(",&")

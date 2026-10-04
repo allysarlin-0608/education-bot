@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 import streamlit as st
 
-from coach import core, curriculum, settings, storage
+from coach import catalog, core, curriculum, settings, storage
 
 logger = logging.getLogger("coach.ui")
 TIMEZONE = ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))
@@ -156,6 +156,8 @@ def init_state():
         # "date|topic" -> that lesson's chat, so switching pages or topics
         # never loses it (restored from the saved entry when missing).
         st.session_state.coach_chats = {}
+    # her goals, for every page this run (coach/catalog.py)
+    catalog.use(st.session_state.coach_log.get("paths"))
 
 
 def personal_user_id() -> str:
@@ -277,6 +279,30 @@ def save_entry(log, entry):
     return True
 
 
+def save_path(log, path) -> bool:
+    """Save one of her goals (and keep it in this session's records); same
+    error handling as save_entry."""
+    try:
+        st.session_state.coach_store.save_path(log, path)
+    except storage.StorageError as e:
+        st.session_state.coach_save_error = f"Your goal wasn't saved ({e}). Try again in a moment."
+        return False
+    log["paths"] = [p for p in log.get("paths", []) if p["id"] != path["id"]] + [path]
+    catalog.use(log["paths"])
+    return True
+
+
+def record(event: str) -> None:
+    """Count one usage event for today (coach/metrics.py). Counting never
+    gets in the way: a failure is logged, not shown, and the learner carries on."""
+    if not hasattr(st.session_state.get("coach_store"), "add_event"):
+        return
+    try:
+        st.session_state.coach_store.add_event(today().isoformat(), event)
+    except storage.StorageError as e:
+        logger.warning("couldn't count %s (%s)", event, e)
+
+
 def save_book(log, book):
     """Save one book's state; same error handling as save_entry."""
     try:
@@ -358,6 +384,9 @@ def refresh_log(log) -> None:
     log["entries"] = sorted(entries, key=lambda e: (e["date"], e["topic"]))
     if not getattr(st.session_state.coach_store, "books_error", None):
         log["books"] = stored["books"]      # (books that couldn't be read aren't "no books", ISS-031)
+    if not getattr(st.session_state.coach_store, "paths_error", None):
+        log["paths"] = stored.get("paths", [])     # (the same for her goals)
+        catalog.use(log["paths"])
     st.session_state.coach_chats = {}          # rebuilt from the records as now stored
 
 

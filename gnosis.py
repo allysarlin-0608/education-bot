@@ -17,6 +17,9 @@ if auth.is_public():
 else:
     ui.require_password()      # before any data is loaded
 ui.init_state()
+if st.session_state.get("coach_visit_day") != ui.today():     # one "visit" a day (coach/metrics.py)
+    st.session_state.coach_visit_day = ui.today()
+    ui.record("visit")
 ui.show_pending_error()
 
 config = ui.config()

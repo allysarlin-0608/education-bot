@@ -8,7 +8,7 @@ import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 
-from coach import books, curriculum
+from coach import books, catalog, curriculum
 
 # What is sent to the model: a shared core plus the one topic module for
 # the day (see coach/prompts/). system_prompt.md is the full original
@@ -98,7 +98,7 @@ def level_for_session(session_number: int) -> str:
 #   followup_question, reflection, lesson
 
 def empty_log() -> dict:
-    return {"version": 1, "entries": [], "books": []}
+    return {"version": 1, "entries": [], "books": [], "paths": []}
 
 
 def load_log(path: Path = DEFAULT_LOG_PATH) -> dict:
@@ -124,7 +124,7 @@ def parse_log(data) -> dict:
         raise ValueError("this isn't a learning-record backup")
     entries = {}
     for e in data["entries"]:
-        if not isinstance(e, dict) or e.get("topic") not in TOPICS:
+        if not isinstance(e, dict) or not catalog.valid(e.get("topic")):
             continue
         try:
             day = date.fromisoformat(str(e.get("date")))
@@ -156,10 +156,13 @@ def parse_log(data) -> dict:
         if not entry["level"]:
             entry["level"] = level_for_session(entry["session_number"])
     book_list = [b for b in map(books.normalize_book, data.get("books") or []) if b]
+    from coach import paths as goal_paths            # (her own goals: coach/paths.py)
+    path_list = list({p["id"]: p for p in map(goal_paths.parse_path, data.get("paths") or []) if p}.values())
     return {
         "version": 1,
         "entries": [{k: e[k] for k in ENTRY_FIELDS} for e in ordered],
         "books": book_list,
+        "paths": path_list,
     }
 
 
@@ -361,8 +364,8 @@ def note_fact(log: dict, topic: str, today: date, n: int) -> str:
     if streak >= 2:
         return f"{streak} days in a row with a lesson passed. Lesson {n} is today's next step."
     if passed:
-        return f"Lesson {n} of {TOPICS[topic]}, building on the {passed} you've passed so far."
-    return f"Your first lesson in {TOPICS[topic]}. One clear idea is enough for today."
+        return f"Lesson {n} of {catalog.name(topic)}, building on the {passed} you've passed so far."
+    return f"Your first lesson in {catalog.name(topic)}. One clear idea is enough for today."
 
 
 def truthful_note(text: str, fact: str) -> str:
@@ -437,7 +440,7 @@ def build_history_context(log: dict, topic: str, today: date, slot: dict = None,
     lines = [
         "【App 自動提供的學習紀錄】",
         f"- 今天：{today.isoformat()}（{weekday_name(today)}）",
-        f"- 今天的主題：{TOPICS[topic]}",
+        f"- 今天的主題：{catalog.name(topic)}",
     ]
     if slot is not None:
         lines += _syllabus_lines(topic, slot, start_level)
@@ -496,7 +499,7 @@ def build_system_prompt(log: dict, topic: str, today: date, followup: bool = Fal
 
 
 def build_kickoff_message(topic: str, today: date, focus: str = "", slot: dict = None) -> str:
-    message = f"Today is {weekday_name(today)}, {today.isoformat()}. Subject: {TOPICS[topic]}."
+    message = f"Today is {weekday_name(today)}, {today.isoformat()}. Subject: {catalog.name(topic)}."
     if slot is not None:
         message += f" Lesson {slot['n']}: {slot['title']}"
     if focus.strip():

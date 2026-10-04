@@ -10,7 +10,7 @@ subject starts at, and whether Reading is on.
 Pure functions, no Streamlit, so they can be tested."""
 from datetime import date, datetime, timezone
 
-from coach import core
+from coach import catalog, core
 
 DEFAULT_USER_ID = "owner"
 
@@ -26,6 +26,10 @@ DESCRIPTIONS = {
     "free": "A wide mix: history, psychology, economics, art, science and more.",
 }
 MIN_SUBJECTS, MAX_SUBJECTS = 1, 3
+# her own goals (coach/paths.py) take turns with the subjects; how many she
+# may keep active is the plan's to decide (coach/plans.py), this is the most
+# the app handles
+MAX_GOALS = 5
 
 # lessons a day -> (name, time)
 PACES = {1: ("Light", "~10 min"), 3: ("Steady", "~25 min"), 5: ("Focused", "~40 min")}
@@ -62,7 +66,7 @@ def normalize(row, user_id: str) -> dict:
         return s
     subjects = row.get("subjects")
     if isinstance(subjects, list):
-        s["subjects"] = [t for t in dict.fromkeys(subjects) if t in SUBJECTS][:MAX_SUBJECTS]
+        s["subjects"] = _cap([t for t in dict.fromkeys(subjects) if t in SUBJECTS or catalog.is_goal(t)])
     if row.get("units_per_day") in PACES:
         s["units_per_day"] = row["units_per_day"]
     levels = row.get("subject_levels")
@@ -75,18 +79,37 @@ def normalize(row, user_id: str) -> dict:
     return s
 
 
+def _cap(items: list) -> list:
+    """At most MAX_SUBJECTS subjects and MAX_GOALS goals, in her order."""
+    out, subjects, goals = [], 0, 0
+    for t in items:
+        if t in SUBJECTS and subjects < MAX_SUBJECTS:
+            subjects += 1
+            out.append(t)
+        elif catalog.is_goal(t) and goals < MAX_GOALS:
+            goals += 1
+            out.append(t)
+    return out
+
+
 def errors(s: dict) -> list:
     """What's wrong with a finished configuration (empty when it's fine)."""
     out = []
-    subjects = s.get("subjects") or []
-    if not MIN_SUBJECTS <= len(subjects) <= MAX_SUBJECTS:
-        out.append(f"Choose {MIN_SUBJECTS} to {MAX_SUBJECTS} subjects.")
-    if len(set(subjects)) != len(subjects) or any(t not in SUBJECTS for t in subjects):
+    items = s.get("subjects") or []
+    subjects = [t for t in items if t in SUBJECTS]
+    goals = [t for t in items if catalog.is_goal(t)]
+    if len(items) < MIN_SUBJECTS:
+        out.append("Choose a subject or set a goal to learn.")
+    if len(subjects) > MAX_SUBJECTS:
+        out.append(f"Choose at most {MAX_SUBJECTS} subjects.")
+    if len(goals) > MAX_GOALS:
+        out.append(f"Keep at most {MAX_GOALS} goals.")
+    if len(set(items)) != len(items) or len(subjects) + len(goals) != len(items):
         out.append("Unknown or repeated subject.")
     if s.get("units_per_day") not in PACES:
         out.append("Choose a daily pace.")
     levels = s.get("subject_levels") or {}
-    if any(levels.get(t) not in LEVELS for t in subjects):
+    if any(levels.get(t) not in LEVELS for t in subjects):       # (a goal's level is its path's)
         out.append("Every subject needs a starting level.")
     if not isinstance(s.get("reading_enabled"), bool):
         out.append("Reading must be on or off.")
@@ -132,8 +155,8 @@ def toggle_subject(subjects: list, topic: str) -> list:
     A fourth can't be added."""
     if topic in subjects:
         return [t for t in subjects if t != topic]
-    if topic not in SUBJECTS or len(subjects) >= MAX_SUBJECTS:
-        return list(subjects)
+    if topic not in SUBJECTS or len([t for t in subjects if t in SUBJECTS]) >= MAX_SUBJECTS:
+        return list(subjects)          # (her goals don't count toward the three subjects)
     return list(subjects) + [topic]
 
 
@@ -217,7 +240,10 @@ def units(s: dict) -> int:
 
 
 def start_level(s: dict, topic: str):
-    """Where a subject starts (None: from the syllabus alone, as before)."""
+    """Where a subject starts (None: from the syllabus alone, as before); a
+    goal is taught at its path's level."""
+    if catalog.is_goal(topic):
+        return catalog.level(topic)
     level = (s.get("subject_levels") or {}).get(topic)
     return level if level in LEVELS else None
 
@@ -227,7 +253,20 @@ def chosen_subjects(s: dict) -> list:
     her settings row's `subjects` (user_settings.subjects); every page reads
     it through here. (Levels may be kept for subjects she has taken out, so
     they come back if she adds one again; nothing shows those.)"""
-    return [t for t in (s.get("subjects") or []) if t in SUBJECTS]
+    return [t for t in (s.get("subjects") or [])
+            if t in SUBJECTS or (catalog.is_goal(t) and (catalog.path(t) or {}).get("status") == "active")]
+
+
+def chosen_goals(s: dict) -> list:
+    return [t for t in chosen_subjects(s) if catalog.is_goal(t)]
+
+
+def add_goal(s: dict, goal_id: str, when: str) -> dict:
+    """Her settings with a new goal added at the end of her turns."""
+    items = [t for t in (s.get("subjects") or []) if t != goal_id] + [goal_id]
+    if len([t for t in items if catalog.is_goal(t)]) > MAX_GOALS:
+        raise ValueError(f"Keep at most {MAX_GOALS} goals.")
+    return dict(s, subjects=items, updated_at=when)
 
 
 def shown_subjects(s: dict) -> list:

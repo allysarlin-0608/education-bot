@@ -23,7 +23,7 @@ import random
 import re
 from datetime import date, timedelta
 
-from coach import core, quiz
+from coach import catalog, core, quiz
 
 INTERVALS = (1, 3, 7, 14, 30, 60)       # days until the next review, by box
 DAILY_LIMIT = 20                        # cards offered a day
@@ -237,7 +237,7 @@ def search(log: dict, query: str, kind: str = None) -> list:
         c = x[2]
         if kind and c["kind"] != kind:
             continue
-        text = f"{c['front']} {c['back']} {core.TOPICS.get(c.get('topic'), '')}".lower()
+        text = f"{c['front']} {c['back']} {catalog.name(c.get('topic'), '')}".lower()
         if all(w in text for w in words):
             out.append(x)
     return sorted(out, key=lambda x: (x[2]["paused"], x[2]["due"]))

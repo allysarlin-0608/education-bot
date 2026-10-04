@@ -23,9 +23,11 @@ SCHEMA = {
     storage.INVITES_TABLE: ("email",),
     storage.USAGE_TABLE: ("user_id", "date"),
     storage.ADMINS_TABLE: ("email",),
+    storage.PATHS_TABLE: ("user_id", "id"),            # goals.sql
+    storage.EVENTS_TABLE: ("user_id", "day", "event"),
 }
 USER_TABLES = [t for t in SCHEMA if t not in (storage.INVITES_TABLE, storage.ADMINS_TABLE)]
-OWN_ROWS = [storage.TABLE, storage.BOOKS_TABLE, storage.SETTINGS_TABLE, storage.USERS_TABLE]
+OWN_ROWS = [storage.TABLE, storage.BOOKS_TABLE, storage.SETTINGS_TABLE, storage.USERS_TABLE, storage.PATHS_TABLE]
 
 
 class Resp:
@@ -92,7 +94,7 @@ class FakeDB:
             return Resp(401, {"message": "JWT required"})
         name = url.removeprefix(f"{URL}/rest/v1/")
         if name.startswith("rpc/"):
-            return self.rpc(name[4:], json, uid)
+            return self.rpc(name[4:], json, uid, email)
         table, pk = self.tables[name], SCHEMA[name]
         if method == "GET":
             rows = [r for r in table.values() if _match(r, params) and self._visible(name, r, uid, email)]
@@ -108,7 +110,7 @@ class FakeDB:
                     return Resp(400, {"code": "23502", "message": f"null value in {pk} of {name}"})
                 if self.rls and (
                         (name in OWN_ROWS and row["user_id"] != uid)
-                        or name == storage.USAGE_TABLE                       # only add_ai_usage writes
+                        or name in (storage.USAGE_TABLE, storage.EVENTS_TABLE)   # only their functions write
                         or name == storage.ADMINS_TABLE
                         or (name == storage.INVITES_TABLE and not self._admin(email))):
                     return RLS_DENIED
@@ -129,7 +131,7 @@ class FakeDB:
             return Resp(204)
         raise AssertionError(method)
 
-    def rpc(self, fn, args, uid):
+    def rpc(self, fn, args, uid, email=""):
         if uid is None:
             return Resp(400, {"message": "not signed in"})
         if fn == "add_ai_usage":
@@ -140,6 +142,22 @@ class FakeDB:
             row["request_count"] += max(args["p_requests"], 0)
             row["token_count"] += max(args["p_tokens"], 0)
             return Resp(204)
+        if fn == "add_usage_event":
+            assert set(args) == {"p_day", "p_event"}                 # the function uses auth.uid()
+            key = (uid, args["p_day"], args["p_event"])
+            row = self.tables[storage.EVENTS_TABLE].setdefault(
+                key, {"user_id": uid, "day": args["p_day"], "event": args["p_event"], "count": 0})
+            row["count"] = 1 if args["p_event"] == "visit" else row["count"] + 1
+            return Resp(204)
+        if fn == "gnosis_metrics":
+            if not self._admin(email):
+                return Resp(400, {"message": "admins only"})
+            from datetime import date, datetime
+            from coach import metrics
+            today = datetime.now(metrics.TZ).date()
+            return Resp(200, metrics.summarize(list(self.tables[storage.USERS_TABLE].values()),
+                                               list(self.tables[storage.EVENTS_TABLE].values()),
+                                               date.fromisoformat(args["p_since"]), today))
         if fn == "delete_my_account":
             assert args == {}
             snapshot = {t: dict(rows) for t, rows in self.tables.items()}
