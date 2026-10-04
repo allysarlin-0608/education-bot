@@ -427,6 +427,8 @@ class Flaky:
         if len(self.calls) <= self.n:
             if self.how == "drop":
                 raise requests.ConnectionError("connection reset by peer")
+            if self.how == "slow":
+                raise requests.ReadTimeout("read timed out")
             return FakeResponse(self.how, {"message": "gateway"})
         return self.fake.request(method, url, **kw)
 
@@ -470,3 +472,60 @@ def test_a_real_refusal_isnt_retried(no_pause):
     with pytest.raises(storage.StorageError):
         storage.SupabaseStore(URL, KEY, session=flaky).load()
     assert flaky.calls == ["GET"]
+
+
+def test_a_read_that_timed_out_isnt_asked_again(no_pause):
+    """Sent but not answered in time: the database is slow; asking twice
+    would double her wait and its load."""
+    flaky = Flaky(FakePostgrest(), 1, "slow")
+    with pytest.raises(storage.StorageError):
+        storage.SupabaseStore(URL, KEY, session=flaky).load()
+    assert flaky.calls == ["GET"]
+    connect, read = storage.TIMEOUT
+    assert connect < read <= 10, "a dead host is noticed in seconds"
+
+
+# ---------- the local files: saved under one lock, never overwritten when unreadable ----------
+def _local(tmp_path, who):
+    return storage.FileStore(tmp_path / f"{who}.json", tmp_path / "settings.json", current_user=lambda: who)
+
+
+def test_two_people_saving_settings_at_once_keep_both(tmp_path):
+    import threading
+    from coach import settings
+    stores = [_local(tmp_path, f"u{k}") for k in range(8)]
+    go = threading.Barrier(len(stores))
+
+    def save(store, k):
+        go.wait()
+        for n in range(15):
+            store.save_settings(dict(settings.blank(f"u{k}"), units_per_day=(1, 3, 5)[n % 3]))
+    threads = [threading.Thread(target=save, args=(s, k)) for k, s in enumerate(stores)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    rows = json.loads((tmp_path / "settings.json").read_text())["user_settings"]
+    assert sorted(r["user_id"] for r in rows) == [f"u{k}" for k in range(8)], "no one's row was lost"
+
+
+@pytest.mark.parametrize("damage", ["{not json", '"just text"', '{"other": 1}'])
+def test_a_damaged_settings_file_is_reported_and_left_alone(tmp_path, damage):
+    from coach import settings
+    (tmp_path / "settings.json").write_text(damage)
+    store = _local(tmp_path, "u1")
+    with pytest.raises(storage.StorageError, match="can't be read"):
+        store.save_settings(settings.blank("u1"))
+    with pytest.raises(storage.StorageError):
+        store.load_settings()
+    assert (tmp_path / "settings.json").read_text() == damage, "left as it was, for repair"
+
+
+def test_a_damaged_usage_file_is_never_overwritten(tmp_path):
+    store = _local(tmp_path, "u1")
+    store.add_usage("2026-09-01", 1, 10)
+    path = store._table_path(storage.USAGE_TABLE)
+    path.write_text("[{broken")
+    with pytest.raises(storage.StorageError):
+        store.add_usage("2026-09-01", 1, 10)
+    assert path.read_text() == "[{broken"

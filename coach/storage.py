@@ -28,6 +28,7 @@ from pathlib import Path
 import requests
 
 from coach import clock, core
+from coach.errors import StorageError  # noqa: F401  (storage.StorageError, as every caller names it)
 
 TABLE = "learning_entries"
 BOOKS_TABLE = "reading_books"
@@ -41,7 +42,7 @@ PATHS_TABLE_MISSING = (
     "Supabase doesn't have the learning_paths table yet. Run supabase/goals.sql in "
     "Supabase's SQL Editor, then refresh this page."
 )
-TIMEOUT = 10
+TIMEOUT = (3.05, 10)                 # seconds to connect, then to wait for the answer
 READ_TRIES = 2                       # a read: once more after a transient failure (_request)
 TRANSIENT = (502, 503, 504)          # the gateway, not the request: worth one more try
 RETRY_PAUSE = 0.4                    # seconds
@@ -162,16 +163,6 @@ SETTINGS_COLUMNS = ("user_id", "subjects", "units_per_day", "subject_levels", "r
                     "onboarding", "onboarded_at", "updated_at")
 
 
-class StorageError(Exception):
-    """str(e) is safe to show the user; details are logged, not shown.
-    status is the HTTP status (None for connection problems)."""
-
-    def __init__(self, message, status=None, detail=""):
-        super().__init__(message)
-        self.status = status
-        self.detail = detail     # the raw response, for code paths only
-
-
 NO_USER = "no one is signed in"
 
 
@@ -233,11 +224,20 @@ class FileStore(_Scope):
         return self.settings_path.with_name(f"{table}.json")
 
     def _rows(self, table: str) -> list:
+        """A table's rows (none yet: no file). A file that can't be read is
+        never taken for an empty one, or the next write would replace it."""
+        path = self._table_path(table)
         try:
-            rows = json.loads(self._table_path(table).read_text(encoding="utf-8"))
-        except (FileNotFoundError, json.JSONDecodeError):
+            rows = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
             return []
-        return rows if isinstance(rows, list) else []
+        except (ValueError, UnicodeDecodeError) as e:
+            logger.error("the local %s file %s can't be read (%s); nothing was written", table, path, e)
+            raise StorageError(f"the local {table} file can't be read; it was left as it is") from e
+        if not isinstance(rows, list):
+            logger.error("the local %s file %s isn't a list of rows; nothing was written", table, path)
+            raise StorageError(f"the local {table} file can't be read; it was left as it is")
+        return rows
 
     def _write_rows(self, table: str, rows: list) -> None:
         path = self._table_path(table)
@@ -251,11 +251,21 @@ class FileStore(_Scope):
     settings_missing = False
 
     def _settings_rows(self) -> list:
+        """Everyone's settings rows. A file that can't be read is never taken
+        for an empty one: the next save would write over every row in it
+        with this one (as for the records, ISS-020)."""
         try:
-            rows = json.loads(self.settings_path.read_text(encoding="utf-8")).get("user_settings")
-        except (FileNotFoundError, json.JSONDecodeError, AttributeError):
+            data = json.loads(self.settings_path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
             return []
-        return [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
+        except (ValueError, UnicodeDecodeError) as e:
+            logger.error("the settings file %s can't be read (%s); nothing was written", self.settings_path, e)
+            raise StorageError("your settings file can't be read; it was left as it is") from e
+        rows = data.get("user_settings") if isinstance(data, dict) else None
+        if not isinstance(rows, list):
+            logger.error("the settings file %s isn't a settings file; nothing was written", self.settings_path)
+            raise StorageError("your settings file can't be read; it was left as it is")
+        return [r for r in rows if isinstance(r, dict)]
 
     def load_settings(self):
         """The current user's settings row, or None if they have none yet."""
@@ -271,9 +281,10 @@ class FileStore(_Scope):
 
     def save_settings(self, row: dict) -> None:
         uid = self._uid()
-        rows = [r for r in self._settings_rows() if r.get("user_id") != uid]
-        rows.append({**{k: row.get(k) for k in SETTINGS_COLUMNS}, "user_id": uid})
-        self._write_settings(rows)
+        with _FILE_LOCK:              # (read, change, write: two people saving at once keep both rows)
+            rows = [r for r in self._settings_rows() if r.get("user_id") != uid]
+            rows.append({**{k: row.get(k) for k in SETTINGS_COLUMNS}, "user_id": uid})
+            self._write_settings(rows)
 
     def load(self) -> dict:
         with _FILE_LOCK:
@@ -321,14 +332,15 @@ class FileStore(_Scope):
     # ---- accounts (scoped only) ----
     def touch_user(self, email: str, name: str, picture: str = "") -> None:
         uid = self._uid()
-        rows = self._rows(USERS_TABLE)
-        mine = next((r for r in rows if r["user_id"] == uid), None)
-        if mine is None:
-            rows.append({"user_id": uid, "email": email, "display_name": name, "avatar_url": picture,
-                         "created_at": _now(), "last_seen_at": _now()})
-        else:
-            mine.update(email=email, display_name=name, avatar_url=picture, last_seen_at=_now())
-        self._write_rows(USERS_TABLE, rows)
+        with _FILE_LOCK:
+            rows = self._rows(USERS_TABLE)
+            mine = next((r for r in rows if r["user_id"] == uid), None)
+            if mine is None:
+                rows.append({"user_id": uid, "email": email, "display_name": name, "avatar_url": picture,
+                             "created_at": _now(), "last_seen_at": _now()})
+            else:
+                mine.update(email=email, display_name=name, avatar_url=picture, last_seen_at=_now())
+            self._write_rows(USERS_TABLE, rows)
 
     def user_row(self):
         uid = self._uid()
@@ -341,12 +353,14 @@ class FileStore(_Scope):
         return sorted(self._rows(INVITES_TABLE), key=lambda r: r["email"])
 
     def add_invite(self, email: str, note: str = "") -> None:
-        rows = [r for r in self._rows(INVITES_TABLE) if r["email"] != email.lower()]
-        rows.append({"email": email.lower(), "invited_at": _now(), "note": note})
-        self._write_rows(INVITES_TABLE, rows)
+        with _FILE_LOCK:
+            rows = [r for r in self._rows(INVITES_TABLE) if r["email"] != email.lower()]
+            rows.append({"email": email.lower(), "invited_at": _now(), "note": note})
+            self._write_rows(INVITES_TABLE, rows)
 
     def remove_invite(self, email: str) -> None:
-        self._write_rows(INVITES_TABLE, [r for r in self._rows(INVITES_TABLE) if r["email"] != email.lower()])
+        with _FILE_LOCK:
+            self._write_rows(INVITES_TABLE, [r for r in self._rows(INVITES_TABLE) if r["email"] != email.lower()])
 
     def usage_today(self, day: str) -> dict:
         uid = self._uid()
@@ -355,14 +369,15 @@ class FileStore(_Scope):
 
     def add_usage(self, day: str, requests_: int, tokens_: int) -> None:
         uid = self._uid()
-        rows = self._rows(USAGE_TABLE)
-        row = next((r for r in rows if r["user_id"] == uid and r["date"] == day), None)
-        if row is None:
-            rows.append({"user_id": uid, "date": day, "request_count": requests_, "token_count": tokens_})
-        else:
-            row["request_count"] += requests_
-            row["token_count"] += tokens_
-        self._write_rows(USAGE_TABLE, rows)
+        with _FILE_LOCK:
+            rows = self._rows(USAGE_TABLE)
+            row = next((r for r in rows if r["user_id"] == uid and r["date"] == day), None)
+            if row is None:
+                rows.append({"user_id": uid, "date": day, "request_count": requests_, "token_count": tokens_})
+            else:
+                row["request_count"] += requests_
+                row["token_count"] += tokens_
+            self._write_rows(USAGE_TABLE, rows)
 
     def export_my_data(self) -> dict:
         uid = self._uid()
@@ -393,10 +408,11 @@ class FileStore(_Scope):
         their usage and their users row (the files each replaced whole)."""
         uid = self._uid()
         log_path = self._log_path()
-        self._write_settings([r for r in self._settings_rows() if r.get("user_id") != uid])
-        self._write_rows(USAGE_TABLE, [r for r in self._rows(USAGE_TABLE) if r["user_id"] != uid])
-        self._write_rows(EVENTS_TABLE, [r for r in self._rows(EVENTS_TABLE) if r["user_id"] != uid])
-        self._write_rows(USERS_TABLE, [r for r in self._rows(USERS_TABLE) if r["user_id"] != uid])
+        with _FILE_LOCK:              # (each file read, changed and written while no one else writes it)
+            self._write_settings([r for r in self._settings_rows() if r.get("user_id") != uid])
+            self._write_rows(USAGE_TABLE, [r for r in self._rows(USAGE_TABLE) if r["user_id"] != uid])
+            self._write_rows(EVENTS_TABLE, [r for r in self._rows(EVENTS_TABLE) if r["user_id"] != uid])
+            self._write_rows(USERS_TABLE, [r for r in self._rows(USERS_TABLE) if r["user_id"] != uid])
         try:
             log_path.unlink(missing_ok=True)
         except OSError as e:
@@ -479,9 +495,11 @@ class SupabaseStore(_Scope):
             headers["Authorization"] = f"Bearer {token}"
         if prefer:
             headers["Prefer"] = prefer
-        # A read is asked again once after a moment if the connection dropped
+        # A read is asked again once after a moment if the connection failed
         # or the database's gateway was briefly unavailable; a write never is
         # (not every write may safely happen twice: a counter would count twice).
+        # A read that was sent but not answered in time isn't asked again: the
+        # database is slow, and asking twice would double the wait and its load.
         tries = READ_TRIES if method == "GET" else 1
         for attempt in range(1, tries + 1):
             try:
@@ -490,7 +508,7 @@ class SupabaseStore(_Scope):
                     headers=headers, timeout=TIMEOUT,
                 )
             except requests.RequestException as e:
-                if attempt < tries:
+                if attempt < tries and isinstance(e, requests.ConnectionError):
                     logger.warning("supabase %s %s unreachable (%s); trying once more", method, table, e)
                     _sleep(RETRY_PAUSE)
                     continue

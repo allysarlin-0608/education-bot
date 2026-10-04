@@ -46,7 +46,7 @@ if not _logger.handlers:
 # run loads the new code whole. coach.routes is kept: the server holds its
 # routes (and the sign-ins waiting in them) from when it started; a change
 # there still needs a reboot.
-SERVER_SIDE = {"coach.routes"}
+SERVER_SIDE = {"coach.routes", "coach.errors"}     # (errors: one class across versions, coach/errors.py)
 GENERATION = 0              # +1 each time the code is reloaded (ui.make_store starts sessions afresh)
 _loaded = {}                # module name -> its file's modification time when it was loaded
 _lock = threading.Lock()
@@ -101,6 +101,6 @@ def freshen() -> bool:
                 delattr(package, short)     # (or `from coach import ui` would hand back the old one)
         GENERATION += 1
         _logger.warning("new code on disk (%s): coach modules reloaded, generation %d%s", ", ".join(sorted(changed)),
-                        GENERATION, "; coach.routes changed too: reboot the app to load it"
-                        if "coach.routes" in changed else "")
+                        GENERATION, f"; {', '.join(sorted(set(changed) & SERVER_SIDE))} changed too: reboot the app to load it"
+                        if set(changed) & SERVER_SIDE else "")
         return True
