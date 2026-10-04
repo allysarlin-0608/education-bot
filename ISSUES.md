@@ -153,3 +153,10 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 - **ISS-047:** a setup left half-way before goals existed reopened on another step (the steps were renumbered). Old drafts map to the same step. Test: `test_goals.py::test_a_setup_draft_from_before_goals_opens_on_the_same_step`.
 - **ISS-048:** a usage count took its date from the browser, so the numbers could be skewed. The database now dates it (`add_usage_event(p_event)`); the goal form isn't offered while goals can't be saved (no AI call for nothing).
 - **ISS-049:** the weekly lessons average rounded halves differently in the app and in the database (2.25). Both round halves up now. Test: `test_goals.py::test_the_weekly_average_rounds_as_the_database_does`.
+
+### ISS-050 … ISS-054 — found by the engineering review (see docs/ENGINEERING_REVIEW.md)
+- **ISS-050:** six separate clocks; the test clock left books and goals on the real date. One clock (`coach/clock.py`). Test: `test_clock.py`.
+- **ISS-051:** a database blip failed a read outright; a slow database was waited on twice. Reads retried once on connection failure or 502/503/504 only; 3 s / 10 s timeouts. Tests: `test_storage.py`.
+- **ISS-052:** a code reload mid-run could turn a handled database error into a traceback. `coach/errors.py`. Test: `test_reload_errors.py`.
+- **ISS-053:** local file store: two saves at once could lose a settings row; a damaged settings or table file was taken for empty and overwritten. Locked and refused. Tests: `test_storage.py`.
+- **ISS-054:** a malformed secrets file was silent; sign-in reads and the password gate swallowed every exception. Logged / narrowed. Tests: `test_appconfig.py`.

@@ -116,10 +116,18 @@ the sidebar all use them.
 - **Settings are saved whole**, so every save starts from the row as stored
   now (`ui.refresh_settings()` first: in Settings, the setup, the New goal
   page). Records are merged on write (`ui.save_day`).
-- **Database calls** (`storage.SupabaseStore._request`): 10 s timeout; a
-  read is asked once more after a dropped connection or a 502/503/504; a
-  write never is (it may have landed). Every failure becomes a
-  `StorageError` with a message fit to show; the details go to the log.
+- **Database calls** (`storage.SupabaseStore._request`): 3 s to connect,
+  10 s to answer; a read is asked once more when the connection failed or
+  the gateway answered 502/503/504 (never after a timeout: a slow database
+  isn't asked twice); a write never is (it may have landed). Every failure
+  becomes a `StorageError` (`coach/errors.py`: one class across a code
+  reload) with a message fit to show; the details go to the log.
+- **Local files** (personal mode): every read-change-write runs under one
+  lock; a file that can't be read is reported and left as it is, never
+  taken for an empty one.
+- **Secrets**: none in the code or the log. No secrets file is normal (the
+  environment is used); one that can't be read is logged as an error and
+  the app fails closed.
 - **Model calls** (`llm.py`): paced to the per-minute limit, retried on
   429/5xx within a deadline, counted toward the daily allowance; a failure
   is a friendly message and a Retry button, never a half-saved lesson.

@@ -115,3 +115,15 @@ two-store design.
 | R5 | No silent catch at the password gate; sign-in reads catch Streamlit's own errors only | page tests |
 | R6 | Unused imports removed | pyflakes clean |
 | Review | Setup finishes onto the stored settings (as every settings save does); admin status never cached as "no" before the store exists | page and account tests |
+
+## 6. Hostile review of this pass (independent reviewer) and what was done
+
+No P0/P1. Five P2, all fixed and tested:
+
+| Finding | Fix | Test |
+|---|---|---|
+| A malformed secrets file was still taken for none (Streamlit raises it as "file not found") | Told apart from "no file"; logged once; fails closed | `tests/test_appconfig.py` |
+| The retry doubled a slow database's wait (a single 10 s timeout, timeouts retried): ~40 s before a page gave up | 3 s connect / 10 s answer; only connection failures and 502/503/504 retried | `tests/test_storage.py::test_a_read_that_timed_out_isnt_asked_again` |
+| A code reload mid-run made `except storage.StorageError` miss the old session's error (a traceback) | `StorageError` in `coach/errors.py`, kept across reloads | `tests/test_reload_errors.py` (fails without it) |
+| A reload during the browser suite dropped the fake clock and model | The harness re-installs them after a reload | (harness) |
+| Local file store: settings and other tables read-changed-written without the lock; a damaged file taken for empty | All under the lock; damaged files reported and left alone | `tests/test_storage.py` (the race test fails without the lock, every run) |
