@@ -231,3 +231,15 @@ def test_a_goal_that_couldnt_be_read_is_never_replaced_by_another_lesson(monkeyp
     assert not any("Start this lesson" in str(b.proto) for b in at.button), "and no other lesson takes its place"
     loads(at, "views/goal.py")
     assert "the database is busy" in texts(at) and not has(at, "goal_design") and not calls
+
+
+def test_setup_offers_our_subjects_while_goals_cant_be_saved(monkeypatch, tmp_path):
+    # covers: W-goalmaker-k_key_skip-2
+    from coach import storage
+    monkeypatch.setattr(storage.FileStore, "paths_error", storage.PATHS_TABLE_MISSING)
+    calls = ai(monkeypatch)
+    at = app(monkeypatch, tmp_path, subjects=(), history=False, onboarded=False)
+    at.button(key="ob_next").click().run()
+    assert "goals.sql" in texts(at) and not has(at, "obg_design")
+    at.button(key="obg_skip").click().run()
+    assert not at.exception and "Choose up to three" in texts(at) and not calls
