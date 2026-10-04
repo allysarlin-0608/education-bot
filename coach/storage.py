@@ -38,6 +38,7 @@ INVITES_TABLE = "allowed_users"
 USAGE_TABLE = "ai_usage"
 PATHS_TABLE = "learning_paths"
 EVENTS_TABLE = "usage_events"
+PREFS_TABLE = "learner_prefs"      # supabase/goals.sql (habits: reminders, light day, milestones seen)
 PATHS_TABLE_MISSING = (
     "Supabase doesn't have the learning_paths table yet. Run supabase/goals.sql in "
     "Supabase's SQL Editor, then refresh this page."
@@ -386,7 +387,21 @@ class FileStore(_Scope):
                 "learning_entries": log["entries"], "reading_books": log.get("books", []),
                 "learning_paths": log.get("paths", []),
                 "ai_usage": [r for r in self._rows(USAGE_TABLE) if r["user_id"] == uid],
-                "usage_events": [r for r in self._rows(EVENTS_TABLE) if r["user_id"] == uid]}
+                "usage_events": [r for r in self._rows(EVENTS_TABLE) if r["user_id"] == uid],
+                "learner_prefs": self.load_prefs()}
+
+    def load_prefs(self):
+        """Her habit preferences (coach/prefs.py), or None if she has none yet."""
+        uid = self._uid()
+        row = next((r for r in self._rows(PREFS_TABLE) if r.get("user_id") == uid), None)
+        return row["data"] if row else None
+
+    def save_prefs(self, data: dict) -> None:
+        uid = self._uid()
+        with _FILE_LOCK:
+            rows = [r for r in self._rows(PREFS_TABLE) if r.get("user_id") != uid]
+            rows.append({"user_id": uid, "data": data, "updated_at": _now()})
+            self._write_rows(PREFS_TABLE, rows)
 
     def add_event(self, day: str, event: str) -> None:
         uid = self._uid()
@@ -412,6 +427,7 @@ class FileStore(_Scope):
             self._write_settings([r for r in self._settings_rows() if r.get("user_id") != uid])
             self._write_rows(USAGE_TABLE, [r for r in self._rows(USAGE_TABLE) if r["user_id"] != uid])
             self._write_rows(EVENTS_TABLE, [r for r in self._rows(EVENTS_TABLE) if r["user_id"] != uid])
+            self._write_rows(PREFS_TABLE, [r for r in self._rows(PREFS_TABLE) if r["user_id"] != uid])
             self._write_rows(USERS_TABLE, [r for r in self._rows(USERS_TABLE) if r["user_id"] != uid])
         try:
             log_path.unlink(missing_ok=True)
@@ -756,7 +772,18 @@ class SupabaseStore(_Scope):
             # (her own counts: supabase/goals.sql, made with learning_paths)
             "usage_events": [] if self.paths_error else
                             self._request("GET", params={**mine, "order": "day.asc"}, table=EVENTS_TABLE).json(),
+            "learner_prefs": None if self.paths_error else self.load_prefs(),
         }
+
+    def load_prefs(self):
+        """Her habit preferences (coach/prefs.py), or None if she has none yet."""
+        rows = self._request("GET", params=self._mine({"select": "data"}), table=PREFS_TABLE).json()
+        return rows[0]["data"] if rows else None
+
+    def save_prefs(self, data: dict) -> None:
+        self._request("POST", params={"on_conflict": "user_id"},
+                      json=self._own([{"data": data, "updated_at": _now()}]),
+                      prefer="resolution=merge-duplicates,return=minimal", table=PREFS_TABLE)
 
     def delete_my_account(self) -> None:
         """All of the current user's rows in every table, their users row and

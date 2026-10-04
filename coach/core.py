@@ -8,7 +8,7 @@ import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 
-from coach import books, catalog, curriculum
+from coach import books, catalog, curriculum, streaks
 
 # What is sent to the model: a shared core plus the one topic module for
 # the day (see coach/prompts/). system_prompt.md is the full original
@@ -309,16 +309,9 @@ def streak_dates(log: dict) -> set:
 
 
 def current_streak(log: dict, today: date) -> int:
-    """Consecutive days ending today with a lesson passed. If none is passed
-    today yet the streak still counts through yesterday, so it never reads
-    as broken before she's had a chance to study today."""
-    done = streak_dates(log)
-    day = today if today in done else today - timedelta(days=1)
-    streak = 0
-    while day in done:
-        streak += 1
-        day -= timedelta(days=1)
-    return streak
+    """Study days in the streak going now. Rest days (coach/streaks.py)
+    carry it over a missed day; today counts against her only once it's over."""
+    return streaks.walk(streak_dates(log), today)["current"]
 
 
 def days_since_last_visit(log: dict, today: date):
@@ -556,15 +549,10 @@ def build_kickoff_message(topic: str, today: date, focus: str = "", slot: dict =
 LEVEL_STARTS = {"Beginner": 1, "Intermediate": 4, "Advanced": 8}
 
 
-def longest_streak(log: dict) -> int:
-    done = sorted(streak_dates(log))
-    best = run = 0
-    prev = None
-    for day in done:
-        run = run + 1 if prev and day - prev == timedelta(days=1) else 1
-        best = max(best, run)
-        prev = day
-    return best
+def longest_streak(log: dict, today: date = None) -> int:
+    """The longest streak ever, with the same rest days as the current one."""
+    done = streak_dates(log)
+    return streaks.walk(done, today or max(done, default=date.min))["longest"] if done else 0
 
 
 def topic_progress(log: dict, topic: str) -> dict:

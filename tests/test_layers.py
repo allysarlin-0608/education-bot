@@ -7,8 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1] / "coach"
 
 # what learning is: the day, the syllabus, quizzes, review, goals, settings, the numbers
-PURE = ("books", "catalog", "clock", "core", "course", "curriculum", "history", "metrics", "paths",
-        "placement", "plans", "quiz", "review", "search", "settings", "steps", "tokens")
+PURE = ("books", "catalog", "clock", "core", "course", "curriculum", "habit", "history", "metrics", "paths",
+        "placement", "plans", "prefs", "quiz", "review", "search", "settings", "steps", "streaks", "tokens")
 # what talks to the outside: the database, sign-in, the model
 NO_UI = ("appconfig", "llm", "quizgen", "quota", "routes", "session_cookie", "storage", "supa_auth")
 

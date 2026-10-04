@@ -25,9 +25,11 @@ SCHEMA = {
     storage.ADMINS_TABLE: ("email",),
     storage.PATHS_TABLE: ("user_id", "id"),            # goals.sql
     storage.EVENTS_TABLE: ("user_id", "day", "event"),
+    storage.PREFS_TABLE: ("user_id",),                 # goals.sql (habits)
 }
 USER_TABLES = [t for t in SCHEMA if t not in (storage.INVITES_TABLE, storage.ADMINS_TABLE)]
-OWN_ROWS = [storage.TABLE, storage.BOOKS_TABLE, storage.SETTINGS_TABLE, storage.USERS_TABLE, storage.PATHS_TABLE]
+OWN_ROWS = [storage.TABLE, storage.BOOKS_TABLE, storage.SETTINGS_TABLE, storage.USERS_TABLE, storage.PATHS_TABLE,
+            storage.PREFS_TABLE]
 
 
 class Resp:

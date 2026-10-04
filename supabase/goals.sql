@@ -1,6 +1,7 @@
 -- ============================================================================
--- Phase 1: a learner's own goals, and the few numbers that say whether
--- GNOSIS works. TEST database only. Run after accounts.sql.
+-- Phases 1 and 2: a learner's own goals, her habit preferences, and the
+-- few numbers that say whether GNOSIS works. TEST database only. Run after
+-- accounts.sql.
 -- One transaction: all of it applies, or none. Adds only: no existing row is
 -- changed or deleted.
 --
@@ -8,14 +9,17 @@
 --   1. learning_paths: each learner's goals (the path the AI designed for
 --      it). Each person reads and writes only their own rows.
 --   2. usage_events: per person, per day, how many times something happened
---      ("visit", "setup_done", "goal_created", "lesson_passed"). No lesson
+--      ("visit", "setup_done", "goal_created", "lesson_passed", "reminder_shown",
+--      "reminded_session"). No lesson
 --      content, no answers, no goal text: only the event's name and a count.
 --      A person can read their own; only add_usage_event() adds, on the
 --      server's date.
 --   3. gnosis_metrics(since): the key numbers for people who signed up since
 --      a date, for admins only (app_admins), as totals: never anyone's rows.
---   4. delete_my_account() also deletes the two new tables' rows (the same
---      function as before, with two lines added).
+--   4. learner_prefs: her reminder choice, a light day, the milestones and
+--      weekly reports she has seen (one row, hers only).
+--   5. delete_my_account() also deletes the new tables' rows (the same
+--      function as before, with three lines added).
 -- ============================================================================
 begin;
 
@@ -39,7 +43,8 @@ grant select, insert, update, delete on public.learning_paths to authenticated;
 create table if not exists public.usage_events (
   user_id text not null,
   day date not null,
-  event text not null check (event in ('visit', 'setup_done', 'goal_created', 'lesson_passed')),
+  event text not null check (event in ('visit', 'setup_done', 'goal_created', 'lesson_passed',
+                                       'reminder_shown', 'reminded_session')),
   count integer not null default 1 check (count >= 0),
   primary key (user_id, day, event)
 );
@@ -101,13 +106,31 @@ begin
     'eligible_next_day', (select count(*) from per where day0 + 1 <= (now() at time zone 'Asia/Taipei')::date),
     'active_after_a_week', (select count(*) from per where after_week),
     'eligible_week', (select count(*) from per where day0 + 7 <= (now() at time zone 'Asia/Taipei')::date),
-    'lessons_per_learner_week', (select coalesce(round(avg(lessons)::numeric, 1), 0) from weeks)
+    'lessons_per_learner_week', (select coalesce(round(avg(lessons)::numeric, 1), 0) from weeks),
+    'reminders_shown', (select coalesce(sum(e.count), 0) from public.usage_events e
+                        where e.event = 'reminder_shown' and e.day >= p_since),
+    'reminded_sessions', (select coalesce(sum(e.count), 0) from public.usage_events e
+                          where e.event = 'reminded_session' and e.day >= p_since)
   ) into result;
   return result;
 end;
 $$;
 
--- 4. deleting an account deletes these too --------------------------------------
+-- 4. her habit preferences ----------------------------------------------------
+create table if not exists public.learner_prefs (
+  user_id text primary key default (auth.uid())::text,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table public.learner_prefs enable row level security;
+drop policy if exists own_rows on public.learner_prefs;
+create policy own_rows on public.learner_prefs for all to authenticated
+  using (user_id = (select auth.uid())::text)
+  with check (user_id = (select auth.uid())::text);
+revoke all on public.learner_prefs from anon;
+grant select, insert, update, delete on public.learner_prefs to authenticated;
+
+-- 5. deleting an account deletes these too --------------------------------------
 create or replace function public.delete_my_account()
 returns void
 language plpgsql security definer
@@ -120,6 +143,7 @@ begin
   delete from public.reading_books where user_id = uid::text;
   delete from public.learning_paths where user_id = uid::text;
   delete from public.usage_events where user_id = uid::text;
+  delete from public.learner_prefs where user_id = uid::text;
   delete from public.user_settings where user_id = uid::text;
   delete from public.ai_usage where user_id = uid::text;
   delete from public.users where user_id = uid::text;
@@ -136,8 +160,8 @@ grant execute on function public.delete_my_account() to authenticated;
 
 commit;
 
--- check: both tables with row level security on
+-- check: the three tables with row level security on
 select c.relname as table_name, c.relrowsecurity as rls_enabled
 from pg_class c join pg_namespace n on n.oid = c.relnamespace
-where n.nspname = 'public' and c.relname in ('learning_paths', 'usage_events')
+where n.nspname = 'public' and c.relname in ('learning_paths', 'usage_events', 'learner_prefs')
 order by 1;

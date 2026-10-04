@@ -24,6 +24,11 @@ def today() -> date:
     return datetime.now(TIMEZONE).date()
 
 
+def now() -> datetime:
+    """The learner's local time now (for her reminder time)."""
+    return datetime.now(TIMEZONE)
+
+
 def now_iso() -> str:
     """Now, as stored on records (UTC, ISO 8601)."""
     return datetime.now(timezone.utc).isoformat()

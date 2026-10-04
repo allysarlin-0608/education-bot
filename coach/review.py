@@ -182,13 +182,14 @@ def reviewed_today(log: dict, today: date) -> int:
     return sum(1 for _, _, c in cards(log) if c.get("last") == today.isoformat())
 
 
-def due(log: dict, today: date) -> list:
+def due(log: dict, today: date, limit: int = None) -> list:
     """Today's cards still to do: due by today, not paused, oldest due first,
-    up to what's left of the daily limit."""
+    up to what's left of the daily limit (a smaller one on a light or
+    returning day: coach/habit.py, so a break never leaves a wall of cards)."""
     waiting = [x for x in cards(log) if not x[2]["paused"] and x[2]["due"] <= today.isoformat()
                and x[2].get("last") != today.isoformat()]
     waiting.sort(key=lambda x: (x[2]["due"], x[2]["added"], x[2]["id"]))
-    return waiting[:max(0, DAILY_LIMIT - reviewed_today(log, today))]
+    return waiting[:max(0, (limit or DAILY_LIMIT) - reviewed_today(log, today))]
 
 
 def next_due(log: dict, today: date):

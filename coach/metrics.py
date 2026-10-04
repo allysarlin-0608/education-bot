@@ -6,6 +6,8 @@ things happened. No lesson, answer, goal text or anything she wrote.
 - "setup_done": she finished setting up
 - "goal_created": she added a goal of her own
 - "lesson_passed": she passed a lesson (counted)
+- "reminder_shown": her daily reminder was shown to her (once a day)
+- "reminded_session": she passed a lesson after a reminder that day (once a day)
 
 The numbers (for admins, Settings → Insights), for people who signed up since
 a date:
@@ -13,6 +15,7 @@ a date:
 - came back the day after signing up
 - still opened GNOSIS a week or more after signing up
 - lessons passed per learner per week
+- reminders shown, and how many led to a lesson the same day
 
 summarize() is the same arithmetic as gnosis_metrics() in supabase/goals.sql,
 for the local store and the tests."""
@@ -21,7 +24,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-EVENTS = ("visit", "setup_done", "goal_created", "lesson_passed")
+EVENTS = ("visit", "setup_done", "goal_created", "lesson_passed", "reminder_shown", "reminded_session")
 TZ = ZoneInfo("Asia/Taipei")
 
 
@@ -69,6 +72,10 @@ def summarize(users: list, events: list, since: date, today: date) -> dict:
                                    if has(uid, lambda e, d0=d0: e["event"] == "visit" and day(e) >= d0 + timedelta(days=7))),
         "eligible_week": sum(1 for _, d0 in cohort if d0 + timedelta(days=7) <= today),
         "lessons_per_learner_week": _round1(Decimal(sum(weeks.values())) / len(weeks)) if weeks else 0,
+        "reminders_shown": sum(int(e.get("count") or 0) for e in events
+                               if e["event"] == "reminder_shown" and day(e) >= since),
+        "reminded_sessions": sum(int(e.get("count") or 0) for e in events
+                                 if e["event"] == "reminded_session" and day(e) >= since),
     }
 
 
