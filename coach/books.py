@@ -322,6 +322,13 @@ def _local_today() -> date:
     return datetime.now(ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))).date()
 
 
+def _is_day(value) -> bool:
+    try:
+        return isinstance(value, str) and bool(date.fromisoformat(value))
+    except ValueError:
+        return False
+
+
 def normalize_book(data):
     """A stored or imported book with every field of the right type and the
     plan consistent with the chapters; None if it can't be a book. (A backup
@@ -337,6 +344,10 @@ def normalize_book(data):
             value = default
         book[key] = value
     book["id"] = data["id"].strip()[:64]
+    default = new_book(_local_today())
+    for key in [k for k in book if k.endswith("_on")]:      # a date that isn't one: the new book's (or none)
+        if book[key] and not _is_day(book[key]):
+            book[key] = default.get(key, "")
     if book["status"] not in STATUSES:
         book["status"] = "setup"
     book["chapters"] = [c if isinstance(c, str) else str(c) for c in book["chapters"]
@@ -359,7 +370,7 @@ def normalize_book(data):
         book["chapter_count"] = n
     elif not plan_ok:
         book["plan"] = []
-    book["checks"] = {d: {"passed_on": c.get("passed_on") if isinstance(c.get("passed_on"), str) else "",
+    book["checks"] = {d: {"passed_on": c.get("passed_on") if _is_day(c.get("passed_on")) else "",
                           "summary": c.get("summary") if isinstance(c.get("summary"), str) else ""}
                       for d, c in book["checks"].items()
                       if isinstance(d, str) and d.isdigit() and 1 <= int(d) <= DAYS and isinstance(c, dict)}

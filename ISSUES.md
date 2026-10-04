@@ -135,3 +135,8 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 
 ### ISS-037 — No focus ring on the page area
 - The page's scrolling area takes the keyboard; it had no ring. The check passed before only because a shadow inside the area counted as a ring; with shadows gone the check saw it. It now has its own ring.
+
+### ISS-038 … ISS-040 — found by the sixth independent review
+- **ISS-038:** the settings (pace, subjects, levels) were read once per session, so a change made in another tab or device didn't reach this one until sign-in. They are re-read at the start of every run (`ui.refresh_settings`, gnosis.py). Test: `test_pages_smoke.py::test_settings_changed_in_another_tab_reach_this_one` (fails without it).
+- **ISS-039:** the first lesson's kickoff saved this session's whole copy of the day, the one save left that didn't merge into what is stored. It now saves through `ui.save_day` like every other lesson save.
+- **ISS-040:** a book whose stored or imported date wasn't a date (e.g. "soon") made Today and the reading shelf fail. A date that isn't one becomes the new book's (or none); a check-in's date likewise. Test: `test_books.py::test_a_book_with_a_date_that_isnt_one_still_opens` (fails without it).

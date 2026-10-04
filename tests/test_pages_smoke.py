@@ -235,3 +235,15 @@ def test_books_that_couldnt_be_read_are_not_taken_for_none(monkeypatch, tmp_path
     monkeypatch.setattr(type(store), "books_error", "the books couldn't be read", raising=False)
     loads(at, "views/records.py")
     assert [b["id"] for b in at.session_state["coach_log"]["books"]] == [book["id"]]
+
+
+def test_settings_changed_in_another_tab_reach_this_one(monkeypatch, tmp_path):
+    """A pace changed in Settings in one tab was undone by another tab still
+    on the old pace (its settings were read once a session)."""
+    at = app(monkeypatch, tmp_path, history=False, pace=5)
+    loads(at, "views/daily.py")
+    stored = json.loads((tmp_path / "settings.json").read_text())
+    stored["user_settings"][0]["units_per_day"] = 1                 # the other tab
+    (tmp_path / "settings.json").write_text(json.dumps(stored))
+    loads(at, "views/daily.py")
+    assert at.session_state["coach_settings"]["units_per_day"] == 1

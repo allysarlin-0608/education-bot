@@ -17,6 +17,7 @@ if auth.is_public():
 else:
     ui.require_password()      # before any data is loaded
 ui.init_state()
+ui.refresh_settings()     # as stored now: another tab may have changed the pace or the subjects
 if st.session_state.get("coach_visit_day") != ui.today():     # one "visit" a day (coach/metrics.py)
     st.session_state.coach_visit_day = ui.today()
     ui.record("visit")

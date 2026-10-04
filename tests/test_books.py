@@ -390,3 +390,18 @@ def test_coach_messages_are_in_english():
     text = "\n".join(replies) + books.plan_table(book) + books.check_start_message(book, 1)
     text = text.replace("Book", "").replace("Author", "")
     assert not any("一" <= c <= "鿿" for c in text), text
+
+
+def test_a_book_with_a_date_that_isnt_one_still_opens():
+    """A backup or old record with a mangled date: the book is still read
+    (the date becomes the new book's), and Today and the shelf still draw."""
+    from coach import core, shelf
+    log = core.parse_log({"entries": [], "books": [{
+        "id": "b1", "title": "Book", "status": "reading", "chapters": ["a", "b", "c"],
+        "started_on": "soon", "checks": {"1": {"passed_on": "yesterday", "summary": ""}}}]})
+    book = log["books"][0]
+    date.fromisoformat(book["started_on"])
+    assert book["checks"].get("1", {}).get("passed_on", "") == ""
+    books.is_open(book, 1, TODAY)
+    shelf.today_html(book, TODAY)
+    shelf.shelf_html(log["books"])

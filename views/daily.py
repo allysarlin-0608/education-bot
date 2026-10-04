@@ -108,7 +108,8 @@ def run_kickoff(i):
     entry["title"] = f"Lessons {first}–{last}"
     entry["level"] = core.lesson_level(first, start_level)
     entry["followup_question"] = core.extract_section(lesson, "Question to Explore")
-    ui.save_entry(log, entry)
+    # into the day as stored now (the stream took a while: another tab may have saved since)
+    ui.save_day(log, entry, [slot["n"]], keep=("title", "level", "followup_question"), recount=True, page_day=today)
     st.rerun()
 
 

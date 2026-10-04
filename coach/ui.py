@@ -295,8 +295,9 @@ def save_path(log, path) -> bool:
 def record(event: str) -> None:
     """Count one usage event for today (coach/metrics.py). Counting never
     gets in the way: a failure is logged, not shown, and the learner carries on."""
-    if not hasattr(st.session_state.get("coach_store"), "add_event"):
-        return
+    from coach import auth
+    if not auth.is_public() or not hasattr(st.session_state.get("coach_store"), "add_event"):
+        return                       # (the numbers are the public site's: signed-in learners only)
     try:
         st.session_state.coach_store.add_event(today().isoformat(), event)
     except storage.StorageError as e:
