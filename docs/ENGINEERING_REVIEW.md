@@ -103,3 +103,15 @@ two-store design.
 4. A session tag on every log line (a short, anonymous id). (R4)
 5. Narrow the silent catch; remove unused imports. (R5, R6)
 6. Hostile review, user flows in a browser, docs.
+
+## 5. Changes made (each verified by the full check, then committed)
+
+| Step | Change | Verified by |
+|---|---|---|
+| R1 | `coach/clock.py`: every date and timestamp; the test clock patches it alone | `tests/test_clock.py` (fails on the old code: six separate clocks) |
+| R2 | `coach/appconfig.py`: settings read without the UI module; a malformed secrets file now surfaces | `tests/test_layers.py` |
+| R3 | A read retried once on a dropped connection or 502/503/504; writes never; 4xx/500 never | `tests/test_storage.py` (blip, persistent failure, write, refusal) |
+| R4 | `[sid]` session tag on every log line | `tests/test_logging.py` |
+| R5 | No silent catch at the password gate; sign-in reads catch Streamlit's own errors only | page tests |
+| R6 | Unused imports removed | pyflakes clean |
+| Review | Setup finishes onto the stored settings (as every settings save does); admin status never cached as "no" before the store exists | page and account tests |

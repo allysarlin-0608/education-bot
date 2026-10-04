@@ -12,6 +12,7 @@ the model.
 | Entry | `streamlit_app.py`, `gnosis.py` | `st.App` with the sign-in routes; every run: `coach.freshen()`, style, the gate (password or account), the page list | hold logic of its own |
 | Pages (UI) | `views/*.py` | draw one page from the session's data; call domain functions; save through `coach.ui` | talk to Supabase or Groq directly; compute progress |
 | UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
+| Config | `clock.py`, `appconfig.py` | the one clock (the learner's timezone, today, now) and the one way to read a setting | depend on Streamlit's UI or on any other module |
 | Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `plans.py`, `metrics.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
 | AI | `llm.py`, `quizgen.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
 | Data | `storage.py` (file store and Supabase store), `supa_auth.py`, `auth.py`, `session_cookie.py`, `routes.py` | read/write entries, books, settings, usage; sign-in, sessions, invites | trust anything the browser sends without the signed-in user's token |
@@ -104,9 +105,31 @@ the sidebar all use them.
 - **Plans** (`plans.py`): what each plan would include; not enforced
   (`ENFORCED = False`), no page mentions plans.
 
+## Rules the code keeps (and tests that hold them)
+
+- **Layers** (`tests/test_layers.py`): the domain modules are pure (no
+  Streamlit, no database, no network); the data, auth and AI modules never
+  import the UI helpers.
+- **One clock** (`tests/test_clock.py`): only `clock.py` asks the system
+  for the date; tests move time for the whole app by replacing
+  `clock.today` / `clock.now_iso`.
+- **Settings are saved whole**, so every save starts from the row as stored
+  now (`ui.refresh_settings()` first: in Settings, the setup, the New goal
+  page). Records are merged on write (`ui.save_day`).
+- **Database calls** (`storage.SupabaseStore._request`): 10 s timeout; a
+  read is asked once more after a dropped connection or a 502/503/504; a
+  write never is (it may have landed). Every failure becomes a
+  `StorageError` with a message fit to show; the details go to the log.
+- **Model calls** (`llm.py`): paced to the per-minute limit, retried on
+  429/5xx within a deadline, counted toward the daily allowance; a failure
+  is a friendly message and a Retry button, never a half-saved lesson.
+- **Logs** (`coach/__init__.py`): one line per event, `[sid]` = a short tag
+  of the Streamlit session (never a name, email or user id); never a
+  secret, token or answer.
+
 ## Configuration
 
-Secrets come from Streamlit secrets or the environment (`ui.get_setting`):
+Secrets come from Streamlit secrets or the environment (`appconfig.get_setting`):
 `SUPABASE_URL`, `SUPABASE_KEY` (the publishable key only; a secret key is
 refused), `GROQ_API_KEY`, `APP_PASSWORD`, `APP_MODE=public`. None is ever
 logged or shown. `.streamlit/config.toml` caps uploads at 20 MB.
