@@ -117,8 +117,10 @@ def is_admin() -> bool:
     if who["sub"] not in cache:
         from coach import storage
         store = st.session_state.get("coach_store")
+        if store is None:
+            return False                     # (no store yet: not cached, asked again once there is)
         try:
-            cache[who["sub"]] = bool(store and store.is_admin(who["email"]))
+            cache[who["sub"]] = bool(store.is_admin(who["email"]))
         except storage.StorageError:
             return False                     # not cached: asked again next time
     return cache[who["sub"]]
