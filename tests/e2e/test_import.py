@@ -94,7 +94,10 @@ def test_a_huge_file_is_refused(public_app, pages, tmp_path):
     open_backup(p, app)
     big = json.dumps({"entries": [{"date": "2026-09-01", "topic": "philosophy", "lesson": "x" * 1000}] * 25000})
     text = upload(p, tmp_path, "huge.json", big.encode())
-    assert "too large" in text.lower(), "a 25 MB backup should be refused with a reason"
+    # refused with a reason: by the upload itself (server.maxUploadSize, 20 MB) before
+    # the app's own check (MAX_BACKUP_BYTES) would see it
+    assert "too large" in text.lower() or "must be 20.0mb or smaller" in text.lower(), \
+        "a 25 MB backup should be refused with a reason"
 
 
 def test_a_failed_import_keeps_the_records(public_app, pages, tmp_path):

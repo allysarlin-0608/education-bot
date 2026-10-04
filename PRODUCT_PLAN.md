@@ -250,3 +250,13 @@ This is a decision before any public launch, not before building.
    not needed for building and testing.*
 8. **Language of the product**: English UI today. *Recommendation: keep
    English; add Traditional Chinese later as its own phase.*
+
+---
+
+## 7. Decisions made
+- **Starting audience (Phase 1)**: all three — working adults growing their
+  skills (career, money, business), lifelong learners following their
+  curiosity (art, science, history, travel), and students learning for school
+  or an exam. Onboarding suggestions and examples cover the three.
+- **Certificates** become one of the paid plan's benefits (Phase 5 / Phase 4
+  split).
