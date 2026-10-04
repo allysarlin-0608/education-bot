@@ -25,7 +25,7 @@ import time
 
 import streamlit as st
 
-from coach import ui
+from coach import appconfig, ui
 
 logger = logging.getLogger("coach.auth")
 
@@ -63,7 +63,7 @@ ERRORS = {  # supa_auth.AuthError codes → what the person reads
 
 
 def mode() -> str:
-    return PUBLIC if ui.get_setting("APP_MODE").strip().lower() == PUBLIC else PERSONAL
+    return PUBLIC if appconfig.get_setting("APP_MODE").strip().lower() == PUBLIC else PERSONAL
 
 
 def is_public() -> bool:

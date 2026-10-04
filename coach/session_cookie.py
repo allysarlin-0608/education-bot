@@ -24,7 +24,7 @@ from streamlit.web.server.starlette.starlette_server_config import (
     XSRF_COOKIE_NAME,
 )
 
-from coach import ui
+from coach import appconfig
 
 
 # Written into every session this app makes. A cookie without it (e.g. one
@@ -36,7 +36,7 @@ MARK_VERSION = 1
 
 def app_url() -> str:
     """The app's public address, e.g. https://x.streamlit.app (APP_URL)."""
-    return ui.get_setting("APP_URL").rstrip("/")
+    return appconfig.get_setting("APP_URL").rstrip("/")
 
 
 def origin() -> str:

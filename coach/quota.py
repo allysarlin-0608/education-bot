@@ -10,7 +10,7 @@ import logging
 
 import streamlit as st
 
-from coach import auth, storage, ui
+from coach import appconfig, auth, clock, storage
 
 LIMIT_REACHED = "You've reached today's limit. Your progress is saved. See you tomorrow."
 DEFAULT_REQUESTS, DEFAULT_TOKENS = 80, 150_000
@@ -20,7 +20,7 @@ logger = logging.getLogger("coach.quota")
 
 def _limit(name: str, default: int) -> int:
     try:
-        return int(ui.get_setting(name) or default)
+        return int(appconfig.get_setting(name) or default)
     except ValueError:
         return default
 
@@ -42,7 +42,7 @@ def over_limit() -> bool:
     if not counted() or auth.is_admin():
         return False
     try:
-        used = _store().usage_today(ui.today().isoformat())
+        used = _store().usage_today(clock.today().isoformat())
     except storage.StorageError as e:          # can't tell: let the call through, and say so in the log
         logger.error("couldn't read today's AI usage: %s", e)
         return False
@@ -55,6 +55,6 @@ def record(tokens_used: int) -> None:
     if not counted():
         return
     try:
-        _store().add_usage(ui.today().isoformat(), 1, max(int(tokens_used), 0))
+        _store().add_usage(clock.today().isoformat(), 1, max(int(tokens_used), 0))
     except storage.StorageError as e:
         logger.error("couldn't record AI usage: %s", e)
