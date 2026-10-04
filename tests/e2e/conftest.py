@@ -200,7 +200,7 @@ class Page:
     """A browser tab with what the audit checks recorded."""
 
     def __init__(self, browser, width=1440, height=None, scheme="light", device=None, reduced_motion=False):
-        touch = width < 900
+        touch = width < 1300          # phones and both iPad orientations (her iPad, landscape, is 1180)
         ua = IPHONE if width < 500 else (IPAD if device == "ipad" or 700 < width < 1300 and touch else None)
         self.ctx = browser.new_context(viewport={"width": width, "height": height or WIDTHS.get(width, 900)},
                                        color_scheme=scheme, has_touch=touch, is_mobile=touch and width < 500,

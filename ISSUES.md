@@ -40,6 +40,8 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 | ISS-031 | P2 | Data / backup | A brief failure reading books on arriving at Progress emptied them (and a backup made then had none) | fixed |
 | ISS-032 | P2 | Review | A card deleted in one tab came back when another tab saved the day | fixed |
 | ISS-033 | P2 | Progress / cost | The record was re-read after the bar was drawn (different numbers), and twice when a session began on Progress | fixed |
+| ISS-034 | P1 | Visual / iPad | Text ran into the text and buttons under it (Review → Collection cards; a course map unit's heading over its caption), worst on iPad Safari | fixed |
+| ISS-035 | P2 | Tests | The iPad-landscape tests (1180) ran as a desktop with a mouse, and nothing checked for text drawn over text | fixed |
 
 ## Details
 
@@ -117,3 +119,9 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 - **ISS-031:** books that couldn't be read (`books_error`) are kept as this session holds them, never replaced by an empty list. Test: `test_pages_smoke.py::test_books_that_couldnt_be_read_are_not_taken_for_none` (fails without it).
 - **ISS-032:** deleting a card notes its id on its lesson (`removed`, kept through saves and backups); a merge never brings back a card noted there. Test: `test_curriculum.py::test_a_card_deleted_in_another_tab_isnt_brought_back_by_a_merge`.
 - **ISS-033:** the arrival re-read is done in gnosis.py before the bar and sidebar, and skipped when the record was loaded in the same run.
+
+### ISS-034 — Text on top of text (reported on the iPad, Review → Collection)
+- **Root cause:** Streamlit pulls every text block up by -1rem, to cancel a paragraph's own bottom margin. GNOSIS removes those margins (headings and paragraphs carry none), so the pull put the next line onto the text above it; Safari's slightly taller lines made it an overlap you could see. Separately, a collection card was three blocks stacked 4px apart.
+- **Fix:** one global rule (`coach/style.py`): a text block keeps its height and ends where its last line ends. The collection card is now one block of text spaced by its own type (word, a quiet source line, the answer), then its actions.
+- **Siblings:** the new check found the course map's unit heading over its "Lessons 1–5 · …" line; fixed by the same rule.
+- **Safeguard (ISS-035):** every screenshot in `tests/e2e/test_screens.py` now fails on any two pieces of text whose boxes overlap, and the tests treat iPad landscape (1180) as a touch screen, as hers is.

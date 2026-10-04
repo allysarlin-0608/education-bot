@@ -18,7 +18,7 @@ of truth, and draws one surface under it:
   into it (or back) when the finger lifts. Vertical scrolling, sideways
   scrolling areas, fields and the screen edges are left alone.
 
-Kept apart from glass.py: this is interaction, that is material. The
+The
 script has no "<" in it (Streamlit drops a script that looks like it
 holds a tag)."""
 

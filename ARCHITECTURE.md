@@ -70,19 +70,24 @@ Secrets come from Streamlit secrets or the environment (`ui.get_setting`):
 refused), `GROQ_API_KEY`, `APP_PASSWORD`, `APP_MODE=public`. None is ever
 logged or shown. `.streamlit/config.toml` caps uploads at 20 MB.
 
-## Visual system (Quiet Precision)
+## Visual system (Sharp Minimalism)
 
-All in `coach/style.py`, tokens in `:root`:
-- **Lines, three levels, all 1px**: `--line-1` structural (sections, the
-  header), `--line-2` secondary (rows inside a list), `--line-3`
-  interactive (fields, outlined buttons); focus adds `--outline`.
-- **Surfaces**: a tint (`--surface`) without a shadow; only what floats
-  (menus, the dock, dialogs, toasts) is lifted.
-- **Corners**: `--radius-small` 12 controls, `--radius-medium` 16 surfaces
-  and images, `--radius-large` 20 floating things, pill only for segmented
-  controls, tags and dots.
-- Grey only; type carries the hierarchy; motion only for continuity, and
-  none under `prefers-reduced-motion`.
+All in `coach/style.py`, tokens in `:root`; the existing typefaces are kept.
+- **Solid and flat**: black, white and grey only (`--env` page, `--surface`
+  one solid step of grey); no glass, blur, gradient, glow or shadow. Colour
+  only where it means something (an error).
+- **Square**: every corner 0 (`--radius-*` are 0, and Streamlit's own parts
+  are squared); the only round things are two small dots.
+- **Lines, all 1px and few**: `--line-1` structural, `--line-2` rows in a
+  list, `--line-3` the edge of a field or an outlined button; a line only
+  where it says where one thing ends.
+- **Buttons**: primary solid ink with page-coloured text, secondary a 1px
+  edge, tertiary words only. **Choices** (switches, the page bar): the
+  chosen word in full ink over a 2px ink rule; no boxes or pills.
+- **Progress**: a 3px solid bar in ink on a grey track.
+- Type carries the hierarchy; motion only for continuity (no bounce or
+  zoom), and none under `prefers-reduced-motion`. `coach/glass.py` keeps
+  only page behaviours (light/dark mark, touch, calendar), no effects.
 
 ## Tests and deployment
 

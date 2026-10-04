@@ -28,80 +28,58 @@ CSS = f"""
      in Settings), and light-dark() follows it. */
   --env: light-dark(#FFFFFF, #000000);          /* pure white or pure black, nothing else */
   --label: light-dark(#141414, #EDEDED); --label-2: light-dark(#5C5C5C, #9B9B9B);
-  --label-3: light-dark(#737373, #7C7C7C);   /* 4.5:1 or more on white, the off-white cards and black */ --strong: light-dark(#000000, #FFFFFF);
-  /* LINES: three levels, all 1px, never decoration (Quiet Precision).
-     --line-1 structural: separates sections, the header, a list from what follows
-     --line-2 secondary: rows inside a list, quieter than the section around them
-     --line-3 interactive: the edge of something to type into or press
-              (fields, outlined buttons); focus and selection add --outline.
-     A line is drawn only where it says where one thing ends; a surface that
-     needs a line and a fill and a shadow is two too many. Surfaces are a
-     tint (--surface) with no shadow; only what floats above the page
-     (menus, the dock, dialogs, toasts) is lifted. */
-  --line-1: light-dark(rgba(0, 0, 0, 0.09), rgba(255, 255, 255, 0.1));
-  --line-2: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.065));
-  --line-3: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.16));
-  --surface: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.05));   /* grey text (--label-3) stays 4.5:1 on it */
+  --label-3: light-dark(#6B6B6B, #858585);   /* 4.5:1 or more on the page and on --surface */ --strong: light-dark(#000000, #FFFFFF);
+  /* SHARP MINIMALISM. Solid black, white and grey; square corners; no glass,
+     blur, gradient, glow or shadow anywhere. Type, spacing and alignment
+     carry the hierarchy; a line or a filled surface is used only where it
+     says where one thing ends.
+     LINES, all 1px:
+     --line-1 structural: a section, the header, a list from what follows
+     --line-2 secondary: rows inside a list
+     --line-3 interactive: the edge of a field or an outlined button
+     SURFACES: --env (the page) and --surface (one solid step of grey, for the
+     rare block that needs to stand apart); nothing floats except menus,
+     dialogs and toasts, which are solid and edged with --line-1. */
+  --line-1: light-dark(#E2E2E2, #262626);
+  --line-2: light-dark(#EDEDED, #1A1A1A);
+  --line-3: light-dark(#BDBDBD, #4A4A4A);
+  --surface: light-dark(#F4F4F4, #121212);
   --hair: var(--line-2);
-  --wash: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
-  --field: light-dark(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.03));
+  --wash: var(--surface);
+  --field: var(--env);
   --field-edge: var(--line-3);
-  --field-focus: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.5));
-  --chrome: light-dark(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.02));
-  --sidebar: light-dark(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.015));
-  --popover: light-dark(rgba(250, 250, 250, 0.82), rgba(20, 20, 20, 0.72));
-  --popover-edge: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
-  --outline: light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.7));
+  --field-focus: var(--strong);
+  --chrome: var(--env);
+  --sidebar: var(--env);
+  --popover: var(--env);
+  --popover-edge: var(--line-1);
+  --outline: var(--strong);
   --selection: light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.22));
 
-  /* glass: thin, lightly frosted, physically curved. What's behind stays
-     clearly visible and recognizable, just softened (a light frost, never
-     milky or cloudy); the rim bends it a little more, diffuses it a little
-     more and gathers a trace of light, which is what gives the glass its
-     rounded, slightly thick edge. Only greys; no colour, no stroke, no glow. */
-  --glass: light-dark(rgba(0, 0, 0, 0.012), rgba(255, 255, 255, 0.028));
-  --glass-strong: light-dark(rgba(0, 0, 0, 0.026), rgba(255, 255, 255, 0.05));
-  --glass-faint: light-dark(rgba(0, 0, 0, 0.006), rgba(255, 255, 255, 0.016));
+  /* (former glass tokens: kept as names, all solid and flat now) */
+  --glass: transparent;
+  --glass-strong: var(--surface);
+  --glass-faint: transparent;
   --glass-edge: transparent;
   --glass-edge-strong: transparent;
   --glass-edge-soft: transparent;
   --glass-edge-bubble: transparent;
-  --glass-edge-circle: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.36));
-  --hilite: light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.14));
-  --hilite-soft: light-dark(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.1));
-  --shadow: light-dark(rgba(0, 0, 0, 0.035), rgba(0, 0, 0, 0.5));
-  /* the frost: light, over the whole surface. Where the browser can (Chromium,
-     marked by coach/glass.py) the lg-refract filter does it and adds the rim;
-     elsewhere a plain light blur. The chat box also quiets what passes behind
-     it a little, so what she types stays readable. Dark theme: see below. */
-  --glass-blur: blur(1.3px);
-  --glass-optics: blur(1.4px);
-  --glass-optics-legible: blur(2px) contrast(0.45) brightness(1.4);
-  /* thickness: a faint inner highlight along the top, the lower inner edge a
-     shade deeper, and a soft band just inside the rim; all low contrast */
-  --optic:
-    inset 0 1px 1px -0.5px var(--hilite-soft),
-    inset 0 -1px 1px -0.5px light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.04)),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.05)),
-    inset 0 0 14px -7px light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.08)),
-    0 1px 2px var(--shadow);
-  --optic-strong:
-    inset 0 1px 1px -0.5px var(--hilite),
-    inset 0 -1px 1px -0.5px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.05)),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.065)),
-    inset 0 0 18px -8px light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.1)),
-    0 1px 3px var(--shadow);
-  --rim: var(--optic-strong);
-  /* floating glass stands a hair off the page: the softest contact shadow */
-  --lift: 0 8px 26px -14px light-dark(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.8));
-  --glass-depth: var(--optic-strong);
-  --glass-depth-soft: var(--optic);
+  --glass-edge-circle: var(--line-3);
+  --hilite: transparent;
+  --hilite-soft: transparent;
+  --shadow: transparent;
+  --glass-blur: none;
+  --glass-optics: none;
+  --glass-optics-legible: none;
+  --optic: none;
+  --optic-strong: none;
+  --rim: none;
+  --lift: none;
+  --glass-depth: none;
+  --glass-depth-soft: none;
 
-  /* geometry */
-  /* CORNERS: controls (buttons, fields) small; quiet surfaces and images
-     medium; what floats (dialogs, menus, the chat input) large; pill only
-     for segmented controls, tags and dots. Lines and bars are square. */
-  --radius-small: 12px; --radius-medium: 16px; --radius-large: 20px; --radius-pill: 999px;
+  /* geometry: square corners everywhere (dots stay round: a dot is a dot) */
+  --radius-small: 0; --radius-medium: 0; --radius-large: 0; --radius-pill: 0;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
   --control: 44px;
@@ -125,31 +103,15 @@ CSS = f"""
 [data-testid="stAppViewContainer"], [data-testid="stMain"] {{ background: transparent; }}
 ::selection {{ background: var(--selection); color: var(--strong); }}
 
-/* the glass filters for the dark theme (coach/glass.py marks the page) */
-:root[data-scheme="dark"] {{ --glass-optics-legible: blur(2px) brightness(0.5); }}
-:root[data-refract] {{
-  --glass-optics: url(#lg-refract);
-  --glass-optics-legible: url(#lg-refract) blur(0.6px) contrast(0.45) brightness(1.4);
-}}
-:root[data-refract][data-scheme="dark"] {{
-  /* on black, no gathered light at the rim (lg-refract-dim): it read as a grey slab */
-  --glass-optics: url(#lg-refract-dim);
-  --glass-optics-legible: url(#lg-refract-dim) blur(0.6px) brightness(0.5);
-}}
-
-/* corners: generous and continuous, the curve easing into the straight edge
-   (a superellipse where the browser can draw one) */
-.stButton button, .stFormSubmitButton button, [data-testid="stChatInput"], [class*="st-key-lcard_"],
-[data-testid="stChatMessage"], .st-key-day_done, [data-testid="stToast"], [data-trigger],
-[class*="st-key-prog_day_"], [class*="st-key-reader_"], [class*="st-key-cal_20"] button {{ corner-shape: superellipse(1.6); }}
-
 /* ---------- chrome ---------- */
 [data-testid="stDecoration"], footer,
 [data-testid="stHeaderActionElements"] {{ display: none !important; }}
-[data-testid="stHeader"] {{
-  background: var(--glass);
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-optics);
-}}
+[data-testid="stHeader"] {{ background: var(--env); }}      /* solid: nothing shows through the bar */
+/* every Streamlit component square, whatever its own default (popover and
+   expander, select and date fields, alerts, code, images, toasts, menus) */
+.stApp :is(button, input, textarea, details, summary, pre, code, img, [data-baseweb="select"] > div,
+  [data-testid="stExpander"] > details, [data-testid="stAlert"] > div, [data-testid="stImage"] img),
+[data-baseweb="popover"] :is(div, ul, li), [data-testid="stToast"], [role="dialog"] {{ border-radius: 0 !important; }}
 [data-testid="stSidebar"] {{
   background: var(--env);                /* a plain surface, so the page links stay readable over the page on a phone */
   border-right: 1px solid var(--line-1);
@@ -183,6 +145,13 @@ CSS = f"""
   padding: var(--space-6) 0 0; margin: 0;
 }}
 .stApp p, .stApp li {{ line-height: 1.65; }}
+/* Streamlit pulls each text block up by -1rem (meant to cancel a paragraph's
+   own bottom margin). Here blocks are spaced by their containers' gap and
+   headings and paragraphs carry no stray margins, so that pull put the next
+   line on top of the text (a heading over its caption; worse on iPad). A
+   block ends where its last line ends. */
+[data-testid="stMarkdownContainer"] {{ margin-bottom: 0 !important; }}
+[data-testid="stMarkdownContainer"] > :last-child {{ margin-bottom: 0 !important; }}
 /* Streamlit fades captions to 60%; --label-3 is already the lightest grey that reads at 4.5:1 */
 [data-testid="stCaptionContainer"], .stApp small {{ color: var(--label-3); opacity: 1; }}
 .stApp a {{ color: var(--label); text-underline-offset: 0.2em; text-decoration-color: var(--label-3); }}
@@ -197,45 +166,72 @@ CSS = f"""
   font-variant-numeric: lining-nums tabular-nums;
 }}
 
-/* ---------- buttons: thin glass ---------- */
+/* ---------- buttons: rectangles, part of the type ----------
+   primary: solid ink, page-coloured text (black on white, white on black)
+   secondary: the page's colour, a 1px edge
+   tertiary: words only; the edge-less link-like action */
 .stButton button, .stFormSubmitButton button, .stDownloadButton button {{
   min-height: var(--control); padding: 0 var(--space-5);
-  border-radius: var(--radius-small); font-weight: 500; letter-spacing: 0.01em;
-  background: var(--glass-faint); color: var(--label);
-  border: 1px solid var(--glass-edge-soft);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-depth-soft);
+  border-radius: 0; font-weight: 500; letter-spacing: 0.01em;
+  background: var(--env); color: var(--label);
+  border: 1px solid var(--line-3); box-shadow: none;
   transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease),
-              transform var(--t-micro) var(--ease), box-shadow var(--t-micro) var(--ease);
+              color var(--t-micro) var(--ease);
 }}
-.stButton button[kind="primary"], .stFormSubmitButton button[kind="primaryFormSubmit"] {{
-  background: var(--glass-strong); color: var(--strong);
-  border-color: var(--glass-edge-strong); box-shadow: var(--glass-depth);
+.stButton button[kind="primary"], .stFormSubmitButton button[kind="primaryFormSubmit"],
+.stDownloadButton button[kind="primary"] {{
+  background: var(--strong); color: var(--env); border-color: var(--strong);
+}}
+.stButton button[kind="primary"] p, .stFormSubmitButton button[kind="primaryFormSubmit"] p {{ color: var(--env); }}
+.stButton button[kind="tertiary"] {{
+  background: transparent; border-color: transparent; padding: 0 var(--space-1); color: var(--label-2);
 }}
 /* hover only where there is a real pointer: on a touch screen a tap leaves :hover stuck on */
 @media (hover: hover) {{
   .stButton button:hover, .stFormSubmitButton button:hover, .stDownloadButton button:hover {{
-    background: var(--glass-strong); border-color: var(--glass-edge-strong); color: var(--strong);
+    border-color: var(--strong); color: var(--strong);
+  }}
+  .stButton button[kind="primary"]:hover, .stFormSubmitButton button[kind="primaryFormSubmit"]:hover {{
+    background: var(--label); border-color: var(--label); color: var(--env);
+  }}
+  .stButton button[kind="tertiary"]:hover {{
+    border-color: transparent; color: var(--label);
+    text-decoration: underline; text-underline-offset: 0.25em; text-decoration-thickness: 1px;
   }}
 }}
 .stButton button:active, .stFormSubmitButton button:active, .stDownloadButton button:active {{
-  transform: scale(0.97); transition-duration: var(--t-press);
+  opacity: 0.7; transition-duration: var(--t-press);
 }}
 .stButton button:disabled, .stFormSubmitButton button:disabled {{
-  background: var(--glass-faint) !important; border-color: transparent !important; box-shadow: none !important;
-  color: var(--label-3) !important; opacity: 0.55; cursor: default;
+  background: var(--env) !important; border-color: var(--line-1) !important; box-shadow: none !important;
+  color: var(--label-3) !important; opacity: 1; cursor: default;
 }}
+.stButton button[kind="primary"]:disabled {{ background: var(--surface) !important; border-color: var(--surface) !important; }}
 .stButton button:focus-visible, .stFormSubmitButton button:focus-visible,
 .stDownloadButton button:focus-visible {{
-  outline: 1px solid var(--outline); outline-offset: 2px; box-shadow: var(--glass-depth);
+  outline: 1px solid var(--outline); outline-offset: 2px;
 }}
 
-/* ---------- fields: quiet wells, not glass ---------- */
+/* ---------- switches and pills (segmented controls): words, the chosen one
+   in full ink over a 2px rule; no boxes. Switches with a travelling rule
+   (motion.py: [data-cx]) draw the rule themselves. ---------- */
+[data-testid="stButtonGroup"] button {{
+  background: transparent !important; border: none !important; border-radius: 0 !important;
+  color: var(--label-2); box-shadow: none;
+}}
+[data-testid="stButtonGroup"] button p {{ color: inherit; }}
+[data-testid="stButtonGroup"] button[aria-checked="true"] {{
+  color: var(--label); box-shadow: inset 0 -2px 0 var(--strong);
+}}
+[data-testid="stButtonGroup"] button[aria-checked="true"] p {{ font-weight: 500; }}
+@media (hover: hover) {{ [data-testid="stButtonGroup"] button:hover {{ color: var(--label); }} }}
+
+/* ---------- fields: solid, a 1px edge, ink when in use ---------- */
 [data-testid="stSelectbox"] [role="group"], [data-testid="stDateInputField"],
 [data-testid="stTextInputRootElement"], [data-testid="stTextAreaRootElement"] {{
   min-height: var(--control); box-sizing: border-box;
   background: var(--field) !important; border: 1px solid var(--field-edge) !important;
-  border-radius: var(--radius-small) !important;
+  border-radius: 0 !important;
   transition: border-color var(--t-micro) var(--ease);
 }}
 [data-testid="stTextAreaRootElement"] {{ min-height: 0; }}
@@ -257,8 +253,8 @@ CSS = f"""
   --glass-edge-strong: rgb(from currentColor r g b / 0.5);
   --hilite: rgba(255, 255, 255, 0.3);
   background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.97) !important;
-  border: 1px solid rgb(from currentColor r g b / 0.08) !important; border-radius: var(--radius-medium) !important;
-  box-shadow: var(--glass-depth-soft) !important; overflow: hidden;
+  border: 1px solid rgb(from currentColor r g b / 0.08) !important; border-radius: 0 !important;
+  box-shadow: none !important; overflow: hidden;
   animation: fade 280ms var(--ease) both;   /* opacity only: the popover is positioned by transform */
 }}
 @keyframes fade {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
@@ -270,30 +266,29 @@ CSS = f"""
   --hilite: rgba(255, 255, 255, 0.3);
 }}
 [role="grid"] [role="button"] {{
-  border-radius: 50% !important; border: 1px solid transparent;
+  border-radius: 0 !important; border: 1px solid transparent;
   transition: background-color var(--t-state) var(--ease), border-color var(--t-state) var(--ease), transform var(--t-state) var(--ease);
 }}
 [role="grid"] [role="button"][data-selected="true"] {{
-  background: var(--glass-strong) !important; color: var(--strong) !important;
-  border-color: var(--glass-edge-strong) !important; box-shadow: inset 0 1px 1px -1px var(--hilite);
-  animation: settle 300ms var(--ease) both;
+  background: var(--strong) !important; color: var(--env) !important;
+  border-color: var(--strong) !important; box-shadow: none;
 }}
 [role="grid"] [role="button"][data-hovered="true"]:not([data-selected="true"]) {{ background: var(--wash) !important; }}
 
-/* ---------- checkbox: a glass circle, the tick draws itself ---------- */
+/* ---------- checkbox: a square, solid ink when ticked; the tick draws itself ---------- */
 [data-testid="stCheckbox"] label {{ align-items: center; gap: var(--space-3); min-height: var(--control); }}
 [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p {{ margin: 0; line-height: 22px; }}
 [data-testid="stCheckbox"] label > div:has(> svg) {{
-  width: 22px; height: 22px; flex: 0 0 22px; margin: 0 !important; border-radius: 50%; box-sizing: border-box;
+  width: 22px; height: 22px; flex: 0 0 22px; margin: 0 !important; border-radius: 0; box-sizing: border-box;
   display: grid; place-items: center;
   background: transparent !important; border: 1px solid var(--glass-edge-circle) !important;
   transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease),
               box-shadow var(--t-micro) var(--ease);
 }}
 [data-testid="stCheckbox"][data-selected="true"] label > div:has(> svg) {{
-  background: var(--glass-strong) !important; border-color: var(--glass-edge-strong) !important;
-  box-shadow: var(--optic-strong);
+  background: var(--strong) !important; border-color: var(--strong) !important;
 }}
+[data-testid="stCheckbox"][data-selected="true"] label > div > svg polyline {{ stroke: var(--env) !important; }}
 [data-testid="stCheckbox"] label > div > svg {{ width: 11px; height: 9px; overflow: visible; opacity: 1 !important; }}
 [data-testid="stCheckbox"] label > div > svg polyline {{
   fill: none; stroke: var(--strong) !important; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
@@ -302,9 +297,9 @@ CSS = f"""
 }}
 [data-testid="stCheckbox"][data-selected="true"] label > div > svg polyline {{ stroke-dashoffset: 0; }}
 
-/* ---------- navigation: glass pill on the current page ---------- */
+/* ---------- navigation: the current page in full ink, nothing behind it ---------- */
 [data-testid="stSidebarNav"] a {{
-  min-height: 36px; border-radius: var(--radius-small); border: 1px solid transparent;
+  min-height: 36px; border-radius: 0; border: 1px solid transparent;
   background: transparent !important;
   transition: background-color var(--t-space) var(--ease), border-color var(--t-space) var(--ease),
               box-shadow var(--t-space) var(--ease);
@@ -312,8 +307,7 @@ CSS = f"""
 [data-testid="stSidebarNav"] a span {{ color: var(--label-2); }}
 @media (hover: hover) {{ [data-testid="stSidebarNav"] a:hover span {{ color: var(--label); }} }}
 [data-testid="stSidebarNav"] a[aria-current="page"] {{
-  background: var(--glass) !important; border-color: var(--glass-edge);
-  box-shadow: var(--glass-depth-soft);
+  background: transparent !important; border-color: transparent;
 }}
 [data-testid="stSidebarNav"] a[aria-current="page"] span {{ color: var(--strong); font-weight: 500; }}
 [data-testid="stSidebar"] h3 {{ font-size: 1.125rem; font-weight: 400; }}
@@ -328,14 +322,14 @@ CSS = f"""
 /* ---------- notices: gray text on a hairline, no color ---------- */
 [data-testid="stAlertContainer"] {{
   background: transparent !important; color: var(--label) !important;
-  border: 1px solid var(--field-edge); border-radius: var(--radius-small);
+  border: 1px solid var(--field-edge); border-radius: 0;
 }}
 [data-testid="stAlertContainer"] [data-testid="stAlertDynamicIcon"] {{ display: none; }}
 /* rendered outside .stApp like the floating menus, so (as for those) the fill
    is the theme's text color inverted: dark behind light text in dark mode */
 [data-testid="stToast"] {{
   background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.97) !important; border: none;
-  border-radius: var(--radius-medium); box-shadow: 0 0 0 1px rgb(from currentColor r g b / 0.08), var(--lift);
+  border-radius: 0; box-shadow: none;
 }}
 /* the lesson reads at a comfortable line length on wide screens */
 [data-testid="stChatMessage"] :is(p, li, blockquote) {{ max-width: 68ch; }}
@@ -348,43 +342,29 @@ CSS = f"""
 }}
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {{
   width: fit-content; max-width: 85%; margin-left: auto;
-  padding: var(--space-3) var(--space-4); border-radius: var(--radius-large);
-  background: var(--glass); border: 1px solid var(--glass-edge-bubble);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-depth-soft);
+  padding: var(--space-3) var(--space-4); border-radius: 0;
+  background: var(--surface); border: none; box-shadow: none;     /* her words: one solid step of grey */
 }}
 [data-testid="stBottom"], [data-testid="stBottom"] > div, [data-testid="stBottomBlockContainer"] {{
   background: transparent !important;
 }}
-/* the chat box: a physical control resting just above the page. Readable
-   first: enough of a surface behind the text for clear contrast (still a
-   little see-through, with a controlled blur), a fine edge that catches the
-   light, and a soft shadow to lift it off the page. It answers her: a
-   touch firmer when focused, the send button fills once there is text,
-   and presses in a little when tapped. */
+/* the chat box: a solid field at the foot of the page, its edge 1px, firm
+   (ink) when she is in it; the send button fills once there is text */
 [data-testid="stChatInput"] {{
-  min-height: 56px; box-sizing: border-box;
-  border-radius: var(--radius-large) !important; border: none !important;
-  /* exactly the header's glass: the same fill and the same filter (the
-     refraction where the browser can, the light frost elsewhere), focused
-     or not. Only a hairline outline, so she can see where the box is. */
-  background: var(--glass) !important;
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-optics);
-  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
-  transition: box-shadow 360ms var(--ease), background-color 360ms var(--ease);
+  min-height: 56px; box-sizing: border-box; border-radius: 0 !important;
+  background: var(--env) !important; border: 1px solid var(--line-3) !important; box-shadow: none;
+  transition: border-color var(--t-micro) var(--ease);
 }}
-[data-testid="stChatInput"]:focus-within {{
-  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.28), rgba(255, 255, 255, 0.28));
-}}
+[data-testid="stChatInput"]:focus-within {{ border-color: var(--strong) !important; }}
 [data-testid="stChatInput"] > div, [data-testid="stChatInput"] textarea {{ background: transparent !important; border: none !important; }}
 [data-testid="stChatInput"] textarea {{ color: var(--label) !important; caret-color: var(--label); }}
 [data-testid="stChatInput"] textarea::placeholder {{ color: var(--label-2); opacity: 1; }}
 [data-testid="stChatInputSubmitButton"] {{
-  border-radius: 50% !important; background: transparent !important; color: var(--label-3) !important;
+  border-radius: 0 !important; background: transparent !important; color: var(--label-3) !important;
   transition: background-color 320ms var(--ease), color 320ms var(--ease), transform var(--t-micro) var(--ease);
 }}
 [data-testid="stChatInputSubmitButton"]:not(:disabled) {{ background: var(--label) !important; color: var(--env) !important; }}
-[data-testid="stChatInputSubmitButton"]:not(:disabled):active {{ transform: scale(0.92); transition-duration: var(--t-press); }}
+[data-testid="stChatInputSubmitButton"]:not(:disabled):active {{ opacity: 0.7; transition-duration: var(--t-press); }}
 /* The chat box has its own band at the bottom of the screen, under the page
    rather than over it: the page's scrolling area ends just above the band
    (--dock-h, --kb: the box's height and the on-screen keyboard, kept by
@@ -402,7 +382,7 @@ CSS = f"""
 
 /* ---------- progress: a hairline filling with light ---------- */
 [data-testid="stProgress"] [role="progressbar"],
-[data-testid="stProgress"] [role="progressbar"] div {{ height: 2px !important; border-radius: 1px; }}
+[data-testid="stProgress"] [role="progressbar"] div {{ height: 2px !important; border-radius: 0; }}
 
 /* ---------- where a move lands (below the header) ---------- */
 .jump-anchor {{ height: 0; scroll-margin-top: 96px; }}      /* land below the header */
@@ -468,8 +448,8 @@ html {{ scroll-behavior: smooth; }}
 </style>
 """
 
-# The course progress bar (coach/progress_bar.py): the one place with a hue,
-# a pale air-blue liquid in clear glass. Kept apart from CSS because the
+# The course progress bar (coach/progress_bar.py): a solid fill in ink on a
+# grey track, nothing else. Kept apart from CSS because the
 # @property rules would need every brace doubled in the f-string. Their
 # "<number>" is written \3C number> (the same string to CSS) because st.html
 # sanitizes the markup and a literal "<number" reads as a tag, which drops
@@ -477,20 +457,20 @@ html {{ scroll-behavior: smooth; }}
 LIQUID = """
 <style>
 @property --p { syntax: "\\3C number>"; inherits: true; initial-value: 0; }      /* the liquid's front */
-@property --surge { syntax: "\\3C number>"; inherits: true; initial-value: 0; }  /* 0 still … 1 moving */
 :root {
-  --lq-liquid: light-dark(#C2D8E7, #D0E2EF);     /* one step deeper on a pale page */
-  --lq-hi: #EAF4FA;
-  --lq-deep: light-dark(#B4CEE0, #C2D8E7);
-  --lq-glow: light-dark(#D0E2EF, #D9EBF7);
-  --lq-glass-top: light-dark(rgba(0, 0, 0, 0.006), rgba(255, 255, 255, 0.022));
-  --lq-glass-bottom: light-dark(rgba(0, 0, 0, 0.014), rgba(255, 255, 255, 0.01));
-  --lq-edge-hi: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.2));
-  --lq-edge-lo: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.06));
+  /* progress: a solid fill in the text's own colour on a grey track; no colour, no light */
+  --lq-liquid: var(--label);
+  --lq-hi: var(--label);
+  --lq-deep: var(--label);
+  --lq-glow: transparent;
+  --lq-glass-top: var(--line-1);
+  --lq-glass-bottom: var(--line-1);
+  --lq-edge-hi: transparent;
+  --lq-edge-lo: transparent;
   --lq-edge-near: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.05));   /* the rim bends a little light */
 }
 .lq {
-  --height: 9px; --inset: 2.5px;               /* the liquid is 4px */
+  --height: 3px; --inset: 0px;                 /* one solid 3px bar on its track */
   --lh: calc((var(--height) - 2 * var(--inset)) / 2);
   --p: var(--to);
   display: grid; gap: 14px; margin: 4px 0 8px;
@@ -520,10 +500,9 @@ LIQUID = """
 /* the glass: no frame, a clear sliver with a trace of edge */
 .lq-glass {
   position: relative; height: var(--height); padding: var(--inset) 0; box-sizing: border-box;
-  border-radius: 999px;
-  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
-  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo),
-              inset 0 2px 3px -2px var(--lq-edge-near), inset 0 -2px 3px -2px var(--lq-edge-near);
+  border-radius: 0;
+  background: var(--line-1);
+  box-shadow: none;
 }
 /* the liquid: full colour to a soft round end, a touch lighter there so no
    colour gathers; while flowing the end draws out a little */
@@ -531,28 +510,21 @@ LIQUID = """
   position: relative; height: 100%;
   width: max(calc(var(--lh) * 2), calc(var(--p) * 1%));
   /* exact radii: a 999px corner would make the browser shrink them all */
-  border-radius: var(--lh) calc(var(--lh) * (1.3 + var(--surge) * 1.6)) calc(var(--lh) * (1.1 + var(--surge) * 0.8)) var(--lh) /
-                 var(--lh) var(--lh) var(--lh) var(--lh);
+  border-radius: 0;
   /* one continuous liquid: the faintest drift from depth to light, no
      bands and nothing gathered or brightened at the end */
-  background: linear-gradient(90deg, color-mix(in srgb, var(--lq-liquid) 94%, var(--lq-deep)), var(--lq-liquid));
-  opacity: 0.92;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--lq-glow) 7%, transparent);
+  background: var(--label);
+  opacity: 1;
+  box-shadow: none;
 }
-.lq-liquid::after {              /* the one light response, barely there */
-  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 45%; border-radius: inherit;
-  background: linear-gradient(90deg, transparent 10%,
-    color-mix(in srgb, var(--lq-hi) calc(14% + var(--surge) * 10%), transparent) 55%, transparent 95%);
-}
+.lq-liquid::after { content: none; }
 .lq.empty .lq-liquid { opacity: 0.45; }   /* a droplet at the start, so the bar is never missing */
 
 /* motion: flows in, settles, then is still (no bounce, no loop) */
 .lq.flowing .lq-liquid {
-  animation: lq-front 1150ms cubic-bezier(0.3, 0.6, 0.3, 1) both,
-             lq-surge 1300ms cubic-bezier(0.4, 0, 0.3, 1) both;
+  animation: lq-front 900ms var(--ease) both;
 }
 @keyframes lq-front { from { --p: var(--from); } to { --p: var(--to); } }
-@keyframes lq-surge { 0% { --surge: 0; } 30% { --surge: 1; } 100% { --surge: 0; } }
 
 /* Today's course card: the day's lessons are the liquid line, as it
    always was: one glass tube across the lessons, the liquid filling each
@@ -570,27 +542,25 @@ LIQUID = """
   box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
   transform: none !important; transition: none;
 }
-/* the glass, continuous across the lessons */
+/* the track, one line across the lessons */
 [class*="st-key-lesson_steps"] button::before {
-  content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 9px;
-  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
-  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo),
-              inset 0 2px 3px -2px var(--lq-edge-near), inset 0 -2px 3px -2px var(--lq-edge-near);
+  content: ""; position: absolute; left: 0; right: 0; top: 8px; height: 3px;
+  background: var(--line-1);
+  box-shadow: none;
 }
-[class*="st-key-lesson_steps"] > :first-child button::before { border-radius: 999px 0 0 999px; }
-[class*="st-key-lesson_steps"] > :last-child button::before { border-radius: 0 999px 999px 0; }
-/* the liquid in a completed lesson; the last completed one ends in a round meniscus */
+[class*="st-key-lesson_steps"] > :first-child button::before { border-radius: 0; }
+[class*="st-key-lesson_steps"] > :last-child button::before { border-radius: 0; }
+/* a completed lesson: its part of the line in solid ink */
 [class*="st-key-step_"] button::after {
-  content: ""; position: absolute; left: 0; top: 6.5px; height: 4px; width: 0;
-  background: var(--lq-liquid); opacity: 0.92; transition: opacity var(--t-micro) var(--ease);
+  content: ""; position: absolute; left: 0; top: 8px; height: 3px; width: 0;
+  background: var(--lq-liquid);
 }
-[class*="st-key-lesson_steps"] > :first-child button::after { border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
 [class*="st-key-step_"][class*="_completed"] button::after { width: 100%; }
 [class*="st-key-step_"][class*="_completed"]:not(:has(+ [class*="_completed"])) button::after {
-  border-radius: 0 2.6px 2.2px 0 / 0 2px 2px 0;
+  border-radius: 0;
 }
 [class*="st-key-lesson_steps"] > [class*="_completed"]:first-child:not(:has(+ [class*="_completed"])) button::after {
-  border-radius: 2px 2.6px 2.2px 2px / 2px 2px 2px 2px;
+  border-radius: 0;
 }
 @media (hover: hover) {
   [class*="st-key-step_"][class*="_completed"] button:hover::after { opacity: 1; }
@@ -636,11 +606,18 @@ LIQUID = """
 /* all of today's lessons done: the summary card */
 /* review: today's pace as a hairline; the collection as quiet rows */
 .rv-pace { margin: var(--space-2) 0 var(--space-4); }
-.rv-line { height: 2px; border-radius: 1px; background: var(--hair); overflow: hidden; }
+.rv-line { height: 2px; border-radius: 0; background: var(--hair); overflow: hidden; }
 .rv-line span { display: block; height: 100%; background: var(--label); transition: width 480ms var(--ease); }
 .rv-pace p { margin: var(--space-2) 0 0; font-size: 0.8125rem; color: var(--label-3); font-variant-numeric: tabular-nums; }
-[class*="st-key-rv_row_"] { padding: var(--space-3) 0; border-bottom: 1px solid var(--hair); gap: var(--space-1) !important; }
-[class*="st-key-rv_row_"] [data-testid="stMarkdownContainer"] p { margin: 0; }
+/* a card in the collection: its words, a quiet line of where it's from, the
+   answer; then its two actions. One row, one hairline under it. */
+[class*="st-key-rv_row_"] { padding: var(--space-5) 0 var(--space-4); border-bottom: 1px solid var(--line-2); gap: var(--space-2) !important; }
+.rv-card p { margin: 0; }
+.rv-front { font-size: 1.0625rem; font-weight: 600; line-height: 1.4; color: var(--label); }
+.rv-meta { margin-top: var(--space-1) !important; font-size: 0.8125rem; line-height: 1.5; color: var(--label-3); }
+.rv-back { margin-top: var(--space-3) !important; font-size: 1rem; line-height: 1.6; color: var(--label); }
+[class*="st-key-rv_acts_"] { gap: var(--space-4) !important; margin-left: calc(-1 * var(--space-1)); }
+[class*="st-key-rv_acts_"] .stButton button { min-height: 36px; }
 .st-key-rv_today, .st-key-rv_collection { max-width: 40rem; }
 @media (prefers-reduced-motion: reduce) { .rv-line span { transition: none; } }
 
@@ -703,7 +680,7 @@ LIQUID = """
 /* reviewing an earlier lesson: a quiet bar above its title */
 .st-key-review_bar {
   align-items: center !important; justify-content: space-between; gap: var(--space-3) !important; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
-  border-radius: var(--radius-medium); background: var(--wash);
+  border-radius: 0; background: var(--wash);
 }
 .st-key-review_bar [data-testid="stMarkdownContainer"] p { font-size: 0.875rem; color: var(--label-2); margin: 0; }
 .st-key-review_bar [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
@@ -714,7 +691,7 @@ LIQUID = """
   backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
 }
 .st-key-review_bar [data-testid="stButton"] button::before {
-  content: ""; position: absolute; inset: 4px 0; z-index: -1; box-sizing: border-box; border-radius: 999px;
+  content: ""; position: absolute; inset: 4px 0; z-index: -1; box-sizing: border-box; border-radius: 0;
   background: light-dark(#FFFFFF, #1C1C1E);
   border: 1px solid var(--line-1);
 }
@@ -727,32 +704,25 @@ LIQUID = """
 /* ---------- today in the sidebar: an upright glass tube ---------- */
 .lqv { --p: var(--to); display: flex; gap: 18px; align-items: stretch; margin: 0; }
 .lqv-tube {
-  position: relative; flex: none; width: 44px; height: 140px; box-sizing: border-box;
-  border-radius: var(--radius-medium);
-  background: linear-gradient(90deg, var(--lq-glass-top), var(--lq-glass-bottom));
-  box-shadow: inset 1px 0 1px -1px var(--lq-edge-hi), inset -1px 0 1px -1px var(--lq-edge-lo),
-              inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 0 6px -2px var(--lq-edge-near);
+  position: relative; flex: none; width: 3px; height: 140px; box-sizing: border-box;
+  border-radius: 0;
+  background: var(--line-1);
+  box-shadow: none;
 }
 /* the liquid rises from the bottom; its surface is a soft meniscus that
    tilts a little while it moves and levels out as it settles */
 .lqv-liquid {
-  position: absolute; left: 5px; right: 5px; bottom: 5px;
-  height: max(10px, calc((100% - 10px) * var(--p) / 100));
-  border-radius: calc(7px + var(--surge) * 5px) calc(7px - var(--surge) * 3px) 11px 11px /
-                 6px 6px 11px 11px;
-  background: linear-gradient(0deg, color-mix(in srgb, var(--lq-liquid) 94%, var(--lq-deep)), var(--lq-liquid));
-  opacity: 0.92;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--lq-glow) 7%, transparent);
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: calc(100% * var(--p) / 100);
+  border-radius: 0;
+  background: var(--label);
+  opacity: 1;
+  box-shadow: none;
 }
-.lqv-liquid::after {              /* the one light response, barely there */
-  content: ""; position: absolute; top: 4px; bottom: 4px; left: 3px; width: 35%; border-radius: inherit;
-  background: linear-gradient(0deg, transparent 5%,
-    color-mix(in srgb, var(--lq-hi) calc(16% + var(--surge) * 10%), transparent) 60%, transparent 95%);
-}
+.lqv-liquid::after { content: none; }
 .lqv.empty .lqv-liquid { opacity: 0.45; }   /* a drop at the bottom, so the tube is never empty-looking */
 .lqv.flowing .lqv-liquid {
-  animation: lq-front 1150ms cubic-bezier(0.3, 0.6, 0.3, 1) both,
-             lq-surge 1300ms cubic-bezier(0.4, 0, 0.3, 1) both;
+  animation: lq-front 900ms var(--ease) both;
 }
 /* the sidebar: the day, then today's subject beside its tube, then the
    book; one small label per step, one serif line under it, hairline apart */
@@ -781,11 +751,11 @@ LIQUID = """
 .sb-quiet { font-size: 0.8125rem; color: var(--label-3); margin-top: 8px; }
 /* the book's days: the same liquid, as a thin line */
 .sb-line {
-  position: relative; height: 5px; margin: 14px 0 8px; border-radius: 999px; padding: 0.5px 0; box-sizing: border-box;
-  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
-  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo), inset 0 0 0 0.5px var(--lq-edge-near);
+  position: relative; height: 5px; margin: 14px 0 8px; border-radius: 0; padding: 0.5px 0; box-sizing: border-box;
+  background: var(--line-1);
+  box-shadow: none;
 }
-.sb-line i { display: block; height: 100%; min-width: 4px; border-radius: 999px; background: var(--lq-liquid); opacity: 0.92;
+.sb-line i { display: block; height: 100%; min-width: 4px; border-radius: 0; background: var(--lq-liquid); opacity: 0.92;
   transition: width var(--t-layout, 560ms) var(--ease, ease); }
 .sb-meta { font-size: 0.75rem; color: var(--label-3); font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .lqv.flowing .lqv-liquid { animation: none; } }
@@ -857,7 +827,6 @@ PROGRESS = """
     position: sticky; top: 72px; max-height: calc(100vh - 92px); max-height: calc(100dvh - 92px); overflow-y: auto; overscroll-behavior: contain;
     padding: 6px 8px 40px 6px; margin: -6px -8px 0 -6px;
     scrollbar-width: thin; scrollbar-color: var(--hair) transparent;
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 32px), transparent);
   }
 }
 @container (max-width: 859.98px) {
@@ -869,20 +838,20 @@ PROGRESS = """
    it stays at the top of its side while the view scrolls under it */
 .st-key-prog_view {
   position: sticky; top: -6px; z-index: 5; padding: 6px 0 var(--space-3);
-  background: linear-gradient(var(--env) 80%, transparent);
+  background: var(--env);
 }
 .st-key-prog_view [data-testid="stButtonGroup"], .st-key-prog_view [data-testid="stButtonGroup"] > div { width: 100%; }
 .st-key-prog_view [data-testid="stButtonGroup"] > div {
-  display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--wash); border: none;
+  display: flex; gap: 2px; padding: 3px; border-radius: 0; background: var(--wash); border: none;
 }
 .st-key-prog_view [data-testid="stButtonGroup"] button {
-  flex: 1 1 0; min-height: 36px; margin: 0 !important; border: none !important; border-radius: 999px !important;
+  flex: 1 1 0; min-height: 36px; margin: 0 !important; border: none !important; border-radius: 0 !important;
   background: transparent !important; box-shadow: none !important; color: var(--label-2);
   transition: background-color var(--t-state) var(--ease), color var(--t-state) var(--ease), box-shadow var(--t-state) var(--ease);
 }
 .st-key-prog_view [data-testid="stButtonGroup"] button p { font-size: 0.875rem; }
 .st-key-prog_view [data-testid="stButtonGroup"] button[aria-checked="true"] {
-  background: var(--env) !important; color: var(--label); box-shadow: var(--optic-strong) !important;
+  background: var(--env) !important; color: var(--label); box-shadow: none !important;
 }
 .st-key-prog_view [data-testid="stButtonGroup"] button[aria-checked="true"] p { font-weight: 600; }
 @media (hover: hover) { .st-key-prog_view [data-testid="stButtonGroup"] button:hover:not([aria-checked="true"]) { color: var(--label); } }
@@ -920,14 +889,14 @@ PROGRESS = """
 [class*="st-key-calw_"] [data-testid="stButton"], [class*="st-key-calw_"] button { width: 100%; }
 [class*="st-key-cal_20"] .stButton button {
   position: relative; height: 56px; min-height: 44px; padding: 0 0 12px !important;
-  border: none; border-radius: var(--radius-small); background: transparent; box-shadow: none;
+  border: none; border-radius: 0; background: transparent; box-shadow: none;
   backdrop-filter: none; -webkit-backdrop-filter: none; color: var(--label-3);
   transition: background-color 320ms var(--ease), box-shadow 320ms var(--ease), color 320ms var(--ease);
 }
 [class*="st-key-cal_20"] .stButton button > div, [class*="st-key-cal_20"] .stButton button [data-testid="stMarkdownContainer"] { overflow: visible !important; min-width: 0; }
 [class*="st-key-cal_20"] .stButton button p { font-size: 0.9375rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: visible; }
 [class*="st-key-cal_20"] .stButton button::before, [class*="st-key-cal_20"] .stButton button::after {
-  content: ""; position: absolute; bottom: 12px; left: calc(50% - 12px); height: 3px; border-radius: 1.5px;
+  content: ""; position: absolute; bottom: 12px; left: calc(50% - 12px); height: 3px; border-radius: 0;
 }
 [class*="st-key-cal_20"][class*="_done_"] .stButton button::before,
 [class*="st-key-cal_20"][class*="_partial_"] .stButton button::before { width: 24px; background: var(--hair); }
@@ -954,7 +923,7 @@ PROGRESS = """
    redraws, and the old pick lets go */
 [class*="st-key-cal_20"][class*="_sel"] .stButton button, [class*="st-key-cal_20"] .stButton button[data-picking] {
   background: var(--glass-strong); color: var(--label);
-  box-shadow: var(--optic), inset 0 0 0 1px light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.34));
+  box-shadow: none;
 }
 [class*="st-key-cal_20"][class*="_sel"] .stButton button { animation: day-pick var(--t-state) var(--ease) backwards; }
 [class*="st-key-calgrid_"]:has(button[data-picking]) [class*="_sel"] .stButton button:not([data-picking]) {
@@ -965,14 +934,14 @@ PROGRESS = """
 
 .cal-key { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 0.75rem; color: var(--label-3); }
 .cal-key span { display: inline-flex; align-items: center; gap: 8px; }
-.cal-key i { display: inline-block; width: 16px; height: 3px; border-radius: 1.5px; }
+.cal-key i { display: inline-block; width: 16px; height: 3px; border-radius: 0; }
 .cal-key .k-done { background: var(--label); }
 .cal-key .k-part { background: linear-gradient(90deg, var(--label-2) 50%, var(--hair) 50%); }
 
 /* ---------- the day picked ---------- */
 [class*="st-key-prog_day_"] {
   gap: var(--space-2) !important; padding: var(--space-5);
-  border-radius: var(--radius-medium); background: var(--surface); box-shadow: none;
+  border-radius: 0; background: var(--surface); box-shadow: none;
   animation: rise-in var(--t-space) var(--ease) backwards; scroll-margin: 88px 0 16px;
 }
 [class*="st-key-prog_day_"] h4 { padding: 0 0 2px !important; }
@@ -996,7 +965,7 @@ PROGRESS = """
 /* one lesson to read, a section at a time */
 [class*="st-key-reader_"] {
   gap: var(--space-2) !important; padding: var(--space-4) var(--space-4) var(--space-3);
-  border-radius: var(--radius-medium); background: var(--surface); box-shadow: none;
+  border-radius: 0; background: var(--surface); box-shadow: none;
   animation: fade-in 420ms var(--ease) 80ms backwards;
 }
 /* the section grows with its text: the page is the one thing that scrolls */
@@ -1171,17 +1140,15 @@ BOOKS = """
 .bk-seg { position: relative; }
 .bk-seg::before {
   content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 9px;
-  background: linear-gradient(180deg, var(--lq-glass-top), var(--lq-glass-bottom));
-  box-shadow: inset 0 1px 1px -1px var(--lq-edge-hi), inset 0 -1px 1px -1px var(--lq-edge-lo),
-              inset 0 2px 3px -2px var(--lq-edge-near), inset 0 -2px 3px -2px var(--lq-edge-near);
+  background: var(--line-1);
+  box-shadow: none;
 }
-.bk-seg:first-child::before { border-radius: 999px 0 0 999px; }
-.bk-seg:last-child::before { border-radius: 0 999px 999px 0; }
+.bk-seg:first-child::before { border-radius: 0; }
+.bk-seg:last-child::before { border-radius: 0; }
 .bk-seg::after { content: ""; position: absolute; left: 0; top: 6.5px; height: 4px; width: 0; background: var(--lq-liquid); opacity: 0.92; }
-.bk-seg:first-child::after { border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
 .bk-seg.done::after { width: 100%; }
-.bk-seg.done.end::after { border-radius: 0 2.6px 2.2px 0 / 0 2px 2px 0; }
-.bk-seg.done.end:first-child::after { border-radius: 2px 2.6px 2.2px 2px / 2px 2px 2px 2px; }
+.bk-seg.done.end::after { border-radius: 0; }
+.bk-seg.done.end:first-child::after { border-radius: 0; }
 .bk-seg i {
   position: absolute; top: 21px; left: 0; right: 0; text-align: center; font-style: normal;
   font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; color: var(--label-2); white-space: nowrap;
@@ -1201,8 +1168,8 @@ BOOKS = """
 /* the bookshelf: one light surface, a row per book, 0.5px lines between */
 .bk-empty { margin: 0; font-size: 0.875rem; color: var(--label-3); }
 .bk-shelf {
-  border-radius: var(--radius-medium); background: var(--surface);
-  overflow: hidden; corner-shape: superellipse(1.6);
+  border-radius: 0; background: var(--surface);
+  overflow: hidden; 
 }
 .bk-book > summary {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
@@ -1253,7 +1220,7 @@ BOOKS = """
 .stMainBlockContainer:has(.reading-page) { max-width: 1400px; }
 .page-sub {
   margin: 0; font-size: 0.875rem; line-height: 1.5;
-  color: light-dark(rgba(60, 60, 67, 0.78), rgba(235, 235, 245, 0.6));   /* secondary, 4.5:1 or more on either ground */
+  color: var(--label-2);
 }
 .st-key-read_main { margin-top: var(--space-5); }
 .st-key-read_main [data-testid="stHorizontalBlock"] { gap: 72px !important; align-items: flex-start; }
@@ -1276,14 +1243,14 @@ BOOKS = """
 /* no book: a quiet outlined action the size of its words (36px to the eye, 44px to the finger) */
 .st-key-start_book button {
   position: relative; width: auto; min-height: 36px; height: 36px; padding: 0 16px !important;
-  border-radius: 999px; background: transparent !important; box-shadow: none !important;
+  border-radius: 0; background: transparent !important; box-shadow: none !important;
   border: 1px solid var(--line-3) !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
 .st-key-start_book button::after { content: ""; position: absolute; inset: -5px -2px; }
 .st-key-start_book button { transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease), transform var(--t-micro) var(--ease) !important; }
 @media (hover: hover) {
-  .st-key-start_book button:hover { border-color: light-dark(rgba(60, 60, 67, 0.6), rgba(235, 235, 245, 0.5)) !important; }
+  .st-key-start_book button:hover { border-color: var(--strong) !important; }
 }
 .st-key-start_book button p { font-size: 0.875rem; color: var(--label); }
 .st-key-start_book button:active { background: var(--wash) !important; transition-duration: var(--t-press) !important; }
@@ -1313,22 +1280,7 @@ BOOKS = """
 .bk-more[open] .bk-more-hide { display: inline; }
 @media (prefers-reduced-motion: reduce) { .bk-days li.later { transition: none; } }
 
-/* Reading's chat box: a translucent material, clearly a surface to write
-   on (what passes behind is blurred well away from the text), with a
-   quiet ring when focused */
-.stMainBlockContainer:has(.reading-page) [data-testid="stChatInput"] {
-  background: light-dark(rgba(255, 255, 255, 0.64), rgba(30, 30, 32, 0.64)) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
-  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12)),
-              0 6px 20px -14px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.9));
-  transition: box-shadow 360ms var(--ease), background-color 360ms var(--ease);
-}
-.stMainBlockContainer:has(.reading-page) [data-testid="stChatInput"]:focus-within {
-  background: light-dark(rgba(255, 255, 255, 0.74), rgba(34, 34, 36, 0.74)) !important;
-  box-shadow: inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.3)),
-              0 0 0 3px light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.06)),
-              0 6px 20px -14px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.9));
-}
+/* Reading's chat box: the same field as everywhere (above) */
 .stMainBlockContainer:has(.reading-page) [data-testid="stChatInput"] textarea::placeholder { color: var(--label-2); }
 
 /* Progress, Subjects: Reading is one line leading to its page */
@@ -1354,8 +1306,8 @@ NAV = """
 <style>
 /* the travelling surface: the same material as a chosen segment */
 .cx-pill {
-  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; border-radius: 999px;
-  background: light-dark(#FFFFFF, rgba(255, 255, 255, 0.13)); box-shadow: var(--optic-strong);
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; border-radius: 0;
+  background: transparent; box-shadow: none;
   will-change: transform, width;
 }
 [data-cx] { position: relative; isolation: isolate; }
@@ -1394,9 +1346,9 @@ NAV = """
 @media (hover: hover) { .st-key-topnav [data-testid="stPageLink-NavLink"]:not([data-cx-on]):hover p { color: var(--label); } }
 .st-key-topnav [data-testid="stPageLink-NavLink"]:active p { color: var(--label); }
 .st-key-topnav [data-testid="stPageLink-NavLink"]:focus-visible { outline: none; }
-.st-key-topnav [data-testid="stPageLink-NavLink"]:focus-visible p { outline: 1px solid var(--outline); outline-offset: 4px; border-radius: 3px; }
+.st-key-topnav [data-testid="stPageLink-NavLink"]:focus-visible p { outline: 1px solid var(--outline); outline-offset: 4px; border-radius: 0; }
 /* the travelling mark: a thin line of the text's own colour on the header's edge */
-.cx-pill.cx-line { background: var(--label); box-shadow: none; border-radius: 1px; }
+.cx-pill.cx-line { background: var(--label); box-shadow: none; border-radius: 0; }
 /* Search: in the same row, after a short upright hairline */
 .st-key-nav_search { position: relative; margin-left: 8px; display: flex; align-items: center; }
 .st-key-nav_search::before {
@@ -1463,7 +1415,7 @@ NAV = """
 
 /* ---------- Search ---------- */
 .st-key-search_results { gap: 0 !important; }
-[class*="st-key-sres_"] { position: relative; gap: 0 !important; border-top: 1px solid var(--line-2); border-radius: var(--radius-small); transition: background-color var(--t-micro) var(--ease); }
+[class*="st-key-sres_"] { position: relative; gap: 0 !important; border-top: 1px solid var(--line-2); border-radius: 0; transition: background-color var(--t-micro) var(--ease); }
 .sr { display: grid; gap: 2px; padding: 12px 8px; }
 .sr-t { font-size: 0.9375rem; font-weight: 500; color: var(--label); }
 .sr-m { font-size: 0.75rem; color: var(--label-3); }
@@ -1609,14 +1561,14 @@ SETUP = """
 .ob-subject { margin: 0; font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.375rem; line-height: 1.25; color: var(--label); }
 /* the two ways to start: the same switch as Progress's */
 [class*="st-key-sw_"] [data-testid="stButtonGroup"], [class*="st-key-sw_"] [data-testid="stButtonGroup"] > div { width: 100%; }
-[class*="st-key-sw_"] [data-testid="stButtonGroup"] > div { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--wash); border: none; }
+[class*="st-key-sw_"] [data-testid="stButtonGroup"] > div { display: flex; gap: 2px; padding: 3px; border-radius: 0; background: var(--wash); border: none; }
 [class*="st-key-sw_"] [data-testid="stButtonGroup"] button {
-  flex: 1 1 0; min-height: 36px; margin: 0 !important; border: none !important; border-radius: 999px !important;
+  flex: 1 1 0; min-height: 36px; margin: 0 !important; border: none !important; border-radius: 0 !important;
   background: transparent !important; box-shadow: none !important; color: var(--label-2);
   transition: background-color var(--t-state) var(--ease), color var(--t-state) var(--ease), box-shadow var(--t-state) var(--ease);
 }
 [class*="st-key-sw_"] [data-testid="stButtonGroup"] button p { font-size: 0.875rem; white-space: nowrap; }
-[class*="st-key-sw_"] [data-testid="stButtonGroup"] button[aria-checked="true"] { background: var(--env) !important; color: var(--label); box-shadow: var(--optic-strong) !important; }
+[class*="st-key-sw_"] [data-testid="stButtonGroup"] button[aria-checked="true"] { background: transparent !important; color: var(--label); box-shadow: none !important; }
 [class*="st-key-sw_"] [data-cx] button[aria-checked="true"] { background: transparent !important; box-shadow: none !important; }
 [class*="st-key-sw_"] [data-cx] button { color: var(--label-2); }
 [class*="st-key-sw_"] [data-cx] button p { font-weight: 500 !important; transition: color var(--cx-dur, 360ms) var(--ease); }
@@ -1674,45 +1626,27 @@ SETUP = """
 LENS = """
 <style>
 /* ==========================================================================
-   THE LENS: one piece of clear glass per control, travelling between choices
+   THE CHOSEN MARK: one ink rule per control, travelling between choices
    --------------------------------------------------------------------------
-   It lies over the words chosen. Its middle is perfectly clear (no frost:
-   the words stay sharp); only a narrow rim bends what passes under it
-   (glass.py: lg-lens), and a hairline of light marks its upper edge.
-   Settled it is nearly invisible; while it travels (cx-live, motion.py) the
-   rim bends a little more and its edge light gathers, then calms. Where the
-   browser can't bend light, the same shape and edge light alone.
+   A 2px rule under the word chosen (at the left edge of a row in a list of
+   options); it travels to the next choice (motion.py) and nothing else
+   marks the choice but the word's own weight and ink.
    ========================================================================== */
 :root {
-  --lens-fill: light-dark(rgba(0, 0, 0, 0.014), rgba(255, 255, 255, 0.03));
-  --lens-fill-live: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.045));
-  --lens-rim:
-    inset 0 0.5px 0 0 light-dark(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.2)),
-    inset 0 -0.5px 0 0 light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.05)),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.09)),
-    inset 0 0 18px -8px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07)),
-    0 8px 22px -16px light-dark(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.9));
-  --lens-rim-live:
-    inset 0 1px 0 0 light-dark(rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.34)),
-    inset 0 -0.5px 0 0 light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.08)),
-    inset 0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.14)),
-    inset 0 0 22px -8px light-dark(rgba(0, 0, 0, 0.09), rgba(255, 255, 255, 0.11)),
-    0 12px 26px -16px light-dark(rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.95));
   --lens-optics: none; --lens-optics-live: none;
 }
-:root[data-refract] { --lens-optics: url(#lg-lens); --lens-optics-live: url(#lg-lens-live); }
-:root[data-refract][data-scheme="dark"] { --lens-optics: url(#lg-lens-dim); --lens-optics-live: url(#lg-lens-live-dim); }
 .cx-pill.cx-lens {
-  z-index: 3; pointer-events: none; border-radius: var(--radius-small); corner-shape: superellipse(1.6);
-  background: var(--lens-fill); box-shadow: var(--lens-rim);
-  backdrop-filter: var(--lens-optics); -webkit-backdrop-filter: none;
+  z-index: 3; pointer-events: none; border-radius: 0;
+  background: transparent; box-shadow: inset 0 -2px 0 var(--strong);     /* the chosen one: an ink rule under it */
 }
-.cx-pill.cx-lens.cx-live { background: var(--lens-fill-live); box-shadow: var(--lens-rim-live); backdrop-filter: var(--lens-optics-live); }
-/* in a switch the track is a pill, and so is the lens riding in it */
-.st-key-prog_view .cx-pill.cx-lens, [class*="st-key-sw_"] .cx-pill.cx-lens { border-radius: 999px; }
+.cx-pill.cx-lens.cx-live { background: transparent; box-shadow: inset 0 -2px 0 var(--strong); }
+/* in a list of options the rule stands at the row's left edge instead */
+[class*="st-key-optlist_"] .cx-pill.cx-lens, [class*="st-key-optlist_"] .cx-pill.cx-lens.cx-live {
+  box-shadow: inset 2px 0 0 var(--strong);
+}
+/* a switch: its choices on one hairline, the rule travelling along it */
 .st-key-prog_view [data-testid="stButtonGroup"] > div, [class*="st-key-sw_"] [data-testid="stButtonGroup"] > div {
-  background: light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.045)) !important;
-  box-shadow: inset 0 0 0 0.5px var(--hair);
+  background: transparent !important; box-shadow: inset 0 -1px 0 var(--line-1);
 }
 
 /* ---------- a list of options, under the lens ---------- */
@@ -1728,7 +1662,7 @@ LENS = """
 @media (hover: hover) { [class*="st-key-opt_"]:not([class*="__dis"]):hover { background: transparent; }
   [class*="st-key-optlist_"] [class*="st-key-opt_"]:not([class*="__dis"]):not([data-cx-on]):hover .opt-t { color: var(--label); } }
 [class*="st-key-opt_"]:not([class*="__dis"]):has(button:active) { background: transparent; }
-[class*="st-key-opt_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -3px; border-radius: var(--radius-small); }
+[class*="st-key-opt_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: -3px; border-radius: 0; }
 /* chosen, in a list of several: the check, and under it the day in the rotation */
 .opt-mark { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: auto; min-width: 32px; height: auto; min-height: 20px; }
 .opt-mark::after { left: 50%; margin-left: -3px; top: 2px; }
@@ -1749,7 +1683,7 @@ LENS = """
 .opt-pace .opt-t { grid-column: 1; font-size: 1.0625rem; }
 .opt-pace .opt-s { grid-column: 1; }
 .opt-bars { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 3px; }
-.opt-bars i { width: 12px; height: 3px; border-radius: 2px; background: var(--field-edge); transition: background-color var(--cx-dur, 360ms) var(--ease); }
+.opt-bars i { width: 12px; height: 3px; border-radius: 0; background: var(--field-edge); transition: background-color var(--cx-dur, 360ms) var(--ease); }
 .opt-bars i.on { background: var(--label-2); }
 [class*="st-key-optlist_"] [data-cx-on] .opt-bars i.on, [class*="st-key-opt_"][class*="__sel"] .opt-bars i.on { background: var(--label); }
 .opt-pace .opt-mark { grid-column: 3; grid-row: 1 / span 2; }
@@ -1792,29 +1726,19 @@ LENS = """
 }
 
 /* ---------- the stage: the subject in focus, large ---------- */
-.sg-stage { position: relative; height: min(76vh, 700px); min-height: 460px; overflow: hidden; border-radius: var(--radius-large); corner-shape: superellipse(1.6); isolation: isolate; }
+.sg-stage { position: relative; height: min(76vh, 700px); min-height: 460px; overflow: hidden; border-radius: 0;  isolation: isolate; }
 .sg-layer { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
   opacity: 0; visibility: hidden; transition: opacity var(--t-layout) var(--ease), visibility 0s linear var(--t-layout); }
 .sg-art {
   position: absolute; inset: 0; background: center 30% / cover no-repeat;
   filter: grayscale(1) contrast(1.06);
-  /* the picture sinks into the page: fully there above, gone below the words */
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 76%),
-                      radial-gradient(ellipse 74% 66% at 50% 34%, #000 42%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 76%),
-              radial-gradient(ellipse 74% 66% at 50% 34%, #000 42%, transparent 100%);
-  -webkit-mask-composite: source-in; mask-composite: intersect;
-  transform: scale(1.035); transition: transform 1100ms var(--ease);
+  /* a plain rectangle of picture */
 }
 :root[data-scheme="dark"] .sg-art:not(.no-art) { filter: grayscale(1) contrast(1.06) brightness(0.84); }
 /* on white, a studio backdrop would read as a grey slab: the picture lifts
    toward the page and its edges fall away sooner */
 :root:not([data-scheme="dark"]) .sg-art:not(.no-art) {
   filter: grayscale(1) contrast(1.04) brightness(1.1);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 72%),
-                      radial-gradient(ellipse 62% 58% at 50% 34%, #000 30%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 72%),
-              radial-gradient(ellipse 62% 58% at 50% 34%, #000 30%, transparent 100%);
 }
 /* no picture yet: the subject's number, large and faint, stands in its place */
 .sg-art.no-art { -webkit-mask-image: none; mask-image: none; display: flex; align-items: flex-start; justify-content: flex-end; padding: 8px 24px 0 0; }
@@ -1856,7 +1780,7 @@ LENS = """
 .sg-stage:not([data-focus]) .sg-layer:first-child { opacity: 1; visibility: visible; }
 @media (max-width: 899px) {
   .sg-stage { height: 232px; min-height: 0; border-radius: 0; background: var(--env); }
-  .sg-art { -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent 100%); mask-image: linear-gradient(to bottom, #000 20%, transparent 100%); }
+  .sg-art { }
   .sg-head { padding: 0 16px; }
   .sg-copy { padding: 0 16px 14px; gap: 2px; }
   .sg-title { font-size: 2.5rem; }
@@ -1897,7 +1821,7 @@ ACCOUNT = """
 .st-key-signin [data-testid="stForm"] [data-testid="stVerticalBlock"] { gap: var(--space-4); }
 /* Continue with Google: a quiet outlined control, the same height as the others */
 .si-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box;
-  min-height: var(--control); border-radius: var(--radius-small); border: 1px solid var(--line-3);
+  min-height: var(--control); border-radius: 0; border: 1px solid var(--line-3);
   color: var(--label) !important; text-decoration: none !important; font-weight: 500; font-size: 0.9375rem;
   transition: background-color .2s ease, opacity .2s ease; }
 .si-google:hover { background: var(--wash); }
@@ -1914,15 +1838,15 @@ ACCOUNT = """
 .si-plain { font-size: 0.9375rem; color: var(--label) !important; }
 
 /* ---------- the account menu at the bar's right end ---------- */
-.st-key-account_menu button { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 50%;
-  font-size: 0.8125rem; font-weight: 500; color: var(--label); background: var(--wash) !important;
+.st-key-account_menu button { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 0;
+  font-size: 0.8125rem; font-weight: 500; color: var(--label); background: var(--env) !important;
   border: 1px solid var(--line-3) !important; box-shadow: none !important; margin-left: var(--space-3); }
 .st-key-account_menu button [data-testid="stIconMaterial"] { display: none; }
 /* a keyboard user sees where they are here too (as on every other control) */
 .st-key-account_menu button:focus-visible, [data-testid="stMainMenuButton"]:focus-visible {
   outline: 1px solid var(--outline) !important; outline-offset: 2px; }
 .acct-who { display: flex; align-items: center; gap: var(--space-3); }
-.acct-pic { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; }
+.acct-pic { width: 36px; height: 36px; border-radius: 0; object-fit: cover; flex: none; }
 /* the menu opens outside the page (like the other floating menus), where the
    page's colour tokens don't follow dark mode: its text takes the theme's own
    text colour (currentColor), full strength or a readable 72% for the email */
@@ -1983,9 +1907,7 @@ WORLDS = """
 .st-key-w_object { position: relative; align-self: stretch; gap: 0 !important; }
 .w-object {
   position: relative; height: min(62vh, 620px); background: center / cover no-repeat; transform-origin: center;
-  filter: grayscale(1) contrast(1.06); border-radius: var(--radius-large); corner-shape: superellipse(1.6);
-  -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
-  mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
+  filter: grayscale(1) contrast(1.06); border-radius: 0;
 }
 :root[data-scheme="dark"] .w-object:not(.no-art) { filter: grayscale(1) contrast(1.06) brightness(0.84); }
 :root:not([data-scheme="dark"]) .w-object:not(.no-art) { filter: grayscale(1) contrast(1.04) brightness(1.08); }
@@ -2014,8 +1936,8 @@ WORLDS = """
 .w-sec-body p { margin: 0; }
 .w-big { font-family: "Newsreader", serif; font-weight: 300; font-size: 1.75rem; line-height: 1.15; color: var(--label); }
 .w-small { font-size: 0.8125rem; color: var(--label-2); }
-.w-line { position: relative; height: 2px; border-radius: 2px; background: var(--field-edge); overflow: hidden; max-width: 28rem; }
-.w-line i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--label); border-radius: 2px; }
+.w-line { position: relative; height: 2px; border-radius: 0; background: var(--field-edge); overflow: hidden; max-width: 28rem; }
+.w-line i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--label); border-radius: 0; }
 .w-list { list-style: none; margin: 0; padding: 0; display: grid; }
 .w-list li { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: var(--space-3); padding: 10px 0; border-bottom: 1px solid var(--line-2); font-size: 0.9375rem; color: var(--label); }
 .w-list li:last-child { border-bottom: none; }
@@ -2024,7 +1946,7 @@ WORLDS = """
 .st-key-w_others { gap: var(--space-5) !important; flex-wrap: wrap; justify-content: flex-start !important; }
 .st-key-w_others > * { flex: 0 0 auto !important; width: auto !important; }
 .st-key-w_others [class*="st-key-enter_"] { position: relative; width: 168px !important; flex: 0 0 168px !important; gap: 8px !important; }
-.w-thumb { height: 112px; border-radius: var(--radius-medium); corner-shape: superellipse(1.6); background: center / cover no-repeat;
+.w-thumb { height: 112px; border-radius: 0;  background: center / cover no-repeat;
   filter: grayscale(1) contrast(1.04); transition: transform var(--t-state) var(--ease); }
 :root[data-scheme="dark"] .w-thumb { filter: grayscale(1) contrast(1.04) brightness(0.84); }
 .w-thumb.no-art { background: var(--wash); }
@@ -2033,8 +1955,7 @@ WORLDS = """
 .st-key-w_others [class*="st-key-enter_"] [data-testid="stElementContainer"]:has(.stButton),
 .st-key-w_others [class*="st-key-enter_"] [data-testid="stElementContainer"]:has(.stButton) *:not(button) { position: static !important; }
 .st-key-w_others [class*="st-key-enter_"] .stButton button { position: absolute !important; inset: 0; width: 100%; height: 100%; opacity: 0; z-index: 2; }
-@media (hover: hover) { .st-key-w_others [class*="st-key-enter_"]:hover .w-thumb { transform: scale(1.02); } }
-.st-key-w_others [class*="st-key-enter_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: 4px; border-radius: var(--radius-medium); }
+.st-key-w_others [class*="st-key-enter_"]:has(button:focus-visible) { outline: 1px solid var(--outline); outline-offset: 4px; border-radius: 0; }
 
 /* the ways in, elsewhere: quiet words with an arrow */
 [class*="st-key-enter_"] .stButton button[kind="tertiary"],
@@ -2071,7 +1992,7 @@ WORLDS = """
 .w-thumb.is-cut[data-layout="pendant"] { background-size: auto 190% !important; background-position: center 100% !important; }
 .ob-obj.is-cut[data-layout="pendant"] { background-size: auto 210% !important; background-position: center 100% !important; }
 .ob-objs { display: flex; gap: 8px; margin-bottom: 8px; }
-.ob-obj { width: 40px; height: 52px; border-radius: 8px; background: center / cover no-repeat; filter: grayscale(1); flex: none; }
+.ob-obj { width: 40px; height: 52px; border-radius: 0; background: center / cover no-repeat; filter: grayscale(1); flex: none; }
 .ob-obj.no-art { background: var(--wash); }
 
 @media (max-width: 899px) {
@@ -2109,12 +2030,8 @@ WORLDS = """
   .sg-art, .sg-art.is-cut, .sg-art.no-art { grid-area: art; position: relative; inset: auto; min-height: 0; z-index: 1;
     margin-top: calc(-1 * var(--lap)); background-position: center; }
   .sg-art.is-cut { background-position: 35% bottom !important; }
-  .sg-art:not(.is-cut):not(.no-art) {
-    -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%);
-    mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 55%, transparent 100%); }
-  :root:not([data-scheme="dark"]) .sg-art:not(.is-cut):not(.no-art) {
-    -webkit-mask-image: radial-gradient(ellipse 68% 66% at 50% 50%, #000 48%, transparent 100%);
-    mask-image: radial-gradient(ellipse 68% 66% at 50% 50%, #000 48%, transparent 100%); }
+  .sg-art:not(.is-cut):not(.no-art) { }
+  :root:not([data-scheme="dark"]) .sg-art:not(.is-cut):not(.no-art) { }
   .sg-copy { grid-area: copy; align-self: end; max-width: 28rem; padding: 0 0 clamp(12px, 3vh, 28px); gap: 10px; z-index: 2; }
   .sg-desc { font-size: 1.1875rem; }
 }
@@ -2128,5 +2045,5 @@ def stylesheet() -> str:
 
 def inject():
     st.html(stylesheet())
-    st.html(glass.script(), unsafe_allow_javascript=True)      # the refraction filter the glass uses
+    st.html(glass.script(), unsafe_allow_javascript=True)      # page behaviours (light/dark mark, touch, calendar)
     st.html(motion.script(), unsafe_allow_javascript=True)     # connected controls: one surface travelling between items

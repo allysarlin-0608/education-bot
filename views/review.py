@@ -5,6 +5,7 @@ lessons she has passed and the points she saved. Answers are checked here,
 without the model: a question against its stored answer, a word as "which
 meaning?", a saved point by her own honest "I knew it" / "Not yet"."""
 from datetime import date
+from html import escape
 
 import streamlit as st
 
@@ -201,9 +202,12 @@ def collection_view():
     shown = st.session_state.get("rv_more", 30)
     for e, slot, c in found[:shown]:
         with st.container(key=f"rv_row_{c['id']}"):
-            st.markdown(f"**{c['front']}**")
-            st.caption(f"{source(c)} · " + ("paused" if c["paused"] else f"next review {when(c['due'])}"))
-            st.markdown(c["back"] if c["kind"] != "question" else f"Answer: {c['back']}")
+            # one block of text, spaced by its own type (separate blocks stacked
+            # tight and, on iPad Safari, ran into each other and the buttons)
+            meta = f"{source(c)} · " + ("paused" if c["paused"] else f"next review {when(c['due'])}")
+            back = c["back"] if c["kind"] != "question" else f"Answer: {c['back']}"
+            st.html(f'<div class="rv-card"><p class="rv-front">{escape(c["front"])}</p>'
+                    f'<p class="rv-meta">{escape(meta)}</p><p class="rv-back">{escape(back)}</p></div>')
             confirm = st.session_state.get("rv_confirm") == c["id"]
             with st.container(horizontal=True, key=f"rv_acts_{c['id']}"):
                 if confirm:

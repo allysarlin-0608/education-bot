@@ -1,8 +1,8 @@
 """Layout check: every main screen at the four widths she uses (phone 390,
 iPad portrait 820, iPad landscape 1180, desktop 1440), light and dark.
 Saves screenshots to docs/audit/screens/devices/ and fails on what can be
-measured: the page scrolling sideways, anything under the chat box, and
-buttons too small to tap on a touch screen."""
+measured: the page scrolling sideways, anything under the chat box, text
+on top of text, and buttons too small to tap on a touch screen."""
 import itertools
 import json
 import sys
@@ -37,6 +37,25 @@ CHECK = """(touch) => {
     }
     if (under.length) out.under = under;
   }
+  // words on top of words: two pieces of text whose boxes overlap (what made
+  // the collection's cards unreadable on the iPad)
+  const head = (document.querySelector('[data-testid=stHeader]') || { getBoundingClientRect: () => ({ bottom: 0 }) }).getBoundingClientRect().bottom;
+  const texts = [...document.querySelectorAll('[data-testid=stMain] :is(p, h1, h2, h3, h4, li, button, label)')].filter(e => {
+    if (e.closest('.st-key-chat_dock') || e.closest('[data-testid=stSidebar]')) return false;
+    if (!(e.innerText || '').trim()) return false;
+    const s = getComputedStyle(e), b = e.getBoundingClientRect();
+    if (s.visibility === 'hidden' || +s.opacity === 0 || b.width < 2 || b.height < 2) return false;
+    return b.top >= head && b.bottom <= window.innerHeight;
+  });
+  const overlap = [];
+  for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) {
+    const a = texts[i], c = texts[j];
+    if (a.contains(c) || c.contains(a)) continue;
+    const x = a.getBoundingClientRect(), y = c.getBoundingClientRect();
+    const w = Math.min(x.right, y.right) - Math.max(x.left, y.left), h = Math.min(x.bottom, y.bottom) - Math.max(x.top, y.top);
+    if (w > 4 && h > 3) overlap.push(a.innerText.trim().slice(0, 24) + ' / ' + c.innerText.trim().slice(0, 24));
+  }
+  if (overlap.length) out.overlap = overlap.slice(0, 8);
   if (touch) {
     const small = [...document.querySelectorAll('button, a[href], [role=tab], [role=radio], [role=switch]')].filter(e => {
       const b = e.getBoundingClientRect(); const s = getComputedStyle(e);
@@ -124,7 +143,7 @@ def test_every_screen(public_app, pages, width, scheme):
     box.press("Enter")
     shot(p, f"12_search_{tag}", problems)
     (SHOTS / f"problems_{tag}.json").write_text(json.dumps(problems, indent=1))
-    assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v}, problems
+    assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
 
 
 
