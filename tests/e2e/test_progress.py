@@ -118,7 +118,7 @@ def test_sessions_list_filter_more_and_calendar_link(public_app, pages):
     p.page.get_by_role("radio", name="Sessions").or_(p.page.get_by_role("button", name="Sessions", exact=True)).first.click()
     flows.idle(p.page)
     assert flows.wait_text(p.page, f"{len(entries)} sessions", 5)
-    expanders = p.page.locator('[data-testid="stExpander"] summary')
+    expanders = p.page.locator('[class*="st-key-sessions_list_"] [data-testid="stExpander"] summary')   # (the sessions', not Milestones')
     first_page = expanders.count()
     flows.button(p, f"Show 10 more of {len(entries) - 10}")
     assert expanders.count() > first_page
