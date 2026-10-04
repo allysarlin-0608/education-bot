@@ -76,10 +76,9 @@ def require_password():
     if st.session_state.get("coach_authed"):
         return
     # the page she asked for (a refresh, a link): she is taken back to it once in
-    try:
-        st.session_state.setdefault("coach_asked_path", urlparse(st.context.url).path.strip("/").split("/")[-1])
-    except Exception:
-        pass
+    url = st.context.url          # (None where there is no browser page: the page tests)
+    if url:
+        st.session_state.setdefault("coach_asked_path", urlparse(url).path.strip("/").split("/")[-1])
     expected = appconfig.get_setting("APP_PASSWORD")
     st.markdown("### GNOSIS")
     if not expected:

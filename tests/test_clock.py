@@ -4,7 +4,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from coach import books, clock, core, paths, settings, storage, ui
+from coach import clock, core, paths, settings, storage, ui
 
 ROOT = Path(__file__).resolve().parents[1]
 DAY = date(2031, 2, 3)

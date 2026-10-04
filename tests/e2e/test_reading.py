@@ -4,7 +4,6 @@ confirming it, the daily check on a clock that moves day by day, the
 wrap-up at the end, errors with Retry, More options, and books of odd
 sizes (1, 14, 15, 200 chapters; 1 and 5,000 pages)."""
 import itertools
-import json
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo

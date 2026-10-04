@@ -6,11 +6,30 @@ import sys
 import threading
 
 # Details of failed AI / database calls go here (Streamlit Cloud: Manage
-# app → logs), never onto the page.
+# app → logs), never onto the page. Each line carries the session it came
+# from (a short tag of Streamlit's random session id: no name, email or
+# user id), so one person's failing run can be followed through the log.
+class _SessionTag(logging.Filter):
+    def filter(self, record):
+        record.sid = session_tag()
+        return True
+
+
+def session_tag() -> str:
+    """The running session's tag ("-" outside one: the server, a route)."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        ctx = get_script_run_ctx(suppress_warning=True)
+    except ImportError:
+        return "-"
+    return ctx.session_id[:8] if ctx is not None and ctx.session_id else "-"
+
+
 _logger = logging.getLogger("coach")
 if not _logger.handlers:
     _handler = logging.StreamHandler()
-    _handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s [%(sid)s] %(message)s"))
+    _handler.addFilter(_SessionTag())
     _logger.addHandler(_handler)
     _logger.setLevel(logging.INFO)
     _logger.propagate = False

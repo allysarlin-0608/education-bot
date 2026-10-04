@@ -6,7 +6,6 @@ several days; pausing it; and the numbers an admin sees.
 The fake model (harness/fake_groq.py) designs a 16-lesson path for any clear
 goal, asks about "business stuff", narrows "doctor" and declines "hack"."""
 import itertools
-import json
 import time
 from datetime import date, timedelta
 
