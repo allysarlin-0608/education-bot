@@ -63,7 +63,7 @@ def test_subjects_add_remove_and_keep_one(public_app, pages):
     pick(p, ".st-key-set_sec_subjects", "Philosophy")
     assert settings_row(app, email)["subjects"] == ["cosmos"]
     pick(p, ".st-key-set_sec_subjects", "Astronomy")          # the last one can't go
-    assert flows.wait_text(p.page, "Keep at least one subject.")
+    assert flows.wait_text(p.page, "Keep at least one subject or goal.")
     assert settings_row(app, email)["subjects"] == ["cosmos"]
     flows.go(p, app, "Today")
     assert flows.wait_text(p.page, "Astronomy"), "Today's subject follows the change"
