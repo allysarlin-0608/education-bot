@@ -101,6 +101,7 @@ def set_reading() -> None:
 def start() -> None:
     """Start learning: check everything, save it as her settings (her goal's
     path first), and Today opens."""
+    ui.refresh_settings()          # finished onto the row as stored now (as every settings save is)
     d = draft()
     try:
         done = settings.finish(ui.config(), d, settings.now_iso())

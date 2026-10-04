@@ -24,6 +24,7 @@ import re
 import time
 
 import streamlit as st
+from streamlit.errors import StreamlitAPIException
 
 from coach import appconfig, ui
 
@@ -79,7 +80,7 @@ def identity():
         if not user.get("is_logged_in") or user.get(session_cookie.MARK) != session_cookie.MARK_VERSION:
             return None          # no one, or a cookie this app didn't make (e.g. an old st.login one)
         sub = user.get("sub")
-    except Exception:  # no [auth] configured: st.user has nothing
+    except StreamlitAPIException:  # Streamlit's sign-in not set up here: no one is signed in
         return None
     if not sub:
         return None
@@ -93,7 +94,7 @@ def access_token():
     """The signed-in person's access token (for the database), or None."""
     try:
         return st.user.tokens.get("access") if st.user.get("is_logged_in") else None
-    except Exception:
+    except StreamlitAPIException:  # (as above)
         return None
 
 
