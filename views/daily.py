@@ -3,7 +3,8 @@ from html import escape
 
 import streamlit as st
 
-from coach import auth, core, curriculum, lesson_view, llm, place, progress_bar, quiz, quizgen, review, settings, steps, tokens, ui
+from coach import (auth, catalog, core, curriculum, goalmaker, lesson_view, llm, paths, place, progress_bar, quiz,
+                   quizgen, review, settings, steps, tokens, ui, visuals)
 
 log = st.session_state.coach_log
 config = ui.config()        # her subjects, daily pace and starting levels
@@ -95,7 +96,7 @@ def run_kickoff(i):
     # The chat only changes once the lesson is complete: a run interrupted
     # mid-stream (she clicks elsewhere) must not leave a lesson half there.
     lesson, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level),
+        core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level, public=auth.is_public()),
         [{"role": "user", "content": kickoff}], max_tokens=tokens.LESSON_MAX_TOKENS,
     )
     if error:
@@ -123,7 +124,8 @@ def run_followup(i, text):
     with st.chat_message("user"):
         st.markdown(text)
     reply, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today, followup=True, slot=slot, start_level=start_level), asked,
+        core.build_system_prompt(log, topic, today, followup=True, slot=slot, start_level=start_level,
+                                public=auth.is_public()), asked,
         max_tokens=tokens.CHAT_MAX_TOKENS,
     )
     if error:
@@ -211,9 +213,10 @@ topic = ui.topic_for(today)
 start_level = settings.start_level(config, topic)
 st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
 with st.container(key="today_links", horizontal=True):
-    with st.container(key=f"enter_{topic}", horizontal=True):      # into the day's subject, its world
-        if st.button(f"Enter {core.TOPICS[topic]}", type="tertiary", key="today_world"):
-            ui.enter_world(topic)
+    if visuals.known(topic):         # into the day's subject, its world (a goal of hers has none)
+        with st.container(key=f"enter_{topic}", horizontal=True):
+            if st.button(f"Enter {catalog.name(topic)}", type="tertiary", key="today_world"):
+                ui.enter_world(topic)
     if st.button("Course map", type="tertiary", key="today_course"):   # the whole path
         ui.open_course(topic)
 # review: noticed when something is due, never in the way of the day's lesson
@@ -224,6 +227,11 @@ if due_now:
         if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due · about {minutes} min",
                      type="tertiary", key="today_review"):
             st.switch_page("views/review.py")
+# her own goal, before its first lesson: the path made for her, and what today holds
+goal = catalog.path(topic)
+if goal and not paths.started(log, topic):
+    with st.container(key="goal_intro"):
+        st.html(goalmaker.summary_html(goal, settings.units(config), eyebrow="Made for you · day one"))
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
 
@@ -246,7 +254,7 @@ if "lessons" in getattr(store, "missing_columns", ()):
     st.stop()
 if not plan:
     st.info(f"You've finished all {curriculum.written(topic)} lessons written so far for "
-            f"{core.TOPICS[topic]}. The next ones will appear once they're added.")
+            f"{catalog.name(topic)}. The next ones will appear once they're added.")
     st.stop()
 
 # ============================================================
@@ -272,8 +280,8 @@ def open_lesson(k, anchor="current-lesson", restore=False):
 
 with st.container(key="course_card"):
     # title and one percentage; the five segments below are the bar itself
-    progress_bar.render(f"card_{topic}", core.TOPICS[topic], done_count, len(plan),
-                        bar=False, label="Subject", topic=unit["unit"])
+    progress_bar.render(f"card_{topic}", catalog.name(topic), done_count, len(plan),
+                        bar=False, label="Your goal" if goal else "Subject", topic=unit["unit"])
     # the segment of a lesson just passed fills from left to right, once
     shown = st.session_state.setdefault("steps_shown", {})
     fresh = steps.just_completed(shown.get(sel_key), plan)
@@ -312,8 +320,8 @@ if i is None:
                     f'<span class="q">{f"{score}%" if score is not None else ""}</span></li>')
     tomorrow = today + timedelta(days=1)
     t_next = ui.topic_for(tomorrow)
-    upcoming = curriculum.next_numbers(log, t_next, settings.units(config)) if t_next in core.TOPICS else []
-    ahead = (f"Tomorrow · {core.TOPICS[t_next]} · "
+    upcoming = curriculum.next_numbers(log, t_next, settings.units(config)) if catalog.known(t_next) else []
+    ahead = (f"Tomorrow · {catalog.name(t_next)} · "
              + (f"Lesson {upcoming[0]}" if len(upcoming) == 1 else f"Lessons {upcoming[0]}–{upcoming[-1]}")
              if upcoming else "")
     with st.container(key="day_done"):
@@ -522,6 +530,10 @@ if passed_here:
             show_results(q)
     else:
         st.caption("This lesson is done.")
+    if goal and slot["n"] == 1:          # her goal's first lesson: a small win, said plainly
+        left = paths.lesson_count(goal) - 1
+        st.html(f'<p class="goal-win">First step done. {left} {"lesson" if left == 1 else "lessons"} '
+                f'to go on “{escape(goal["title"])}”.</p>')
     # just passed: on to the lesson this one unlocked, or the day's summary after the last
     if now is not None and now == i + 1:
         if st.button("Next lesson →", type="primary", use_container_width=True, key="next_lesson"):

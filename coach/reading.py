@@ -1,7 +1,7 @@
 """Reading (part 4.3): the book tracker on the Reading page."""
 import streamlit as st
 
-from coach import books, core, llm, place, progress_bar, shelf, tokens, ui
+from coach import auth, books, core, llm, place, progress_bar, shelf, tokens, ui
 
 SWITCH_MESSAGE = "OK, let's set up a new book. "
 RESTART_MESSAGE = "OK, let's start over. "
@@ -150,7 +150,7 @@ def _recover_interrupted(book, chat):
 
 def _system(task_prompt):
     """Shared core + the reading module + this call's task."""
-    return f"{core.load_system_prompt('reading')}\n\n{task_prompt}"
+    return f"{core.load_system_prompt('reading', auth.is_public())}\n\n{task_prompt}"
 
 
 def _failed(book, chat, error, text):

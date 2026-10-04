@@ -123,7 +123,7 @@ def test_draft_is_checked():
     s = dict(settings.blank("u1"), onboarding={"step": 9, "subjects": ["cosmos", "x"], "units_per_day": 1,
                                                "reading_enabled": True})
     d = settings.draft_of(s)
-    assert d["step"] == 5 and d["subjects"] == ["cosmos"] and d["units_per_day"] == 1 and d["reading_enabled"]
+    assert d["step"] == len(settings.STEPS) - 1 and d["subjects"] == ["cosmos"] and d["units_per_day"] == 1 and d["reading_enabled"]
 
 
 def test_placement_rules():

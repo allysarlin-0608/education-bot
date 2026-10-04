@@ -24,7 +24,7 @@ mine = settings.shown_subjects(config)
 asked = st.query_params.get("subject")
 topic = asked if visuals.known(asked) else st.session_state.get("world_topic")
 if not visuals.known(topic):
-    topic = ui.topic_for(today) if visuals.known(ui.topic_for(today)) else (mine[0] if mine else settings.SUBJECTS[0])
+    topic = ui.topic_for(today) if visuals.known(ui.topic_for(today)) else next((t for t in mine if visuals.known(t)), settings.SUBJECTS[0])
 st.session_state.world_topic = topic
 if asked != topic:
     st.query_params["subject"] = topic

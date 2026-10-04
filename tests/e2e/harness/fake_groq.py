@@ -59,6 +59,8 @@ def _log(kind: str) -> int:
 
 def _kind(messages: list, stream: bool) -> str:
     system = messages[0]["content"] if messages else ""
+    if system.startswith("You design short, structured learning paths"):
+        return "design"
     if "replacement questions" in system:
         return "quiz_rewrite"
     if system.startswith("You write a short quiz"):
@@ -95,9 +97,38 @@ def _quiz(inject: bool) -> dict:
     return {"questions": qs}
 
 
+def _design(last: str, inject: bool) -> dict:
+    """A path for her goal, or the answer for one that can't be planned yet:
+    "doctor" is too big, "hack" or "stocks to buy" isn't taught, "business
+    stuff" is too vague (until she answers the question)."""
+    goal = re.search(r"Goal: (.*)", last).group(1).lower()
+    extra = "INJECT " + INJECT if inject else ""
+    if "doctor" in goal:
+        return {"status": "narrow", "message": "Becoming a doctor takes years. Here are first steps that fit a few weeks.",
+                "suggestions": ["Understand how the heart and blood work", "Learn basic first aid",
+                                "Know how medical school works"]}
+    if "hack" in goal or "stocks to buy" in goal:
+        return {"status": "decline", "message": "We can't help with that here, but here is what we can teach.",
+                "suggestions": ["Understand how investing works", "Learn how to read a company report",
+                                "Know the risks of investing"]}
+    if "business stuff" in goal and "More about my goal" not in last:
+        return {"status": "clarify", "message": "Business is a wide field. What would you like to be able to do?",
+                "questions": ["Are you starting something of your own, or working in a company?"],
+                "suggestions": ["Plan and price a small side business", "Read a company's financial statements",
+                                "Run better meetings"]}
+    units = [{"name": name, "lessons": [f"{name}: idea {k + 1}" + (f" {extra}" if extra and k == 0 else "")
+                                                    for k in range(4)]}
+             for name in ("Foundations", "Core skills", "Putting it together", "Next steps")]
+    return {"status": "ok", "title": ("Reading financial statements" if "financ" in goal else "Your path") + extra,
+            "outcome": "By the end you will be able to read the three main statements and explain what they say.",
+            "level": "Beginner", "units": units}
+
+
 def _reply(kind: str, messages: list, ctl: dict) -> str:
     inject = ctl.get("inject")
     last = messages[-1]["content"] if messages else ""
+    if kind == "design":
+        return json.dumps(_design(last, inject))
     if kind == "quiz":
         return json.dumps(_quiz(inject))
     if kind == "quiz_rewrite":           # as many of each kind as asked for

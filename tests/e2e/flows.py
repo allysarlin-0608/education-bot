@@ -142,8 +142,14 @@ def admin_sign_in(p, app):
 
 
 # ---- setup ------------------------------------------------------------------
-def onboard(p, subjects=("Philosophy",), pace=None, reading=False):
+def to_subjects(p):
+    """From the welcome to our subjects (past the goal of her own)."""
     button(p, "Get started")
+    button(p, "Choose from our subjects instead")
+
+
+def onboard(p, subjects=("Philosophy",), pace=None, reading=False):
+    to_subjects(p)
     for s in subjects:
         button(p, s)
     button(p, "Continue")                  # subjects

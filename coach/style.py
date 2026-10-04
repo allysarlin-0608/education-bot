@@ -637,6 +637,7 @@ LIQUID = """
 .cm-eyebrow { margin: var(--space-6) 0 var(--space-1); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
 .cm-head { margin: var(--space-2) 0 var(--space-5); }
 .cm-head p { margin: var(--space-2) 0 0; font-size: 0.875rem; color: var(--label-2); }
+.cm-outcome { margin: 0 0 var(--space-2); max-width: 42rem; font-size: 0.9375rem; line-height: 1.5; color: var(--label-2); }
 .st-key-cm_next { gap: var(--space-3) !important; padding-bottom: var(--space-4); border-bottom: 1px solid var(--line-1); }
 .st-key-cm_links { flex-wrap: wrap; gap: var(--space-1) var(--space-4) !important; }
 .st-key-cm_links > * { width: auto !important; flex: 0 0 auto !important; }
@@ -1626,6 +1627,51 @@ SETUP = """
 .set-level { margin: 0; display: flex; align-items: baseline; gap: 10px; font-size: 0.9375rem; color: var(--label); }
 .set-level b { font-weight: 500; color: var(--label-2); font-size: 0.8125rem; }
 .set-kept { color: var(--label-2); }
+[class*="st-key-setgoal_"] { justify-content: space-between; gap: var(--space-3) !important; min-height: 44px; flex-wrap: wrap; }
+[class*="st-key-setgoal_"] > :first-child { flex: 1 1 14rem; min-width: 0; }
+.set-goal { margin: 0; display: grid; gap: 2px; font-size: 0.9375rem; line-height: 1.4; color: var(--label); }
+.set-goal b { font-weight: 400; color: var(--label-2); font-size: 0.8125rem; }
+[class*="st-key-setgoal_"][class*="_off"] .set-goal span { color: var(--label-2); }
+
+/* ---------- a goal of her own (coach/goalmaker.py): her words, then her path ---------- */
+.gm-label { margin: 0; font-size: 0.8125rem; color: var(--label-2); }
+[class*="st-key-obg_ideas"], [class*="st-key-goal_ideas"] { gap: var(--space-2) !important; }
+/* an idea is a chip she can tap: a grey surface, the words in full (they wrap) */
+[class*="_idea_list"] [data-testid="stButtonGroup"] > div { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+[class*="_idea_list"] [data-testid="stButtonGroup"] button {
+  min-height: 40px; height: auto; padding: 8px 14px; border-radius: var(--radius-field); background: var(--surface) !important;
+  color: var(--label); text-align: left; white-space: normal; }
+[class*="_idea_list"] [data-testid="stButtonGroup"] button p { white-space: normal; font-size: 0.875rem; line-height: 1.35; }
+[class*="_idea_list"] [data-testid="stButtonGroup"] button::after { display: none !important; }
+.gm-reply { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--label); }
+.gm-q { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--label-2); }
+[class*="_reply_"] { padding: var(--space-4); border-radius: var(--radius-large); background: var(--surface); gap: var(--space-3) !important; }
+[class*="_suggested"] { flex-wrap: wrap; gap: var(--space-2) !important; }
+.gm-path { display: grid; gap: var(--space-2); }
+.gm-path h3 { margin: 0 !important; padding: 0 !important; font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300;
+  font-size: clamp(1.625rem, 2.6vw, 2rem); line-height: 1.15; color: var(--label); }
+.gm-eyebrow { margin: 0; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
+.gm-outcome { margin: 0; font-size: 1rem; line-height: 1.5; color: var(--label); max-width: 36rem; }
+.gm-why { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--label-2); max-width: 36rem; }
+.gm-meta { margin: 0; font-size: 0.8125rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
+[class*="_adjust"] { flex-wrap: wrap; gap: var(--space-3) !important; }
+[class*="st-key-obp_units"], [class*="st-key-gpath_units"] { gap: var(--space-3) !important; }
+[class*="st-key-obp_unit_"], [class*="st-key-gpath_unit_"] { padding: var(--space-4); border-radius: var(--radius-large); background: var(--surface); gap: var(--space-2) !important; }
+[class*="_unit_act_"] { flex-wrap: wrap; gap: var(--space-1) var(--space-3) !important; }
+.gm-unit .gm-u { margin: 0 0 var(--space-2); display: grid; gap: 2px; font-size: 1rem; font-weight: 500; color: var(--label); }
+.gm-unit .gm-u span { font-size: 0.75rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); }
+.gm-unit ol { margin: 0; padding-left: 1.75rem; display: grid; gap: 4px; font-size: 0.9375rem; line-height: 1.45; color: var(--label); }
+.gm-unit li::marker { color: var(--label-3); font-variant-numeric: tabular-nums; }
+
+/* her goal's first day on Today: the path made for her, before its first lesson */
+.st-key-goal_intro { padding: var(--space-5); border-radius: var(--radius-large); background: var(--surface); }
+.ins-list { margin: 0 !important; padding: 0 !important; display: grid; }
+.ins-list > div { margin: 0 !important; display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4);
+  padding: 8px 0; }
+.ins-list dt { font-size: 0.875rem; color: var(--label-2); }
+.ins-list dd { margin: 0 !important; font-size: 1rem; font-variant-numeric: tabular-nums; color: var(--label); display: flex; gap: var(--space-2); align-items: baseline; }
+.ins-list small { font-size: 0.8125rem; color: var(--label-3); min-width: 3ch; text-align: right; }
+.goal-win { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--label); }
 </style>
 """
 

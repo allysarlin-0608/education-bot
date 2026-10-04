@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime
 
 import pytest
@@ -371,3 +372,45 @@ def test_a_damaged_file_is_a_clear_error_not_a_crash(tmp_path, content):
     with pytest.raises(storage.StorageError):
         store.save_entry(log, core.start_entry(log, date(2026, 10, 3), "philosophy"))
     assert (tmp_path / "log.json").read_bytes() == content
+
+
+# ---------- her goals (supabase/goals.sql) ----------
+def _goal():
+    from test_goals import a_path
+    return a_path()
+
+
+def test_a_goal_is_saved_read_back_and_kept_through_a_backup():
+    fake, store = make()
+    g = _goal()
+    log = store.load()
+    store.save_path(log, g)
+    assert store.load()["paths"] == [g]
+    other = dict(_goal(), title="Another")
+    store.replace(dict(log, paths=[other]))           # a backup with another goal: hers becomes exactly that
+    assert [p["id"] for p in store.load()["paths"]] == [other["id"]]
+
+
+def test_without_the_goals_table_goals_say_so_and_nothing_else_breaks():
+    fake, store = make(FakePostgrest(paths_table=False))
+    log = store.load()
+    assert log["paths"] == [] and store.paths_error == storage.PATHS_TABLE_MISSING
+    with pytest.raises(storage.StorageError, match="goals.sql"):
+        store.save_path(log, _goal())
+    store.replace(log)                                   # a backup still imports (its goals wait for the table)
+
+
+def test_file_store_keeps_goals_and_her_counts(tmp_path):
+    store = storage.FileStore(tmp_path / "log.json", tmp_path / "s.json", current_user=lambda: "owner")
+    g = _goal()
+    store.save_path(store.load(), g)
+    store.save_path(store.load(), dict(g, status="archived"))
+    assert [p["status"] for p in store.load()["paths"]] == ["archived"]
+    store.add_event("2026-09-01", "visit")
+    store.add_event("2026-09-01", "visit")              # a visit counts once a day
+    store.add_event("2026-09-01", "lesson_passed")
+    store.add_event("2026-09-01", "lesson_passed")
+    data = store.export_my_data()
+    assert data["learning_paths"][0]["id"] == g["id"]
+    assert sorted((e["event"], e["count"]) for e in data["usage_events"]) == [("lesson_passed", 2), ("visit", 1)]
+    assert "text" not in json.dumps(data["usage_events"]), "counts only"

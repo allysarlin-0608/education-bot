@@ -13,7 +13,7 @@ Units are the syllabus's own: "done" when every lesson in them is passed,
 "current" for the one holding her next lesson, "ahead" or "behind" otherwise."""
 from datetime import date
 
-from coach import catalog, core, curriculum
+from coach import catalog, curriculum
 
 
 def _records(log: dict, topic: str) -> dict:
@@ -84,7 +84,8 @@ def build(log: dict, topic: str, today_plan: list = ()) -> dict:
     if current is None:          # everything written is passed, or nothing to point at
         current = next((k for k, u in enumerate(units) if u["state"] != "done"), len(units) - 1 if units else None)
     return {"topic": topic, "units": units, "current": current, "done": len(done), "written": len(lessons),
-            "next": nxt, "total": curriculum.TOTAL}
+            "next": nxt,
+            "total": len(lessons) if catalog.is_goal(topic) else curriculum.TOTAL}     # (a goal's path is whole)
 
 
 def short_date(iso: str) -> str:

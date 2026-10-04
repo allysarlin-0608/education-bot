@@ -14,6 +14,17 @@ import streamlit as st
 from coach import catalog, core, curriculum, settings, storage
 
 logger = logging.getLogger("coach.ui")
+
+
+def _session_paths():
+    """Her goals, from the session running now (None outside a session)."""
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+    if get_script_run_ctx(suppress_warning=True) is None or "coach_log" not in st.session_state:
+        return None
+    return st.session_state.coach_log.get("paths") or []
+
+
+catalog.bind(_session_paths)      # every page and callback sees this session's goals (coach/catalog.py)
 TIMEZONE = ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))
 
 
@@ -156,8 +167,6 @@ def init_state():
         # "date|topic" -> that lesson's chat, so switching pages or topics
         # never loses it (restored from the saved entry when missing).
         st.session_state.coach_chats = {}
-    # her goals, for every page this run (coach/catalog.py)
-    catalog.use(st.session_state.coach_log.get("paths"))
 
 
 def personal_user_id() -> str:
@@ -288,7 +297,6 @@ def save_path(log, path) -> bool:
         st.session_state.coach_save_error = f"Your goal wasn't saved ({e}). Try again in a moment."
         return False
     log["paths"] = [p for p in log.get("paths", []) if p["id"] != path["id"]] + [path]
-    catalog.use(log["paths"])
     return True
 
 
@@ -387,7 +395,6 @@ def refresh_log(log) -> None:
         log["books"] = stored["books"]      # (books that couldn't be read aren't "no books", ISS-031)
     if not getattr(st.session_state.coach_store, "paths_error", None):
         log["paths"] = stored.get("paths", [])     # (the same for her goals)
-        catalog.use(log["paths"])
     st.session_state.coach_chats = {}          # rebuilt from the records as now stored
 
 

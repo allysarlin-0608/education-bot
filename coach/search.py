@@ -3,7 +3,7 @@ over the log, so they can be tested. Every word she types has to appear
 (in any order, any case); newest first."""
 import re
 
-from coach import catalog, core
+from coach import catalog
 
 SNIPPET = 90
 

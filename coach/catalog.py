@@ -10,23 +10,39 @@ Both are "topics" to the rest of the app: entries, review cards, the course
 map, Progress, search and backups key everything by topic, so a goal works
 everywhere a subject does.
 
-The goals are one person's, so they are held for the session running now
-(use(), called at the start of every run with her records), not in the
-module: a Streamlit server runs many people's sessions at once, each in its
-own thread."""
+The goals are one person's, so they are never held in the module: a
+Streamlit server runs many people's sessions at once. In the app they are
+read from the session running now (bind(), set once by coach/ui.py: her
+records in st.session_state), so a button's callback, which runs before the
+page, sees them too. Without a session (tests, tools) use() gives them for
+the thread."""
 import re
 import threading
 
 GOAL_ID = re.compile(r"^g-[0-9a-f]{8}$")
 _local = threading.local()
+_source = None
+
+
+def bind(source) -> None:
+    """source(): the paths of the session running now, or None outside one."""
+    global _source
+    _source = source
 
 
 def use(paths) -> None:
-    """The learner's goals for this session's run (her records' "paths")."""
-    _local.paths = {p["id"]: p for p in paths or [] if isinstance(p, dict) and is_goal(p.get("id"))}
+    """Her goals for this thread, where there is no app session (tests, tools)."""
+    _local.paths = _index(paths)
+
+
+def _index(paths) -> dict:
+    return {p["id"]: p for p in paths or [] if isinstance(p, dict) and is_goal(p.get("id"))}
 
 
 def _paths() -> dict:
+    found = _source() if _source is not None else None
+    if found is not None:
+        return _index(found)
     return getattr(_local, "paths", {})
 
 

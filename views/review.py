@@ -9,7 +9,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import core, review, ui
+from coach import catalog, review, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -58,7 +58,7 @@ def when(iso):
 
 
 def source(card):
-    subject = core.TOPICS.get(card.get("topic"), "")
+    subject = catalog.name(card.get("topic"), "")
     lesson = f"Lesson {card['n']}" if card.get("n") else ""
     return " · ".join(x for x in (review.KIND_NAMES[card["kind"]], subject, lesson) if x)
 

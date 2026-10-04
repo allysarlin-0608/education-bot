@@ -10,7 +10,7 @@ subject starts at, and whether Reading is on.
 Pure functions, no Streamlit, so they can be tested."""
 from datetime import date, datetime, timezone
 
-from coach import catalog, core
+from coach import catalog, core, paths
 
 DEFAULT_USER_ID = "owner"
 
@@ -127,12 +127,39 @@ def now_iso() -> str:
 # ------------------------------------------------------------
 # The setup in progress (kept in the row until it's finished)
 # ------------------------------------------------------------
-STEPS = ("welcome", "subjects", "pace", "level", "reading", "summary")
+STEPS = ("welcome", "goal", "path", "subjects", "pace", "level", "reading", "summary")
 
 
 def new_draft() -> dict:
     return {"step": 0, "subjects": [], "units_per_day": DEFAULT_PACE, "levels": {},
-            "reading_enabled": False}
+            "reading_enabled": False, **new_goal_draft()}
+
+
+def new_goal_draft() -> dict:
+    """A goal being made (coach/goalmaker.py): what she wrote, the AI's
+    answer when it couldn't plan it yet, and the path while she adjusts it."""
+    return {"goal": {"text": "", "why": "", "start": "new", "answers": ""},
+            "design": None, "path": None, "path_original": None}
+
+
+def goal_draft_of(saved: dict) -> dict:
+    """The goal part of a stored draft, checked."""
+    d = new_goal_draft()
+    g = saved.get("goal") if isinstance(saved.get("goal"), dict) else {}
+    d["goal"] = {"text": str(g.get("text") or "")[:paths.GOAL_MAX_CHARS * 2],
+                 "why": str(g.get("why") or "")[:paths.TEXT_LIMIT],
+                 "start": g.get("start") if g.get("start") in paths.STARTS else "new",
+                 "answers": str(g.get("answers") or "")[:paths.TEXT_LIMIT]}
+    design = saved.get("design")
+    if isinstance(design, dict) and design.get("status") in ("ok", "clarify", "narrow", "decline", "error"):
+        d["design"] = {"status": design["status"], "message": str(design.get("message") or ""),
+                       "questions": [str(q) for q in design.get("questions") or [] if q][:2],
+                       "suggestions": [str(q) for q in design.get("suggestions") or [] if q][:3],
+                       "for": str(design.get("for") or ""), "text": str(design.get("text") or ""),
+                       "calls": design.get("calls") if isinstance(design.get("calls"), int) else 0}
+    d["path"] = paths.parse_path(saved.get("path"))
+    d["path_original"] = paths.parse_path(saved.get("path_original")) if d["path"] else None
+    return d
 
 
 def draft_of(s: dict) -> dict:
@@ -147,6 +174,7 @@ def draft_of(s: dict) -> dict:
     if isinstance(saved.get("levels"), dict):
         d["levels"] = {t: dict(v) for t, v in saved["levels"].items() if t in SUBJECTS and isinstance(v, dict)}
     d["reading_enabled"] = bool(saved.get("reading_enabled"))
+    d.update(goal_draft_of(saved))
     return d
 
 
@@ -184,7 +212,8 @@ def draft_levels(d: dict) -> dict:
 def finish(s: dict, d: dict, when: str) -> dict:
     """The settings she chose, ready to save: onboarded, draft cleared.
     Raises ValueError if anything is missing (never saved half done)."""
-    done = dict(s, subjects=list(d["subjects"]), units_per_day=d["units_per_day"],
+    goal = [d["path"]["id"]] if d.get("path") else []        # her goal first: her first day is for it
+    done = dict(s, subjects=goal + list(d["subjects"]), units_per_day=d["units_per_day"],
                 subject_levels=draft_levels(d), reading_enabled=bool(d["reading_enabled"]),
                 onboarding=None, onboarded_at=when, updated_at=when)
     problems = errors(done)
@@ -261,11 +290,19 @@ def chosen_goals(s: dict) -> list:
     return [t for t in chosen_subjects(s) if catalog.is_goal(t)]
 
 
-def add_goal(s: dict, goal_id: str, when: str) -> dict:
-    """Her settings with a new goal added at the end of her turns."""
-    items = [t for t in (s.get("subjects") or []) if t != goal_id] + [goal_id]
-    if len([t for t in items if catalog.is_goal(t)]) > MAX_GOALS:
+def add_goal(s: dict, goal_id: str, when: str, first_day: date = None, tz=None) -> dict:
+    """Her settings with a goal added to her turns. With first_day, the goal
+    is placed so that its first turn is that day (the turns after it shift
+    by one, as adding a subject in Settings does; a day already started
+    keeps its subject: topic_for). Archived goals leave the turns."""
+    items = [t for t in chosen_subjects(s) if t != goal_id]
+    if len([t for t in items if catalog.is_goal(t)]) + 1 > MAX_GOALS:
         raise ValueError(f"Keep at most {MAX_GOALS} goals.")
+    if first_day is not None and s.get("onboarded_at") and not is_legacy(s):
+        at = (first_day - start_day(s, tz)).days % (len(items) + 1)
+        items.insert(at, goal_id)
+    else:
+        items.append(goal_id)
     return dict(s, subjects=items, updated_at=when)
 
 

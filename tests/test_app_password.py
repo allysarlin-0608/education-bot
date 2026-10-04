@@ -52,7 +52,7 @@ def test_with_the_settings_table_a_new_user_sets_up_first(monkeypatch):
     at.text_input[0].input("correct horse").run()
     at.button[0].click().run()
     assert not at.exception
-    assert any("Learn a little every day" in m.value for m in at.markdown)
+    assert any("Learn what you want, a little every day" in m.value for m in at.markdown)
     assert db.settings == {}                      # nothing saved just by looking
 
 

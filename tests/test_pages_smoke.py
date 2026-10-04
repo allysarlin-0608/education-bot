@@ -17,7 +17,8 @@ PAGES = ["views/daily.py", "views/review.py", "views/reading.py", "views/records
          "views/world.py", "views/course.py"]
 
 
-def app(monkeypatch, tmp_path, *, history=True, reading=True, subjects=("philosophy", "cosmos"), entries=None, pace=3):
+def app(monkeypatch, tmp_path, *, history=True, reading=True, subjects=("philosophy", "cosmos"), entries=None, pace=3,
+        paths=(), onboarding=None, onboarded=True):
     for name in ("SUPABASE_URL", "SUPABASE_KEY", "APP_MODE"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("APP_PASSWORD", "pw")
@@ -28,12 +29,14 @@ def app(monkeypatch, tmp_path, *, history=True, reading=True, subjects=("philoso
     store = storage.make_store("", "", scoped=False, current_user=ui.personal_user_id)
     row = settings.blank(store._uid())
     row.update(subjects=list(subjects), units_per_day=pace, subject_levels={}, reading_enabled=reading,
-               onboarded_at=datetime.now(timezone.utc).isoformat())
+               onboarded_at=datetime.now(timezone.utc).isoformat() if onboarded else None, onboarding=onboarding)
     store.save_settings(row)
     if history and entries is None:
-        entries = seed_history.build(ui.today() - timedelta(days=1), days=20, topics=subjects)
-    if entries is not None:
-        (tmp_path / "log.json").write_text(json.dumps({"version": 1, "entries": entries, "books": []}))
+        entries = seed_history.build(ui.today() - timedelta(days=1), days=20,
+                                     topics=[t for t in subjects if t in settings.SUBJECTS])
+    if entries is not None or paths:
+        (tmp_path / "log.json").write_text(json.dumps({"version": 1, "entries": entries or [], "books": [],
+                                                       "paths": list(paths)}))
     at = AppTest.from_file("../gnosis.py", default_timeout=30)
     at.session_state["coach_authed"] = True
     return at.run()

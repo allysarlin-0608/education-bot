@@ -52,7 +52,7 @@ def test_every_step_and_what_is_saved(mode, pages, request):
         for f in ("learning_log.json", "user_settings.json"):
             (app.state / f).unlink(missing_ok=True)
     p, email = new_person(app, pages)
-    flows.button(p, "Get started")
+    flows.to_subjects(p)
     assert flows.wait_text(p.page, "Choose at least one subject to continue.")
     assert p.page.get_by_role("button", name="Continue").is_disabled()
     for name in ("Philosophy", "Astronomy", "Business Planning"):
@@ -110,7 +110,7 @@ def test_a_refresh_mid_setup_keeps_the_step_and_choices(public_app, pages):
     covers("W-setup-ob_next", "D-setup-save_settings")
     app = public_app
     p, _ = new_person(app, pages)
-    flows.button(p, "Get started")
+    flows.to_subjects(p)
     pick_option(p, "Astronomy")
     pick_option(p, "Philosophy")
     flows.button(p, "Continue")
@@ -129,7 +129,7 @@ def test_double_click_start_learning(public_app, pages):
     covers("W-setup-ob_next-2")
     app = public_app
     p, email = new_person(app, pages)
-    flows.button(p, "Get started")
+    flows.to_subjects(p)
     pick_option(p, "Philosophy")
     for _ in range(4):
         flows.button(p, "Continue")

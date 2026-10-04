@@ -66,11 +66,49 @@ for _name, _aliases in list(SECTION_ALIASES.items()):
         SECTION_ALIASES.setdefault(_alias, _aliases)
 
 
-def load_system_prompt(topic: str) -> str:
-    """Shared core + that topic's section of the knowledge map."""
+# The learner the coach is talking to. The personal app is one person's
+# (learner.md); on the public site it is anyone, so the profile is generic and
+# her own goal and reasons (below) do the personalizing.
+# (and the lines elsewhere that speak of her: what each says on the public site)
+PUBLIC_EDITS = {"語言：她準備出國留學，整個App都是英文。": "語言：整個App都是英文。",
+                "雖然17歲不太可能立刻用到，但": ""}
+
+
+def load_system_prompt(topic: str, public: bool = False) -> str:
+    """Who she is + the shared core + that topic's section of the knowledge
+    map (for one of her goals: her goal and its path, coach/paths.py)."""
+    learner = (PROMPTS_DIR / ("learner_public.md" if public else "learner.md")).read_text(encoding="utf-8")
     core_text = (PROMPTS_DIR / "core.md").read_text(encoding="utf-8")
-    topic_text = (PROMPTS_DIR / "topics" / f"{topic}.md").read_text(encoding="utf-8")
-    return f"{core_text}\n今天的主題範圍：\n{topic_text}"
+    if catalog.is_goal(topic):
+        topic_text = goal_section(catalog.path(topic))
+    else:
+        topic_text = (PROMPTS_DIR / "topics" / f"{topic}.md").read_text(encoding="utf-8")
+    prompt = f"{learner}\n{core_text}\n今天的主題範圍：\n{topic_text}"
+    if public:
+        for personal, general in PUBLIC_EDITS.items():
+            prompt = prompt.replace(personal, general)
+    return prompt
+
+
+def goal_section(path) -> str:
+    """The topic section for one of her goals: what she wants and why, the
+    path, and the rules for a subject with no written knowledge map."""
+    if not path:
+        return "（她的目標已經不在了：照課程標題講。）"
+    units = " → ".join(u["name"] for u in path["units"])
+    lines = ["【她自己的學習目標】",
+             f"- 目標（她的話）：{path.get('goal') or path['title']}"]
+    if path.get("why"):
+        lines.append(f"- 為什麼對她重要（她的話）：{path['why']}")
+    lines += [f"- 這條學習路徑：「{path['title']}」；學完她能：{path['outcome']}",
+              f"- 路徑的單元順序：{units}",
+              "這個目標沒有預先寫好的知識地圖，所以：",
+              "- 只教有共識、能查證的知識。不確定的數字、年份、人名、定義、規定就不要寫；各地不同的規定要說明「依地區而異」。",
+              "- 重要的事實（數字、定義、規則、研究結論、歷史事件）在句子後面用括號註明一般能查到的出處，例如 (Source: WHO)、"
+              "(Source: IFRS)、(Source: NASA)。只寫你確定存在的機構、標準或經典著作；絕不編造網址、書名、論文或引言。",
+              "- 例子和今天的任務盡量連到她寫的原因，讓她看得出這是為她的目標設計的。",
+              "- 健康、法律、財務的決定：只教觀念，不給個人建議；需要時提醒她請教專業人士。"]
+    return "\n".join(lines)
 
 
 def scheduled_topic(day: date) -> str:
@@ -424,6 +462,9 @@ def _syllabus_lines(topic: str, slot: dict, start_level: str = None) -> list:
         f"- 今天要上的課（依固定課綱，照這個標題講，不要換題目）：第 {n} 課「{slot['title']}」",
         f"- 所屬單元：{slot['unit'] or '（無）'}；難度（{source}）：{level}",
     ]
+    if catalog.is_goal(topic) and n == 1:
+        lines.append("- 這是她這個目標的第一課：寫短一點（約350到500字），今天的任務5分鐘內就做得完，"
+                     "讓她今天就有一個看得見的小成功；【Note】用一句話把這課連到她寫的原因。")
     before, after = curriculum.lesson(topic, n - 1), curriculum.lesson(topic, n + 1)
     if before:
         lines.append(f"- 上一課是「{before['title']}」，可以自然銜接，但不要重講。")
@@ -491,8 +532,8 @@ FOLLOWUP_NOTE = """【App 補充：今天的課程已經給過了】
 
 
 def build_system_prompt(log: dict, topic: str, today: date, followup: bool = False,
-                        slot: dict = None, start_level: str = None) -> str:
-    prompt = f"{load_system_prompt(topic)}\n\n{build_history_context(log, topic, today, slot, start_level)}"
+                        slot: dict = None, start_level: str = None, public: bool = False) -> str:
+    prompt = f"{load_system_prompt(topic, public)}\n\n{build_history_context(log, topic, today, slot, start_level)}"
     if followup:
         prompt += f"\n\n{FOLLOWUP_NOTE}"
     return prompt

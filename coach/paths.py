@@ -113,7 +113,6 @@ First decide the status:
 For "ok", design the path:
 - "title": a short name for the path (max 6 words, no quotes).
 - "outcome": one sentence starting "By the end you will be able to" - concrete and checkable.
-- "level": "Beginner", "Intermediate" or "Advanced", matching where the learner is now.
 - "units": {units_min}-{units_max} units in a sensible order; each has "name" (max 6 words) and "lessons": {lessons_min}-{lessons_max} lesson titles.
 - Total lessons: {total_min}-{total_max}. Each lesson title names ONE idea or skill a 10-minute lesson can teach, in plain words (max 10 words), building on the ones before. No duplicates, no "Introduction"/"Conclusion"/"Review" lessons, no exam or quiz lessons.
 - Only well-established knowledge; nothing that depends on recent news.
@@ -121,7 +120,7 @@ For "ok", design the path:
 JSON shape:
 {{"status": "ok|clarify|narrow|decline", "message": "one kind sentence (for clarify/narrow/decline)",
   "questions": ["..."], "suggestions": ["..."],
-  "title": "...", "outcome": "...", "level": "...",
+  "title": "...", "outcome": "...",
   "units": [{{"name": "...", "lessons": ["...", "..."]}}]}}"""
 
 
@@ -159,8 +158,9 @@ def read_design(data, goal: dict) -> dict:
                 "suggestions": [g for g in (_text(x, 120) for x in (data.get("suggestions") or [])[:3]) if g]}
     if status != "ok":
         return {"status": "error"}
+    start = goal.get("start") if goal.get("start") in STARTS else "new"
     path = parse_path({"id": new_id(), "title": data.get("title"), "outcome": data.get("outcome"),
-                       "level": data.get("level"), "units": data.get("units"),
+                       "level": STARTS[start][1], "units": data.get("units"),       # (where she said she is)
                        "goal": goal.get("text"), "why": goal.get("why"), "start": goal.get("start"),
                        "status": "active", "created_at": now_iso(), "updated_at": now_iso()})
     if path is None:
@@ -216,6 +216,11 @@ def lighter(path: dict) -> dict:
     never fewer than two)."""
     units = [dict(u, lessons=u["lessons"][:max(MIN_LESSONS, -(-len(u["lessons"]) * 2 // 3))]) for u in path["units"]]
     return dict(path, units=units, updated_at=now_iso())
+
+
+def with_level(path: dict, level: str) -> dict:
+    """Deeper or gentler: the same lessons, taught at another level."""
+    return dict(path, level=level, updated_at=now_iso()) if level in LEVELS else path
 
 
 def remove_unit(path: dict, i: int) -> dict:

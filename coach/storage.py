@@ -711,6 +711,9 @@ class SupabaseStore(_Scope):
                               [r["data"] for r in
                                self._request("GET", params={**mine, "order": "updated_at.asc"}, table=PATHS_TABLE).json()],
             "ai_usage": self._request("GET", params={**mine, "order": "date.asc"}, table=USAGE_TABLE).json(),
+            # (her own counts: supabase/goals.sql, made with learning_paths)
+            "usage_events": [] if self.paths_error else
+                            self._request("GET", params={**mine, "order": "day.asc"}, table=EVENTS_TABLE).json(),
         }
 
     def delete_my_account(self) -> None:

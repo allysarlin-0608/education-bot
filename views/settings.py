@@ -3,11 +3,12 @@ starts. A change is saved as she makes it (by her user_id) and the other
 pages use it straight away. Levels aren't edited by hand: the placement
 check sets them. Nothing here touches her learning history."""
 import json
+from datetime import timedelta
 from html import escape
 
 import streamlit as st
 
-from coach import auth, choices, core, settings, stage, storage, ui, visuals
+from coach import auth, catalog, choices, curriculum, metrics, paths, settings, stage, storage, ui, visuals
 
 config = ui.config()
 
@@ -27,7 +28,7 @@ def update(**fields) -> bool:
     try:
         new = settings.change(ui.config(), settings.now_iso(), **fields)
     except ValueError:
-        st.session_state.set_problem = "Keep at least one subject."
+        st.session_state.set_problem = "Keep at least one subject or goal."
         return False
     return ui.save_settings(new)
 
@@ -83,13 +84,14 @@ problem = st.session_state.pop("set_problem", "")
 with st.container(key="set_sec_subjects"):
     st.markdown("#### Subjects")
     chosen = settings.chosen_subjects(config)
+    builtin = [t for t in chosen if t in settings.SUBJECTS]       # (her goals have their own section)
     # the subject in focus: the one she touched last, else the one the address
     # names (a link from a world). The address isn't rewritten to follow it:
     # Streamlit adds a browser history step for every such change, so Back
     # would walk through them instead of leaving the page.
     asked = st.query_params.get("subject")
     looked = st.session_state.get("set_focus")
-    focus = stage.focus_of(looked if looked in settings.SUBJECTS else asked, chosen)
+    focus = stage.focus_of(looked if looked in settings.SUBJECTS else asked, builtin)
     st.session_state.set_focus = focus
     with st.container(key="set_grid_subjects"):
         with st.container(key="set_stage"):
@@ -101,13 +103,58 @@ with st.container(key="set_sec_subjects"):
                 if st.button("Course map", type="tertiary", key="set_course"):
                     ui.open_course(focus)
         with st.container(key="set_body"):
-            choices.rows("setsubj", stage.rows(), chosen, pick_subject, multi=True,
-                         full=len(chosen) >= settings.MAX_SUBJECTS, focus=focus, style="index")
-            order = " → ".join(visuals.subject(t)["title"] for t in chosen)
-            st.html(f'<p class="ob-note">{len(chosen)} of {settings.MAX_SUBJECTS} · one a day, in this order: {escape(order)}</p>'
+            choices.rows("setsubj", stage.rows(), builtin, pick_subject, multi=True,
+                         full=len(builtin) >= settings.MAX_SUBJECTS, focus=focus, style="index")
+            order = " → ".join(catalog.name(t) for t in chosen)
+            st.html(f'<p class="ob-note">{len(builtin)} of {settings.MAX_SUBJECTS} · one a day, in this order: {escape(order)}</p>'
                     + (f'<p class="ob-note">{escape(problem)}</p>' if problem else "")
                     + ('<p class="ob-note set-kept">Your existing learning history will be preserved.</p>'
                        if st.session_state.get("set_subjects_changed") else ""))
+
+# ---------- Your goals: her own, each with the path designed for it ----------
+def pause_goal(goal_id: str) -> None:
+    ui.refresh_settings()
+    rest = [t for t in settings.chosen_subjects(ui.config()) if t != goal_id]
+    if not rest:
+        st.session_state.goal_set_problem = "Keep at least one subject or goal."
+        return
+    if update(subjects=rest):
+        ui.save_path(st.session_state.coach_log, paths.archive(catalog.path(goal_id)))
+
+
+def resume_goal(goal_id: str) -> None:
+    ui.refresh_settings()
+    try:
+        new = settings.add_goal(ui.config(), goal_id, settings.now_iso())
+    except ValueError as e:
+        st.session_state.goal_set_problem = str(e)
+        return
+    if ui.save_path(st.session_state.coach_log, paths.restore(catalog.path(goal_id))):
+        ui.save_settings(new)
+
+
+with st.container(key="set_sec_goals"):
+    st.markdown("#### Your goals")
+    mine = catalog.goals(active_only=False)
+    if not mine:
+        st.html('<p class="ob-note">Tell us what you want to learn and we\'ll design a path for it.</p>')
+    for g in mine:
+        on = g["status"] == "active"
+        p = curriculum.progress(st.session_state.coach_log, g["id"])
+        with st.container(key=f"setgoal_{g['id']}_{'on' if on else 'off'}", horizontal=True, vertical_alignment="center"):
+            st.html(f'<p class="set-goal"><span>{escape(g["title"])}</span>'
+                    f'<b>{p["done"]} of {p["written"]} lessons · {escape(g["level"])}{"" if on else " · paused"}</b></p>')
+            if st.button("Course map", key=f"setgoal_map_{g['id']}", type="tertiary"):
+                ui.open_course(g["id"])
+            if on:
+                st.button("Pause", key=f"setgoal_pause_{g['id']}", type="tertiary", on_click=pause_goal, args=(g["id"],))
+            else:
+                st.button("Resume", key=f"setgoal_resume_{g['id']}", type="tertiary", on_click=resume_goal, args=(g["id"],))
+    goal_problem = st.session_state.pop("goal_set_problem", "")
+    if goal_problem:
+        st.html(f'<p class="ob-note">{escape(goal_problem)}</p>')
+    if st.button("Add a goal", key="set_goal_add"):
+        st.switch_page("views/goal.py")
 
 # ---------- Daily pace ----------
 with st.container(key="set_sec_pace"):
@@ -120,10 +167,10 @@ with st.container(key="set_sec_level"):
     st.markdown("#### Starting level")
     placed = st.session_state.pop("set_placed", None)
     open_topic = st.session_state.get("set_retake")
-    for t in chosen:
+    for t in builtin:
         level = settings.start_level(config, t) or "Beginner"
         with st.container(key=f"setlvl_{t}", horizontal=True, vertical_alignment="center"):
-            st.html(f'<p class="set-level"><span>{escape(core.TOPICS[t])}</span><b>{escape(level)}</b></p>')
+            st.html(f'<p class="set-level"><span>{escape(catalog.name(t))}</span><b>{escape(level)}</b></p>')
             if open_topic == t:
                 st.button("Cancel", key=f"setcancel_{t}", type="tertiary", on_click=cancel)
             else:
@@ -133,7 +180,7 @@ with st.container(key="set_sec_level"):
             choices.placement(f"set_{t}", t, st.session_state.set_check,
                               on_answer=check_answer, on_move=check_move, on_again=lambda t=t: retake(t))
         if placed and placed[0] == t:
-            st.html(f'<p class="ob-note">{escape(core.TOPICS[t])} now starts at {escape(placed[1])} '
+            st.html(f'<p class="ob-note">{escape(catalog.name(t))} now starts at {escape(placed[1])} '
                     f'({placed[2]} of 5 right).</p>')
 
 # ---------- Reading ----------
@@ -193,6 +240,32 @@ if auth.is_admin():
                 st.button("Remove", key=f"inv_rm_{slug}", type="tertiary",
                           on_click=remove_invite, args=(inv["email"],))
 
+
+# ---------- Insights (public, admins only): whether GNOSIS works (coach/metrics.py) ----------
+if auth.is_admin():
+    with st.container(key="set_sec_insights"):
+        st.markdown("#### Insights")
+        since = st.date_input("People who signed up since", value=ui.today() - timedelta(days=30),
+                              max_value=ui.today(), key="ins_since")
+        try:
+            m = st.session_state.coach_store.metrics(since, ui.today())
+        except storage.StorageError as e:
+            st.html(f'<p class="ob-note">Couldn\'t load the numbers ({escape(str(e))}). '
+                    "If the goals tables aren't set up yet, run supabase/goals.sql first.</p>")
+        else:
+            rows = [("Signed up", str(m["signed_up"]), ""),
+                    ("Set a goal or subjects", str(m["set_up"]), metrics.share(m["set_up"], m["signed_up"])),
+                    ("Passed a first lesson", str(m["first_lesson"]), metrics.share(m["first_lesson"], m["signed_up"])),
+                    ("Came back the next day", str(m["came_back_next_day"]),
+                     metrics.share(m["came_back_next_day"], m["eligible_next_day"])),
+                    ("Still active after a week", str(m["active_after_a_week"]),
+                     metrics.share(m["active_after_a_week"], m["eligible_week"])),
+                    ("Lessons per learner per week", str(m["lessons_per_learner_week"]), "")]
+            st.html('<dl class="ins-list">' + "".join(
+                f'<div><dt>{escape(a)}</dt><dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c in rows)
+                + "</dl>")
+            st.html('<p class="ob-note">Counts only: no lesson, answer or goal text is kept for these. '
+                    "Next day and a week are out of the people who signed up at least that long ago.</p>")
 
 # ---------- Your data (public): a copy of it all, or all of it gone ----------
 DELETE_WARNING = "This permanently deletes your account and all your learning history. This can't be undone."

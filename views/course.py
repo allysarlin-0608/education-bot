@@ -10,7 +10,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import core, course, curriculum, lesson_view, quiz, settings, ui
+from coach import catalog, core, course, curriculum, lesson_view, quiz, settings, ui, visuals
 
 log = st.session_state.coach_log
 config = ui.config()
@@ -19,9 +19,10 @@ mine = settings.shown_subjects(config)
 
 # the subject: named in the address (a link, a refresh), else her session, else today's
 asked = st.query_params.get("subject")
-topic = asked if asked in settings.SUBJECTS and curriculum.has_syllabus(asked) else st.session_state.get("course_topic")
-if topic not in settings.SUBJECTS:
-    topic = ui.topic_for(today) if ui.topic_for(today) in settings.SUBJECTS else (mine[0] if mine else "philosophy")
+# (a subject, or one of her goals)
+topic = asked if catalog.known(asked) and curriculum.has_syllabus(asked) else st.session_state.get("course_topic")
+if not (catalog.known(topic) and curriculum.has_syllabus(topic)):
+    topic = ui.topic_for(today) if catalog.known(ui.topic_for(today)) else (mine[0] if mine else "philosophy")
 st.session_state.course_topic = topic
 if asked != topic:
     st.query_params["subject"] = topic
@@ -92,6 +93,9 @@ def open_lesson(n):
 share = m["done"] / m["written"] if m["written"] else 0
 st.html('<p class="cm-eyebrow cm-top">Course map</p>')
 st.markdown(f"## {escape(course.subject_name(topic))}")
+goal = catalog.path(topic)
+if goal:                    # her goal: what the path is for
+    st.html(f'<p class="cm-outcome">{escape(goal["outcome"])}</p>')
 st.html(f'<div class="cm-head"><div class="rv-line"><span style="width:{share * 100:.1f}%"></span></div>'
         f'<p>{m["done"]} of {m["written"]} lessons passed · {level}'
         + (" · more are added as you go" if m["written"] < m["total"] else "") + "</p></div>")
@@ -109,11 +113,11 @@ with st.container(key="cm_next"):
             when = ui.next_study_day(topic)
             day = "" if when is None else f" · on {when:%A}, {when:%b} {when.day}"
             st.markdown(f"**Next: Lesson {nxt}, {escape(title)}**{day}")
-            st.caption(f"Today is {core.TOPICS.get(ui.topic_for(today), 'another subject')}'s day: "
+            st.caption(f"Today is {catalog.name(ui.topic_for(today), 'another subject')}'s day: "
                        "your subjects take turns, one a day.")
     with st.container(key="cm_links", horizontal=True):
-        if st.button(f"Enter {course.subject_name(topic)}", type="tertiary", key="cm_world"):
-            ui.enter_world(topic)
+        if visuals.known(topic) and st.button(f"Enter {course.subject_name(topic)}", type="tertiary", key="cm_world"):
+            ui.enter_world(topic)       # (a goal has no world)
         others = [t for t in mine if t != topic and curriculum.has_syllabus(t)]
         for t in others:
             if st.button(course.subject_name(t), type="tertiary", key=f"cm_other_{t}"):

@@ -27,6 +27,7 @@ LESSON_MAX_TOKENS = 2400     # seven-block lesson, ~600–1000 characters plus r
 CHAT_MAX_TOKENS = 900        # follow-ups and book chat
 JSON_MAX_TOKENS = 900        # verdicts / plan adjustments
 QUIZ_MAX_TOKENS = 2400       # ten questions with options and a line of explanation each
+PATH_MAX_TOKENS = 2400      # a goal's path: up to 40 short lesson titles in units (coach/paths.py)
 
 CJK = re.compile(r"[⺀-鿿豈-﫿＀-￯　-〿]")
 

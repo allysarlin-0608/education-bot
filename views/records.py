@@ -13,7 +13,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import core, curriculum, history, lesson_view, progress_bar, review, rolling, settings, ui
+from coach import catalog, core, curriculum, history, lesson_view, progress_bar, review, rolling, settings, ui, visuals
 
 log = st.session_state.coach_log          # (re-read on arriving here, before the bar: gnosis.py)
 today = ui.today()
@@ -72,7 +72,7 @@ def show_entry(e, where):
         curriculum.refresh_titles(e["topic"], e["lessons"])
         ns = [s["n"] for s in e["lessons"]]
         done_count = sum(1 for s in e["lessons"] if s["completed"])
-        st.caption(f"{core.TOPICS[e['topic']]} · Lessons {min(ns)}–{max(ns)} · {e['level']} · "
+        st.caption(f"{catalog.name(e['topic'])} · Lessons {min(ns)}–{max(ns)} · {e['level']} · "
                    f"{done_count} of {len(ns)} passed")
         lesson_rows(e)
         readable = {s["n"]: curriculum.content(log, e["topic"], s) for s in e["lessons"]}
@@ -88,7 +88,7 @@ def show_entry(e, where):
         if e.get("followup_question"):
             st.markdown(f"**Question to explore:** {e['followup_question']}")
         return
-    st.caption(f"{core.TOPICS[e['topic']]} · session {e['session_number']} · {e['level']} · "
+    st.caption(f"{catalog.name(e['topic'])} · session {e['session_number']} · {e['level']} · "
                + ("finished" if e.get("completed") else "not finished"))
     if e.get("followup_question"):
         st.markdown(f"**Question to explore:** {e['followup_question']}")
@@ -159,7 +159,7 @@ def view_day():
                     + (f", {picked.year}" if picked.year != today.year else ""))
         on_day = history.entries_on(log, picked)
         if not on_day:
-            planned = core.TOPICS[ui.topic_for(picked)]
+            planned = catalog.name(ui.topic_for(picked))
             if stats["status"] == "future":
                 st.caption(f"Coming up: {planned}.")
             elif settings.is_legacy(config):
@@ -195,7 +195,7 @@ def view_sessions():
             topic_filter = st.selectbox(
                 "Subject",
                 ["all", *subjects],
-                format_func=lambda k: "All subjects" if k == "all" else core.TOPICS[k],
+                format_func=lambda k: "All subjects" if k == "all" else catalog.name(k),
                 label_visibility="collapsed",
                 key="sessions_topic",
             )
@@ -210,7 +210,7 @@ def view_sessions():
             for e in entries[:shown]:
                 day = date.fromisoformat(e["date"])
                 mark = "●" if e.get("completed") else "○"
-                title = e.get("title") or core.TOPICS[e["topic"]]
+                title = e.get("title") or catalog.name(e["topic"])
                 with st.expander(f"{mark} {core.weekday_name(day)[:3]}, {day:%b} {day.day}, {day.year} · {title}"):
                     if st.button("Show on the calendar", key=f"oncal_{e['date']}_{e['topic']}", type="tertiary"):
                         st.session_state.prog_reveal = True
@@ -228,20 +228,22 @@ def view_subjects():
     shown = subjects + (["reading"] if settings.reading_on(config) else [])
     with st.container(key="subj_list"):
         for key in shown:
-            label = core.TOPICS[key]
+            label = catalog.name(key)
             if curriculum.has_syllabus(key):
                 p = curriculum.progress(log, key)
                 unit = curriculum.unit_progress(log, key)
                 level = core.lesson_level(min(p["done"] + 1, curriculum.TOTAL), settings.start_level(config, key))
                 progress_bar.render(
                     f"course_{key}", label, unit["done"], unit["total"],
-                    f"{p['done']:,} of {p['written']:,} written so far · {level}",     # as on its world page and course map
+                    (f"{p['done']:,} of {p['written']:,} lessons · {level}" if catalog.is_goal(key)      # her goal's whole path
+                     else f"{p['done']:,} of {p['written']:,} written so far · {level}"),     # as on its world page and course map
                     label="", compact=True, topic=unit["unit"],
                 )
                 with st.container(key=f"prog_links_{key}", horizontal=True):
-                    with st.container(key=f"enter_{key}", horizontal=True):     # into its world
-                        if st.button(f"Enter {label}", type="tertiary", key=f"prog_world_{key}"):
-                            ui.enter_world(key)
+                    if visuals.known(key):        # into its world (a goal of hers has none)
+                        with st.container(key=f"enter_{key}", horizontal=True):
+                            if st.button(f"Enter {label}", type="tertiary", key=f"prog_world_{key}"):
+                                ui.enter_world(key)
                     if st.button("Course map", type="tertiary", key=f"prog_course_{key}"):
                         ui.open_course(key)
                 continue
