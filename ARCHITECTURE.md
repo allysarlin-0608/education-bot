@@ -11,8 +11,8 @@ the model.
 |---|---|---|---|
 | Entry | `streamlit_app.py`, `gnosis.py` | `st.App` with the sign-in routes; every run: `coach.freshen()`, style, the gate (password or account), the page list | hold logic of its own |
 | Pages (UI) | `views/*.py` | draw one page from the session's data; call domain functions; save through `coach.ui` | talk to Supabase or Groq directly; compute progress |
-| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
-| Domain | `core.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
+| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
+| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `plans.py`, `metrics.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
 | AI | `llm.py`, `quizgen.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
 | Data | `storage.py` (file store and Supabase store), `supa_auth.py`, `auth.py`, `session_cookie.py`, `routes.py` | read/write entries, books, settings, usage; sign-in, sessions, invites | trust anything the browser sends without the signed-in user's token |
 | Schema | `supabase/*.sql` | tables, row-level security, the usage function | be changed without the owner's approval |
@@ -30,6 +30,18 @@ the model.
   onboarding. A day already started keeps its subject when subjects change
   (the new turns start tomorrow); a new pace reshapes today's remaining
   lessons at once and saves the day (`ui.refit_today`).
+- **learning_paths** (`supabase/goals.sql`): her own goals, one row per
+  (user, goal id `g-` + 8 hex), the path as JSON (`paths.parse_path`:
+  title, outcome, level, units of lesson titles, her goal and why, status
+  active/archived). A goal is a subject like the others everywhere
+  (`catalog.py`): its id is the entry's `topic`, its syllabus is its path
+  (`curriculum._load`), its name is the path's title; it joins her turns in
+  `user_settings.subjects`. Its outline is fixed once its first lesson is
+  written (lesson numbers are positions); before that she adjusts it freely.
+- **usage_events** (`goals.sql`): per person, per day, a count of four events
+  (visit, setup_done, goal_created, lesson_passed), added only through
+  `add_usage_event()`; admins read totals through `gnosis_metrics()`
+  (Settings → Insights). No content is ever kept for these.
 - **reading_books**, **ai_usage**, **allowed_users** (invites), **app_admins**.
 - Row-level security: every table is read and written only as the signed-in
   user; `ai_usage` only grows (a security-definer function adds to it).
@@ -43,7 +55,10 @@ the model.
 2. `style.inject()`; the gate: the app password (personal) or the account
    session cookie and the invite list (public).
 3. `ui.init_state()` loads the log and settings once per session (keyed by
-   the user and `coach.GENERATION`).
+   the user and `coach.GENERATION`); `ui.refresh_settings()` then re-reads
+   the settings every run (another tab may have changed them). Her goals are
+   read from the session running now (`catalog.bind`), never held in a
+   module: callbacks run before the page and see them too.
 4. `st.navigation(..., position="hidden")` runs the page; the top bar is our
    own (`topnav.py`), the chat dock is placed by `place.py`.
 
@@ -62,6 +77,32 @@ One definition per number, in `core`: a day studied (any entry), a day
 completed (every entry that day completed), lessons passed (`lessons_in`),
 a streak day (a lesson passed, or a reading check-in). Progress, the calendar, the month line and
 the sidebar all use them.
+
+## A goal of her own (Phase 1)
+
+- **Making it** (`goalmaker.py`, used by the setup and `views/goal.py`): her
+  words, why, where she is, how much time → one AI call
+  (`paths.design_messages`, `tokens.PATH_MAX_TOKENS`) → `paths.read_design`:
+  a path, or a kind answer (clarify, narrow, decline) with goals that fit.
+  A goal too short or too vague is answered before any call
+  (`paths.precheck`). The same answers are never designed twice (the reply
+  is kept with the answers it was for, saved before anything is drawn); a
+  goal may be asked about once more with her answer
+  (`paths.DESIGN_ATTEMPTS`). Every call counts toward her daily allowance.
+- **The draft** (her words, the reply, the path being adjusted) lives in
+  `user_settings.onboarding` (`settings.goal_draft_of`), so a refresh or
+  another tab keeps it. Adjusting (depth, shorter, skip/move a part, remove a
+  lesson) never calls the AI.
+- **Her turns**: a new goal goes first in the setup, and from the New goal
+  page takes today's turn when today isn't started (`settings.add_goal`).
+- **Lessons** for a goal (`core.goal_section`): her goal and reasons, the
+  path, well-established knowledge only, sources named for important facts,
+  no personal medical/legal/financial advice; lesson 1 is short with a small
+  win. The public site uses a general learner profile
+  (`prompts/learner_public.md`, `core.PUBLIC_EDITS`); the personal app's
+  prompt is unchanged (`prompts/learner.md` + `core.md`).
+- **Plans** (`plans.py`): what each plan would include; not enforced
+  (`ENFORCED = False`), no page mentions plans.
 
 ## Configuration
 
@@ -99,6 +140,9 @@ All in `coach/style.py`, tokens in `:root`; the existing typefaces are kept.
   inventory check. Runs before every push (`.githooks/pre-push`; enable with
   `git config core.hooksPath .githooks`) and on GitHub
   (`.github/workflows/check.yml`).
+- Goals: `tests/test_goals.py` (paths, catalog, turns, the prompt, the AI
+  call rules, the numbers), `tests/test_goal_pages.py` (every goal page and
+  flow, no browser), `tests/e2e/test_goals.py` (in a browser).
 - `tests/e2e/` (Playwright, a fake Supabase and Groq, a settable clock):
   flows, two accounts, personas, odd input, accessibility, screenshots at
   390 / 820 / 1180 / 1440 light and dark, visual baselines

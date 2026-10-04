@@ -147,6 +147,62 @@ def test_every_screen(public_app, pages, width, scheme):
 
 
 
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+@pytest.mark.parametrize("width", list(SIZES))
+def test_goal_screens(public_app, pages, width, scheme):
+    """A goal of her own: her words, an answer to a vague goal, her path,
+    the summary, Today made for her, the first win, Settings and the New
+    goal page, and the numbers (admins)."""
+    app = public_app
+    app.set_llm()
+    problems = {}
+    tag = f"{width}_{scheme}"
+    p = pages(width=width, height=SIZES[width], scheme=scheme)
+    email = f"gscr{next(_n)}-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=email)
+    shot(p, f"20_welcome_{tag}", problems)
+    flows.button(p, "Get started")
+    shot(p, f"21_goal_{tag}", problems)
+    box = p.page.get_by_label("In your own words")
+    box.fill("Get better at business stuff")
+    p.page.keyboard.press("Tab")
+    flows.button(p, "Design my path", wait=False)
+    assert flows.wait_text(p.page, "What would you like to be able to do?", 40)
+    shot(p, f"22_goal_clarify_{tag}", problems)
+    box.fill("Read a company's financial statements")
+    p.page.get_by_label("Why does it matter to you? (optional)").fill("I want to invest my savings well")
+    p.page.keyboard.press("Tab")
+    flows.button(p, "Design my path", wait=False)
+    assert flows.wait_text(p.page, "Your path", 40)
+    shot(p, f"23_path_{tag}", problems)
+    for _ in range(3):
+        flows.button(p, "Continue")
+    shot(p, f"24_summary_{tag}", problems)
+    flows.button(p, "Start learning")
+    flows.idle(p.page, 30)
+    shot(p, f"25_today_goal_{tag}", problems)
+    flows.pass_lesson(p)
+    shot(p, f"26_first_win_{tag}", problems)
+    flows.open_app(p, app, "/settings")
+    shot(p, f"27_settings_{tag}", problems)            # (the page, measured from its top)
+    flows.idle(p.page)                                   # her goals: the section itself (the subjects'
+    p.page.locator(".st-key-set_sec_goals").screenshot(  # picture stays at the top over the list below it)
+        path=str(SHOTS / f"27b_settings_goals_{tag}.png"))
+    flows.open_app(p, app, "/goal")
+    shot(p, f"28_new_goal_{tag}", problems)
+    flows.open_app(p, app, "/records")
+    shot(p, f"29_progress_goal_{tag}", problems)
+    q = pages(width=width, height=SIZES[width], scheme=scheme)
+    flows.admin_sign_in(q, app)
+    if flows.wait_text(q.page, "Get started", 3):
+        flows.onboard(q)
+    flows.open_app(q, app, "/settings")
+    flows.idle(q.page)
+    q.page.locator(".st-key-set_sec_insights").screenshot(path=str(SHOTS / f"30_insights_{tag}.png"))
+    (SHOTS / f"problems_goals_{tag}.json").write_text(json.dumps(problems, indent=1))
+    assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
+
+
 @pytest.fixture(autouse=True)
 def _real_clock_after(public_app):
     yield

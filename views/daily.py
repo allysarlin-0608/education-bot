@@ -231,7 +231,8 @@ if due_now:
 goal = catalog.path(topic)
 if goal and not paths.started(log, topic):
     with st.container(key="goal_intro"):
-        st.html(goalmaker.summary_html(goal, settings.units(config), eyebrow="Made for you · day one"))
+        st.html(goalmaker.summary_html(goal, settings.units(config), eyebrow="Made for you · day one",
+                                       title=False))       # (the card below names it)
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
 
@@ -532,7 +533,7 @@ if passed_here:
         st.caption("This lesson is done.")
     if goal and slot["n"] == 1:          # her goal's first lesson: a small win, said plainly
         left = paths.lesson_count(goal) - 1
-        st.html(f'<p class="goal-win">First step done. {left} {"lesson" if left == 1 else "lessons"} '
+        st.html(f'<p class="goal-win"><b>First step done.</b> {left} {"lesson" if left == 1 else "lessons"} '
                 f'to go on “{escape(goal["title"])}”.</p>')
     # just passed: on to the lesson this one unlocked, or the day's summary after the last
     if now is not None and now == i + 1:

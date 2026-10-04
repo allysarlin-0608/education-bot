@@ -162,26 +162,27 @@ with st.container(key="set_sec_pace"):
     choices.rows("setpace", [(n, name, settings.pace_line(n), {"bars": n}) for n, (name, _) in settings.PACES.items()],
                  [config["units_per_day"]], pick_pace, style="pace")
 
-# ---------- Starting level ----------
-with st.container(key="set_sec_level"):
-    st.markdown("#### Starting level")
-    placed = st.session_state.pop("set_placed", None)
-    open_topic = st.session_state.get("set_retake")
-    for t in builtin:
-        level = settings.start_level(config, t) or "Beginner"
-        with st.container(key=f"setlvl_{t}", horizontal=True, vertical_alignment="center"):
-            st.html(f'<p class="set-level"><span>{escape(catalog.name(t))}</span><b>{escape(level)}</b></p>')
+# ---------- Starting level (of our subjects: a goal's is its path's) ----------
+if builtin:
+    with st.container(key="set_sec_level"):
+        st.markdown("#### Starting level")
+        placed = st.session_state.pop("set_placed", None)
+        open_topic = st.session_state.get("set_retake")
+        for t in builtin:
+            level = settings.start_level(config, t) or "Beginner"
+            with st.container(key=f"setlvl_{t}", horizontal=True, vertical_alignment="center"):
+                st.html(f'<p class="set-level"><span>{escape(catalog.name(t))}</span><b>{escape(level)}</b></p>')
+                if open_topic == t:
+                    st.button("Cancel", key=f"setcancel_{t}", type="tertiary", on_click=cancel)
+                else:
+                    st.button("Retake placement quiz", key=f"setretake_{t}", type="tertiary",
+                              on_click=retake, args=(t,))
             if open_topic == t:
-                st.button("Cancel", key=f"setcancel_{t}", type="tertiary", on_click=cancel)
-            else:
-                st.button("Retake placement quiz", key=f"setretake_{t}", type="tertiary",
-                          on_click=retake, args=(t,))
-        if open_topic == t:
-            choices.placement(f"set_{t}", t, st.session_state.set_check,
-                              on_answer=check_answer, on_move=check_move, on_again=lambda t=t: retake(t))
-        if placed and placed[0] == t:
-            st.html(f'<p class="ob-note">{escape(catalog.name(t))} now starts at {escape(placed[1])} '
-                    f'({placed[2]} of 5 right).</p>')
+                choices.placement(f"set_{t}", t, st.session_state.set_check,
+                                  on_answer=check_answer, on_move=check_move, on_again=lambda t=t: retake(t))
+            if placed and placed[0] == t:
+                st.html(f'<p class="ob-note">{escape(catalog.name(t))} now starts at {escape(placed[1])} '
+                        f'({placed[2]} of 5 right).</p>')
 
 # ---------- Reading ----------
 with st.container(key="set_sec_reading"):

@@ -135,6 +135,10 @@ def form(key: str, get, put, *, ask_pace: bool = True, pace: int = settings.DEFA
         st.session_state.setdefault(_k(key, name), d["goal"][name])
     st.session_state.setdefault(_k(key, "start"), d["goal"]["start"])
 
+    st.text_area("In your own words", key=_k(key, "text"), max_chars=paths.GOAL_MAX_CHARS, height=96,
+                 placeholder="e.g. Understand how investing works before I put money in",
+                 on_change=_keep, args=(key, get, put))
+    # the answer to the goal she wrote, just under it
     reply = d.get("design") or {}
     if reply.get("status") in ("clarify", "narrow", "decline", "error") and reply.get("text") == d["goal"]["text"].strip():
         with st.container(key=_k(key, f"reply_{reply['status']}")):
@@ -148,9 +152,6 @@ def form(key: str, get, put, *, ask_pace: bool = True, pace: int = settings.DEFA
                     for k, idea in enumerate(reply["suggestions"]):
                         st.button(idea, key=_k(key, f"sugg_{k}"), on_click=_use, args=(key, idea, get, put))
 
-    st.text_area("In your own words", key=_k(key, "text"), max_chars=paths.GOAL_MAX_CHARS, height=96,
-                 placeholder="e.g. Understand how investing works before I put money in",
-                 on_change=_keep, args=(key, get, put))
     with st.container(key=_k(key, "ideas")):
         # one kind of learner's ideas at a time (work, curiosity, study), so the list stays short
         group = st.segmented_control("Or start from an idea", list(paths.SUGGESTIONS), key=_k(key, "idea_group"),
@@ -209,11 +210,12 @@ def again(get, put) -> None:
     put(d)
 
 
-def summary_html(p: dict, pace: int, eyebrow: str = "Made for you") -> str:
+def summary_html(p: dict, pace: int, eyebrow: str = "Made for you", title: bool = True) -> str:
     n = paths.lesson_count(p)
     days = math.ceil(n / pace)
     why = f'<p class="gm-why">Because: “{escape(p["why"])}”</p>' if p.get("why") else ""
-    return (f'<div class="gm-path"><p class="gm-eyebrow">{escape(eyebrow)}</p><h3>{escape(p["title"])}</h3>'
+    return (f'<div class="gm-path"><p class="gm-eyebrow">{escape(eyebrow)}</p>'
+            + (f'<h3>{escape(p["title"])}</h3>' if title else "") +
             f'<p class="gm-outcome">{escape(p["outcome"])}</p>{why}'
             f'<p class="gm-meta">{n} lessons in {len(p["units"])} parts · {p["level"]} · '
             f'about {days} study {"day" if days == 1 else "days"} at {pace} a day</p></div>')

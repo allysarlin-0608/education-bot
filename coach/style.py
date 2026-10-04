@@ -1657,7 +1657,12 @@ SETUP = """
 [class*="_adjust"] { flex-wrap: wrap; gap: var(--space-3) !important; }
 [class*="st-key-obp_units"], [class*="st-key-gpath_units"] { gap: var(--space-3) !important; }
 [class*="st-key-obp_unit_"], [class*="st-key-gpath_unit_"] { padding: var(--space-4); border-radius: var(--radius-large); background: var(--surface); gap: var(--space-2) !important; }
-[class*="_unit_act_"] { flex-wrap: wrap; gap: var(--space-1) var(--space-3) !important; }
+[class*="_unit_act_"] { flex-wrap: wrap; gap: 0 var(--space-5) !important; margin-top: var(--space-1); }
+[class*="_unit_act_"] button { padding: 6px 0 !important; min-height: 40px; font-weight: 400 !important; }
+[class*="_unit_act_"] button p { font-weight: 400 !important; }
+/* a suggested goal, inside the grey answer: a chip on the page's own ground */
+[class*="_reply_"] [data-baseweb="input"], [class*="_reply_"] [data-baseweb="base-input"], [class*="_reply_"] input { background: var(--env) !important; }
+[class*="_suggested"] button { background: var(--env) !important; text-align: left; height: auto; white-space: normal; }
 .gm-unit .gm-u { margin: 0 0 var(--space-2); display: grid; gap: 2px; font-size: 1rem; font-weight: 500; color: var(--label); }
 .gm-unit .gm-u span { font-size: 0.75rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); }
 .gm-unit ol { margin: 0; padding-left: 1.75rem; display: grid; gap: 4px; font-size: 0.9375rem; line-height: 1.45; color: var(--label); }
@@ -1671,6 +1676,7 @@ SETUP = """
 .ins-list dt { font-size: 0.875rem; color: var(--label-2); }
 .ins-list dd { margin: 0 !important; font-size: 1rem; font-variant-numeric: tabular-nums; color: var(--label); display: flex; gap: var(--space-2); align-items: baseline; }
 .ins-list small { font-size: 0.8125rem; color: var(--label-3); min-width: 3ch; text-align: right; }
+.goal-win b { font-weight: 600; }
 .goal-win { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--label); }
 </style>
 """
