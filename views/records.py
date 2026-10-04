@@ -131,8 +131,7 @@ if (deck := review.cards(log)):
     waiting = len(review.due(log, today))
     with st.container(key="prog_review"):
         if st.button(f"Review collection · {len(deck)} {'card' if len(deck) == 1 else 'cards'}"
-                     + (f" · {waiting} due today" if waiting else ""), type="tertiary", key="prog_review_open",
-                     icon=":material/replay:"):
+                     + (f" · {waiting} due today" if waiting else ""), type="tertiary", key="prog_review_open"):
             st.session_state.rv_view = "Today" if waiting else "Collection"
             st.switch_page("views/review.py")
 
@@ -213,8 +212,7 @@ def view_sessions():
                 mark = "●" if e.get("completed") else "○"
                 title = e.get("title") or core.TOPICS[e["topic"]]
                 with st.expander(f"{mark} {core.weekday_name(day)[:3]}, {day:%b} {day.day}, {day.year} · {title}"):
-                    if st.button("Show on the calendar", key=f"oncal_{e['date']}_{e['topic']}",
-                                 icon=":material/event:", type="tertiary"):
+                    if st.button("Show on the calendar", key=f"oncal_{e['date']}_{e['topic']}", type="tertiary"):
                         st.session_state.prog_reveal = True
                         go((day.year, day.month), day, way=toward((day.year, day.month)))
                     show_entry(e, "list")
@@ -242,10 +240,9 @@ def view_subjects():
                 )
                 with st.container(key=f"prog_links_{key}", horizontal=True):
                     with st.container(key=f"enter_{key}", horizontal=True):     # into its world
-                        if st.button(f"Enter {label}", type="tertiary", key=f"prog_world_{key}",
-                                     icon=":material/arrow_outward:"):
+                        if st.button(f"Enter {label}", type="tertiary", key=f"prog_world_{key}"):
                             ui.enter_world(key)
-                    if st.button("Course map", type="tertiary", key=f"prog_course_{key}", icon=":material/route:"):
+                    if st.button("Course map", type="tertiary", key=f"prog_course_{key}"):
                         ui.open_course(key)
                 continue
             # Reading has no syllabus: one line, the books finished, and the way to the shelf

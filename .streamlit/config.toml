@@ -2,8 +2,8 @@
 font = '"Inter", "Noto Sans TC", sans-serif'
 headingFont = '"Newsreader", "Noto Serif TC", serif'
 baseFontSize = 15
-baseRadius = "0px"
-buttonRadius = "0px"
+baseRadius = "8px"
+buttonRadius = "6px"
 showWidgetBorder = true
 showSidebarBorder = true
 

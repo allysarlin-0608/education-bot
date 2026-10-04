@@ -51,7 +51,7 @@ st.html('<div id="world-page" hidden></div>')
 
 # the way back: to all the subjects, this one still in focus
 with st.container(key="w_back"):
-    if st.button("All subjects", type="tertiary", key="w_all", icon=":material/arrow_back:"):
+    if st.button("All subjects", type="tertiary", key="w_all"):
         all_subjects()
 
 # ---------- the world: its name at the top, its object, and what she can do here ----------
@@ -78,7 +78,7 @@ with st.container(key=f"world_{w['layout']}"):
                     st.switch_page("views/daily.py")
             else:
                 st.html(f'<p class="w-next">{"Next on " + f"{when:%A}, {when:%B} {when.day}" if when else "Not in your rotation"}</p>')
-            if st.button("Course map", type="tertiary", key="w_course", icon=":material/route:"):
+            if st.button("Course map", type="tertiary", key="w_course"):
                 ui.open_course(topic)
             if st.button("See its lessons so far", type="tertiary", key="w_history"):
                 st.session_state.prog_view_next = "Sessions"

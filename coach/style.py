@@ -29,24 +29,23 @@ CSS = f"""
   --env: light-dark(#FFFFFF, #000000);          /* pure white or pure black, nothing else */
   --label: light-dark(#141414, #EDEDED); --label-2: light-dark(#5C5C5C, #9B9B9B);
   --label-3: light-dark(#6B6B6B, #858585);   /* 4.5:1 or more on the page and on --surface */ --strong: light-dark(#000000, #FFFFFF);
-  /* SHARP MINIMALISM. Solid black, white and grey; square corners; no glass,
-     blur, gradient, glow or shadow anywhere. Type, spacing and alignment
-     carry the hierarchy; a line or a filled surface is used only where it
-     says where one thing ends.
-     LINES, all 1px:
-     --line-1 structural: a section, the header, a list from what follows
-     --line-2 secondary: rows inside a list
-     --line-3 interactive: the edge of a field or an outlined button
-     SURFACES: --env (the page) and --surface (one solid step of grey, for the
-     rare block that needs to stand apart); nothing floats except menus,
-     dialogs and toasts, which are solid and edged with --line-1. */
-  --line-1: light-dark(#E2E2E2, #262626);
-  --line-2: light-dark(#EDEDED, #1A1A1A);
-  --line-3: light-dark(#BDBDBD, #4A4A4A);
+  /* QUIET MINIMALISM. Solid black, white and grey; no glass, blur, gradient,
+     glow or shadow. Type, spacing and alignment carry the structure.
+     BORDERS: none by default. --line-1 and --line-2 (the old structural and
+     row lines) are transparent; --rule is the one hairline left, for the
+     rare place a line is needed. A field or a secondary button is a solid
+     grey surface (--surface), not an outline; focus draws the ink edge.
+     --track is the grey a progress bar runs on. */
+  --line-1: transparent;
+  --line-2: transparent;
+  --line-3: transparent;
+  --rule: light-dark(#EBEBEB, #1E1E1E);
+  --track: light-dark(#E4E4E4, #262626);
   --surface: light-dark(#F4F4F4, #121212);
+  --surface-2: light-dark(#EBEBEB, #1C1C1C);   /* a surface pressed or hovered */
   --hair: var(--line-2);
   --wash: var(--surface);
-  --field: var(--env);
+  --field: var(--surface);
   --field-edge: var(--line-3);
   --field-focus: var(--strong);
   --chrome: var(--env);
@@ -64,7 +63,7 @@ CSS = f"""
   --glass-edge-strong: transparent;
   --glass-edge-soft: transparent;
   --glass-edge-bubble: transparent;
-  --glass-edge-circle: var(--line-3);
+  --glass-edge-circle: transparent;
   --hilite: transparent;
   --hilite-soft: transparent;
   --shadow: transparent;
@@ -78,8 +77,11 @@ CSS = f"""
   --glass-depth: none;
   --glass-depth-soft: none;
 
-  /* geometry: square corners everywhere (dots stay round: a dot is a dot) */
-  --radius-small: 0; --radius-medium: 0; --radius-large: 0; --radius-pill: 0;
+  /* GEOMETRY follows function: structure, images and the marks under a
+     choice are square; what the hand touches is softened a little (a
+     button 6px, a field 8px), what floats a little more (a menu 8px, a
+     dialog 12px); only an avatar is round. */
+  --radius-small: 6px; --radius-field: 8px; --radius-medium: 8px; --radius-large: 12px; --radius-pill: 999px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
   --control: 44px;
@@ -107,14 +109,16 @@ CSS = f"""
 [data-testid="stDecoration"], footer,
 [data-testid="stHeaderActionElements"] {{ display: none !important; }}
 [data-testid="stHeader"] {{ background: var(--env); }}      /* solid: nothing shows through the bar */
-/* every Streamlit component square, whatever its own default (popover and
-   expander, select and date fields, alerts, code, images, toasts, menus) */
-.stApp :is(button, input, textarea, details, summary, pre, code, img, [data-baseweb="select"] > div,
-  [data-testid="stExpander"] > details, [data-testid="stAlert"] > div, [data-testid="stImage"] img),
-[data-baseweb="popover"] :is(div, ul, li), [data-testid="stToast"], [role="dialog"] {{ border-radius: 0 !important; }}
+/* Streamlit's own parts, each the shape of its use: images and open
+   disclosures square, fields and alerts like a field, menus and toasts a
+   little softer, dialogs the softest */
+.stApp :is(img, [data-testid="stImage"] img, [data-testid="stExpander"] > details, details, summary) {{ border-radius: 0 !important; }}
+.stApp :is(input, textarea, [data-baseweb="select"] > div, [data-testid="stAlert"] > div, pre) {{ border-radius: var(--radius-field) !important; }}
+[data-baseweb="popover"] > div, [data-testid="stToast"] {{ border-radius: var(--radius-medium) !important; }}
+[role="dialog"] {{ border-radius: var(--radius-large) !important; }}
 [data-testid="stSidebar"] {{
-  background: var(--env);                /* a plain surface, so the page links stay readable over the page on a phone */
-  border-right: 1px solid var(--line-1);
+  background: var(--surface);            /* set apart by a change of surface, not a line */
+  border-right: none;
 }}
 
 /* ---------- page ---------- */
@@ -166,36 +170,37 @@ CSS = f"""
   font-variant-numeric: lining-nums tabular-nums;
 }}
 
-/* ---------- buttons: rectangles, part of the type ----------
-   primary: solid ink, page-coloured text (black on white, white on black)
-   secondary: the page's colour, a 1px edge
-   tertiary: words only; the edge-less link-like action */
-.stButton button, .stFormSubmitButton button, .stDownloadButton button {{
+/* ---------- buttons ----------
+   primary: solid ink with page-coloured words, the one strong thing on a screen
+   secondary: a solid grey surface, no outline
+   tertiary: words only
+   Corners softened just enough for the hand (--radius-small). */
+.stButton button, .stFormSubmitButton button, .stDownloadButton button, [data-testid="stPopover"] button {{
   min-height: var(--control); padding: 0 var(--space-5);
-  border-radius: 0; font-weight: 500; letter-spacing: 0.01em;
-  background: var(--env); color: var(--label);
-  border: 1px solid var(--line-3); box-shadow: none;
-  transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease),
-              color var(--t-micro) var(--ease);
+  border-radius: var(--radius-small); font-weight: 500; letter-spacing: 0.01em;
+  background: var(--surface); color: var(--label);
+  border: 1px solid transparent; box-shadow: none;
+  transition: background-color var(--t-micro) var(--ease), color var(--t-micro) var(--ease);
 }}
 .stButton button[kind="primary"], .stFormSubmitButton button[kind="primaryFormSubmit"],
 .stDownloadButton button[kind="primary"] {{
-  background: var(--strong); color: var(--env); border-color: var(--strong);
+  background: var(--strong); color: var(--env);
 }}
 .stButton button[kind="primary"] p, .stFormSubmitButton button[kind="primaryFormSubmit"] p {{ color: var(--env); }}
 .stButton button[kind="tertiary"] {{
-  background: transparent; border-color: transparent; padding: 0 var(--space-1); color: var(--label-2);
+  background: transparent; padding: 0 var(--space-1); color: var(--label-2);
 }}
 /* hover only where there is a real pointer: on a touch screen a tap leaves :hover stuck on */
 @media (hover: hover) {{
-  .stButton button:hover, .stFormSubmitButton button:hover, .stDownloadButton button:hover {{
-    border-color: var(--strong); color: var(--strong);
+  .stButton button:hover, .stFormSubmitButton button:hover, .stDownloadButton button:hover,
+  [data-testid="stPopover"] button:hover {{
+    background: var(--surface-2); border-color: transparent; color: var(--strong);
   }}
   .stButton button[kind="primary"]:hover, .stFormSubmitButton button[kind="primaryFormSubmit"]:hover {{
-    background: var(--label); border-color: var(--label); color: var(--env);
+    background: var(--label); color: var(--env);
   }}
   .stButton button[kind="tertiary"]:hover {{
-    border-color: transparent; color: var(--label);
+    background: transparent; color: var(--label);
     text-decoration: underline; text-underline-offset: 0.25em; text-decoration-thickness: 1px;
   }}
 }}
@@ -203,10 +208,12 @@ CSS = f"""
   opacity: 0.7; transition-duration: var(--t-press);
 }}
 .stButton button:disabled, .stFormSubmitButton button:disabled {{
-  background: var(--env) !important; border-color: var(--line-1) !important; box-shadow: none !important;
+  background: var(--surface) !important; border-color: transparent !important; box-shadow: none !important;
   color: var(--label-3) !important; opacity: 1; cursor: default;
 }}
-.stButton button[kind="primary"]:disabled {{ background: var(--surface) !important; border-color: var(--surface) !important; }}
+.stButton button[kind="tertiary"]:disabled {{ background: transparent !important; }}
+/* the page's scrolling area takes the keyboard (Tab reaches it, arrows scroll it): a ring inside its edge */
+[data-testid="stMain"]:focus-visible {{ outline: 1px solid var(--outline); outline-offset: -4px; }}
 .stButton button:focus-visible, .stFormSubmitButton button:focus-visible,
 .stDownloadButton button:focus-visible {{
   outline: 1px solid var(--outline); outline-offset: 2px;
@@ -230,8 +237,8 @@ CSS = f"""
 [data-testid="stSelectbox"] [role="group"], [data-testid="stDateInputField"],
 [data-testid="stTextInputRootElement"], [data-testid="stTextAreaRootElement"] {{
   min-height: var(--control); box-sizing: border-box;
-  background: var(--field) !important; border: 1px solid var(--field-edge) !important;
-  border-radius: 0 !important;
+  background: var(--field) !important; border: 1px solid transparent !important;
+  border-radius: var(--radius-field) !important;
   transition: border-color var(--t-micro) var(--ease);
 }}
 [data-testid="stTextAreaRootElement"] {{ min-height: 0; }}
@@ -253,7 +260,7 @@ CSS = f"""
   --glass-edge-strong: rgb(from currentColor r g b / 0.5);
   --hilite: rgba(255, 255, 255, 0.3);
   background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.97) !important;
-  border: 1px solid rgb(from currentColor r g b / 0.08) !important; border-radius: 0 !important;
+  border: 1px solid rgb(from currentColor r g b / 0.08) !important; border-radius: var(--radius-medium) !important;
   box-shadow: none !important; overflow: hidden;
   animation: fade 280ms var(--ease) both;   /* opacity only: the popover is positioned by transform */
 }}
@@ -266,7 +273,7 @@ CSS = f"""
   --hilite: rgba(255, 255, 255, 0.3);
 }}
 [role="grid"] [role="button"] {{
-  border-radius: 0 !important; border: 1px solid transparent;
+  border-radius: var(--radius-small) !important; border: 1px solid transparent;
   transition: background-color var(--t-state) var(--ease), border-color var(--t-state) var(--ease), transform var(--t-state) var(--ease);
 }}
 [role="grid"] [role="button"][data-selected="true"] {{
@@ -275,13 +282,13 @@ CSS = f"""
 }}
 [role="grid"] [role="button"][data-hovered="true"]:not([data-selected="true"]) {{ background: var(--wash) !important; }}
 
-/* ---------- checkbox: a square, solid ink when ticked; the tick draws itself ---------- */
+/* ---------- checkbox: a small solid square, softened; ink when ticked; the tick draws itself ---------- */
 [data-testid="stCheckbox"] label {{ align-items: center; gap: var(--space-3); min-height: var(--control); }}
 [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p {{ margin: 0; line-height: 22px; }}
 [data-testid="stCheckbox"] label > div:has(> svg) {{
-  width: 22px; height: 22px; flex: 0 0 22px; margin: 0 !important; border-radius: 0; box-sizing: border-box;
+  width: 22px; height: 22px; flex: 0 0 22px; margin: 0 !important; border-radius: 5px; box-sizing: border-box;
   display: grid; place-items: center;
-  background: transparent !important; border: 1px solid var(--glass-edge-circle) !important;
+  background: var(--surface-2) !important; border: 1px solid transparent !important;
   transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease),
               box-shadow var(--t-micro) var(--ease);
 }}
@@ -329,7 +336,7 @@ CSS = f"""
    is the theme's text color inverted: dark behind light text in dark mode */
 [data-testid="stToast"] {{
   background: rgb(from currentColor calc(255 - r) calc(255 - g) calc(255 - b) / 0.97) !important; border: none;
-  border-radius: 0; box-shadow: none;
+  border-radius: var(--radius-medium); box-shadow: none;
 }}
 /* the lesson reads at a comfortable line length on wide screens */
 [data-testid="stChatMessage"] :is(p, li, blockquote) {{ max-width: 68ch; }}
@@ -351,8 +358,8 @@ CSS = f"""
 /* the chat box: a solid field at the foot of the page, its edge 1px, firm
    (ink) when she is in it; the send button fills once there is text */
 [data-testid="stChatInput"] {{
-  min-height: 56px; box-sizing: border-box; border-radius: 0 !important;
-  background: var(--env) !important; border: 1px solid var(--line-3) !important; box-shadow: none;
+  min-height: 56px; box-sizing: border-box; border-radius: var(--radius-field) !important;
+  background: var(--surface) !important; border: 1px solid transparent !important; box-shadow: none;
   transition: border-color var(--t-micro) var(--ease);
 }}
 [data-testid="stChatInput"]:focus-within {{ border-color: var(--strong) !important; }}
@@ -463,8 +470,8 @@ LIQUID = """
   --lq-hi: var(--label);
   --lq-deep: var(--label);
   --lq-glow: transparent;
-  --lq-glass-top: var(--line-1);
-  --lq-glass-bottom: var(--line-1);
+  --lq-glass-top: var(--track);
+  --lq-glass-bottom: var(--track);
   --lq-edge-hi: transparent;
   --lq-edge-lo: transparent;
   --lq-edge-near: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.05));   /* the rim bends a little light */
@@ -501,7 +508,7 @@ LIQUID = """
 .lq-glass {
   position: relative; height: var(--height); padding: var(--inset) 0; box-sizing: border-box;
   border-radius: 0;
-  background: var(--line-1);
+  background: var(--track);
   box-shadow: none;
 }
 /* the liquid: full colour to a soft round end, a touch lighter there so no
@@ -545,7 +552,7 @@ LIQUID = """
 /* the track, one line across the lessons */
 [class*="st-key-lesson_steps"] button::before {
   content: ""; position: absolute; left: 0; right: 0; top: 8px; height: 3px;
-  background: var(--line-1);
+  background: var(--track);
   box-shadow: none;
 }
 [class*="st-key-lesson_steps"] > :first-child button::before { border-radius: 0; }
@@ -606,7 +613,7 @@ LIQUID = """
 /* all of today's lessons done: the summary card */
 /* review: today's pace as a hairline; the collection as quiet rows */
 .rv-pace { margin: var(--space-2) 0 var(--space-4); }
-.rv-line { height: 2px; border-radius: 0; background: var(--hair); overflow: hidden; }
+.rv-line { height: 2px; border-radius: 0; background: var(--track); overflow: hidden; }
 .rv-line span { display: block; height: 100%; background: var(--label); transition: width 480ms var(--ease); }
 .rv-pace p { margin: var(--space-2) 0 0; font-size: 0.8125rem; color: var(--label-3); font-variant-numeric: tabular-nums; }
 /* a card in the collection: its words, a quiet line of where it's from, the
@@ -706,7 +713,7 @@ LIQUID = """
 .lqv-tube {
   position: relative; flex: none; width: 3px; height: 140px; box-sizing: border-box;
   border-radius: 0;
-  background: var(--line-1);
+  background: var(--track);
   box-shadow: none;
 }
 /* the liquid rises from the bottom; its surface is a soft meniscus that
@@ -752,7 +759,7 @@ LIQUID = """
 /* the book's days: the same liquid, as a thin line */
 .sb-line {
   position: relative; height: 5px; margin: 14px 0 8px; border-radius: 0; padding: 0.5px 0; box-sizing: border-box;
-  background: var(--line-1);
+  background: var(--track);
   box-shadow: none;
 }
 .sb-line i { display: block; height: 100%; min-width: 4px; border-radius: 0; background: var(--lq-liquid); opacity: 0.92;
@@ -826,7 +833,7 @@ PROGRESS = """
   .st-key-prog_main [data-testid="stHorizontalBlock"]:not([class*="st-key-"]) > [data-testid="stColumn"] {
     position: sticky; top: 72px; max-height: calc(100vh - 92px); max-height: calc(100dvh - 92px); overflow-y: auto; overscroll-behavior: contain;
     padding: 6px 8px 40px 6px; margin: -6px -8px 0 -6px;
-    scrollbar-width: thin; scrollbar-color: var(--hair) transparent;
+    scrollbar-width: thin; scrollbar-color: var(--track) transparent;
   }
 }
 @container (max-width: 859.98px) {
@@ -899,7 +906,7 @@ PROGRESS = """
   content: ""; position: absolute; bottom: 12px; left: calc(50% - 12px); height: 3px; border-radius: 0;
 }
 [class*="st-key-cal_20"][class*="_done_"] .stButton button::before,
-[class*="st-key-cal_20"][class*="_partial_"] .stButton button::before { width: 24px; background: var(--hair); }
+[class*="st-key-cal_20"][class*="_partial_"] .stButton button::before { width: 24px; background: var(--track); }
 [class*="st-key-cal_20"] .stButton button::after { width: 0; background: var(--label-2); transition: width var(--t-space) var(--ease); }
 [class*="st-key-cal_20"][class*="_a1"] .stButton button::after { width: 4.8px; }
 [class*="st-key-cal_20"][class*="_a2"] .stButton button::after { width: 9.6px; }
@@ -917,12 +924,12 @@ PROGRESS = """
 [class*="st-key-cal_20"][class*="_future_"] .stButton button { color: var(--label-3); }
 [class*="st-key-cal_20"][class*="_future_"][class*="_sel"] .stButton button { color: var(--label-2); }
 [class*="st-key-cal_20"][class*="_today"] .stButton button p { font-weight: 700; color: var(--strong); }
-@media (hover: hover) { [class*="st-key-cal_20"]:not([class*="_sel"]) .stButton button:not(:disabled):not([data-picking]):hover { background: var(--glass); border: none; box-shadow: none; } }
-/* the day picked: glass with a fine ink ring, so it reads at a glance. A
-   tap shows it at once (data-picking, set by coach/glass.py) while the page
-   redraws, and the old pick lets go */
+@media (hover: hover) { [class*="st-key-cal_20"]:not([class*="_sel"]) .stButton button:not(:disabled):not([data-picking]):hover { background: var(--surface); border: none; box-shadow: none; border-radius: var(--radius-small); } }
+/* the day picked: a solid grey square behind it, softened like any
+   control. A tap shows it at once (data-picking, set by coach/glass.py)
+   while the page redraws, and the old pick lets go */
 [class*="st-key-cal_20"][class*="_sel"] .stButton button, [class*="st-key-cal_20"] .stButton button[data-picking] {
-  background: var(--glass-strong); color: var(--label);
+  background: var(--surface-2); color: var(--label); border-radius: var(--radius-small);
   box-shadow: none;
 }
 [class*="st-key-cal_20"][class*="_sel"] .stButton button { animation: day-pick var(--t-state) var(--ease) backwards; }
@@ -936,7 +943,7 @@ PROGRESS = """
 .cal-key span { display: inline-flex; align-items: center; gap: 8px; }
 .cal-key i { display: inline-block; width: 16px; height: 3px; border-radius: 0; }
 .cal-key .k-done { background: var(--label); }
-.cal-key .k-part { background: linear-gradient(90deg, var(--label-2) 50%, var(--hair) 50%); }
+.cal-key .k-part { background: linear-gradient(90deg, var(--label-2) 50%, var(--track) 50%); }
 
 /* ---------- the day picked ---------- */
 [class*="st-key-prog_day_"] {
@@ -1140,7 +1147,7 @@ BOOKS = """
 .bk-seg { position: relative; }
 .bk-seg::before {
   content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 9px;
-  background: var(--line-1);
+  background: var(--track);
   box-shadow: none;
 }
 .bk-seg:first-child::before { border-radius: 0; }
@@ -1240,17 +1247,16 @@ BOOKS = """
   .st-key-read_main [data-testid="stHorizontalBlock"] { gap: var(--space-6) !important; }
 }
 
-/* no book: a quiet outlined action the size of its words (36px to the eye, 44px to the finger) */
+/* no book: a quiet secondary action the size of its words (36px to the eye, 44px to the finger) */
 .st-key-start_book button {
   position: relative; width: auto; min-height: 36px; height: 36px; padding: 0 16px !important;
-  border-radius: 0; background: transparent !important; box-shadow: none !important;
-  border: 1px solid var(--line-3) !important;
-  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  border-radius: var(--radius-small); background: var(--surface) !important; box-shadow: none !important;
+  border: none !important;
 }
 .st-key-start_book button::after { content: ""; position: absolute; inset: -5px -2px; }
 .st-key-start_book button { transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease), transform var(--t-micro) var(--ease) !important; }
 @media (hover: hover) {
-  .st-key-start_book button:hover { border-color: var(--strong) !important; }
+  .st-key-start_book button:hover { background: var(--surface-2) !important; }
 }
 .st-key-start_book button p { font-size: 0.875rem; color: var(--label); }
 .st-key-start_book button:active { background: var(--wash) !important; transition-duration: var(--t-press) !important; }
@@ -1715,7 +1721,7 @@ LENS = """
 .st-key-ob_grid_subjects { display: flex !important; flex-direction: column; align-items: stretch !important; row-gap: var(--space-5); }
 .st-key-ob_grid_subjects > * { width: 100% !important; }
 .st-key-ob_grid_subjects > :has(> .st-key-ob_lead) { position: static; }
-.st-key-ob_grid_subjects > :has(> .st-key-ob_stage) { position: sticky; top: 56px; z-index: 4; background: var(--env); }
+.st-key-ob_grid_subjects > :has(> .st-key-ob_stage) { position: sticky; top: 56px; z-index: 10; isolation: isolate; background: var(--env); padding-bottom: var(--space-4); }
 .st-key-ob_grid_subjects .st-key-ob_body { max-width: 760px; }
 @media (max-width: 899px) {
   [class*="st-key-ob_grid"] { display: flex !important; flex-direction: column; align-items: stretch !important; }
@@ -1749,8 +1755,6 @@ LENS = """
 .sg-copy { position: relative; display: grid; gap: 6px; padding: 0 clamp(20px, 3vw, 36px) clamp(20px, 3vw, 32px); }
 .sg-copy p { margin: 0; }
 .sg-kicker { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-2); font-variant-numeric: tabular-nums; }
-/* the words over the picture keep a breath of the page's own colour around them */
-.sg-kicker, .sg-title, .sg-desc { text-shadow: 0 0 18px var(--env), 0 0 2px var(--env); }
 .sg-title { font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; color: var(--label);
   font-size: clamp(2.75rem, 5vw, 4.5rem); line-height: 1; letter-spacing: -0.01em; margin-top: 4px !important; }
 .sg-desc { font-size: 1.0625rem; line-height: 1.5; color: var(--label-2); max-width: 30rem; margin-top: 6px !important; }
@@ -1821,10 +1825,10 @@ ACCOUNT = """
 .st-key-signin [data-testid="stForm"] [data-testid="stVerticalBlock"] { gap: var(--space-4); }
 /* Continue with Google: a quiet outlined control, the same height as the others */
 .si-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-sizing: border-box;
-  min-height: var(--control); border-radius: 0; border: 1px solid var(--line-3);
+  min-height: var(--control); border-radius: var(--radius-small); border: none; background: var(--surface);
   color: var(--label) !important; text-decoration: none !important; font-weight: 500; font-size: 0.9375rem;
   transition: background-color .2s ease, opacity .2s ease; }
-.si-google:hover { background: var(--wash); }
+.si-google:hover { background: var(--surface-2); }
 .si-google::before { content: ""; width: 18px; height: 18px; flex: none;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath fill='%234285F4' d='M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z'/%3E%3Cpath fill='%2334A853' d='M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z'/%3E%3Cpath fill='%23FBBC05' d='M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.05l3.01-2.33z'/%3E%3Cpath fill='%23EA4335' d='M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z'/%3E%3C/svg%3E") center / contain no-repeat; }
 .si-google.is-busy, .si-google.is-off { opacity: .55; pointer-events: none; }
@@ -1838,15 +1842,15 @@ ACCOUNT = """
 .si-plain { font-size: 0.9375rem; color: var(--label) !important; }
 
 /* ---------- the account menu at the bar's right end ---------- */
-.st-key-account_menu button { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 0;
-  font-size: 0.8125rem; font-weight: 500; color: var(--label); background: var(--env) !important;
-  border: 1px solid var(--line-3) !important; box-shadow: none !important; margin-left: var(--space-3); }
+.st-key-account_menu button { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 50%;   /* an avatar: round */
+  font-size: 0.8125rem; font-weight: 500; color: var(--label); background: var(--surface) !important;
+  border: 1px solid transparent !important; box-shadow: none !important; margin-left: var(--space-3); }
 .st-key-account_menu button [data-testid="stIconMaterial"] { display: none; }
 /* a keyboard user sees where they are here too (as on every other control) */
 .st-key-account_menu button:focus-visible, [data-testid="stMainMenuButton"]:focus-visible {
   outline: 1px solid var(--outline) !important; outline-offset: 2px; }
 .acct-who { display: flex; align-items: center; gap: var(--space-3); }
-.acct-pic { width: 36px; height: 36px; border-radius: 0; object-fit: cover; flex: none; }
+.acct-pic { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; }
 /* the menu opens outside the page (like the other floating menus), where the
    page's colour tokens don't follow dark mode: its text takes the theme's own
    text colour (currentColor), full strength or a readable 72% for the email */
@@ -1967,8 +1971,15 @@ WORLDS = """
 /* Settings' subjects: the same stage, held at the top while the list scrolls under it */
 .st-key-set_grid_subjects { display: flex !important; flex-direction: column; align-items: stretch !important; row-gap: var(--space-4); }
 .st-key-set_grid_subjects > * { width: 100% !important; }
-.st-key-set_grid_subjects > :has(> .st-key-set_stage) { position: sticky; top: 56px; z-index: 4; background: var(--env); }
-.st-key-set_stage { gap: var(--space-2) !important; }
+/* the stage stays at the top while the list scrolls under it: its own layer
+   above the list (the list's marks included), and a breath under its links */
+.st-key-set_grid_subjects > :has(> .st-key-set_stage) { position: sticky; top: 56px; z-index: 10; isolation: isolate; background: var(--env); }
+@media (min-width: 900px) {      /* as wide as the list's rows, which reach 8px out (phones: edge to edge, below) */
+  .st-key-set_grid_subjects > :has(> .st-key-set_stage),
+  .st-key-ob_grid_subjects > :has(> .st-key-ob_stage) {
+    box-sizing: border-box; width: calc(100% + 24px) !important; max-width: none !important; margin: 0 -12px; padding-left: 12px; padding-right: 12px; }
+}
+.st-key-set_stage { gap: var(--space-2) !important; padding-bottom: var(--space-4); }
 .st-key-set_body { max-width: 760px; }
 /* a way in drawn for one subject stands aside while the stage shows another (motion.py) */
 [class*="st-key-enter_"][data-other] { opacity: 0; pointer-events: none; }
@@ -2034,6 +2045,18 @@ WORLDS = """
   :root:not([data-scheme="dark"]) .sg-art:not(.is-cut):not(.no-art) { }
   .sg-copy { grid-area: copy; align-self: end; max-width: 28rem; padding: 0 0 clamp(12px, 3vh, 28px); gap: 10px; z-index: 2; }
   .sg-desc { font-size: 1.1875rem; }
+}
+/* a wide but short screen (an iPad on its side, a laptop): the stage stays
+   at the top while the list scrolls under it, so it takes a little under
+   half the height and the list keeps the rest; the meta and credit lines
+   give way, the name and the words stay */
+@media (min-width: 900px) and (max-height: 1050px) {
+  .sg-stage { height: max(300px, 46vh); }
+  .sg-stage .sg-title { font-size: clamp(2.5rem, 4.4vw, 3.75rem); }
+  .sg-stage .sg-title-tracked .sg-title { font-size: clamp(1.5rem, 2.6vw, 2.25rem); }
+  .sg-desc { font-size: 1rem; }
+  .sg-meta, .sg-credit { display: none; }
+  .sg-copy { gap: 6px; }
 }
 </style>
 """

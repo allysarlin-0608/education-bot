@@ -70,24 +70,25 @@ Secrets come from Streamlit secrets or the environment (`ui.get_setting`):
 refused), `GROQ_API_KEY`, `APP_PASSWORD`, `APP_MODE=public`. None is ever
 logged or shown. `.streamlit/config.toml` caps uploads at 20 MB.
 
-## Visual system (Sharp Minimalism)
+## Visual system (quiet minimalism)
 
 All in `coach/style.py`, tokens in `:root`; the existing typefaces are kept.
-- **Solid and flat**: black, white and grey only (`--env` page, `--surface`
-  one solid step of grey); no glass, blur, gradient, glow or shadow. Colour
-  only where it means something (an error).
-- **Square**: every corner 0 (`--radius-*` are 0, and Streamlit's own parts
-  are squared); the only round things are two small dots.
-- **Lines, all 1px and few**: `--line-1` structural, `--line-2` rows in a
-  list, `--line-3` the edge of a field or an outlined button; a line only
-  where it says where one thing ends.
-- **Buttons**: primary solid ink with page-coloured text, secondary a 1px
-  edge, tertiary words only. **Choices** (switches, the page bar): the
-  chosen word in full ink over a 2px ink rule; no boxes or pills.
-- **Progress**: a 3px solid bar in ink on a grey track.
-- Type carries the hierarchy; motion only for continuity (no bounce or
-  zoom), and none under `prefers-reduced-motion`. `coach/glass.py` keeps
-  only page behaviours (light/dark mark, touch, calendar), no effects.
+- **Solid and flat**: black, white and grey (`--env` the page, `--surface`
+  one solid step of grey, `--surface-2` pressed); no glass, blur, gradient,
+  glow or shadow. Colour only where it means something.
+- **No borders by default**: `--line-1/2/3` are transparent; structure comes
+  from type, spacing, alignment and a change of surface (the sidebar is
+  `--surface`). `--rule` is the one hairline kept for a real need.
+- **Geometry follows function**: structure, images and the rule under a
+  choice are square; a button 6px (`--radius-small`), a field or the chat box
+  8px (`--radius-field`), a menu or toast 8px, a dialog 12px; an avatar round.
+- **Controls**: primary solid ink (one per screen), secondary a grey surface,
+  tertiary words only; decorative icons removed (text says it). Fields are
+  grey surfaces whose ink edge appears only in use.
+- **Choices** (switches, the page bar): the chosen word in full ink over a
+  2px ink rule. **Progress**: a 3px ink bar on `--track`.
+- Motion only for continuity (no bounce or zoom); none under
+  `prefers-reduced-motion`.
 
 ## Tests and deployment
 

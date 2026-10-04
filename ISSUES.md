@@ -42,6 +42,8 @@ accessibility, architecture, performance · P3 polish. Earlier issues
 | ISS-033 | P2 | Progress / cost | The record was re-read after the bar was drawn (different numbers), and twice when a session began on Progress | fixed |
 | ISS-034 | P1 | Visual / iPad | Text ran into the text and buttons under it (Review → Collection cards; a course map unit's heading over its caption), worst on iPad Safari | fixed |
 | ISS-035 | P2 | Tests | The iPad-landscape tests (1180) ran as a desktop with a mouse, and nothing checked for text drawn over text | fixed |
+| ISS-036 | P1 | Settings / Setup on iPad | The subject list scrolled in a thin strip under the fixed subject picture on a wide, short screen (iPad on its side) | fixed |
+| ISS-037 | P2 | Accessibility | The page's scrolling area showed no focus ring from the keyboard (hidden from the check by shadows inside it) | fixed |
 
 ## Details
 
@@ -125,3 +127,11 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 - **Fix:** one global rule (`coach/style.py`): a text block keeps its height and ends where its last line ends. The collection card is now one block of text spaced by its own type (word, a quiet source line, the answer), then its actions.
 - **Siblings:** the new check found the course map's unit heading over its "Lessons 1–5 · …" line; fixed by the same rule.
 - **Safeguard (ISS-035):** every screenshot in `tests/e2e/test_screens.py` now fails on any two pieces of text whose boxes overlap, and the tests treat iPad landscape (1180) as a touch screen, as hers is.
+
+### ISS-036 — The subject list squeezed under the subject picture (reported on the iPad)
+- **Root cause:** the subject picture stays at the top while the list scrolls (sticky) and was sized for a tall screen (64-76% of the height, at least 460px); an iPad on its side is wide but short, so the list had a strip at the bottom. The list's rows reach 8px past the picture, so the mark of the subject in focus also showed beside the picture.
+- **Fix:** a wide but short screen gets a picture a little under half the height (name and words kept, meta and credit lines give way); the picture's layer covers the list's full width; a breath under its links. Same in setup (onboarding), which shares it.
+- **Verified:** screenshots at 1000×620 (iPad landscape), 1180×820 and 1440×900.
+
+### ISS-037 — No focus ring on the page area
+- The page's scrolling area takes the keyboard; it had no ring. The check passed before only because a shadow inside the area counted as a ring; with shadows gone the check saw it. It now has its own ring.

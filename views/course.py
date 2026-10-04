@@ -112,11 +112,11 @@ with st.container(key="cm_next"):
             st.caption(f"Today is {core.TOPICS.get(ui.topic_for(today), 'another subject')}'s day: "
                        "your subjects take turns, one a day.")
     with st.container(key="cm_links", horizontal=True):
-        if st.button(f"Enter {course.subject_name(topic)}", type="tertiary", key="cm_world", icon=":material/arrow_outward:"):
+        if st.button(f"Enter {course.subject_name(topic)}", type="tertiary", key="cm_world"):
             ui.enter_world(topic)
         others = [t for t in mine if t != topic and curriculum.has_syllabus(t)]
         for t in others:
-            if st.button(course.subject_name(t), type="tertiary", key=f"cm_other_{t}", icon=":material/route:"):
+            if st.button(course.subject_name(t), type="tertiary", key=f"cm_other_{t}"):
                 ui.open_course(t)
 
 

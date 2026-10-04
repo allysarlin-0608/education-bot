@@ -211,9 +211,9 @@ start_level = settings.start_level(config, topic)
 st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
 with st.container(key="today_links", horizontal=True):
     with st.container(key=f"enter_{topic}", horizontal=True):      # into the day's subject, its world
-        if st.button(f"Enter {core.TOPICS[topic]}", type="tertiary", key="today_world", icon=":material/arrow_outward:"):
+        if st.button(f"Enter {core.TOPICS[topic]}", type="tertiary", key="today_world"):
             ui.enter_world(topic)
-    if st.button("Course map", type="tertiary", key="today_course", icon=":material/route:"):   # the whole path
+    if st.button("Course map", type="tertiary", key="today_course"):   # the whole path
         ui.open_course(topic)
 # review: noticed when something is due, never in the way of the day's lesson
 due_now = review.due(log, today)
@@ -221,7 +221,7 @@ if due_now:
     with st.container(key="review_entry"):
         minutes = max(1, round(len(due_now) * 0.4))
         if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due · about {minutes} min",
-                     type="tertiary", key="today_review", icon=":material/replay:"):
+                     type="tertiary", key="today_review"):
             st.switch_page("views/review.py")
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
@@ -370,7 +370,7 @@ reply_spot = st.container()     # a new question and its answer appear here, und
 # Key points she wants back later (review): the Key Idea and each Deep Dive point
 points = review.key_points(slot.get("lesson", ""))
 if points:
-    with st.popover("Save for review", icon=":material/bookmark_add:", key=f"save_menu_{slot['n']}"):
+    with st.popover("Save for review", key=f"save_menu_{slot['n']}"):
         st.caption("A saved point comes back in Review tomorrow, then further apart each time you know it.")
         for k, (label, text) in enumerate(points):
             kept = review.saved(slot, label)
