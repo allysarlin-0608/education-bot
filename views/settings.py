@@ -136,7 +136,10 @@ def resume_goal(goal_id: str) -> None:
 with st.container(key="set_sec_goals"):
     st.markdown("#### Your goals")
     mine = catalog.goals(active_only=False)
-    if not mine:
+    unreadable = getattr(st.session_state.coach_store, "paths_error", None)
+    if unreadable:
+        st.html(f'<p class="ob-note" role="status">{escape(unreadable)}</p>')
+    elif not mine:
         st.html('<p class="ob-note">Tell us what you want to learn and we\'ll design a path for it.</p>')
     for g in mine:
         on = g["status"] == "active"

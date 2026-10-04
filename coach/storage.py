@@ -514,9 +514,10 @@ class SupabaseStore(_Scope):
                       prefer="resolution=merge-duplicates,return=minimal", table=PATHS_TABLE)
 
     def add_event(self, day: str, event: str) -> None:
-        """Count one event for the current person (add_usage_event: the person's own row only)."""
+        """Count one event for the current person (add_usage_event: the person's own row only,
+        on the server's date: `day` is the local store's)."""
         self._uid()
-        self._request("POST", json={"p_day": day, "p_event": event}, prefer="return=minimal",
+        self._request("POST", json={"p_event": event}, prefer="return=minimal",
                       table="rpc/add_usage_event")
 
     def metrics(self, since: date, today: date) -> dict:

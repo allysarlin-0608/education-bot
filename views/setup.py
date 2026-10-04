@@ -24,6 +24,7 @@ def draft() -> dict:
 
 def put(d: dict) -> None:
     """Keep her answers so far (not yet a finished setup: onboarded_at stays empty)."""
+    ui.refresh_settings()       # onto the row as stored now (another tab may have changed it; ISS-044)
     ui.save_settings(dict(ui.config(), onboarding=d))
 
 

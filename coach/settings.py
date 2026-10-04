@@ -128,6 +128,7 @@ def now_iso() -> str:
 # The setup in progress (kept in the row until it's finished)
 # ------------------------------------------------------------
 STEPS = ("welcome", "goal", "path", "subjects", "pace", "level", "reading", "summary")
+OLD_STEPS = ("welcome", "subjects", "pace", "level", "reading", "summary")      # (drafts saved before goals)
 
 
 def new_draft() -> dict:
@@ -166,7 +167,10 @@ def draft_of(s: dict) -> dict:
     """Her answers so far, checked (a draft is stored as she goes)."""
     d, saved = new_draft(), s.get("onboarding") or {}
     if isinstance(saved.get("step"), int):
-        d["step"] = min(max(saved["step"], 0), len(STEPS) - 1)
+        step = saved["step"]
+        if "goal" not in saved and 0 <= step < len(OLD_STEPS):     # a draft from before goals: the same step
+            step = STEPS.index(OLD_STEPS[step])
+        d["step"] = min(max(step, 0), len(STEPS) - 1)
     if isinstance(saved.get("subjects"), list):
         d["subjects"] = [t for t in dict.fromkeys(saved["subjects"]) if t in SUBJECTS][:MAX_SUBJECTS]
     if saved.get("units_per_day") in PACES:
@@ -282,8 +286,16 @@ def chosen_subjects(s: dict) -> list:
     her settings row's `subjects` (user_settings.subjects); every page reads
     it through here. (Levels may be kept for subjects she has taken out, so
     they come back if she adds one again; nothing shows those.)"""
-    return [t for t in (s.get("subjects") or [])
-            if t in SUBJECTS or (catalog.is_goal(t) and (catalog.path(t) or {}).get("status") == "active")]
+    return [t for t in (s.get("subjects") or []) if t in SUBJECTS or _active_goal(t)]
+
+
+def _active_goal(t) -> bool:
+    """One of her goals still in her turns: active, or not readable just now
+    (ISS-045: a goal that didn't load is kept, never dropped by the next save)."""
+    if not catalog.is_goal(t):
+        return False
+    p = catalog.path(t)
+    return p["status"] == "active" if p else catalog.unreadable()
 
 
 def chosen_goals(s: dict) -> list:

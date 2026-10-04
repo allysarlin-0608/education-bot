@@ -143,10 +143,13 @@ class FakeDB:
             row["token_count"] += max(args["p_tokens"], 0)
             return Resp(204)
         if fn == "add_usage_event":
-            assert set(args) == {"p_day", "p_event"}                 # the function uses auth.uid()
-            key = (uid, args["p_day"], args["p_event"])
+            assert set(args) == {"p_event"}             # the function uses auth.uid() and the server's date
+            from datetime import datetime
+            from coach import metrics
+            day = datetime.now(metrics.TZ).date().isoformat()
+            key = (uid, day, args["p_event"])
             row = self.tables[storage.EVENTS_TABLE].setdefault(
-                key, {"user_id": uid, "day": args["p_day"], "event": args["p_event"], "count": 0})
+                key, {"user_id": uid, "day": day, "event": args["p_event"], "count": 0})
             row["count"] = 1 if args["p_event"] == "visit" else row["count"] + 1
             return Resp(204)
         if fn == "gnosis_metrics":

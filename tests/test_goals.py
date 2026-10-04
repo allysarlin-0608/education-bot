@@ -311,3 +311,49 @@ def test_the_numbers_count_people_not_content():
     assert m["active_after_a_week"] == 1 and m["eligible_week"] == 2
     assert m["lessons_per_learner_week"] == round((3 + 2 + 5) / 3, 1)
     assert metrics.share(1, 2) == "50%" and metrics.share(1, 0) == "—"
+
+
+# ------------------------------------------- found by the review (ISS-044 …)
+def test_a_path_she_takes_down_to_one_lesson_is_still_hers():
+    p = a_path()
+    for _ in range(3):
+        p = paths.remove_unit(p, 0)
+    p = paths.remove_lesson(p, 0, 0)
+    d = settings.draft_of(dict(settings.blank("u"), onboarding={"goal": {"text": "x"}, "path": p, "path_original": p}))
+    assert d["path"] == p and paths.lesson_count(p) == 3
+    assert paths.read_design(design_reply(units=[{"name": "U", "lessons": ["a", "b", "c"]}]), {}) == {"status": "error"}, \
+        "the AI's path itself must have four or more"
+
+
+def test_a_path_let_go_of_is_designed_again_for_the_same_words(maker):
+    box = maker(design_reply(), design_reply())
+    say("Read a company's financial statements")
+    goalmaker.design("t", box.get(), box.put, 3)
+    box.d["path"] = None                                   # (gone from the draft)
+    assert goalmaker.design("t", box.get(), box.put, 3) and box.calls == 2, "never stuck with no path and no way on"
+
+
+def test_goals_that_couldnt_be_read_stay_in_her_turns():
+    p = a_path()
+    s = dict(settings.blank("u"), subjects=["philosophy", p["id"]])
+    was = (catalog._source, catalog._failed)
+    catalog.bind(lambda: [], lambda: True)                  # her goals unreadable this run
+    try:
+        assert settings.chosen_subjects(s) == ["philosophy", p["id"]]
+        assert settings.toggle_subject(settings.chosen_subjects(s), "cosmos") == ["philosophy", p["id"], "cosmos"]
+        catalog.bind(lambda: [], lambda: False)             # read, and not there: gone
+        assert settings.chosen_subjects(s) == ["philosophy"]
+    finally:
+        catalog.bind(*was)
+
+
+@pytest.mark.parametrize("old, now", [(1, "subjects"), (2, "pace"), (3, "level"), (4, "reading"), (5, "summary")])
+def test_a_setup_draft_from_before_goals_opens_on_the_same_step(old, now):
+    d = settings.draft_of(dict(settings.blank("u"), onboarding={"step": old, "subjects": ["cosmos"]}))
+    assert settings.STEPS[d["step"]] == now
+
+
+def test_the_weekly_average_rounds_as_the_database_does():
+    d0 = date(2026, 9, 7)
+    events = [{"user_id": u, "day": d0, "event": "lesson_passed", "count": n} for u, n in (("a", 2), ("b", 2), ("c", 2), ("d", 3))]
+    assert metrics.summarize([], events, d0, d0)["lessons_per_learner_week"] == 2.3     # 9 / 4 = 2.25

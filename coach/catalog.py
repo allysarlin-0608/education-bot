@@ -22,12 +22,20 @@ import threading
 GOAL_ID = re.compile(r"^g-[0-9a-f]{8}$")
 _local = threading.local()
 _source = None
+_failed = None
 
 
-def bind(source) -> None:
-    """source(): the paths of the session running now, or None outside one."""
-    global _source
-    _source = source
+def bind(source, failed=None) -> None:
+    """source(): the paths of the session running now, or None outside one;
+    failed(): True when her goals couldn't be read this time."""
+    global _source, _failed
+    _source, _failed = source, failed
+
+
+def unreadable() -> bool:
+    """Her goals couldn't be read (a goal she has may just not be here now:
+    it is kept in her turns, never taken for gone; coach/settings.py)."""
+    return bool(_failed and _failed())
 
 
 def use(paths) -> None:

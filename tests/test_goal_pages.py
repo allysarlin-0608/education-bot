@@ -205,3 +205,29 @@ def test_the_last_goal_cant_be_paused(monkeypatch, tmp_path):
     at.button(key=f"setgoal_pause_{goal['id']}").click().run()
     assert "Keep at least one subject or goal." in texts(at)
     assert stored(tmp_path)[0]["subjects"] == [goal["id"]]
+
+
+def test_the_goal_page_saves_onto_what_another_tab_changed(monkeypatch, tmp_path):
+    at = app(monkeypatch, tmp_path, history=False)
+    loads(at, "views/goal.py")
+    s, _ = stored(tmp_path)
+    other = dict(s, subjects=["philosophy", "cosmos", "fashion"], units_per_day=5)     # another tab, since
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"user_settings": [other]}))
+    at.text_area(key="goal_text").input("Read a company's financial statements").run()
+    s, _ = stored(tmp_path)
+    assert s["subjects"] == ["philosophy", "cosmos", "fashion"] and s["units_per_day"] == 5
+    assert s["onboarding"]["goal"]["text"] == "Read a company's financial statements"
+
+
+def test_a_goal_that_couldnt_be_read_is_never_replaced_by_another_lesson(monkeypatch, tmp_path):
+    from coach import storage
+    goal = a_path()
+    monkeypatch.setattr(storage.FileStore, "paths_error", "Your goals: the database is busy. Refresh in a moment.")
+    calls = ai(monkeypatch)
+    at = app(monkeypatch, tmp_path, subjects=(goal["id"],), history=False)       # (no paths in her records now)
+    loads(at, "views/daily.py")
+    assert any("the database is busy" in w.value for w in at.warning), "she is told"
+    assert not any("Start this lesson" in str(b.proto) for b in at.button), "and no other lesson takes its place"
+    loads(at, "views/goal.py")
+    assert "the database is busy" in texts(at) and not has(at, "goal_design") and not calls

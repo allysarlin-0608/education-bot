@@ -26,6 +26,7 @@ STATUSES = ("active", "archived")
 MIN_UNITS, MAX_UNITS = 2, 8
 MIN_LESSONS, MAX_LESSONS = 2, 8          # in a unit
 MAX_TOTAL = 48
+MIN_DESIGNED = 4                          # lessons the AI must give; she may then take it down to one
 TITLE_LIMIT, NAME_LIMIT, LESSON_LIMIT, TEXT_LIMIT = 60, 80, 110, 400
 GOAL_MIN_CHARS, GOAL_MAX_CHARS = 8, 300
 DESIGN_ATTEMPTS = 2                       # AI calls one new goal may use (a vague goal gets one more after its answer)
@@ -163,7 +164,7 @@ def read_design(data, goal: dict) -> dict:
                        "level": STARTS[start][1], "units": data.get("units"),       # (where she said she is)
                        "goal": goal.get("text"), "why": goal.get("why"), "start": goal.get("start"),
                        "status": "active", "created_at": now_iso(), "updated_at": now_iso()})
-    if path is None:
+    if path is None or lesson_count(path) < MIN_DESIGNED:      # (too thin to be a path worth starting)
         return {"status": "error"}
     return {"status": "ok", "path": path}
 
@@ -193,7 +194,7 @@ def parse_path(data):
                 total += 1
         if name and lessons:
             units.append({"name": name, "lessons": lessons})
-    if not units or total < 4:
+    if not units:            # (one lesson is a path: she may have skipped the rest, paths.remove_*)
         return None
     return {
         "id": data["id"], "title": title, "outcome": outcome,

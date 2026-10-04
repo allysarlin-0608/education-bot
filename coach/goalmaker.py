@@ -94,8 +94,8 @@ def design(key: str, d: dict, put, pace: int) -> bool:
         return False
     sig = signature(goal, pace)
     prev = d["design"] or {}
-    if prev.get("for") == sig and prev.get("status") != "error":
-        return bool(d["path"])
+    if prev.get("for") == sig and prev.get("status") != "error" and (prev.get("status") != "ok" or d["path"]):
+        return bool(d["path"])          # (a path she has since let go of is designed again)
     calls = prev.get("calls", 0) if prev.get("text") == goal["text"].strip() else 0
     if calls >= paths.DESIGN_ATTEMPTS:
         st.session_state[_k(key, "note")] = ENOUGH
@@ -125,6 +125,13 @@ def form(key: str, get, put, *, ask_pace: bool = True, pace: int = settings.DEFA
     ask_pace, how much time she has is asked here too (the setup); else
     `pace` is her settings'. skip: (label, callback) for the other way in.
     on_path(): called once a path is designed (the page moves on to it)."""
+    unreadable = getattr(st.session_state.get("coach_store"), "paths_error", None)
+    if unreadable:                 # goals can't be kept now: no path is designed for nothing
+        st.html(f'<p class="ob-note" role="status">{escape(unreadable)}</p>')
+        if skip:
+            with st.container(key="ob_nav", horizontal=True):
+                st.button(skip[0], key=_k(key, "skip"), type="tertiary", on_click=skip[1])
+        return
     d = get()
     if st.session_state.pop(_k(key, "go"), False):
         if design(key, d, put, d["units_per_day"] if ask_pace else pace):

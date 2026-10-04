@@ -229,6 +229,10 @@ if due_now:
             st.switch_page("views/review.py")
 # her own goal, before its first lesson: the path made for her, and what today holds
 goal = catalog.path(topic)
+if catalog.is_goal(topic) and goal is None:       # her goal couldn't be read just now (never a lesson in its place)
+    st.warning(getattr(st.session_state.coach_store, "paths_error", None)
+               or "Today's goal couldn't be found. Choose your goals again in Settings.")
+    st.stop()
 if goal and not paths.started(log, topic):
     with st.container(key="goal_intro"):
         st.html(goalmaker.summary_html(goal, settings.units(config), eyebrow="Made for you · day one",

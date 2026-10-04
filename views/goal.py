@@ -23,6 +23,7 @@ def draft() -> dict:
 
 def put(d: dict) -> None:
     """Keep the goal being made in her settings' draft (a refresh brings it back)."""
+    ui.refresh_settings()       # onto the row as stored now (another tab may have changed it; ISS-044)
     ui.save_settings(dict(ui.config(), onboarding=d))
 
 

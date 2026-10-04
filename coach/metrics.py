@@ -17,6 +17,7 @@ a date:
 summarize() is the same arithmetic as gnosis_metrics() in supabase/goals.sql,
 for the local store and the tests."""
 from collections import defaultdict
+from decimal import ROUND_HALF_UP, Decimal
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -67,8 +68,13 @@ def summarize(users: list, events: list, since: date, today: date) -> dict:
         "active_after_a_week": sum(1 for uid, d0 in cohort
                                    if has(uid, lambda e, d0=d0: e["event"] == "visit" and day(e) >= d0 + timedelta(days=7))),
         "eligible_week": sum(1 for _, d0 in cohort if d0 + timedelta(days=7) <= today),
-        "lessons_per_learner_week": round(sum(weeks.values()) / len(weeks), 1) if weeks else 0,
+        "lessons_per_learner_week": _round1(Decimal(sum(weeks.values())) / len(weeks)) if weeks else 0,
     }
+
+
+def _round1(x: Decimal) -> float:
+    """To one place, halves up: as Postgres's round() (2.25 is 2.3)."""
+    return float(x.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
 
 
 def share(part: int, whole: int) -> str:

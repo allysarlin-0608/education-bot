@@ -10,7 +10,8 @@
 --   2. usage_events: per person, per day, how many times something happened
 --      ("visit", "setup_done", "goal_created", "lesson_passed"). No lesson
 --      content, no answers, no goal text: only the event's name and a count.
---      A person can read their own; only add_usage_event() adds.
+--      A person can read their own; only add_usage_event() adds, on the
+--      server's date.
 --   3. gnosis_metrics(since): the key numbers for people who signed up since
 --      a date, for admins only (app_admins), as totals: never anyone's rows.
 --   4. delete_my_account() also deletes the two new tables' rows (the same
@@ -49,7 +50,7 @@ create policy own_events on public.usage_events for select to authenticated
 revoke all on public.usage_events from anon;
 grant select on public.usage_events to authenticated;
 
-create or replace function public.add_usage_event(p_day date, p_event text)
+create or replace function public.add_usage_event(p_event text)
 returns void
 language plpgsql security definer
 set search_path = ''
@@ -57,8 +58,9 @@ as $$
 declare uid uuid := auth.uid();
 begin
   if uid is null then raise exception 'not signed in'; end if;
+  -- the day is the server's (Taipei), never one the browser sends
   insert into public.usage_events as u (user_id, day, event, count)
-  values (uid::text, p_day, p_event, 1)
+  values (uid::text, (now() at time zone 'Asia/Taipei')::date, p_event, 1)
   on conflict (user_id, day, event) do update
     set count = case when excluded.event = 'visit' then u.count else u.count + 1 end;
 end;
@@ -125,8 +127,8 @@ begin
 end;
 $$;
 
-revoke all on function public.add_usage_event(date, text) from public, anon;
-grant execute on function public.add_usage_event(date, text) to authenticated;
+revoke all on function public.add_usage_event(text) from public, anon;
+grant execute on function public.add_usage_event(text) to authenticated;
 revoke all on function public.gnosis_metrics(date) from public, anon;
 grant execute on function public.gnosis_metrics(date) to authenticated;
 revoke all on function public.delete_my_account() from public, anon;

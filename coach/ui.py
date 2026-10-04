@@ -24,7 +24,12 @@ def _session_paths():
     return st.session_state.coach_log.get("paths") or []
 
 
-catalog.bind(_session_paths)      # every page and callback sees this session's goals (coach/catalog.py)
+def _paths_unreadable() -> bool:
+    store = st.session_state.get("coach_store")
+    return bool(getattr(store, "paths_error", None))
+
+
+catalog.bind(_session_paths, _paths_unreadable)     # every page and callback sees this session's goals (coach/catalog.py)
 TIMEZONE = ZoneInfo(os.environ.get("COACH_TIMEZONE", "Asia/Taipei"))
 
 
