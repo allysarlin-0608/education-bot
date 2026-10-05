@@ -39,6 +39,7 @@ USAGE_TABLE = "ai_usage"
 PATHS_TABLE = "learning_paths"
 EVENTS_TABLE = "usage_events"
 PREFS_TABLE = "learner_prefs"      # supabase/goals.sql (habits: reminders, light day, milestones seen)
+SIGNALS_TABLE = "learning_signals"  # supabase/mastery.sql (is she learning? counts only, coach/metrics.py)
 PATHS_TABLE_MISSING = (
     "Supabase doesn't have the learning_paths table yet. Run supabase/goals.sql in "
     "Supabase's SQL Editor, then refresh this page."
@@ -388,6 +389,7 @@ class FileStore(_Scope):
                 "learning_paths": log.get("paths", []),
                 "ai_usage": [r for r in self._rows(USAGE_TABLE) if r["user_id"] == uid],
                 "usage_events": [r for r in self._rows(EVENTS_TABLE) if r["user_id"] == uid],
+                "learning_signals": [r for r in self._rows(SIGNALS_TABLE) if r["user_id"] == uid],
                 "learner_prefs": self.load_prefs()}
 
     def load_prefs(self):
@@ -404,19 +406,22 @@ class FileStore(_Scope):
             self._write_rows(PREFS_TABLE, rows)
 
     def add_event(self, day: str, event: str) -> None:
+        from coach import metrics
         uid = self._uid()
+        table = SIGNALS_TABLE if event in metrics.SIGNALS else EVENTS_TABLE
         with _FILE_LOCK:
-            rows = self._rows(EVENTS_TABLE)
+            rows = self._rows(table)
             row = next((r for r in rows if r["user_id"] == uid and r["day"] == day and r["event"] == event), None)
             if row is None:
                 rows.append({"user_id": uid, "day": day, "event": event, "count": 1})
             elif event != "visit":
                 row["count"] += 1
-            self._write_rows(EVENTS_TABLE, rows)
+            self._write_rows(table, rows)
 
     def metrics(self, since: date, today: date) -> dict:
         from coach import metrics
-        return metrics.summarize(self._rows(USERS_TABLE), self._rows(EVENTS_TABLE), since, today)
+        return metrics.summarize(self._rows(USERS_TABLE), self._rows(EVENTS_TABLE) + self._rows(SIGNALS_TABLE),
+                                 since, today)
 
     def delete_my_account(self) -> None:
         """Everything of the current user's, gone: the log file, their settings,
@@ -427,6 +432,7 @@ class FileStore(_Scope):
             self._write_settings([r for r in self._settings_rows() if r.get("user_id") != uid])
             self._write_rows(USAGE_TABLE, [r for r in self._rows(USAGE_TABLE) if r["user_id"] != uid])
             self._write_rows(EVENTS_TABLE, [r for r in self._rows(EVENTS_TABLE) if r["user_id"] != uid])
+            self._write_rows(SIGNALS_TABLE, [r for r in self._rows(SIGNALS_TABLE) if r["user_id"] != uid])
             self._write_rows(PREFS_TABLE, [r for r in self._rows(PREFS_TABLE) if r["user_id"] != uid])
             self._write_rows(USERS_TABLE, [r for r in self._rows(USERS_TABLE) if r["user_id"] != uid])
         try:
@@ -573,9 +579,10 @@ class SupabaseStore(_Scope):
     def add_event(self, day: str, event: str) -> None:
         """Count one event for the current person (add_usage_event: the person's own row only,
         on the server's date: `day` is the local store's)."""
+        from coach import metrics
         self._uid()
         self._request("POST", json={"p_event": event}, prefer="return=minimal",
-                      table="rpc/add_usage_event")
+                      table="rpc/add_learning_signal" if event in metrics.SIGNALS else "rpc/add_usage_event")
 
     def metrics(self, since: date, today: date) -> dict:
         """The key numbers (gnosis_metrics: totals, admins only)."""
@@ -772,8 +779,18 @@ class SupabaseStore(_Scope):
             # (her own counts: supabase/goals.sql, made with learning_paths)
             "usage_events": [] if self.paths_error else
                             self._request("GET", params={**mine, "order": "day.asc"}, table=EVENTS_TABLE).json(),
+            "learning_signals": self._signals(mine),
             "learner_prefs": None if self.paths_error else self.load_prefs(),
         }
+
+    def _signals(self, mine: dict) -> list:
+        """Her learning counts (supabase/mastery.sql); none where that table isn't made yet."""
+        try:
+            return self._request("GET", params={**mine, "order": "day.asc"}, table=SIGNALS_TABLE).json()
+        except StorageError as e:
+            if e.status == 404:
+                return []
+            raise
 
     def load_prefs(self):
         """Her habit preferences (coach/prefs.py), or None if she has none yet."""

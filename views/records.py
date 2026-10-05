@@ -13,7 +13,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import (catalog, core, curriculum, habit, history, lesson_view, progress_bar, review, rolling, settings,
+from coach import (catalog, core, curriculum, habit, history, lesson_view, mastery, progress_bar, review, rolling, settings,
                    streaks, ui, visuals)
 
 log = st.session_state.coach_log          # (re-read on arriving here, before the bar: gnosis.py)
@@ -116,6 +116,7 @@ def show_entry(e, where):
 lessons_passed = core.lessons_passed(log)
 streak = streaks.walk(core.streak_dates(log), today)       # (the same walk core.current_streak takes)
 figures = {
+    "Ideas mastered": f"{mastery.overview(log, today)['total']['mastered']:,}",
     "Current streak": days(core.current_streak(log, today)),
     "Longest streak": days(core.longest_streak(log, today)),
     "Days completed": days(len(core.completed_dates(log))),
@@ -127,6 +128,17 @@ st.html('<div class="figures">' + "".join(          # numbers roll when they cha
     f'<div class="figure"><div class="figure-label">{label}</div>'
     f'<div class="figure-value">{rolling.html(value, before.get(label.replace(" ", "_")))}</div></div>'
     for label, value in figures.items()) + "</div>")
+
+# what she knows (coach/mastery.py): ideas mastered and solid, not only lessons finished
+known = mastery.overview(log, today)["total"]
+if sum(known.values()):
+    with st.container(key="prog_skills", horizontal=True, vertical_alignment="center"):
+        met = known["learning"] + known["solid"] + known["mastered"]
+        st.html(f'<p class="prog-rest"><b>What you know:</b> {known["mastered"]} '
+                f'{"idea" if known["mastered"] == 1 else "ideas"} mastered, {known["solid"]} solid, '
+                f'{known["learning"]} still being learned, of {met} you\'ve met.</p>')
+        if st.button("Skill map", type="tertiary", key="prog_skills_open"):
+            st.switch_page("views/skills.py")
 
 # how her streak is kept: rest days, in one calm line, and her week
 with st.container(key="prog_habit", horizontal=True, vertical_alignment="center"):

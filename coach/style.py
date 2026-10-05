@@ -1707,6 +1707,43 @@ SETUP = """
 .ins-list small { font-size: 0.8125rem; color: var(--label-3); min-width: 3ch; text-align: right; }
 .goal-win b { font-weight: 600; }
 .goal-win { margin: 0; font-size: 0.9375rem; line-height: 1.5; color: var(--label); }
+/* Phase 3: exercises, the skill map, practice, the tutor's grounding */
+.ex-kind { margin: var(--space-4) 0 2px; font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
+.ex-scenario { margin: 0 0 var(--space-2); padding: var(--space-3) var(--space-4); background: var(--surface); border-radius: var(--radius-medium);
+  font-size: 0.9375rem; line-height: 1.55; color: var(--label); }
+.ex-earlier { margin: var(--space-5) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--rule); font-size: 0.8125rem; color: var(--label-3); }
+.tutor-based { margin: var(--space-2) 0 0; font-size: 0.8125rem; color: var(--label-3); }
+.idea-state { margin: var(--space-3) 0 0; font-size: 0.875rem; line-height: 1.5; color: var(--label-2); }
+.idea-state b { font-weight: 600; color: var(--label); }
+.sk-summary { margin: var(--space-4) 0 var(--space-5); }
+.sk-bar { display: flex; height: 6px; background: var(--track); border-radius: var(--radius-pill); overflow: hidden; margin: var(--space-2) 0; }
+.sk-seg { display: block; height: 100%; }
+.sk-seg.sk-mastered, .sk-dot.sk-mastered { background: var(--label); }
+.sk-seg.sk-solid, .sk-dot.sk-solid { background: var(--label-3); }
+.sk-seg.sk-learning, .sk-dot.sk-learning { background: light-dark(#C9C9C9, #3D3D3D); }
+.sk-legend { margin: 0; display: flex; flex-wrap: wrap; gap: 4px var(--space-4); font-size: 0.8125rem; color: var(--label-2); }
+.sk-key { display: inline-flex; align-items: center; gap: 6px; }
+.sk-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.sk-unit { margin: var(--space-5) 0 0; font-size: 0.8125rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--label-3); }
+.sk-ideas { list-style: none; margin: var(--space-2) 0 0 !important; padding: 0 !important; display: grid; }
+.sk-ideas li { margin: 0 !important; display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-2) 0; border-bottom: 1px solid var(--rule); }
+.sk-ideas li:last-child { border-bottom: 0; }
+.sk-t { min-width: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--label); }
+.sk-t small { display: block; margin-top: 2px; font-size: 0.8125rem; color: var(--label-3); }
+.sk-ahead .sk-t { color: var(--label-3); }
+.sk-chip { flex: none; display: inline-block; margin-left: var(--space-2); padding: 1px 8px; border-radius: var(--radius-pill);
+  font-size: 0.75rem; line-height: 1.5; white-space: nowrap; color: var(--label-2); background: var(--surface); vertical-align: 1px; }
+.sk-chip.sk-mastered { color: var(--env); background: var(--label); }
+.sk-chip.sk-solid { color: var(--label); background: var(--surface-2); }
+.sk-chip.sk-fading { font-style: italic; }
+.cm-t .sk-chip { font-size: 0.6875rem; }
+.pr-ideas { margin-top: var(--space-3) !important; }
+.ins-list dt small { display: block; margin-top: 2px; font-size: 0.75rem; color: var(--label-3); text-align: left; }
+@media (max-width: 640px) {
+  .sk-ideas li { flex-wrap: wrap; }
+  .sk-chip { margin-left: 0; }
+}
 </style>
 """
 

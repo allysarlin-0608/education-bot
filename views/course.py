@@ -11,7 +11,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import catalog, core, course, curriculum, habit, lesson_view, quiz, settings, ui, visuals
+from coach import catalog, core, course, curriculum, habit, lesson_view, mastery, practice, quiz, review, settings, ui, visuals
 
 log = st.session_state.coach_log
 config = ui.config()
@@ -68,22 +68,29 @@ def open_lesson(n):
                 mark = (q.get("marks") or [None] * len(q["questions"]))[k]
                 sign = "✓" if mark == 1 else ("◐" if mark else "✗")
                 st.markdown(f"{sign} {k + 1}. {item['question']}")
-                if item["type"] == "choice":
-                    st.caption(f"Answer: {item['options'][item['answer']]}. {item.get('why') or ''}".strip())
-                elif item["type"] == "match":
-                    st.caption("Pairs: " + "; ".join(f"{left} → {item['right'][key]}"
-                                                     for left, key in zip(item["left"], item["key"])))
+                if item.get("from"):
+                    st.caption("From an earlier lesson · not part of the score")
+                if item["type"] in quiz.WRITTEN:
+                    st.caption(f"{'What a good answer shows' if item['type'] == 'apply' else 'A good answer'}: "
+                               f"{item['answer']}")
                 else:
-                    st.caption(f"A good answer: {item['answer']}")
+                    st.caption(f"Answer: {review._answer_text(item)}. {item.get('why') or ''}".strip())
     with notes:
         chat = slot.get("followups") or []
         reflection = entry.get("reflection", "").strip()
-        if not chat and not reflection:
+        if not chat and not reflection and not slot.get("explain"):
             st.caption("No notes for this lesson: questions you asked the coach and your thoughts on the "
                        "day's question would be kept here.")
         for msg in chat:
             who = "You" if msg["role"] == "user" else "Coach"
-            st.markdown(f"**{who}:** {msg['content']}")
+            body, where, _ = practice.split_reply(msg["content"], slot.get("lesson", ""))
+            st.markdown(f"**{who}:** {body}")
+            if practice.based_label(where):
+                st.caption(practice.based_label(where))
+        if slot.get("explain", {}).get("feedback"):
+            ex = slot["explain"]
+            st.markdown(f"**You explained it:** {ex['text']}")
+            st.caption(" ".join(x for x in (ex["feedback"]["right"], ex["feedback"]["missing"]) if x))
         if reflection:
             st.markdown(f"**Your thoughts that day:** {reflection}")
 
@@ -127,6 +134,9 @@ with st.container(key="cm_next"):
             st.caption(f"Today is {catalog.name(ui.topic_for(today), 'another subject')}'s day: "
                        "your subjects take turns, one a day.")
     with st.container(key="cm_links", horizontal=True):
+        if st.button("Skill map", type="tertiary", key="cm_skills"):
+            st.session_state.sk_topic = topic
+            st.switch_page("views/skills.py")
         if visuals.known(topic) and st.button(f"Enter {course.subject_name(topic)}", type="tertiary", key="cm_world"):
             ui.enter_world(topic)       # (a goal has no world)
         others = [t for t in mine if t != topic and curriculum.has_syllabus(t)]
@@ -139,6 +149,7 @@ with st.container(key="cm_next"):
 # THE PATH: units in order, lessons in each
 # ============================================================
 STATE_WORDS = {"today": "Today", "next": "Next", "started": "Started"}
+known = {x["n"]: x for x in mastery.ideas(log, topic, today)}       # what she knows, idea by idea
 
 
 def rows(unit):
@@ -150,9 +161,13 @@ def rows(unit):
             meta += f" · {x['best']}%" if x["best"] is not None else ""
         elif x["state"] in STATE_WORDS:
             meta = STATE_WORDS[x["state"]]
+        idea = known.get(x["n"])
+        level = (f'<span class="sk-chip sk-{idea["level"]}{" sk-fading" if idea["fading"] else ""}">'
+                 f'{mastery.LEVEL_NAMES[idea["level"]]}{" · fading" if idea["fading"] else ""}</span>'
+                 if idea and idea["level"] != "new" else "")
         with st.container(key=f"cm_row_{x['n']}_{x['state']}", horizontal=True, vertical_alignment="center"):
             st.html(f'<div class="cm-row"><span class="cm-n">{x["n"]}</span>'
-                    f'<span class="cm-t">{escape(x["title"])}</span><span class="cm-m">{escape(meta)}</span></div>')
+                    f'<span class="cm-t">{escape(x["title"])}{level}</span><span class="cm-m">{escape(meta)}</span></div>')
             if x["readable"]:
                 if st.button("Read", key=f"cm_read_{x['n']}", type="tertiary"):
                     open_lesson(x["n"])
@@ -176,7 +191,10 @@ with st.container(key="cm_path"):
                 u = units[k]
                 st.html(f'<p class="cm-eyebrow">{"You are here" if k == cur else "Up next"}</p>')
                 st.markdown(f"#### {escape(u['name'])}")
-                st.caption(f"Lessons {u['first']}–{u['last']} · {u['done_count']} of {len(u['lessons'])} passed")
+                c = mastery.counts([known[x["n"]] for x in u["lessons"] if x["n"] in known])
+                strong = c["solid"] + c["mastered"]
+                st.caption(f"Lessons {u['first']}–{u['last']} · {u['done_count']} of {len(u['lessons'])} passed"
+                           + (f" · {strong} solid or mastered" if strong else ""))
                 rows(u)
         later = units[cur + 2:]
         if later:

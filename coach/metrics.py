@@ -17,6 +17,16 @@ a date:
 - lessons passed per learner per week
 - reminders shown, and how many led to a lesson the same day
 
+Phase 3, learning (learning_signals, the same shape: counts per person per day):
+- "missed" / "recovered": an idea answered wrong, and later answered right
+  again (recovered / missed: how often a mistake gets fixed)
+- "held" / "slipped": a solid or mastered idea asked again two weeks or more
+  after its last practice, still known or not (held / both: does it last?)
+- "mastered": an idea that became mastered
+- "practice_done", "explained": a practice set finished, an explanation marked
+- "tutor_question", "tutor_confused": questions to the coach, and those that
+  showed a misunderstanding
+
 summarize() is the same arithmetic as gnosis_metrics() in supabase/goals.sql,
 for the local store and the tests."""
 from collections import defaultdict
@@ -25,6 +35,9 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 EVENTS = ("visit", "setup_done", "goal_created", "lesson_passed", "reminder_shown", "reminded_session")
+# Phase 3: is she learning? (table learning_signals, supabase/mastery.sql; counts only)
+SIGNALS = ("practice_done", "explained", "tutor_question", "tutor_confused",
+           "missed", "recovered", "held", "slipped", "mastered")
 TZ = ZoneInfo("Asia/Taipei")
 
 
@@ -76,6 +89,8 @@ def summarize(users: list, events: list, since: date, today: date) -> dict:
                                if e["event"] == "reminder_shown" and day(e) >= since),
         "reminded_sessions": sum(int(e.get("count") or 0) for e in events
                                  if e["event"] == "reminded_session" and day(e) >= since),
+        **{s: sum(int(e.get("count") or 0) for e in events if e["event"] == s and day(e) >= since)
+           for s in SIGNALS},
     }
 
 

@@ -3,8 +3,9 @@ from html import escape
 
 import streamlit as st
 
-from coach import (auth, catalog, clock, core, curriculum, goalmaker, habit, lesson_view, llm, paths, place,
-                   progress_bar, quiz, quizgen, review, settings, steps, streaks, tokens, ui, visuals)
+from coach import (auth, catalog, clock, core, curriculum, exercise, goalmaker, habit, lesson_view, llm, mastery,
+                   paths, place, practice, progress_bar, quiz, quizgen, review, settings, steps, streaks, tokens, ui,
+                   visuals)
 from coach import prefs as prefs_
 
 log = st.session_state.coach_log
@@ -97,7 +98,8 @@ def run_kickoff(i):
     # The chat only changes once the lesson is complete: a run interrupted
     # mid-stream (she clicks elsewhere) must not leave a lesson half there.
     lesson, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level, public=auth.is_public()),
+        core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level, public=auth.is_public(),
+                                 weak=practice.weak_titles(log, topic, slot["n"], today)),     # earlier shaky ideas
         [{"role": "user", "content": kickoff}], max_tokens=tokens.LESSON_MAX_TOKENS,
     )
     if error:
@@ -131,9 +133,21 @@ def run_followup(i, text):
     )
     if error:
         failed("followup", error, slot, i=i, text=text)
-    chat += [asked[-1], {"role": "assistant", "content": core.finalize_reply(reply, lesson=False, topic=topic)}]
+    answer = core.finalize_reply(reply, lesson=False, topic=topic)
+    chat += [asked[-1], {"role": "assistant", "content": answer}]
     slot["followups"] = chat[2:]               # everything after the lesson
+    _, _, confused = practice.split_reply(answer, slot.get("lesson", ""))
+    if confused:            # a question that showed a misunderstanding: the skill map and review hear of it
+        ui.learned(slot, owner["date"], "ask", 0.3, source=f"ask-{len(slot['followups'])}")
+        review.keep(log, slot)
+        review.add_key_idea(slot, today, topic)          # its key idea comes back tomorrow
+        for c in slot.get("cards") or []:
+            if c["kind"] == "point" and c["front"].startswith("Key idea ·") and c["due"] > (today + timedelta(days=1)).isoformat():
+                c["due"] = (today + timedelta(days=1)).isoformat()
     save(entry, owner)
+    ui.record("tutor_question")
+    if confused:
+        ui.record("tutor_confused")
     st.session_state.coach_scroll = (place.LATEST, False)      # and stays on it after the redraw
     st.rerun()                                 # show the checked text, not the raw stream
 
@@ -145,7 +159,8 @@ def run_quiz(i):
     owner, slot = work(entry, i)
     if curriculum.blocking(entry["lessons"], i):     # strictly in order
         st.rerun()
-    questions, error = quizgen.make(slot, f"{topic} lesson {slot['n']}", step=st.spinner)
+    context = practice.quiz_context(log, topic, slot, today, goal=catalog.path(topic))
+    questions, error = quizgen.make(slot, f"{topic} lesson {slot['n']}", step=st.spinner, context=context)
     if questions is None:
         failed("quiz", error, slot, i=i)
     slot["quiz"] = quiz.new(questions, slot.get("quiz"))
@@ -177,6 +192,10 @@ def show_retry(slot, kinds):
             run_quiz(retry["i"])
         elif retry["kind"] == "grade":
             run_grading(retry["i"])
+        elif retry["kind"] == "explain":
+            run_explain(retry["i"], retry["text"])
+        elif retry["kind"] == "follow":
+            run_follow(retry["i"], retry["text"])
         else:
             run_followup(retry["i"], retry["text"])
     return True
@@ -220,6 +239,8 @@ with st.container(key="today_links", horizontal=True):
                 ui.enter_world(topic)
     if st.button("Course map", type="tertiary", key="today_course"):   # the whole path
         ui.open_course(topic)
+    if mastery.topics(log) and st.button("Skill map", type="tertiary", key="today_skills"):   # what she knows
+        st.switch_page("views/skills.py")
 # review: noticed when something is due, never in the way of the day's lesson
 due_now = ui.review_due(log)
 if due_now:
@@ -228,6 +249,15 @@ if due_now:
         if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due · about {minutes} min",
                      type="tertiary", key="today_review"):
             st.switch_page("views/review.py")
+# practice on the ideas she knows least: offered when some are shaky or fading, never in the way
+shaky = mastery.needs_practice(log, today)
+practised = (ui.prefs().get("practice") or {}).get("date") == today.isoformat()
+if shaky and not practised:
+    with st.container(key="practice_entry"):
+        n_ideas = min(3, len(shaky))
+        if st.button(f"Practice · {n_ideas} {'idea' if n_ideas == 1 else 'ideas'} to strengthen · about "
+                     f"{practice.SET_SIZE} min", type="tertiary", key="today_practice"):
+            st.switch_page("views/practice.py")
 # ============================================================
 # COMING BACK (coach/habit.py): a welcome after a break, a light day, her
 # reminder, a milestone just reached, last week in review. Calm, and never
@@ -444,6 +474,11 @@ for k, message in enumerate(chat[1:], start=1):   # the kickoff line is shown as
     with st.chat_message(message["role"]):
         if k == 1:
             lesson_view.render(message["content"], topic, key=chat_key(slot))  # cards, tables and diagrams
+        elif message["role"] == "assistant":
+            body, where, _ = practice.split_reply(message["content"], slot.get("lesson", ""))
+            st.markdown(body)
+            if practice.based_label(where):          # where the answer comes from, or that it isn't sure
+                st.html(f'<p class="tutor-based">{escape(practice.based_label(where))}</p>')
         else:
             st.markdown(message["content"])
 reply_spot = st.container()     # a new question and its answer appear here, under the others
@@ -472,30 +507,15 @@ passed_here = entry["lessons"][i]["completed"]     # (a carried-over lesson: pas
 
 
 def show_results(q, missed_only=False):
-    """Each question with her answer, the right answer and why (only the
-    ones she lost points on with missed_only)."""
+    """Each question with her answer, the right answer and the specific
+    mistake (only the ones she lost points on with missed_only)."""
     for k, item in enumerate(q["questions"]):
         mark, mine = q["marks"][k], q["answers"][k]
         if mark == 1 and missed_only:
             continue
-        sign = "✓" if mark == 1 else ("◐" if mark else "✗")
-        st.markdown(f"{sign} {k + 1}. {item['question']}")
-        if item["type"] == "choice":
-            yours, right = item["options"][mine], item["options"][item["answer"]]
-            lead = f"Your answer: {yours}" + ("" if mark == 1 else f" · Correct: {right}")
-            st.caption(f"{lead}. {item['why']}".strip())
-        elif item["type"] == "match":
-            pairs = "; ".join(f"{left} → {item['right'][key]}" for left, key in zip(item["left"], item["key"]))
-            got = f"{mark * len(item['key']):g} of {len(item['key'])} pairs right. " if mark != 1 else ""
-            st.caption(f"{got}Correct pairs: {pairs}. {item['why']}".strip())
-        else:
-            st.caption(f"Your answer: {mine}")
-            note = q["feedback"][k] or item["why"]
-            if mark == 1:
-                st.caption(note)
-            else:
-                st.caption(f"Why it's marked wrong: {note}")
-                st.caption(f"A good answer: {item['answer']}")
+        if item.get("from"):
+            st.html('<p class="ex-earlier">From an earlier lesson · not part of the score</p>')
+        exercise.result(item, mine, mark, q["feedback"][k], k=k + 1)
 
 
 def conclude(i):
@@ -503,7 +523,10 @@ def conclude(i):
     stays on the lesson to read the explanations; Next lesson moves on."""
     entry = day_entry()
     owner, slot = work(entry, i)
+    mastery.seed(slot, owner["date"])                        # (a lesson from before mastery: what it had first)
     score = quiz.finish(slot["quiz"])
+    q = slot["quiz"]
+    ui.learned(slot, owner["date"], "quiz", score / 100, source=f"{q['id']}-{q['attempts']}")   # the skill map
     review.keep(log, slot)                                   # (a lesson from before review: its old cards first)
     review.add_missed(slot, slot["quiz"], today, topic)      # what she missed comes back in a few days
     if quiz.passed(score):
@@ -517,7 +540,11 @@ def conclude(i):
         # the page goes to the result, so Next lesson is in view (not under the chat box)
         st.session_state.coach_scroll = ("current-quiz", False)
         st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
-    if save(entry, owner) and quiz.passed(score):
+    saved = save(entry, owner)
+    for k, item in enumerate(q["questions"]):                # the question on an earlier idea: evidence for it
+        if item.get("from") and q["marks"][k] is not None:
+            ui.learned_elsewhere(log, topic, item["from"], "recall", q["marks"][k], source=f"{q['id']}-{k}")
+    if saved and quiz.passed(score):
         ui.record("lesson_passed")
         p = ui.prefs()                   # a lesson after today's reminder: did the reminder help? (coach/metrics.py)
         if p.get("reminded_on") == today.isoformat() and p.get("reminder_hit") != today.isoformat():
@@ -539,6 +566,104 @@ def run_grading(i):
     conclude(i)
 
 
+def lesson_title(n):
+    found = curriculum.lesson(topic, n)
+    return f"Lesson {n}: {found['title']}" if found else f"Lesson {n}"
+
+
+def run_explain(i, text):
+    """The coach reads her explanation (one call) and answers as a teacher."""
+    entry = day_entry()
+    owner, slot = work(entry, i)
+    system, messages = practice.explain_request(slot, slot["title"], text)
+    with st.spinner("Your coach is reading it…"):
+        data, error = llm.ask_json(system, messages)
+    fb = practice.read_explain(data) if data else None
+    if error or fb is None:
+        failed("explain", error or llm.FAILED, slot, i=i, text=text)
+    slot["explain"] = {"at": clock.now_iso(), "text": text.strip(), "feedback": fb}
+    ui.learned(slot, owner["date"], "explain", fb["score"], source="explain")
+    if save(entry, owner):
+        ui.record("explained")
+    st.rerun()
+
+
+def run_follow(i, text):
+    """Her answer to the coach's one follow-up question (one call)."""
+    entry = day_entry()
+    owner, slot = work(entry, i)
+    asked = (slot.get("explain") or {}).get("feedback", {}).get("question")
+    if not asked or slot["explain"].get("reply_feedback"):
+        st.rerun()
+    system, messages = practice.follow_request(slot, slot["title"], asked, text)
+    with st.spinner("Your coach is reading it…"):
+        data, error = llm.ask_json(system, messages)
+    fb = practice.read_follow(data) if data else None
+    if error or fb is None:
+        failed("follow", error or llm.FAILED, slot, i=i, text=text)
+    slot["explain"].update(reply=text.strip(), reply_feedback=fb)
+    ui.learned(slot, owner["date"], "explain", fb["score"], source="explain-follow")
+    save(entry, owner)
+    st.rerun()
+
+
+VERDICT = {1.0: "✓ Clear and correct.", 0.5: "◐ On the right track.", 0.0: "✗ Not there yet."}
+
+
+def explain_back(i, slot):
+    """Explain it back: after a lesson is passed, once a day, she teaches its
+    idea in her own words and the coach answers like a good teacher."""
+    done = slot.get("explain")
+    if not done and not practice.invite(log, topic, slot, today):
+        return
+    with st.container(key="explain_back"):
+        st.html('<p class="hb-eyebrow">Explain it back</p>')
+        if not done:
+            st.html(f'<p class="hb-text">Teach “{escape(slot["title"])}” to a friend in two or three sentences: '
+                    "what it is, and why it matters. Putting it in your own words is one of the surest ways "
+                    "to make it stick.</p>")
+            if show_retry(slot, ("explain",)):
+                return
+            text = st.text_area("Your explanation", key=f"explain_{today}_{slot['n']}", height=110,
+                                placeholder="In my own words…", label_visibility="collapsed")
+            spot = st.empty()
+            if spot.button("Get feedback", type="primary", key="explain_send"):
+                problem = practice.precheck(text)
+                if problem:
+                    st.warning(problem)
+                else:
+                    spot.button("Reading…", disabled=True, key="explain_wait")
+                    st.session_state.coach_retry = None
+                    run_explain(i, text)
+            st.caption("Optional. It feeds your skill map; your lesson is already passed.")
+            return
+        fb = done["feedback"]
+        st.caption(f"You wrote: {done['text']}")
+        st.markdown(f"**{VERDICT.get(fb['score'], '')}** {fb['right']}")
+        if fb.get("missing"):
+            st.markdown(f"**What to add:** {fb['missing']}")
+        if fb.get("question") and not done.get("reply_feedback"):
+            st.markdown(f"**One question:** {fb['question']}")
+            if show_retry(slot, ("follow",)):
+                return
+            reply = st.text_area("Your answer", key=f"explain_reply_{today}_{slot['n']}", height=80,
+                                 placeholder="Your answer (optional)", label_visibility="collapsed")
+            spot = st.empty()
+            if spot.button("Send", key="explain_reply_send"):
+                problem = practice.precheck(reply) if len((reply or "").split()) < 3 else ""
+                if problem:
+                    st.warning(problem)
+                else:
+                    spot.button("Reading…", disabled=True, key="explain_reply_wait")
+                    st.session_state.coach_retry = None
+                    run_follow(i, reply)
+        elif done.get("reply_feedback"):
+            st.markdown(f"**One question:** {fb['question']}")
+            st.caption(f"You answered: {done['reply']}")
+            rf = done["reply_feedback"]
+            st.markdown(f"**{VERDICT.get(rf['score'], '')}** {rf['feedback']}")
+
+
 @st.fragment
 def answer_sheet(i, q):
     """The quiz questions. Each answer is kept the moment she gives it
@@ -550,27 +675,10 @@ def answer_sheet(i, q):
     draft = q["draft"]
     saved = [list(a) if isinstance(a, list) else a for a in draft]
     for k, item in enumerate(q["questions"]):
-        key = f"quiz_{q['id']}_{k}"
-        label = f"**{k + 1}.** {item['question']}"
-        if item["type"] == "choice":
-            draft[k] = st.radio(label, range(len(item["options"])), index=draft[k],
-                                format_func=lambda o, item=item: item["options"][o], key=key)
-        elif item["type"] == "match":
-            st.markdown(label)
-            keys = [f"{key}_{j}" for j in range(len(item["left"]))]
-            chosen = [st.session_state.get(kk, draft[k][j]) for j, kk in enumerate(keys)]
-            for j, left in enumerate(item["left"]):
-                # a meaning already matched to another term isn't offered again
-                taken = {c for m, c in enumerate(chosen) if m != j and c is not None}
-                options = [o for o in range(len(item["right"])) if o not in taken]
-                current = chosen[j] if chosen[j] in options else None
-                draft[k][j] = st.selectbox(
-                    left, options, index=options.index(current) if current is not None else None,
-                    placeholder="Choose its match", format_func=lambda o, item=item: item["right"][o],
-                    key=keys[j])
-        else:
-            draft[k] = st.text_area(label, value=draft[k], key=key, height=90,
-                                    placeholder="Answer in a sentence or two, in your own words")
+        if item.get("from"):            # one question on an earlier idea she found hard
+            st.html(f'<p class="ex-earlier">From an earlier lesson ({escape(lesson_title(item["from"]))}) · '
+                    "it doesn't count toward your score</p>")
+        draft[k] = exercise.field(item, f"quiz_{q['id']}_{k}", draft[k], k=k + 1)
     if draft != saved:
         save(day_entry(), work(day_entry(), i)[0])      # every answer is saved as she gives it
     submit = st.empty()
@@ -606,6 +714,10 @@ if passed_here:
             show_results(q)
     else:
         st.caption("This lesson is done.")
+    idea = mastery.state(mastery.evidence(slot, owner["date"]), today)
+    st.html(f'<p class="idea-state">This idea: <b>{mastery.LEVEL_NAMES[idea["level"]]}</b> · '
+            f'{escape(mastery.describe(dict(idea, reached=True)))}</p>')
+    explain_back(i, slot)
     if goal and slot["n"] == 1:          # her goal's first lesson: a small win, said plainly
         left = paths.lesson_count(goal) - 1
         st.html(f'<p class="goal-win"><b>First step done.</b> {left} {"lesson" if left == 1 else "lessons"} '
@@ -638,7 +750,8 @@ elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
         with st.expander("See what you missed", expanded=True):
             show_results(q, missed_only=True)
     else:
-        st.caption(f"{quiz.QUESTIONS} questions on this lesson: multiple choice, matching and short answers. "
+        st.caption(f"{quiz.QUESTIONS} questions on this lesson, of several kinds: choices, scenarios, a blank to "
+                   f"fill, matching, putting steps in order, and two answers in your own words. "
                    f"Score {quiz.PASS_MARK}% or more to finish it.")
     retrying = show_retry(slot, ("quiz",))
     take = st.empty()               # can't be pressed again while the quiz is being written

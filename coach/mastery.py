@@ -22,8 +22,10 @@ From the evidence, in date order:
 - strength moves toward each score (newer evidence counts more);
 - stability: how long it lasts. It grows with each success on a new day
   (spaced retrieval) and halves after a failure;
-- recall now = strength x 2^(-days since the last evidence / stability), so
-  an idea not practised fades, and practising it brings it back.
+- recall now = strength x retention(days since the last evidence), a
+  forgetting curve that keeps 90% after `stability` days: an idea not
+  practised fades (a solid one in about two weeks, a mastered one in a
+  month or more), and practising it brings it back.
 
 Levels: new (no evidence), learning, solid (recall >= SOLID, two
 successes on different days), mastered (recall >= MASTERED, three successes
@@ -43,7 +45,7 @@ SUCCESS, FAILURE = 0.8, 0.5
 STABILITY0 = 3.0          # days an idea lasts after its first success
 GROWTH = 2.2              # each spaced success makes it last this much longer
 MAX_STABILITY = 180.0
-SOLID, MASTERED = 0.6, 0.8
+SOLID, MASTERED = 0.6, 0.85
 MASTERED_SPAN = 7         # days between the first and last of the successes
 MAX_EVENTS = 40           # evidence kept per idea (the oldest go first)
 HELD_AFTER = 14           # days: an idea still known this long after its last practice "held"
@@ -127,6 +129,13 @@ def parse(data) -> list:
 
 
 # -------------------------------------------------------------- the state
+def retention(gap: int, stability: float) -> float:
+    """How much of it is still there `gap` days after the last practice: a
+    forgetting curve (falls fast at first, then slowly), 0.9 after
+    `stability` days."""
+    return 1 / (1 + gap / (9 * stability))
+
+
 def state(events: list, today: date) -> dict:
     """How well she knows an idea today, from its evidence."""
     strength, stability, successes, last_success, first_success = 0.0, STABILITY0, 0, None, None
@@ -148,7 +157,7 @@ def state(events: list, today: date) -> dict:
         return {"level": "new", "recall": 0.0, "strength": 0.0, "fading": False, "last": None,
                 "successes": 0, "stability": stability, "evidence": 0}
     gap = (today - last).days
-    recall = strength * 2 ** (-gap / stability)
+    recall = strength * retention(gap, stability)
     span = (last_success - first_success).days if last_success else 0
 
     def level(r):
@@ -165,28 +174,36 @@ def state(events: list, today: date) -> dict:
 
 def signals(before: list, new: dict) -> list:
     """What one new piece of evidence shows, for the numbers (coach/metrics.py):
+    - "missed": wrong about an idea she had right last time (or never had);
     - "recovered": right now (on a later day) about an idea she had got wrong
       (its first success since that miss);
     - "held" / "slipped": an idea that was solid or mastered, asked again
-      HELD_AFTER days or more after its last practice: still known, or not."""
+      HELD_AFTER days or more after its last practice: still known, or not;
+    - "mastered": the idea has just become mastered."""
     out = []
     day = date.fromisoformat(new["d"])
-    earlier = [e for e in before if e["d"] < new["d"]]
-    if new["k"] == "ask" or not earlier:
+    if new["k"] == "ask":
         return out
-    misses = [e for e in earlier if e["s"] < FAILURE and e["k"] != "ask"]
+    graded = [e for e in before if e["k"] != "ask"]
+    if new["s"] < FAILURE and (not graded or graded[-1]["s"] >= FAILURE):
+        out.append("missed")
+    earlier = [e for e in graded if e["d"] < new["d"]]
+    misses = [e for e in earlier if e["s"] < FAILURE]
     if new["s"] >= SUCCESS and misses:
         after_miss = [e for e in earlier if e["d"] > max(m["d"] for m in misses) and e["s"] >= SUCCESS]
         if not after_miss:
             out.append("recovered")
-    last = date.fromisoformat(max(e["d"] for e in earlier))
-    if (day - last).days >= HELD_AFTER:
-        was = state(earlier, last)["level"]       # as it stood when last practised
-        if was in ("solid", "mastered"):
-            if new["s"] >= SUCCESS:
-                out.append("held")
-            elif new["s"] < FAILURE:
-                out.append("slipped")
+    if earlier:
+        last = date.fromisoformat(max(e["d"] for e in earlier))
+        if (day - last).days >= HELD_AFTER:
+            was = state(earlier, last)["level"]       # as it stood when last practised
+            if was in ("solid", "mastered"):
+                if new["s"] >= SUCCESS:
+                    out.append("held")
+                elif new["s"] < FAILURE:
+                    out.append("slipped")
+    if state(before + [new], day)["level"] == "mastered" and state(before, day)["level"] != "mastered":
+        out.append("mastered")
     return out
 
 

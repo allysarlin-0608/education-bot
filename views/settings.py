@@ -299,6 +299,28 @@ if auth.is_admin():
                 + "</dl>")
             st.html('<p class="ob-note">Counts only: no lesson, answer or goal text is kept for these. '
                     "Next day and a week are out of the people who signed up at least that long ago.</p>")
+            # Phase 3: is learning happening? (learning_signals, supabase/mastery.sql; all learners, since the date)
+            g = lambda k: int(m.get(k) or 0)          # noqa: E731
+            learning = [
+                ("Ideas got wrong, then right later", f"{g('recovered')} of {g('missed')}",
+                 metrics.share(g("recovered"), g("missed")),
+                 "After a mistake, how often the idea is answered right on a later day."),
+                ("Still known after two weeks", f"{g('held')} of {g('held') + g('slipped')}",
+                 metrics.share(g("held"), g("held") + g("slipped")),
+                 "Solid or mastered ideas asked again 14+ days after their last practice."),
+                ("Ideas mastered", str(g("mastered")), "", "Ideas that reached mastered (known again and again over time)."),
+                ("Practice sets finished", str(g("practice_done")), "", ""),
+                ("Ideas explained back", str(g("explained")), "", ""),
+                ("Questions to the coach", str(g("tutor_question")), "", ""),
+                ("…that showed a misunderstanding", str(g("tutor_confused")),
+                 metrics.share(g("tutor_confused"), g("tutor_question")), "These ideas come back in Review the next day."),
+            ]
+            st.markdown("##### Learning")
+            st.html('<dl class="ins-list">' + "".join(
+                f'<div><dt>{escape(a)}{f"<small>{escape(d)}</small>" if d else ""}</dt>'
+                f'<dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c, d in learning) + "</dl>")
+            if "missed" not in m:
+                st.html('<p class="ob-note">The learning numbers need supabase/mastery.sql run first.</p>')
 
 # ---------- Your data (public): a copy of it all, or all of it gone ----------
 DELETE_WARNING = "This permanently deletes your account and all your learning history. This can't be undone."

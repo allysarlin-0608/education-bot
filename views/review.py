@@ -9,7 +9,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import catalog, review, ui
+from coach import catalog, exercise, quiz, review, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -36,12 +36,15 @@ def holder(card_id):
     return found
 
 
-def answered(card_id, right):
+def answered(card_id, right, score=None):
     found = holder(card_id)
     if found is None:
         st.rerun()
-    e, _, card = found
+    e, slot, card = found
     review.grade(card, right, today)
+    # what she knows (the skill map): a review is evidence for its lesson's idea
+    ui.learned(slot, e["date"], "review", float(right) if score is None else score,
+               source=f"{card_id}-{card['reviews']}")
     if not ui.save_entry(log, e):
         ui.show_pending_error()
     st.session_state.rv_current = {"id": card_id, "right": right}
@@ -69,21 +72,14 @@ def source(card):
 def show_question(card, q):
     """A stored question (or a word asked as one), checked on the spot."""
     key = f"rv_{card['id']}_{card['reviews']}"
-    if q["type"] == "choice":
-        pick = st.radio(q["question"], range(len(q["options"])), index=None, key=key,
-                        format_func=lambda o: q["options"][o])
-        if st.button("Check", type="primary", key=f"{key}_check", disabled=pick is None, width="stretch"):
-            answered(card["id"], pick == q["answer"])
-    elif q["type"] == "match":
-        st.markdown(q["question"])
-        picks = []
-        for j, left in enumerate(q["left"]):
-            picks.append(st.selectbox(left, range(len(q["right"])), index=None, key=f"{key}_{j}",
-                                      placeholder="Choose its match", format_func=lambda o: q["right"][o]))
-        if st.button("Check", type="primary", key=f"{key}_check", disabled=None in picks, width="stretch"):
-            answered(card["id"], picks == q["key"])
-    else:
+    if q["type"] in quiz.WRITTEN:
         recall(card, q["question"], f"A good answer: {q['answer']}")
+        return
+    answer = exercise.field(q, key, tag=q["type"] not in ("choice", "match"))
+    if st.button("Check", type="primary", key=f"{key}_check", disabled=not quiz.answered(q, answer), width="stretch"):
+        mark = quiz.mark(q, answer)
+        st.session_state.rv_answer = {"id": card["id"], "answer": answer}
+        answered(card["id"], mark == 1, mark)
 
 
 def recall(card, prompt, answer):
@@ -110,7 +106,11 @@ def feedback(card, right):
     """Just answered: right or not (said in words, not only colour), the answer, what's next."""
     st.markdown(f"**{'✓ Right.' if right else '✗ Not quite.'}** " +
                 (f"It comes back {when(card['due'])}." if right else "It comes back tomorrow."))
-    if card["kind"] == "question":
+    mine = st.session_state.get("rv_answer") or {}
+    if card["kind"] == "question" and mine.get("id") == card["id"] and card["question"]["type"] in quiz.LOCAL:
+        item = card["question"]
+        exercise.result(item, mine["answer"], quiz.mark(item, mine["answer"]), show_question=False)
+    elif card["kind"] == "question":
         item = card["question"]
         st.caption(f"Answer: {review._answer_text(item)}" + (f". {item['why']}" if item.get("why") else ""))
     elif card["kind"] == "word":

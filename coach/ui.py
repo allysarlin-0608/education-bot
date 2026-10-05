@@ -4,6 +4,7 @@ import logging
 import math
 import threading
 import time
+from datetime import date
 from urllib.parse import urlparse
 
 import streamlit as st
@@ -359,6 +360,32 @@ def record(event: str) -> None:
         st.session_state.coach_store.add_event(today().isoformat(), event)
     except storage.StorageError as e:
         logger.warning("couldn't count %s (%s)", event, e)
+
+
+def learned(slot: dict, entry_date: str, kind: str, score: float, source: str = "") -> None:
+    """Add a piece of evidence to a lesson's slot (coach/mastery.py) and count
+    what it showed (missed, recovered, held, slipped, mastered). The caller
+    saves the slot's day."""
+    from coach import mastery
+    for signal in mastery.add(slot, entry_date, kind, score, today(), source):
+        record(signal)
+
+
+def learned_elsewhere(log, topic: str, n: int, kind: str, score: float, source: str = "") -> bool:
+    """Evidence for another lesson than the one on the page (an earlier idea
+    asked again in a quiz, a practice exercise): its day re-read, the
+    evidence added, the day saved. False if it couldn't be saved."""
+    from coach import mastery
+    held = mastery.holder(log, topic, n)
+    if held is None:
+        return False
+    refresh_entry(log, date.fromisoformat(held[0]["date"]), topic)
+    held = mastery.holder(log, topic, n)
+    if held is None:
+        return False
+    entry, slot = held
+    learned(slot, entry["date"], kind, score, source)
+    return save_day(log, entry, [n])
 
 
 def save_book(log, book):

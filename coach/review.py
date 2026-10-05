@@ -87,6 +87,8 @@ def add_missed(slot: dict, q: dict, today: date, topic: str) -> int:
     """A card for each question she lost points on in this marked quiz."""
     added = 0
     for item, mark in zip(q["questions"], q["marks"] or []):
+        if item.get("from"):            # about an earlier lesson: that lesson's own cards cover it
+            continue
         if mark is not None and mark < 1:
             added += _add(slot, _card("question", item["question"], _answer_text(item), today,
                                       question=item, topic=topic, n=slot["n"]))
@@ -120,10 +122,12 @@ def saved(slot: dict, label: str) -> bool:
 
 
 def _answer_text(item: dict) -> str:
-    if item["type"] == "choice":
+    if item["type"] in ("choice", "scenario"):
         return item["options"][item["answer"]]
     if item["type"] == "match":
         return "; ".join(f"{left} → {item['right'][k]}" for left, k in zip(item["left"], item["key"]))
+    if item["type"] == "order":
+        return " → ".join(item["items"][k] for k in item["key"])
     return item["answer"]
 
 

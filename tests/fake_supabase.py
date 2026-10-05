@@ -25,6 +25,7 @@ SCHEMA = {
     storage.ADMINS_TABLE: ("email",),
     storage.PATHS_TABLE: ("user_id", "id"),            # goals.sql
     storage.EVENTS_TABLE: ("user_id", "day", "event"),
+    storage.SIGNALS_TABLE: ("user_id", "day", "event"),
     storage.PREFS_TABLE: ("user_id",),                 # goals.sql (habits)
 }
 USER_TABLES = [t for t in SCHEMA if t not in (storage.INVITES_TABLE, storage.ADMINS_TABLE)]
@@ -154,6 +155,17 @@ class FakeDB:
                 key, {"user_id": uid, "day": day, "event": args["p_event"], "count": 0})
             row["count"] = 1 if args["p_event"] == "visit" else row["count"] + 1
             return Resp(204)
+        if fn == "add_learning_signal":
+            assert set(args) == {"p_event"}
+            from datetime import datetime
+            from coach import metrics
+            assert args["p_event"] in metrics.SIGNALS
+            day = datetime.now(metrics.TZ).date().isoformat()
+            key = (uid, day, args["p_event"])
+            row = self.tables[storage.SIGNALS_TABLE].setdefault(
+                key, {"user_id": uid, "day": day, "event": args["p_event"], "count": 0})
+            row["count"] += 1
+            return Resp(204)
         if fn == "gnosis_metrics":
             if not self._admin(email):
                 return Resp(400, {"message": "admins only"})
@@ -161,7 +173,8 @@ class FakeDB:
             from coach import metrics
             today = datetime.now(metrics.TZ).date()
             return Resp(200, metrics.summarize(list(self.tables[storage.USERS_TABLE].values()),
-                                               list(self.tables[storage.EVENTS_TABLE].values()),
+                                               list(self.tables[storage.EVENTS_TABLE].values())
+                                               + list(self.tables[storage.SIGNALS_TABLE].values()),
                                                date.fromisoformat(args["p_since"]), today))
         if fn == "delete_my_account":
             assert args == {}

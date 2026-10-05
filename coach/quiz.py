@@ -547,6 +547,13 @@ def _distance(a: str, b: str) -> int:
 def blank_result(question: dict, answer) -> str:
     """ "right", "typo" (right, misspelt by a letter or two) or "wrong"."""
     mine = _fold(answer)
+    before, _, after = question["question"].partition("____")
+    words_before, words_after = _fold(before).split(), _fold(after).split()
+    # the words around the gap typed along with it ("our opinions" for "our ____") don't make it wrong
+    if words_before and mine.startswith(words_before[-1] + " "):
+        mine = mine[len(words_before[-1]) + 1:]
+    if words_after and mine.endswith(" " + words_after[0]):
+        mine = mine[:-len(words_after[0]) - 1]
     targets = [_fold(question["answer"])] + [_fold(a) for a in question.get("accept") or []]
     if not mine:
         return "wrong"

@@ -11,5 +11,5 @@ def test_each_kind_of_retry_is_shown_in_one_place_only():
     source = DAILY.read_text(encoding="utf-8")
     calls = re.findall(r"show_retry\(slot, \(([^)]*)\)\)", source)
     kinds = [k.strip().strip('"') for call in calls for k in call.split(",") if k.strip()]
-    assert sorted(kinds) == ["followup", "grade", "kickoff", "quiz"]
+    assert sorted(kinds) == ["explain", "follow", "followup", "grade", "kickoff", "quiz"]
     assert 'key=f"coach_retry_{retry[\'kind\']}"' in source

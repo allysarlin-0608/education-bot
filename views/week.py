@@ -8,7 +8,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import core, habit, streaks, ui
+from coach import core, habit, mastery, streaks, ui
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -50,6 +50,21 @@ with st.container(key="wk_body"):
     for item in w["learned"]:
         st.html(f'<div class="wk-subject"><p class="wk-name">{escape(item["name"])}</p><ul>'
                 + "".join(f"<li>{escape(t)}</li>" for t in item["titles"]) + "</ul></div>")
+
+    st.markdown("#### What you know")
+    moved = mastery.changes(log, monday, min(w["end"], today))
+    if moved["up"]:
+        st.html(f'<p class="wk-idea">{moved["up"]} {"idea" if moved["up"] == 1 else "ideas"} grew stronger'
+                + (f', {moved["mastered"]} of them now mastered' if moved["mastered"] else "") + ".</p>")
+    else:
+        st.html('<p class="wk-note">No idea moved up a level yet this week. Review and Practice are how '
+                "ideas grow from learning to solid to mastered.</p>" if choice == "This week" else
+                '<p class="wk-note">No idea moved up a level that week.</p>')
+    shaky = mastery.needs_practice(log, today)[:3]
+    if shaky:
+        st.html('<p class="wk-note">Shaky now: ' + ", ".join(f"“{escape(x['title'])}”" for _, _, x in shaky) + ".</p>")
+    if st.button("Skill map", type="tertiary", key="wk_skills"):
+        st.switch_page("views/skills.py")
 
     st.markdown("#### Worth a second look")
     if w["review"]:

@@ -14,7 +14,7 @@ import seed_history
 from coach import core, review, settings, storage, ui
 
 PAGES = ["views/daily.py", "views/review.py", "views/reading.py", "views/records.py", "views/settings.py",
-         "views/world.py", "views/course.py"]
+         "views/world.py", "views/course.py", "views/week.py", "views/skills.py", "views/practice.py"]
 
 
 def app(monkeypatch, tmp_path, *, history=True, reading=True, subjects=("philosophy", "cosmos"), entries=None, pace=3,

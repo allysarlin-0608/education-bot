@@ -49,6 +49,7 @@ def build(today: date, days: int = 35, topics=("philosophy",), per_day: int = 3,
                 s["quiz"] = _quiz(f"s{ago}{k}", right)
         for s in slots:
             s.pop("cards", None)     # history as earlier versions saved it (before review cards existed)
+            s.pop("ev", None)        # (and before mastery was tracked)
         entry["lessons"] = slots
         entry["completed"] = curriculum.day_complete(slots)
         entry["title"] = f"Lessons {slots[0]['n']}–{slots[-1]['n']}"
