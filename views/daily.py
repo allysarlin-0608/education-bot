@@ -575,6 +575,8 @@ def run_explain(i, text):
     """The coach reads her explanation (one call) and answers as a teacher."""
     entry = day_entry()
     owner, slot = work(entry, i)
+    if slot.get("explain") or practice.explained_today(log, today) >= practice.EXPLAIN_PER_DAY:
+        st.rerun()                      # (already sent: a second click, or another tab)
     system, messages = practice.explain_request(slot, slot["title"], text)
     with st.spinner("Your coach is reading it…"):
         data, error = llm.ask_json(system, messages)
