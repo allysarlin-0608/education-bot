@@ -11,9 +11,9 @@ the model.
 |---|---|---|---|
 | Entry | `streamlit_app.py`, `gnosis.py` | `st.App` with the sign-in routes; every run: `coach.freshen()`, style, the gate (password or account), the page list | hold logic of its own |
 | Pages (UI) | `views/*.py` | draw one page from the session's data; call domain functions; save through `coach.ui` | talk to Supabase or Groq directly; compute progress |
-| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
+| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
 | Config | `clock.py`, `appconfig.py` | the one clock (the learner's timezone, today, now) and the one way to read a setting | depend on Streamlit's UI or on any other module |
-| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `plans.py`, `metrics.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
+| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
 | AI | `llm.py`, `quizgen.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
 | Data | `storage.py` (file store and Supabase store), `supa_auth.py`, `auth.py`, `session_cookie.py`, `routes.py` | read/write entries, books, settings, usage; sign-in, sessions, invites | trust anything the browser sends without the signed-in user's token |
 | Schema | `supabase/*.sql` | tables, row-level security, the usage function | be changed without the owner's approval |
@@ -39,7 +39,13 @@ the model.
   (`curriculum._load`), its name is the path's title; it joins her turns in
   `user_settings.subjects`. Its outline is fixed once its first lesson is
   written (lesson numbers are positions); before that she adjusts it freely.
-- **learner_prefs** (`goals.sql`): her habit preferences (Phase 2).
+- **learner_prefs** (`goals.sql`): her habit preferences (Phase 2), and
+  today's practice set where she left it (Phase 3).
+- **learning_signals** (`mastery.sql`): per person, per day, a count of
+  nine learning events (Phase 3, below), added only through
+  `add_learning_signal()`; admins read totals through `gnosis_metrics()`.
+- In a lesson's slot (Phase 3): `ev` (mastery evidence), `bank` (practice
+  exercises written for it), `explain` (her last explanation and the reply).
 - **usage_events** (`goals.sql`): per person, per day, a count of six events
   (visit, setup_done, goal_created, lesson_passed, reminder_shown,
   reminded_session), added only through
@@ -128,6 +134,66 @@ the sidebar all use them.
   or one on a light day), so Today, the sidebar and the course map agree.
 - Email reminders are designed, not switched on (`docs/EMAIL_REMINDERS.md`).
 
+## Knowing it, not just finishing it (Phase 3)
+
+- **Ideas and mastery** (`mastery.py`, pure): each lesson is one idea, a
+  unit groups them. Evidence (`slot["ev"]`: `{id, d, k, s}`, kinds quiz,
+  recall, review, practice, explain, ask) is kept on the lesson's own slot,
+  so it is saved, merged (`curriculum.merge_day` keeps every piece of both
+  copies, whichever copy is further on) and backed up with the lesson. A
+  lesson from before this has its evidence worked out from its best quiz
+  and its review cards (`derived`) and stored once something is added
+  (`seed`). From the evidence: strength (moves toward each score; a day's
+  evidence of one kind is one piece), stability (grows with each success on
+  a new day, halves after a failure) and a forgetting curve, so an idea
+  fades when it isn't practised. Levels new / learning / solid (two
+  successes on different days) / mastered (three, spread over a week or
+  more); never more than one level up a day. No AI call; nothing new stored
+  beyond the evidence.
+- **Exercises** (`quiz.py`): seven kinds. Choice and scenario (with a note
+  per wrong option: the mistake behind it), fill in the blank (variants
+  accepted, a small typo forgiven, the words around the gap ignored), put
+  in order and matching (part marks, naming what was out of place) are
+  marked on the spot (`quiz.mark`, `quiz.mistake`); a short answer and an
+  "apply it to your life" answer are marked by the model as right, partly
+  right or wrong. A quiz has ten (never more than two for the model to
+  mark); every keyed answer goes through the same checking call as before.
+  One extra question on an earlier idea she finds hard (`practice.quiz_context`)
+  is written in the same call, checked with the others, left out if
+  flagged, and never counts toward the score (`quiz.counted`).
+  `exercise.py` draws any kind and its feedback, the same in the quiz,
+  Review and Practice.
+- **Practice** (`practice.py`, `views/practice.py`): a short set on the ideas
+  she knows least (`mastery.weakest`): at most two exercises an idea, ideas
+  in turn, easier kinds first for an idea still being learned, harder for
+  a fading one, an idea practised twice today rests. Exercises come from
+  her own lessons (bank, latest quiz, missed questions: no call); only
+  when an idea has none left does the model write some (write + check, two
+  calls, once a day, `prefs.practice_made`), kept in the lesson's bank
+  (`slot["bank"]`). The set is kept in her preferences (`prefs.practice`),
+  so a refresh finds her place; an answer is taken once.
+- **Explain it back** (Today, after a lesson is passed, once a day): one
+  call marks it (what's right, what's missing, right/partly/wrong, at most
+  one follow-up question), one more for her answer to that question.
+  Empty, too short or nonsense explanations are answered with no call. Kept
+  in `slot["explain"]`; its score is evidence.
+- **The tutor** (questions under a lesson): the same one call, with
+  `practice.TUTOR` added to its instructions: answer from the lesson, her
+  goal and her record, stay on the subject, say plainly when unsure, and
+  end with "Based on:" and "Confused:" lines that the page takes off and
+  shows as a quiet line. A question that shows confusion is a little
+  evidence ("ask") and brings the lesson's key idea back in Review tomorrow.
+- **Lessons** are told the earlier ideas of the subject she is still shaky on
+  (`practice.weak_titles`) to touch on once, in the same call.
+- **Where it shows**: the skill map (`views/skills.py`), a level on each row
+  of the course map, "Ideas mastered" and a line on Progress, "What you
+  know" in the week, the idea's level and Practice on Today.
+- **The numbers** (`metrics.SIGNALS`, table `learning_signals` from
+  `supabase/mastery.sql`, counts only): missed → recovered (a mistake fixed
+  on a later day), held / slipped (a solid idea asked again two weeks on),
+  mastered, practice sets, explanations, questions to the coach and those
+  showing confusion. Settings → Insights explains each.
+
 ## Rules the code keeps (and tests that hold them)
 
 - **Layers** (`tests/test_layers.py`): the domain modules are pure (no
@@ -194,6 +260,12 @@ All in `coach/style.py`, tokens in `:root`; the existing typefaces are kept.
   inventory check. Runs before every push (`.githooks/pre-push`; enable with
   `git config core.hooksPath .githooks`) and on GitHub
   (`.github/workflows/check.yml`).
+- Knowing it (Phase 3): `tests/test_mastery.py` (rising, fading, one level a
+  day, old history, merging, the numbers), `tests/test_practice.py` (every
+  kind of exercise right, wrong, partly, empty and nonsense; practice sets;
+  explaining; the tutor's lines), `tests/test_mastery_pages.py`,
+  `tests/e2e/test_mastery.py` (over simulated weeks), screenshots in
+  `tests/e2e/test_screens.py::test_mastery_screens`.
 - Coming back: `tests/test_habit.py` (rules over simulated days and weeks),
   `tests/test_habit_pages.py` (every new page and state), `tests/e2e/test_habit.py`.
 - Goals: `tests/test_goals.py` (paths, catalog, turns, the prompt, the AI

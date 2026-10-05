@@ -163,3 +163,11 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 
 ### ISS-055 — open: a quiz answer list closing at once (test browser, phone width)
 - In one long phone-width test (a learner back after a break, on a light day), the third "match" list in a quiz opened and closed again within half a second; the box lost focus, with no rerun or scroll. A second tap opens it. Seen only in the test browser's touch emulation; every other phone-width quiz test passes. The test helper taps again once (tests/e2e/flows.py). **To check on a real iPhone/iPad in Safari** before inviting users.
+
+### ISS-056 … ISS-060 — found while building and testing Phase 3 (all fixed, with tests)
+- **ISS-056 (P1):** an idea that had faded jumped from "learning" to "mastered" in one practice set (several pieces of evidence on one day). A day's evidence of one kind now counts as one piece, and an idea climbs at most one level a day. Tests: `test_mastery.py::test_it_climbs_one_level_a_day_and_a_days_cards_count_as_one`, `e2e/test_mastery.py`.
+- **ISS-057 (P1):** the last exercise of a practice set went straight to the summary, so its feedback was never shown. The summary now waits for "See how it went". Test: `e2e/test_mastery.py`.
+- **ISS-058 (P1):** "Another set" showed Start, but pressing it showed the old summary again (the request was forgotten on the first redraw). Kept until the new set is made. Test: `test_mastery_pages.py::test_a_whole_practice_set_then_the_next_one`.
+- **ISS-059 (P2):** a blank answered with the word before the gap ("our opinions" for "our ____") was marked wrong. The words around the gap are ignored. Test: `test_practice.py`.
+- **ISS-060 (P3, tests only):** a sign-in test could fail about once in a few hundred runs: its fake token "r1" could appear by chance in the random key it checks. The fake token is now distinctive. Test: `test_signin.py`.
+

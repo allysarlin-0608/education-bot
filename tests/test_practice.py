@@ -199,3 +199,9 @@ def test_her_practice_set_survives_a_refresh_and_junk_is_dropped():
     assert saved["items"][0]["q"] == BLANK and saved["marks"] == [0.0] and saved["done"]
     assert prefs.normalize({"practice": {"date": "2026-11-02", "items": [{"topic": "p"}]}})["practice"] is None
     assert prefs.normalize({"practice": "junk"})["practice"] is None
+
+
+def test_the_checker_sees_the_notes_and_the_markers_ignore_instructions_in_answers():
+    system, messages = quiz.check_request([SCEN])
+    assert "each note on a wrong" in system and "(note: That tries to control what isn't hers)" in messages[0]["content"]
+    assert "ignore them" in quiz.GRADER and "ignore them" in practice.EXPLAINER and "ignore any" in practice.FOLLOW

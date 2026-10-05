@@ -247,3 +247,91 @@ def test_habit_screens(public_app, pages, width, scheme):
 def _real_clock_after(public_app):
     yield
     public_app.set_clock(None)
+
+
+def into_view(p, selector):
+    loc = p.page.locator(selector).first
+    if loc.count():
+        loc.scroll_into_view_if_needed()
+        p.page.evaluate("window.scrollBy(0, -80)")
+        flows.idle(p.page)
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+@pytest.mark.parametrize("width", list(SIZES))
+def test_mastery_screens(public_app, pages, width, scheme):
+    """Phase 3: the quiz's kinds of exercise, its feedback on each mistake,
+    explaining it back, the tutor's grounding, the skill map, practice from
+    start to finish, the course map's levels, Progress's ideas."""
+    from datetime import date
+    from coach import mastery
+    app = public_app
+    app.set_llm()
+    problems = {}
+    tag = f"{width}_{scheme}"
+    d0 = date(2026, 11, 2)
+    app.set_clock(d0 + timedelta(days=8), "02:00:00")
+    p = pages(width=width, height=SIZES[width], scheme=scheme)
+    email = f"mscr{next(_n)}-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=email)
+    flows.onboard(p, subjects=("Philosophy",), pace="Light")
+    entries = seed_history.build(d0 + timedelta(days=8), days=8, topics=("philosophy",), gaps=(), partial=())
+    for k, e in enumerate(entries):          # a mix: some ideas solid, some still being learned, one shaky
+        for s in e["lessons"]:
+            day = date.fromisoformat(e["date"])
+            s["ev"] = [mastery.event("quiz", 0.9, day, "q")]
+            if s["n"] % 3 == 0:
+                s["ev"].append(mastery.event("review", 1.0, day + timedelta(days=1), "r"))
+            if s["n"] % 5 == 0:
+                s["ev"].append(mastery.event("practice", 0.0, day + timedelta(days=1), "p"))
+    app.seed_entries(email, entries)
+    flows.open_app(p, app)
+    flows.start_lesson(p)
+    flows.button(p, "Take the quiz", wait=False)
+    assert flows.wait_text(p.page, "Submit answers", 40)
+    into_view(p, ".ex-scenario")
+    shot(p, f"50_quiz_kinds_{tag}", problems)
+    flows.answer_all(p, correct=False)
+    flows.button(p, "Submit answers", wait=False)
+    assert flows.wait_text(p.page, "You need 80%", 40)
+    into_view(p, "[data-testid=stExpander]")
+    shot(p, f"51_quiz_feedback_{tag}", problems)
+    flows.take_quiz(p, correct=True, start="Try a new quiz")
+    box = p.page.locator(".st-key-explain_back textarea")
+    box.fill("Philosophy asks what is real, what we can know and how to live, because Earth spins on its axis.")
+    p.page.keyboard.press("Tab")
+    flows.button(p, "Get feedback", wait=False)
+    assert flows.wait_text(p.page, "Clear and correct.", 30)
+    into_view(p, ".st-key-explain_back")
+    shot(p, f"52_explain_{tag}", problems)
+    chat = p.page.locator('[data-testid="stChatInputTextArea"]')
+    chat.fill("So a day comes from the orbit, right?")
+    chat.press("Enter")
+    assert flows.wait_text(p.page, "Based on this lesson", 30)
+    into_view(p, ".tutor-based")
+    shot(p, f"53_tutor_{tag}", problems)
+    flows.open_app(p, app, "/skills")
+    shot(p, f"54_skills_{tag}", problems)
+    into_view(p, ".sk-ideas")
+    shot(p, f"55_skills_unit_{tag}", problems)
+    flows.open_app(p, app, "/practice")
+    shot(p, f"56_practice_start_{tag}", problems)
+    flows.button(p, "Start practice", wait=False)
+    assert flows.wait_text(p.page, " done", 30)
+    shot(p, f"57_practice_exercise_{tag}", problems)
+    flows.answer_all(p, correct=False)
+    flows.button(p, "Check")
+    shot(p, f"58_practice_feedback_{tag}", problems)
+    while "See how it went" not in p.page.evaluate("document.body.innerText"):
+        flows.button(p, "Next")
+        flows.answer_all(p, correct=True)
+        flows.button(p, "Check")
+    flows.button(p, "See how it went")
+    shot(p, f"59_practice_done_{tag}", problems)
+    flows.open_app(p, app, "/course?subject=philosophy")
+    into_view(p, ".cm-row .sk-chip")
+    shot(p, f"60_course_levels_{tag}", problems)
+    flows.open_app(p, app, "/records")
+    shot(p, f"61_progress_ideas_{tag}", problems)
+    (SHOTS / f"problems_mastery_{tag}.json").write_text(json.dumps(problems, indent=1))
+    assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
