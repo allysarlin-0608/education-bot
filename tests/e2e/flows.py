@@ -205,7 +205,11 @@ def answer_all(p, correct=True, scope=None):
     root = scope or page
     groups = root.locator('[data-testid="stRadio"]')
     for g in range(groups.count()):
-        tap(p, groups.nth(g).get_by_text("It spins on its axis" if correct else "Solar flares", exact=True))
+        group = groups.nth(g)
+        target = group.get_by_text("It spins on its axis" if correct else "Solar flares", exact=True)
+        if not target.count():          # a seeded lesson's question: "Right" is right
+            target = group.get_by_text("Right", exact=True) if correct else group.locator("label").last
+        tap(p, target)
         page.wait_for_timeout(120)
     boxes = root.locator('[data-testid="stSelectbox"]')
     labels = [boxes.nth(j).locator("label").inner_text().strip() for j in range(boxes.count())]
