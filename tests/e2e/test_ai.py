@@ -284,14 +284,7 @@ def test_thirty_quizzes_in_a_row_each_on_the_first_click(public_app, pages):
                 flows.wait_text(page, "Submit answers", 40)
         flows.idle(page)
         # wrong answers, so a new quiz is offered
-        for g in range(page.locator('[data-testid="stRadio"]').count()):
-            flows.tap(p, page.locator('[data-testid="stRadio"]').nth(g).locator("label").last)
-            page.wait_for_timeout(60)
-        for j in range(page.locator('[data-testid="stSelectbox"]').count()):
-            flows.choose(p, page.locator('[data-testid="stSelectbox"]').nth(j), wrong[j])
-        for j in range(page.locator('textarea[placeholder^="Answer in a sentence"]').count()):
-            page.locator('textarea[placeholder^="Answer in a sentence"]').nth(j).fill("No idea.")
-            page.keyboard.press("Tab")
+        flows.answer_all(p, correct=False)
         flows.idle(page)
         app.set_llm()
         flows.button(p, "Submit answers", wait=False)

@@ -16,7 +16,7 @@ from coach import auth, routes, session_cookie, supa_auth
 
 APP = "https://gnosis-test.streamlit.app"
 PERSON = {"sub": "0b9c-uuid", "email": "a@example.com", "name": "Ann", "picture": "", "provider": "email"}
-SESSION = {"access_token": "access-jwt", "refresh_token": "r1", "expires_at": 2_000_000_000}
+SESSION = {"access_token": "access-jwt", "refresh_token": "refresh-token-r1", "expires_at": 2_000_000_000}
 
 
 @pytest.fixture(autouse=True)
@@ -53,10 +53,10 @@ def test_the_cookie_is_what_streamlit_itself_reads_as_st_user():
     user = ws._parse_decoded_user_cookie(ws._get_signed_cookie_with_chunks(cookies, USER_COOKIE_NAME), APP)
     assert user["is_logged_in"] is True and user["sub"] == "0b9c-uuid" and user["email"] == "a@example.com"
     tokens = json.loads(ws._get_signed_cookie_with_chunks(cookies, TOKENS_COOKIE_NAME))
-    assert tokens == {"access_token": "access-jwt", "refresh_token": "r1"}
+    assert tokens == {"access_token": "access-jwt", "refresh_token": "refresh-token-r1"}
     # and the server reads it back
     person, toks = session_cookie.read(_request(cookies))
-    assert person["sub"] == "0b9c-uuid" and toks["refresh_token"] == "r1"
+    assert person["sub"] == "0b9c-uuid" and toks["refresh_token"] == "refresh-token-r1"
 
 
 def test_an_edited_cookie_is_not_accepted():
@@ -84,7 +84,7 @@ def test_handoff_is_single_use_and_bound_to_the_browser(monkeypatch):
     monkeypatch.setattr(session_cookie, "browser_key", lambda cookies: cookies.get("_streamlit_xsrf", "").encode() or None)
     url = routes.handoff(PERSON, SESSION, b"browser-1")
     key = url.split("h=")[1]
-    assert "access-jwt" not in url and "r1" not in url             # no token in the address
+    assert "access-jwt" not in url and "refresh-token-r1" not in url   # no token in the address (a short "r1" could turn up in the random key)
     # opened in a different browser: refused
     resp = asyncio.run(routes._session(_request({"_streamlit_xsrf": "browser-2"}, query=f"h={key}".encode())))
     assert "auth_error=expired" in resp.headers["location"] and USER_COOKIE_NAME not in _cookies(resp)

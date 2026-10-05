@@ -149,3 +149,16 @@ def test_ideas_units_overview_and_the_week():
     assert mastery.overview(log, D + timedelta(days=1))["total"] == {"new": 0, "learning": 1, "solid": 1, "mastered": 0}
     assert mastery.changes(log, D, D + timedelta(days=6)) == {"up": 2, "mastered": 0}
     assert mastery.changes(log, D + timedelta(days=7), D + timedelta(days=13)) == {"up": 0, "mastered": 0}
+
+
+def test_it_climbs_one_level_a_day_and_a_days_cards_count_as_one():
+    known = ev((0, "quiz", 1.0), (1, "review", 1.0))
+    faded = D + timedelta(days=22)
+    assert mastery.state(known, faded)["level"] == "learning"
+    back = known + ev((22, "practice", 1.0), (22, "practice", 1.0), (22, "review", 1.0))
+    assert mastery.state(back, faded)["level"] == "solid", "not straight to mastered in one sitting"
+    nxt = back + ev((23, "review", 1.0))
+    assert mastery.state(nxt, faded + timedelta(days=1))["level"] == "mastered", "the next day it may climb again"
+    many = ev((0, "quiz", 0.8)) + ev(*[(1, "review", 1.0)] * 10)
+    one = ev((0, "quiz", 0.8), (1, "review", 1.0))
+    assert mastery.state(many, D + timedelta(days=1))["strength"] == mastery.state(one, D + timedelta(days=1))["strength"]

@@ -65,15 +65,7 @@ def test_the_end_of_today_is_never_under_the_chat_box(public_app, pages, width, 
     problems["quiz"] = at_end(page)
     page.screenshot(path=str(SHOTS / f"quiz_{width}x{height}.png"))
     # answer it (all right) and submit: the result state
-    for g in range(page.locator('[data-testid="stRadio"]').count()):
-        flows.tap(p, page.locator('[data-testid="stRadio"]').nth(g).get_by_text("It spins on its axis", exact=True))
-        page.wait_for_timeout(80)
-    rights = ["The line Earth spins around", "One spin a day", "One trip around the Sun", "When the Sun comes into view"]
-    for j in range(page.locator('[data-testid="stSelectbox"]').count()):
-        flows.choose(p, page.locator('[data-testid="stSelectbox"]').nth(j), rights[j])
-    for j in range(page.locator('textarea[placeholder^="Answer in a sentence"]').count()):
-        page.locator('textarea[placeholder^="Answer in a sentence"]').nth(j).fill("Because Earth spins on its axis.")
-        page.keyboard.press("Tab")
+    flows.answer_all(p, correct=True)
     flows.idle(page)
     flows.button(p, "Submit answers", wait=False)
     assert flows.wait_text(page, "Passed with", 40)

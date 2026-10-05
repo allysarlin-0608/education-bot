@@ -87,6 +87,7 @@ def start(avoid=()) -> None:
         st.session_state.pr_problem = st.session_state.get("pr_problem") or "No exercises are ready for these ideas yet."
         return
     before = levels_now()
+    st.session_state.pr_again = False
     ui.update_prefs(practice={"date": today.isoformat(), "items": s["items"], "answers": [None] * len(s["items"]),
                               "marks": [None] * len(s["items"]), "done": False, "seen": list(avoid),
                               "before": {idea_key(x["topic"], x["n"]): before.get(idea_key(x["topic"], x["n"]), "new")
@@ -115,7 +116,6 @@ weak = mastery.needs_practice(log, today)
 
 # ------------------------------------------------------------------ no set yet
 if p is None or (p["done"] and st.session_state.get("pr_again")):
-    st.session_state.pr_again = False
     if p is None and not mastery.weakest(log, today, limit=1):
         st.markdown("### Nothing to practise yet")
         st.caption("Practice opens once you've taken a lesson's quiz: it then picks the ideas you know least "
@@ -123,11 +123,12 @@ if p is None or (p["done"] and st.session_state.get("pr_again")):
         if st.button("Back to Today", key="pr_back", type="tertiary"):
             st.switch_page("views/daily.py")
         st.stop()
-    names = [f"{i['title']}" for _, _, i in (weak or mastery.weakest(log, today, limit=3))[:3]]
+    names = [f"{i['title']}" for _, _, i in (weak or mastery.weakest(log, today, limit=3))[:practice.IDEAS_PER_SET]]
+    count = min(practice.SET_SIZE, practice.PER_IDEA * len(names))
     st.html('<p class="hb-eyebrow">Focus for today</p>'
             f'<p class="hb-text">{len(names)} {"idea" if len(names) == 1 else "ideas"} you know least: '
             + ", ".join(f"“{escape(x)}”" for x in names) + ". "
-            f"{practice.SET_SIZE} short exercises, mixed, about {practice.SET_SIZE} minutes.</p>")
+            f"{count} short exercises, mixed, about {count} minutes.</p>")
     if not weak:
         st.caption("Nothing is fading right now. A short set keeps what's solid on its way to mastered.")
     if problem:
@@ -140,7 +141,7 @@ if p is None or (p["done"] and st.session_state.get("pr_again")):
     st.stop()
 
 # ------------------------------------------------------------------ the summary
-if p["done"]:
+if p["done"] and st.session_state.get("pr_shown") is None:     # (after the last answer's feedback)
     now = levels_now()
     right = sum(1 for m in p["marks"] if m == 1)
     st.markdown("### Practice done")
@@ -162,10 +163,15 @@ if p["done"]:
     st.html('<ul class="wk-review pr-ideas">' + "".join(rows) + "</ul>")
     st.caption("An idea becomes solid when it holds on another day, and mastered when it keeps holding "
                "over a week or more. Coming back tomorrow does more than another set today.")
+    done_ids = tuple(p.get("seen") or ()) + tuple(practice.qid(x["q"]) for x in p["items"])
+    nxt = practice.build(log, today, avoid=done_ids)
+    more = bool(nxt["items"]) or bool(nxt["short"] and ui.prefs().get("practice_made") != today.isoformat())
+    if not more or problem:
+        st.caption(problem or "That's all the practice ready for today. New exercises come tomorrow.")
     with st.container(horizontal=True, key="pr_end"):
         if st.button("Skill map", type="primary", key="pr_map"):
             st.switch_page("views/skills.py")
-        if st.button("Another set", key="pr_more", type="tertiary"):
+        if more and st.button("Another set", key="pr_more", type="tertiary"):
             st.session_state.pr_again = True
             st.rerun()
         if st.button("Back to Today", key="pr_today", type="tertiary"):

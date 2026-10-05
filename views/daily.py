@@ -256,7 +256,7 @@ if shaky and not practised:
     with st.container(key="practice_entry"):
         n_ideas = min(3, len(shaky))
         if st.button(f"Practice · {n_ideas} {'idea' if n_ideas == 1 else 'ideas'} to strengthen · about "
-                     f"{practice.SET_SIZE} min", type="tertiary", key="today_practice"):
+                     f"{min(practice.SET_SIZE, practice.PER_IDEA * n_ideas)} min", type="tertiary", key="today_practice"):
             st.switch_page("views/practice.py")
 # ============================================================
 # COMING BACK (coach/habit.py): a welcome after a break, a light day, her

@@ -143,15 +143,7 @@ def test_marking_fails_then_mark_my_answers(public_app, pages):
     app.set_llm(mode="500")                               # the marking call fails
     flows.idle(p.page)
     page = p.page
-    for g in range(page.locator('[data-testid="stRadio"]').count()):
-        flows.tap(p, page.locator('[data-testid="stRadio"]').nth(g).get_by_text("It spins on its axis", exact=True))
-        page.wait_for_timeout(100)
-    rights = ["The line Earth spins around", "One spin a day", "One trip around the Sun", "When the Sun comes into view"]
-    for j in range(page.locator('[data-testid="stSelectbox"]').count()):
-        flows.choose(p, page.locator('[data-testid="stSelectbox"]').nth(j), rights[j])
-    for j in range(page.locator('textarea[placeholder^="Answer in a sentence"]').count()):
-        page.locator('textarea[placeholder^="Answer in a sentence"]').nth(j).fill("Earth spins on its axis.")
-        page.keyboard.press("Tab")
+    flows.answer_all(p, correct=True)
     flows.idle(page)
     flows.button(p, "Submit answers", wait=False)
     assert flows.wait_text(page, "busy", 40)

@@ -179,32 +179,55 @@ def start_lesson(p):
     idle(p.page)
 
 
+MEANINGS = {"Axis": "The line Earth spins around", "Rotation": "One spin a day", "Orbit": "One trip around the Sun",
+            "Sunrise": "When the Sun comes into view"}
+STEPS = {"1st": "Taipei turns toward the Sun", "2nd": "The Sun rises in Taipei", "3rd": "Taipei turns away: night falls"}
+
+
 def take_quiz(p, correct=True, start="Take the quiz", before_submit=None):
-    """Answer the (fake) quiz: all right, or all wrong."""
+    """Answer the (fake) quiz, every kind of question: all right, or all wrong."""
     page = p.page
     button(p, start, wait=False)
     assert wait_text(page, "Submit answers", 40), "the quiz didn't appear"
     idle(page)
-    groups = page.locator('[data-testid="stRadio"]')
-    for g in range(groups.count()):
-        opt = "It spins on its axis" if correct else "Solar flares"
-        tap(p, groups.nth(g).get_by_text(opt, exact=True))
-        page.wait_for_timeout(120)
-    rights = ["The line Earth spins around", "One spin a day", "One trip around the Sun", "When the Sun comes into view"]
-    boxes = page.locator('[data-testid="stSelectbox"]')
-    for j in range(boxes.count()):
-        choose(p, boxes.nth(j), rights[j] if correct else rights[(j + 1) % 4])
-    areas = page.locator('textarea[placeholder^="Answer in a sentence"]')
-    for j in range(areas.count()):
-        text = "Because Earth spins on its axis." if correct else "No idea."
-        areas.nth(j).fill(text)
-        page.keyboard.press("Tab")
-        page.wait_for_timeout(150)
-    idle(page)
+    answer_all(p, correct)
     if before_submit:
         before_submit(page)
     button(p, "Submit answers", wait=False)
     assert wait_text(page, "Passed with" if correct else "You need 80%", 40), "the quiz result didn't show"
+    idle(page)
+
+
+def answer_all(p, correct=True, scope=None):
+    """Answer every exercise on the page (or in `scope`) of the fake model's kinds."""
+    page = p.page
+    idle(page)                      # (the page settled first: a field filled mid-rerun is redrawn empty)
+    root = scope or page
+    groups = root.locator('[data-testid="stRadio"]')
+    for g in range(groups.count()):
+        tap(p, groups.nth(g).get_by_text("It spins on its axis" if correct else "Solar flares", exact=True))
+        page.wait_for_timeout(120)
+    boxes = root.locator('[data-testid="stSelectbox"]')
+    labels = [boxes.nth(j).locator("label").inner_text().strip() for j in range(boxes.count())]
+    for j, label in enumerate(labels):
+        if label in STEPS:
+            names = list(STEPS.values())
+            k = list(STEPS).index(label)
+            choose(p, boxes.nth(j), names[k] if correct else names[(k + 1) % len(names)])
+        else:
+            names = list(MEANINGS.values())
+            k = list(MEANINGS).index(label)
+            choose(p, boxes.nth(j), names[k] if correct else names[(k + 1) % len(names)])
+    blanks = root.locator('input[placeholder="The missing word or phrase"]')
+    for j in range(blanks.count()):
+        blanks.nth(j).fill("axis" if correct else "banana")
+        page.keyboard.press("Tab")
+        page.wait_for_timeout(150)
+    areas = root.locator('textarea[placeholder^="Answer in a sentence"], textarea[placeholder^="One real example"]')
+    for j in range(areas.count()):
+        areas.nth(j).fill("Because Earth spins on its axis." if correct else "No idea.")
+        page.keyboard.press("Tab")
+        page.wait_for_timeout(150)
     idle(page)
 
 

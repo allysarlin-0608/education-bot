@@ -136,11 +136,32 @@ def retention(gap: int, stability: float) -> float:
     return 1 / (1 + gap / (9 * stability))
 
 
+def _daily(events: list) -> list:
+    """A day's evidence of one kind as one piece (its mean): ten review cards
+    of one lesson on one day are one day's review, not ten."""
+    groups = {}
+    for e in events:
+        groups.setdefault((e["d"], e["k"]), []).append(e["s"])
+    return [{"d": d, "k": k, "s": sum(v) / len(v)} for (d, k), v in sorted(groups.items())]
+
+
 def state(events: list, today: date) -> dict:
-    """How well she knows an idea today, from its evidence."""
+    """How well she knows an idea today, from its evidence. It climbs at
+    most one level a day (never from learning to mastered in one sitting)."""
+    s = _state(events, today)
+    if s["last"]:
+        before = [e for e in events if e["d"] < s["last"]]
+        prev = _state(before, date.fromisoformat(s["last"]))["level"] if before else "new"
+        cap = LEVELS[min(LEVELS.index(prev) + 1, len(LEVELS) - 1)]
+        if LEVELS.index(s["level"]) > LEVELS.index(cap):
+            s = dict(s, level=cap, fading=False)
+    return s
+
+
+def _state(events: list, today: date) -> dict:
     strength, stability, successes, last_success, first_success = 0.0, STABILITY0, 0, None, None
     last = None
-    for e in sorted(events, key=lambda x: x["d"]):
+    for e in _daily(events):
         day = date.fromisoformat(e["d"])
         if day > today:
             continue

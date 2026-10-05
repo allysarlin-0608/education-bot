@@ -80,11 +80,9 @@ def test_review_the_next_day(public_app, pages, clock, width):
     first = True
     for _ in range(n):
         flows.idle(page)
-        boxes = page.locator('[data-testid="stSelectbox"]')
+        boxes = page.locator('[data-testid="stSelectbox"], input[placeholder="The missing word or phrase"]')
         if page.locator('[data-testid="stRadio"]').count() == 0 and boxes.count():
-            rights = ["The line Earth spins around", "One spin a day", "One trip around the Sun", "When the Sun comes into view"]
-            for j in range(boxes.count()):
-                flows.choose(p, boxes.nth(j), rights[j])
+            flows.answer_all(p, correct=True)          # matching, steps in order, a blank
             flows.button(p, "Check")
             assert flows.wait_text(page, "Right.", 10)
         elif page.locator('[data-testid="stRadio"]').count() == 0:

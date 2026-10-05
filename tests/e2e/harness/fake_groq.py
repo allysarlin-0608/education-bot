@@ -13,7 +13,8 @@ make it fail, be slow, or return tricky content:
    "chunk_delay": 0.0,       # seconds between streamed pieces (a slow stream)
    "fail_kinds": ["reading_final"],   # fail only these kinds of call (default: any)
    "inject": false,          # put HTML/script/markdown-link injection strings in every reply
-   "quiz_flag_first": false} # the answer checker flags question 0 once (exercises rewrite)
+   "quiz_flag_first": false, # the answer checker flags question 0 once (exercises rewrite)
+   "old_quiz": false}        # the quiz mix from before Phase 3 (7 choice, 1 match, 2 short)
 
 Every call is appended to calls.jsonl (kind, time), so tests can count them.
 """
@@ -65,6 +66,12 @@ def _kind(messages: list, stream: bool) -> str:
         return "quiz_rewrite"
     if system.startswith("You write a short quiz"):
         return "quiz"
+    if system.startswith("You write short practice exercises"):
+        return "practice_make"
+    if "A learner has just explained" in system:
+        return "explain"
+    if "You asked a learner a follow-up" in system:
+        return "explain_follow"
     if system.startswith("You check a quiz"):
         return "quiz_check"
     if system.startswith("You mark a learner"):
@@ -82,18 +89,45 @@ def _kind(messages: list, stream: bool) -> str:
     return "json_other"
 
 
-def _quiz(inject: bool) -> dict:
+RIGHT, WRONG = "It spins on its axis", "Solar flares"
+OPTIONS = [RIGHT, "It orbits the Sun", "The Moon blocks the light", WRONG]
+NOTES = ["", "Orbiting gives the year, not the day", "The Moon only blocks light in an eclipse", "Flares don't cause night"]
+PAIRS = [["Axis", "The line Earth spins around"], ["Rotation", "One spin a day"],
+         ["Orbit", "One trip around the Sun"], ["Sunrise", "When the Sun comes into view"]]
+STEPS = ["Taipei turns toward the Sun", "The Sun rises in Taipei", "Taipei turns away: night falls"]
+
+
+def _quiz(inject: bool, old: bool = False, recall: bool = False) -> dict:
     extra = f" {INJECT}" if inject else ""
-    qs = [{"type": "choice", "question": f"Why does Earth have day and night? ({k + 1}){extra}",
-           "options": ["It spins on its axis", "It orbits the Sun", "The Moon blocks the light", "Solar flares"],
-           "answer": 0, "why": "Earth's spin turns each place toward and away from the Sun."} for k in range(7)]
-    qs.append({"type": "match", "question": "Match each term to its meaning.",
-               "pairs": [["Axis", "The line Earth spins around"], ["Rotation", "One spin a day"],
-                         ["Orbit", "One trip around the Sun"], ["Sunrise", "When the Sun comes into view"]],
+    if old:
+        qs = [{"type": "choice", "question": f"Why does Earth have day and night? ({k + 1}){extra}",
+               "options": OPTIONS, "answer": 0, "why": "Earth's spin turns each place toward and away from the Sun."}
+              for k in range(7)]
+        qs.append({"type": "match", "question": "Match each term to its meaning.", "pairs": PAIRS,
+                   "why": "These are the lesson's terms."})
+        qs += [{"type": "short", "question": q + extra, "answer": "Because Earth spins on its axis.", "why": "."}
+               for q in ("Explain in your own words why we have day and night.",
+                         "Why does the Sun seem to rise in the east?")]
+        return {"questions": qs}
+    qs = [{"type": "choice", "question": f"Why does Earth have day and night? ({k + 1}){extra}", "options": OPTIONS,
+           "answer": 0, "notes": NOTES, "why": "Earth's spin turns each place toward and away from the Sun."}
+          for k in range(3)]
+    qs += [{"type": "scenario", "scenario": f"Mia in Taipei watches the sky darken in the evening ({k + 1}).{extra}",
+            "question": "What causes what she sees?", "options": OPTIONS, "answer": 0, "notes": NOTES,
+            "why": "Her side of Earth is turning away from the Sun."} for k in range(2)]
+    qs.append({"type": "blank", "question": f"Earth spins on its ____ once a day.{extra}", "answer": "axis",
+               "accept": ["own axis"], "why": "The axis is the line it spins around."})
+    qs.append({"type": "order", "question": f"Put a day in Taipei in order.{extra}", "steps": STEPS,
+               "why": "The spin carries Taipei toward the Sun, then away."})
+    qs.append({"type": "match", "question": "Match each term to its meaning.", "pairs": PAIRS,
                "why": "These are the lesson's terms."})
-    qs += [{"type": "short", "question": q + extra, "answer": "Because Earth spins on its axis.", "why": "."}
-           for q in ("Explain in your own words why we have day and night.",
-                     "Why does the Sun seem to rise in the east?")]
+    qs.append({"type": "short", "question": "Explain in your own words why we have day and night." + extra,
+               "answer": "Because Earth spins on its axis.", "why": "."})
+    qs.append({"type": "apply", "question": "When did you last notice Earth's spin in your own day?" + extra,
+               "answer": "A real moment (a sunrise, a sunset) linked to Earth's spin.", "why": "."})
+    if recall:
+        qs.append({"type": "choice", "recall": True, "question": "From before: what makes a day?",
+                   "options": OPTIONS, "answer": 0, "notes": NOTES, "why": "One spin is one day."})
     return {"questions": qs}
 
 
@@ -130,19 +164,41 @@ def _reply(kind: str, messages: list, ctl: dict) -> str:
     if kind == "design":
         return json.dumps(_design(last, inject))
     if kind == "quiz":
-        return json.dumps(_quiz(inject))
+        return json.dumps(_quiz(inject, ctl.get("old_quiz"), '"recall": true' in last))
     if kind == "quiz_rewrite":           # as many of each kind as asked for
         system = messages[0]["content"]
-        wanted = {k: int(n) for n, k in re.findall(r'(\d+) "(choice|match|short)"', system.split("The kinds are")[0])}
+        wanted = {k: int(n) for n, k in re.findall(r'(\d+) "(\w+)"', system.split("The kinds are")[0])}
         full = _quiz(inject)["questions"]
-        out = [{"type": "choice", "question": "Which way does Earth spin?",
-                "options": ["West to east", "East to west", "North to south", "It doesn't"],
-                "answer": 0, "why": "That's why the Sun rises in the east."}][:wanted.get("choice", 0)]
-        out += [dict(q, question=f"Again: {q['question']}") for q in full
-                if q["type"] == "choice"][:max(0, wanted.get("choice", 0) - 1)]
-        out += [dict(q, question="Pair these up.") for q in full if q["type"] == "match"][:wanted.get("match", 0)]
-        out += [dict(q, question=f"In a sentence: {q['question']}") for q in full if q["type"] == "short"][:wanted.get("short", 0)]
+        out = []
+        for kind_, n in wanted.items():
+            same = [q for q in full if q["type"] == kind_] or [q for q in full if q["type"] == "choice"]
+            out += [dict(same[j % len(same)], question=f"Again ({j + 1}): {same[j % len(same)]['question']}")
+                    for j in range(n)]
         return json.dumps({"questions": out})
+    if kind == "practice_make":
+        ideas = [int(k) for k in re.findall(r"^Idea (\d+):", last, re.M)]
+        out = []
+        for k in ideas:
+            out.append({"idea": k, "type": "choice", "question": f"New practice {k}: what makes a day?",
+                        "options": OPTIONS, "answer": 0, "notes": NOTES, "why": "One spin is one day."})
+            out.append({"idea": k, "type": "blank", "question": f"New practice {k}: Earth spins on its ____.",
+                        "answer": "axis", "why": "The line it spins around."})
+        return json.dumps({"questions": out})
+    if kind == "explain":
+        mine = last.split("Her explanation:")[-1].lower()
+        if "spin" in mine or "rotat" in mine:
+            return json.dumps({"right": "You named the cause: Earth's spin." + (f" {INJECT}" if inject else ""),
+                               "missing": "", "verdict": "right", "question": "Why don't we feel the spin?"})
+        if "sun" in mine or "day" in mine:
+            return json.dumps({"right": "You linked day and night to the Sun.", "verdict": "partly",
+                               "missing": "What makes the Sun appear and disappear: Earth's spin.", "question": ""})
+        return json.dumps({"right": "Nothing yet that explains it.", "verdict": "wrong",
+                           "missing": "Say what causes day and night: Earth spinning on its axis.", "question": ""})
+    if kind == "explain_follow":
+        mine = last.split("Her answer:")[-1].lower()
+        ok = "steady" in mine or "smooth" in mine or "same speed" in mine
+        return json.dumps({"feedback": "Yes: the spin is smooth and steady." if ok else
+                           "Think about how a smooth ride feels.", "verdict": "right" if ok else "partly"})
     if kind == "quiz_check":
         flag = ctl.get("quiz_flag_first") and not (STATE / "flagged_once").exists()
         if flag:
@@ -155,8 +211,11 @@ def _reply(kind: str, messages: list, ctl: dict) -> str:
                 k = int(block.split("\n")[0].split()[1])
                 ans = block.split("Her answer: ")[-1].lower()
                 ok = "spin" in ans or "rotat" in ans
-                results.append({"id": k, "correct": ok,
-                                "feedback": ("Right: it's the spin." if ok else "It doesn't mention Earth's spin.")
+                partly = not ok and ("sun" in ans or "day" in ans)
+                results.append({"id": k, "verdict": "right" if ok else ("partly" if partly else "wrong"),
+                                "feedback": ("Right: it's the spin." if ok else
+                                             "On the right track; name what causes it." if partly else
+                                             "It doesn't mention Earth's spin.")
                                 + (f" {INJECT}" if inject else "")})
         return json.dumps({"results": results})
     if kind == "reading_judge":
@@ -169,7 +228,18 @@ def _reply(kind: str, messages: list, ctl: dict) -> str:
     if kind == "lesson":
         return LESSON + (f"\n\n{INJECT}" if inject else "")
     if kind == "followup":
-        return "Good question. Earth's spin is smooth and steady, so we don't feel it." + (f" {INJECT}" if inject else "")
+        asked = last.lower()
+        if "pizza" in asked:            # off topic: back to the subject, gently
+            return ("That's outside today's subject; here we stick to Earth and the sky. You could ask why "
+                    "the Sun rises in the east.\n\nBased on: beyond this lesson\nConfused: no")
+        if "exact" in asked and "speed" in asked:
+            return ("I'm not sure of the exact figure to quote here, so I won't guess. The lesson's point is "
+                    "that the spin is steady.\n\nBased on: not sure\nConfused: no")
+        confused = "orbit" in asked and "day" in asked          # mixing up the spin and the orbit
+        return ("Good question. Earth's spin is smooth and steady, so we don't feel it."
+                + (" One small fix: a day comes from the spin, not the orbit." if confused else "")
+                + (f" {INJECT}" if inject else "")
+                + f"\n\nBased on: Key Idea\nConfused: {'yes' if confused else 'no'}")
     return "Thanks for sharing." + (f" {INJECT}" if inject else "")
 
 
