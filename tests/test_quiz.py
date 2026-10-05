@@ -4,30 +4,50 @@ import random
 from coach import core, curriculum, quiz, tokens
 
 
-def model_reply(choice=7, match=1, short=2):
+def model_reply(choice=3, match=1, short=1, scenario=2, blank=1, order=1, apply=1):
     qs = [{"type": "choice", "question": f"C{k}?", "options": [f"right {k}", f"b{k}", f"c{k}", f"d{k}"],
-           "answer": 0, "why": "Because."} for k in range(choice)]
+           "answer": 0, "notes": ["", f"nb{k}", f"nc{k}", f"nd{k}"], "why": "Because."} for k in range(choice)]
+    qs += [{"type": "scenario", "scenario": f"A situation {k}.", "question": f"S{k}?",
+            "options": [f"sright {k}", f"sb{k}", f"sc{k}", f"sd{k}"], "answer": 0, "why": "."} for k in range(scenario)]
+    qs += [{"type": "blank", "question": f"The ____ of thing {k}.", "answer": f"heart{k}", "accept": [f"core{k}"],
+            "why": "."} for k in range(blank)]
+    qs += [{"type": "order", "question": f"Order {k}.", "steps": ["first", "second", "third", "fourth"], "why": "."}
+           for k in range(order)]
     qs += [{"type": "match", "question": "Match them.", "pairs": [[f"t{j}", f"m{j}"] for j in range(4)],
             "why": "."} for _ in range(match)]
     qs += [{"type": "short", "question": f"Why {k}?", "answer": f"Model {k}.", "why": "."} for k in range(short)]
+    qs += [{"type": "apply", "question": f"Use it {k}?", "answer": f"Criteria {k}.", "why": "."} for k in range(apply)]
     random.Random(0).shuffle(qs)
     return {"questions": qs}
+
+
+OLD = dict(choice=7, match=1, short=2, scenario=0, blank=0, order=0, apply=0)      # the mix before Phase 3
 
 
 def right_answers(q):
     out = []
     for item in q["questions"]:
-        out.append({"choice": lambda: item["answer"], "match": lambda: list(item["key"]),
-                    "short": lambda: "My answer."}[item["type"]]())
+        out.append({"choice": lambda: item["answer"], "scenario": lambda: item["answer"],
+                    "match": lambda: list(item["key"]), "order": lambda: list(item["key"]),
+                    "blank": lambda: item["answer"].upper() + "!",
+                    "short": lambda: "My answer.", "apply": lambda: "My example."}[item["type"]]())
     return out
 
 
 def test_parse_mixes_and_orders_the_kinds():
     questions = quiz.parse(model_reply(), rng=random.Random(3))
-    assert [q["type"] for q in questions] == ["choice"] * 7 + ["match"] + ["short"] * 2
+    assert [q["type"] for q in questions] == ["choice"] * 3 + ["scenario"] * 2 + ["blank", "order", "match",
+                                                                                  "short", "apply"]
     assert all(q["options"][q["answer"]].startswith("right") for q in questions if q["type"] == "choice")
+    assert all(q["notes"][q["answer"]] == "" for q in questions if q["type"] == "choice")   # notes follow the shuffle
+    assert questions[3]["scenario"].startswith("A situation")
+    order = questions[6]
+    assert [order["items"][k] for k in order["key"]] == ["first", "second", "third", "fourth"]
+    assert order["items"] != ["first", "second", "third", "fourth"]                 # never shown in order
     match = questions[7]
     assert [match["right"][k] for k in match["key"]] == ["m0", "m1", "m2", "m3"]   # key survives shuffling
+    old = quiz.parse(model_reply(**OLD), rng=random.Random(3))                      # the old mix still makes a quiz
+    assert [q["type"] for q in old] == ["choice"] * 7 + ["match"] + ["short"] * 2
 
 
 def test_parse_rejects_junk_and_short_sets():
@@ -49,7 +69,7 @@ def test_marking_matching_partially_and_short_answers_by_the_model():
     assert quiz.submit(q, answers) is True and quiz.needs_grading(q)
     system, messages = quiz.grading_request(q)
     assert "id 8" in messages[0]["content"] and "Her answer: My answer." in messages[0]["content"]
-    assert "say specifically why" in system                                   # wrong answers get a reason
+    assert "specifically what is wrong" in system                                   # wrong answers get a reason
     assert not quiz.apply_grading(q, {"results": [{"id": 8, "correct": True}]})   # id 9 missing
     ok = quiz.apply_grading(q, {"results": [{"id": 8, "correct": True, "feedback": "Good."},
                                             {"id": 9, "correct": False, "feedback": "It misses the tilt."}]})
@@ -58,7 +78,7 @@ def test_marking_matching_partially_and_short_answers_by_the_model():
 
 
 def test_eight_points_pass_seven_do_not_and_retakes_carry_the_best():
-    q = quiz.new(quiz.parse(model_reply(short=0, choice=9), rng=random.Random(2)))
+    q = quiz.new(quiz.parse(model_reply(**dict(OLD, short=0, choice=9)), rng=random.Random(2)))
     answers = right_answers(q)
     wrong = lambda a: (a + 1) % 4                                               # noqa: E731
     first = [wrong(a) for a in answers[:3]] + answers[3:]
@@ -68,7 +88,7 @@ def test_eight_points_pass_seven_do_not_and_retakes_carry_the_best():
     assert retake["attempts"] == 1 and retake["best"] == 70 and retake["answers"] is None
     quiz.submit(retake, [wrong(answers[0]), wrong(answers[1])] + answers[2:])
     assert quiz.finish(retake) == 80 and quiz.passed(80) and retake["best"] == 80
-    assert quiz.PASS_MARK == 80 and quiz.MIX == {"choice": 7, "match": 1, "short": 2}
+    assert quiz.PASS_MARK == 80 and sum(quiz.MIX.values()) == quiz.QUESTIONS
 
 
 def test_answered_checks_every_kind():
@@ -96,7 +116,7 @@ def test_quiz_and_grading_requests_fit_the_budget():
     slot = {"n": 7, "title": "A long lesson", "lesson": "word " * 1400}    # ~7000 characters
     system, messages = quiz.request(slot)
     assert tokens.estimate_request(system, messages, tokens.QUIZ_MAX_TOKENS) <= tokens.REQUEST_BUDGET
-    q = quiz.new(quiz.parse(model_reply(choice=0, match=0, short=10)))
+    q = quiz.new(quiz.parse_items(model_reply(**dict(OLD, choice=0, match=0, short=10))))     # the worst case
     quiz.submit(q, ["An answer of a few sentences. " * 12] * 10)
     system, messages = quiz.grading_request(q)
     assert tokens.estimate_request(system, messages, tokens.JSON_MAX_TOKENS) <= tokens.REQUEST_BUDGET
@@ -115,7 +135,7 @@ def test_the_checker_sees_every_keyed_answer_and_flags_are_rewritten():
     questions[0] = quiz.parse_items({"questions": [gold]}, rng=random.Random(0))[0]
     system, messages = quiz.check_request(questions)
     text = messages[0]["content"]
-    assert "ONLY defensible" in system and "most common" in system
+    assert "ONLY\n  defensible" in system and "most\n  common" in system
     assert "* Higher purity metals are more resistant to wear" in text          # the keyed answer is marked
     assert "id 7 (match)" in text and "model answer:" in text
     assert quiz.problems({"problems": []}, 10) == {}
@@ -183,10 +203,13 @@ def test_a_quiz_short_of_questions_asks_only_for_what_is_missing():
     fresh = [{"type": "choice", "question": "New C?", "options": ["w", "x", "y", "z"], "answer": 1},
              {"type": "short", "question": "New S?", "answer": "Model."}]
     done = quiz.assemble(usable + quiz.parse_items({"questions": fresh}))
-    assert [q["type"] for q in done] == ["choice"] * 7 + ["match"] + ["short"] * 2
+    assert [q["type"] for q in done] == [q["type"] for q in quiz.parse(model_reply())]
     # a question repeated by the model counts once
     assert quiz.assemble(usable + usable) is None
     assert quiz.missing(quiz.parse(model_reply())) == []
+    # never more than two answers for the model to mark, however many it wrote
+    many = quiz.assemble(quiz.parse_items(model_reply(short=6, apply=3, choice=6)))
+    assert sum(q["type"] in quiz.WRITTEN for q in many) == 2
 
 
 def test_a_reply_cut_off_keeps_its_complete_questions():

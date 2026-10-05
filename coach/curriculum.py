@@ -109,7 +109,7 @@ def new_slot(topic: str, n: int) -> dict:
     # "cards" from the start: a lesson written since review began makes its own
     # cards; only lessons without the key are worked out as old ones (review.legacy)
     return {"n": n, "title": info["title"], "unit": info["unit"],
-            "kickoff": "", "lesson": "", "followups": [], "completed": False, "quiz": None, "cards": []}
+            "kickoff": "", "lesson": "", "followups": [], "completed": False, "quiz": None, "cards": [], "ev": []}
 
 
 def _written_before(log: dict, topic: str, n: int):
@@ -135,6 +135,7 @@ def plan_slot(log: dict, topic: str, n: int) -> dict:
     if before is not None:
         slot["from"] = before[0]["date"]
         del slot["cards"]                   # a link holds no content of its own
+        del slot["ev"]
     return slot
 
 
@@ -255,10 +256,15 @@ def merge_day(mine: dict, stored: dict, ns, since, keep=(), recount=False) -> No
         if m is None:
             lessons.append(s)
             continue
+        extras = _extras(m, s)
         if progress_of(s) > progress_of(m):
             m.clear()
             m.update(s)
-        elif "cards" in s:
+            m.update(extras)
+            lessons.append(m)
+            continue
+        m.update(extras)
+        if "cards" in s:
             have = {c["id"] for c in s["cards"]}
             removed = set(s.get("removed") or []) | set(m.get("removed") or [])
             m["cards"] = s["cards"] + [c for c in m.get("cards") or [] if c["id"] not in have | removed
@@ -272,6 +278,30 @@ def merge_day(mine: dict, stored: dict, ns, since, keep=(), recount=False) -> No
     mine.update({k: v for k, v in stored.items() if k != "lessons"}, lessons=lessons, **kept)
     if recount:
         mine["completed"] = day_complete(lessons)
+
+
+def _extras(mine: dict, stored: dict) -> dict:
+    """What both copies of a lesson add to, whichever is further on: every
+    piece of mastery evidence, every practice exercise kept for it, and the
+    later of their explain-it-back answers (coach/mastery.py, coach/practice.py)."""
+    from coach import mastery
+    out = {}
+    if "ev" in mine or "ev" in stored:
+        out["ev"] = mastery.merge(mine.get("ev"), stored.get("ev"))
+    if mine.get("bank") or stored.get("bank"):
+        bank, seen = [], set()
+        for q in (stored.get("bank") or []) + (mine.get("bank") or []):
+            if q["question"].casefold() not in seen:
+                seen.add(q["question"].casefold())
+                bank.append(q)
+        out["bank"] = bank[-BANK_MAX:]
+    explained = [x for x in (mine.get("explain"), stored.get("explain")) if x]
+    if explained:
+        out["explain"] = max(explained, key=lambda x: (x.get("at", ""), bool(x.get("reply_feedback"))))
+    return out
+
+
+BANK_MAX = 12           # practice exercises kept per lesson
 
 
 def blocking(slots: list, i: int):
@@ -333,10 +363,20 @@ def parse_slots(data) -> list:
             slots[-1]["cards"] = review.parse_cards(s["cards"])
         if isinstance(s.get("removed"), list):      # ids of cards she deleted (review.remove)
             slots[-1]["removed"] = sorted({str(x) for x in s["removed"]})
+        from coach import mastery, practice
+        if isinstance(s.get("ev"), list):           # mastery evidence (kept even when empty, like cards)
+            slots[-1]["ev"] = mastery.parse(s["ev"])
+        bank = [q for q in (quiz._saved_question(x) for x in s.get("bank") or []) if q] \
+            if isinstance(s.get("bank"), list) else []
+        if bank:                                     # practice exercises written for this lesson
+            slots[-1]["bank"] = bank[-BANK_MAX:]
+        explained = practice.parse_explain(s.get("explain"))
+        if explained:                                # her last explanation of it, and the coach's reply
+            slots[-1]["explain"] = explained
         if slots[-1].get("from"):                   # a link holds no content of its own
             slots[-1].update(kickoff="", lesson="", followups=[], quiz=None)
-            slots[-1].pop("cards", None)
-            slots[-1].pop("removed", None)
+            for field in ("cards", "removed", "ev", "bank", "explain"):
+                slots[-1].pop(field, None)
     return slots
 
 

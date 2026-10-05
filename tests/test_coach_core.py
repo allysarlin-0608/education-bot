@@ -113,7 +113,8 @@ def test_followup_prompt_relaxes_six_block_format():
     lesson_prompt = core.build_system_prompt(core.empty_log(), "reading", WED)
     followup_prompt = core.build_system_prompt(core.empty_log(), "reading", WED, followup=True)
     assert core.FOLLOWUP_NOTE not in lesson_prompt
-    assert followup_prompt == f"{lesson_prompt}\n\n{core.FOLLOWUP_NOTE}"
+    from coach import practice
+    assert followup_prompt == f"{lesson_prompt}\n\n{core.FOLLOWUP_NOTE}\n\n{practice.TUTOR}"
 
 
 def test_longest_streak_finds_best_run():

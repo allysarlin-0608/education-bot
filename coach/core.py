@@ -525,10 +525,19 @@ FOLLOWUP_NOTE = """【App 補充：今天的課程已經給過了】
 
 
 def build_system_prompt(log: dict, topic: str, today: date, followup: bool = False,
-                        slot: dict = None, start_level: str = None, public: bool = False) -> str:
+                        slot: dict = None, start_level: str = None, public: bool = False,
+                        weak: list = ()) -> str:
+    """The coach's instructions: who she is, the subject, her record. A
+    lesson is told the earlier ideas she's still shaky on (`weak`,
+    coach/practice.weak_titles) to touch on briefly; a question after it
+    gets the tutor's rules (coach/practice.TUTOR)."""
     prompt = f"{load_system_prompt(topic, public)}\n\n{build_history_context(log, topic, today, slot, start_level)}"
+    if weak and not followup:
+        prompt += ("\n- 她還不熟的前面觀念（在今天的課裡自然地帶到一次：一句回顧或一個小問題，"
+                   "不要另開段落、不要說她不熟）：" + "；".join(weak))
     if followup:
-        prompt += f"\n\n{FOLLOWUP_NOTE}"
+        from coach import practice
+        prompt += f"\n\n{FOLLOWUP_NOTE}\n\n{practice.TUTOR}"
     return prompt
 
 
