@@ -40,7 +40,7 @@ KIND_NAMES = {"choice": "Multiple choice", "scenario": "Scenario", "blank": "Fil
               "apply": "Apply it to your life"}
 CHECK_ROUNDS = 2        # rewrite-and-recheck rounds before giving up
 RECOVERIES = 2          # extra calls when the questions come back incomplete (views/daily.py)
-FILL_AT_MOST = 4        # up to this many missing: ask for just those; more: the whole quiz again
+FILL_AT_MOST = 6        # up to this many missing: ask for just those; more: the whole quiz again
 BLANK = re.compile(r"_{3,}")
 
 SYSTEM = f"""You write a short quiz that checks whether a learner really understood one lesson.
@@ -302,6 +302,12 @@ def parse(data, rng=random) -> list:
     return assemble(parse_items(data, rng))
 
 
+def same_as(q: dict) -> str:
+    """What makes a question a repeat: its words (and its situation: two
+    scenarios may ask the same thing about different situations)."""
+    return (q.get("scenario", "") + "|" + q["question"]).casefold()
+
+
 def assemble(questions: list):
     """QUESTIONS of the usable questions, in the MIX where they allow it
     (then any kind she can answer: never more than two written answers to
@@ -309,8 +315,8 @@ def assemble(questions: list):
     an earlier lesson ("recall") is never one of them (recall_of())."""
     seen, unique = set(), []
     for q in questions:
-        if q["question"].casefold() not in seen and not q.get("recall"):
-            seen.add(q["question"].casefold())
+        if same_as(q) not in seen and not q.get("recall"):
+            seen.add(same_as(q))
             unique.append(q)
     picked = []
     for kind, n in MIX.items():
@@ -338,7 +344,7 @@ def missing(questions: list) -> list:
     """The kinds still needed to make a full quiz of these questions (the
     MIX's gaps: written answers, matching, a blank and a scenario first; an
     ordering question is never asked for on its own), e.g. ["short", "choice"]."""
-    have = {q["question"].casefold(): q["type"] for q in questions if not q.get("recall")}
+    have = {same_as(q): q["type"] for q in questions if not q.get("recall")}
     need = QUESTIONS - len(have)
     gaps = []
     for kind in ("apply", "short", "match", "blank", "scenario", "choice"):

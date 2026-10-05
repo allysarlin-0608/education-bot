@@ -291,8 +291,8 @@ def _extras(mine: dict, stored: dict) -> dict:
     if mine.get("bank") or stored.get("bank"):
         bank, seen = [], set()
         for q in (stored.get("bank") or []) + (mine.get("bank") or []):
-            if q["question"].casefold() not in seen:
-                seen.add(q["question"].casefold())
+            if quiz.same_as(q) not in seen:
+                seen.add(quiz.same_as(q))
                 bank.append(q)
         out["bank"] = bank[-BANK_MAX:]
     explained = [x for x in (mine.get("explain"), stored.get("explain")) if x]

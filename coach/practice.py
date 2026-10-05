@@ -43,7 +43,7 @@ HARD = ("blank", "order", "scenario", "match", "choice")        # one that is fa
 
 
 def qid(q: dict) -> str:
-    return hashlib.sha1(q["question"].casefold().encode()).hexdigest()[:10]
+    return hashlib.sha1(quiz.same_as(q).encode()).hexdigest()[:10]
 
 
 # ------------------------------------------------------------- the sources

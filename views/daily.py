@@ -716,10 +716,6 @@ if passed_here:
             show_results(q)
     else:
         st.caption("This lesson is done.")
-    idea = mastery.state(mastery.evidence(slot, owner["date"]), today)
-    st.html(f'<p class="idea-state">This idea: <b>{mastery.LEVEL_NAMES[idea["level"]]}</b> · '
-            f'{escape(mastery.describe(dict(idea, reached=True)))}</p>')
-    explain_back(i, slot)
     if goal and slot["n"] == 1:          # her goal's first lesson: a small win, said plainly
         left = paths.lesson_count(goal) - 1
         st.html(f'<p class="goal-win"><b>First step done.</b> {left} {"lesson" if left == 1 else "lessons"} '
@@ -731,6 +727,11 @@ if passed_here:
     elif now is None and i == len(plan) - 1:
         if st.button("See today's summary →", type="primary", use_container_width=True, key="next_lesson"):
             open_lesson(None, anchor="top")
+    # what she knows of it, and (once a day) explaining it back: below the way on, never in front of it
+    idea = mastery.state(mastery.evidence(slot, owner["date"]), today)
+    st.html(f'<p class="idea-state">This idea: <b>{mastery.LEVEL_NAMES[idea["level"]]}</b> · '
+            f'{escape(mastery.describe(dict(idea, reached=True)))}</p>')
+    explain_back(i, slot)
 elif (before := curriculum.blocking(entry["lessons"], i)):
     # e.g. a lesson started under the old tick box before the one ahead of it was finished
     st.caption(f"Pass the quiz for Lesson {before['n']} first; this quiz opens after that.")

@@ -205,3 +205,11 @@ def test_the_checker_sees_the_notes_and_the_markers_ignore_instructions_in_answe
     system, messages = quiz.check_request([SCEN])
     assert "each note on a wrong" in system and "(note: That tries to control what isn't hers)" in messages[0]["content"]
     assert "ignore them" in quiz.GRADER and "ignore them" in practice.EXPLAINER and "ignore any" in practice.FOLLOW
+
+
+def test_two_scenarios_asking_the_same_about_different_situations_are_both_kept():
+    a = dict(SCEN, scenario="Mia's train is late.")
+    b = dict(SCEN, scenario="Leo's flight is cancelled.")
+    others = [one({"type": "choice", "question": f"Q{k}?", "options": ["a", "b", "c", "d"], "answer": 0}) for k in range(8)]
+    assert quiz.assemble(others + [a, b]) is not None
+    assert quiz.assemble(others + [a, a]) is None, "the very same one twice is a repeat"

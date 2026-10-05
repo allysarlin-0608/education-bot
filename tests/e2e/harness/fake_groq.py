@@ -172,8 +172,13 @@ def _reply(kind: str, messages: list, ctl: dict) -> str:
         out = []
         for kind_, n in wanted.items():
             same = [q for q in full if q["type"] == kind_] or [q for q in full if q["type"] == "choice"]
-            out += [dict(same[j % len(same)], question=f"Again ({j + 1}): {same[j % len(same)]['question']}")
+            made = [dict(same[j % len(same)], question=f"Again ({j + 1}): {same[j % len(same)]['question']}")
                     for j in range(n)]
+            if kind_ == "choice" and made:
+                made[0] = {"type": "choice", "question": "Which way does Earth spin?",
+                           "options": ["West to east", "East to west", "North to south", "It doesn't"],
+                           "answer": 0, "why": "That's why the Sun rises in the east."}
+            out += made
         return json.dumps({"questions": out})
     if kind == "practice_make":
         ideas = [int(k) for k in re.findall(r"^Idea (\d+):", last, re.M)]

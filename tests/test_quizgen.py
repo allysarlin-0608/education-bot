@@ -13,13 +13,11 @@ CLEAN = {"problems": []}
 
 
 def short_by(k):
-    """A full reply with k choice or scenario questions made unusable (3 options)."""
+    """A full reply with k questions made unusable (a choice with no options)."""
     reply = model_reply()
-    broken = 0
-    for item in reply["questions"]:
-        if item["type"] in ("choice", "scenario") and broken < k:
-            item["options"] = item["options"][:3]
-            broken += 1
+    for j, item in enumerate(reply["questions"][:k]):
+        item.clear()
+        item.update(type="choice", question=f"Broken {j}?")
     return reply
 
 
