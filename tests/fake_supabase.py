@@ -524,6 +524,15 @@ def build_app(access_ttl=3600):
                 db.tables[table][tuple(str(row[c]) for c in pk)] = row
         return JSONResponse({"ok": True})
 
+    async def wipe(request):
+        """Test setup: what supabase/reset_my_progress.sql does to one person."""
+        body = await request.json()
+        for t in (storage.ENTRIES_TABLE if hasattr(storage, "ENTRIES_TABLE") else "learning_entries",
+                  storage.BOOKS_TABLE, storage.PATHS_TABLE, storage.SETTINGS_TABLE, storage.PREFS_TABLE):
+            for key in [k for k, r in db.tables[t].items() if r.get("user_id") == body["user_id"]]:
+                del db.tables[t][key]
+        return JSONResponse({"ok": True})
+
     async def expire_link(request):
         """Make the newest mailed link expired (to test that case)."""
         th = auth.outbox[-1]["custom_link"].split("token_hash=")[1].split("&")[0]
@@ -560,6 +569,7 @@ def build_app(access_ttl=3600):
         Route("/rest/v1/{name:path}", rest, methods=["GET", "POST", "DELETE", "PATCH"]),
         Route("/__outbox", outbox),
         Route("/__seed", seed, methods=["POST"]),
+        Route("/__wipe", wipe, methods=["POST"]),
         Route("/__expire_link", expire_link, methods=["POST"]),
         Route("/__dump", dump),
         Route("/__user", make_user, methods=["POST"]),
