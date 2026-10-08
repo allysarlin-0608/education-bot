@@ -5,6 +5,7 @@ its Auth API too, with a pretend Google and an outbox instead of email.
 
 Not a security boundary of anything real: it only lets the app be driven end
 to end without a real project."""
+import os
 import sys
 from pathlib import Path
 
@@ -28,6 +29,9 @@ SCHEMA = {
     storage.SIGNALS_TABLE: ("user_id", "day", "event"),
     storage.PREFS_TABLE: ("user_id",),                 # goals.sql (habits)
 }
+# how many subjects + goals user_settings takes: 8 once supabase/fix_subjects_limit.sql has run,
+# 3 before it (FAKE_SUBJECTS_LIMIT=3 reproduces a database where it hasn't)
+SUBJECTS_LIMIT = int(os.environ.get("FAKE_SUBJECTS_LIMIT", "8"))
 USER_TABLES = [t for t in SCHEMA if t not in (storage.INVITES_TABLE, storage.ADMINS_TABLE)]
 OWN_ROWS = [storage.TABLE, storage.BOOKS_TABLE, storage.SETTINGS_TABLE, storage.USERS_TABLE, storage.PATHS_TABLE,
             storage.PREFS_TABLE]
@@ -117,6 +121,11 @@ class FakeDB:
                         or name == storage.ADMINS_TABLE
                         or (name == storage.INVITES_TABLE and not self._admin(email))):
                     return RLS_DENIED
+            if name == storage.SETTINGS_TABLE:          # the table's own checks (supabase/user_settings.sql,
+                for row in json:                         # supabase/fix_subjects_limit.sql)
+                    subjects = row.get("subjects") or []
+                    if len(subjects) > SUBJECTS_LIMIT or (row.get("onboarded_at") and not subjects):
+                        return Resp(400, {"code": "23514", "message": "new row violates check constraint"})
             for row in json:
                 key = tuple(str(row[c]) for c in pk)
                 table[key] = {**table.get(key, {}), **row}

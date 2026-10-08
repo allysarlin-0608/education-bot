@@ -111,13 +111,17 @@ def start() -> None:
     if d["path"] and not ui.save_path(st.session_state.coach_log, d["path"]):
         st.session_state.ob_problem = "Your goal wasn't saved. Try again in a moment."
         return
-    if ui.save_settings(done):
-        ui.record("setup_done")
-        if d["path"]:
-            ui.record("goal_created")
-        st.session_state.pop("ob_way", None)
-        if visuals.known(done["subjects"][0]):
-            st.session_state.enter_world = done["subjects"][0]     # into the first day's subject (a goal: Today)
+    if not ui.save_settings(done):
+        # said beside the button she pressed (the page's own error line is at the top, out of sight: ISS-061)
+        st.session_state.ob_problem = st.session_state.pop("coach_save_error", "") or \
+            "Your plan wasn't saved. Try again in a moment."
+        return
+    ui.record("setup_done")
+    if d["path"]:
+        ui.record("goal_created")
+    st.session_state.pop("ob_way", None)
+    if visuals.known(done["subjects"][0]):
+        st.session_state.enter_world = done["subjects"][0]     # into the first day's subject (a goal: Today)
 
 
 def skip_goal() -> None:

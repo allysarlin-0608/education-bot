@@ -228,3 +228,31 @@ def test_insights_for_admins_only(public_app, pages):
     flows.open_app(q, app, "/settings")
     flows.idle(q.page)
     assert "Insights" not in text(q)
+
+
+def test_a_goal_and_three_subjects_can_start_learning(public_app, pages):
+    """ISS-061: her own goal plus three subjects is four entries; Start
+    learning must save them and open her first day (it did nothing where the
+    database still allowed three)."""
+    covers("W-setup-ob_next-2")
+    app = public_app
+    app.set_llm()
+    p, email = new_person(app, pages, width=1180)
+    flows.button(p, "Get started")
+    write_goal(p, GOAL)
+    design(p)
+    flows.button(p, "Continue")                         # path → subjects
+    assert flows.wait_text(p.page, "Add a subject?")
+    for s in ("Philosophy", "Astronomy", "Stocks, Investing & Crypto"):
+        flows.button(p, s)
+    flows.button(p, "Continue")                         # → level
+    flows.button(p, "Continue")                         # → reading
+    flows.button(p, "Continue")                         # → summary
+    flows.button(p, "Start learning")
+    flows.idle(p.page, 30)
+    flows.open_app(p, app)
+    assert flows.wait_text(p.page, "MADE FOR YOU", 20), text(p)[:600]
+    d = app.get("/__dump")
+    uid = next(u["id"] for u in d["users"] if u["email"] == email)
+    row = next(r for r in d["tables"]["user_settings"] if r["user_id"] == uid)
+    assert len(row["subjects"]) == 4 and row["onboarded_at"]
