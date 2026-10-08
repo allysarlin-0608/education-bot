@@ -1,0 +1,10 @@
+**/__pycache__
+**/.venv
+**/.pytest_cache
+.git
+data/
+tests/e2e/results/
+docs/audit/screens/
+.streamlit/secrets.toml
+.env
+.env.*

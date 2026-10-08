@@ -194,6 +194,36 @@ the sidebar all use them.
   mastered, practice sets, explanations, questions to the coach and those
   showing confusion. Settings → Insights explains each.
 
+## The platform we are moving to
+
+Decided in `docs/ARCHITECTURE_ASSESSMENT.md` and `docs/adr/`. The plan:
+- our own backend, `backend/`, built as one service with clear internal
+  boundaries;
+- our own PostgreSQL schema;
+- our own sign-in;
+- an AI gateway;
+- TypeScript web and admin apps.
+
+It replaces Supabase and Streamlit step by step, and the app keeps running
+throughout.
+
+Step M1 is done:
+- the backend's skeleton;
+- the relational schema with its migrations;
+- repositories that store the record this app uses and give it back
+  exactly;
+- the checked importer out of Supabase.
+
+Until step M2 switches this app onto it, this app still runs on Supabase as
+described above.
+
+**Rule from now on (ADR 0003, 0006):**
+- no new code uses Supabase-specific features (PostgREST queries,
+  row-level security, `auth.uid()`, RPCs), except to keep this app running
+  until its step replaces them;
+- any new external service goes behind one of our interfaces, with its
+  reasons written down.
+
 ## Rules the code keeps (and tests that hold them)
 
 - **Layers** (`tests/test_layers.py`): the domain modules are pure (no

@@ -1,0 +1,25 @@
+name: backend
+on:
+  push:
+    paths: ["backend/**", "coach/**", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", "coach/**", ".github/workflows/backend.yml"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: gnosis, POSTGRES_PASSWORD: ci, POSTGRES_DB: postgres}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U gnosis" --health-interval 5s --health-retries 20
+    env:
+      GNOSIS_TEST_DATABASE_ADMIN_URL: postgresql+psycopg://gnosis:ci@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install -r backend/requirements.txt pytest httpx requests
+      - run: cd backend && python -m pytest -q
+      - run: docker build -f backend/Dockerfile -t gnosis-api .

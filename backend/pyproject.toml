@@ -1,0 +1,21 @@
+[project]
+name = "gnosis-backend"
+version = "0.1.0"
+description = "GNOSIS backend: API, auth, data, AI orchestration (see docs/ARCHITECTURE_ASSESSMENT.md)"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.140,<1",
+  "uvicorn[standard]>=0.32,<1",
+  "sqlalchemy>=2.0.40,<2.1",
+  "alembic>=1.14,<1.15",
+  "psycopg[binary]>=3.2,<3.3",
+  "pydantic-settings>=2.6,<3",
+  "tzdata",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27", "requests>=2.32"]   # requests: the tests read the current app's export files
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", ".."]          # the backend, and the repository root (the shared domain package `coach`)

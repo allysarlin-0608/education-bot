@@ -1,0 +1,33 @@
+# The reverse proxy for staging/production (any VM, any provider): HTTPS
+# certificates are obtained and renewed automatically for each name below,
+# as soon as the domain's DNS points at this machine. Replace yourdomain.com.
+{
+	email ops@yourdomain.com
+}
+
+yourdomain.com {
+	encode zstd gzip
+	root * /srv/web          # the learner app's static build (step M5)
+	try_files {path} /index.html
+	file_server
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}
+
+admin.yourdomain.com {
+	root * /srv/admin        # the admin app's static build (step M5)
+	try_files {path} /index.html
+	file_server
+}
+
+api.yourdomain.com {
+	reverse_proxy api:8000
+}
+
+staging.yourdomain.com, api.staging.yourdomain.com {
+	# the staging stack (same images, its own database and secrets)
+	reverse_proxy staging-api:8000
+}

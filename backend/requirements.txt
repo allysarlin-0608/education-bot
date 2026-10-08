@@ -1,0 +1,9 @@
+# Pinned for reproducible images (backend/Dockerfile). The current Streamlit
+# app keeps its own requirements.txt at the repository root.
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+sqlalchemy==2.0.54
+alembic==1.14.1
+psycopg[binary]==3.2.13
+pydantic-settings==2.15.0
+tzdata==2026.4
