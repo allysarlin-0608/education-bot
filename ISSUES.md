@@ -171,3 +171,7 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 - **ISS-059 (P2):** a blank answered with the word before the gap ("our opinions" for "our ____") was marked wrong. The words around the gap are ignored. Test: `test_practice.py`.
 - **ISS-060 (P3, tests only):** a sign-in test could fail about once in a few hundred runs: its fake token "r1" could appear by chance in the random key it checks. The fake token is now distinctive. Test: `test_signin.py`.
 
+
+### ISS-061 — open: a setup button press that did nothing (seen once in a test, maybe the same as the reported "Start learning" problem)
+- Seen in the browser test of the site on our own backend (`tests/e2e/test_api_mode.py`): on the first run, right after the page loaded, "Get started" was pressed and the page stayed on Welcome. The next three runs passed, and the same step run on its own passes every time. The learner reported the same symptom on the test site with "Start learning" (Supabase mode) after a progress reset.
+- Common factor: a button with a callback, pressed while the page is still finishing its first run (several database calls at sign-in). To find: reproduce with a slowed store (delay every call) and a press during the first run; then make setup's buttons safe to press early (e.g. disabled until the page has finished, or the step read from the stored draft on every run).

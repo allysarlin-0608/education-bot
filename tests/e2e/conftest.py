@@ -28,6 +28,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
+API_TOKEN = "e2e-service-token-0123456789abcdef"
 EXE = os.environ.get("E2E_CHROMIUM", "/opt/pw-browsers/chromium-1194/chrome-linux/chrome")
 IPHONE = ("Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) "
           "Version/17.5 Mobile/15E148 Safari/604.1")
@@ -78,7 +79,10 @@ class App:
                    # per-minute pacing itself is tested in tests/test_llm.py
                    GROQ_TPM_LIMIT="10000000")
         secrets = {"GROQ_API_KEY": "fake-key-for-tests"}
-        if mode == "public":
+        if mode == "api":                  # the public site on our own backend (step M2), sign-in still as public
+            self._start_api(env)
+            secrets.update(GNOSIS_API_URL=self.api_url, GNOSIS_API_TOKEN=API_TOKEN)
+        if mode in ("public", "api"):
             self.fake_port = _free_port()
             self.fake = f"http://127.0.0.1:{self.fake_port}"
             fenv = dict(env, FAKE_SUPABASE_PORT=str(self.fake_port), FAKE_ACCESS_TTL="3600")
@@ -105,6 +109,41 @@ class App:
             cwd=ROOT, env=env, stdout=self.log, stderr=subprocess.STDOUT))
         _wait(self.url + "/_stcore/health", 90)
         self.set_llm()
+
+    def _start_api(self, env):
+        """Our backend (backend/), on a fresh database migrated as production is."""
+        from sqlalchemy import create_engine, text
+        admin_url = os.environ.get("GNOSIS_TEST_DATABASE_ADMIN_URL",
+                                   "postgresql+psycopg://gnosis@127.0.0.1:5544/postgres")
+        name = f"gnosis_e2e_{self.port}"
+        admin = create_engine(admin_url, isolation_level="AUTOCOMMIT")
+        with admin.connect() as c:
+            c.execute(text(f'drop database if exists "{name}" with (force)'))
+            c.execute(text(f'create database "{name}"'))
+        admin.dispose()
+        self.api_db_url = admin_url.rsplit("/", 1)[0] + "/" + name
+        backend = ROOT / "backend"
+        py = str(backend / ".venv" / "bin" / "python")
+        aenv = dict(env, GNOSIS_DATABASE_URL=self.api_db_url, GNOSIS_SERVICE_TOKENS=API_TOKEN,
+                    GNOSIS_ENVIRONMENT="test", PYTHONPATH=f"{backend}:{ROOT}")
+        subprocess.run([py, "-m", "alembic", "upgrade", "head"], cwd=backend, env=aenv, check=True,
+                       capture_output=True)
+        api_port = _free_port()
+        self.api_url = f"http://127.0.0.1:{api_port}"
+        self.api_log = open(self.state / "api.log", "w")
+        self.procs.append(subprocess.Popen([py, "-m", "uvicorn", "gnosis.app:app", "--port", str(api_port)],
+                                           cwd=backend, env=aenv, stdout=self.api_log, stderr=subprocess.STDOUT))
+        _wait(self.api_url + "/health")
+
+    def api_sql(self, sql, **params):
+        """Read or write our backend's database directly (test setup and checks)."""
+        from sqlalchemy import create_engine, text
+        eng = create_engine(self.api_db_url)
+        with eng.begin() as c:
+            res = c.execute(text(sql), params)
+            rows = [dict(r) for r in res.mappings()] if res.returns_rows else None
+        eng.dispose()
+        return rows
 
     # ---- control
     def set_llm(self, **ctl):
@@ -176,6 +215,11 @@ def app_for(mode):
 @pytest.fixture(scope="session")
 def public_app():
     return app_for("public")
+
+
+@pytest.fixture(scope="session")
+def api_app():
+    return app_for("api")
 
 
 @pytest.fixture(scope="session")

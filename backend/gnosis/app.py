@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from gnosis import __version__
-from gnosis.api import health
+from gnosis.api import admin, health, me
 from gnosis.infra import logging as logs
 from gnosis.infra.config import settings
 
@@ -38,6 +38,8 @@ def create_app() -> FastAPI:
         return response
 
     app.include_router(health.router)
+    app.include_router(me.router)
+    app.include_router(admin.router)
     return app
 
 

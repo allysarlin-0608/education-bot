@@ -539,3 +539,16 @@ def test_a_damaged_usage_file_is_never_overwritten(tmp_path):
     with pytest.raises(storage.StorageError):
         store.add_usage("2026-09-01", 1, 10)
     assert path.read_text() == "[{broken"
+
+
+def test_our_own_backend_is_used_once_it_is_configured():
+    # covers: S-gnosis_api_url, S-gnosis_api_token
+    who = lambda: "supa-1"                                                       # noqa: E731
+    api = storage.make_store("https://x.supabase.co", "sb_publishable_x", scoped=True, current_user=who,
+                             api_url="https://api.example.com/", api_token="t0k3n")
+    assert isinstance(api, storage.ApiStore) and api.name == "api" and api.base == "https://api.example.com"
+    supa = storage.make_store("https://x.supabase.co", "sb_publishable_x", scoped=True, current_user=who,
+                              api_url="https://api.example.com", api_token="")
+    assert isinstance(supa, storage.SupabaseStore), "half configured: the site stays where it was"
+    with pytest.raises(storage.StorageError):
+        storage.ApiStore("https://api.example.com", "", current_user=who)

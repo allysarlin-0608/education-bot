@@ -6,7 +6,7 @@ is being built step by step while the current app keeps running:
 | Step | State |
 |---|---|
 | M1: skeleton, our PostgreSQL schema, migrations, repositories, importer from Supabase | **done** |
-| M2: learner API; the current app runs on it | next |
+| M2: learner API; the current app runs on it (`ApiStore`) | **done in code**; switched on once a server runs it (needs the server) |
 | M3: our own sign-in, sessions, roles; Supabase removed | |
 | M4: AI gateway | |
 | M5: TypeScript web + admin apps | |
@@ -16,7 +16,8 @@ is being built step by step while the current app keeps running:
 ```
 gnosis/
   app.py                 FastAPI app: routers, request id, timing, safe errors
-  api/                   routes (health now; the learner API in M2)
+  api/                   routes: health; /v1/me (her own data); admin (invites, numbers); deps.py decides who may
+  services/              application services: learner (her data), insights (the numbers)
   data/schema.py         every table (changes only through a migration)
   data/repositories/     the only code that touches the database
     learning.py          her learning record <-> tables, exactly
@@ -59,3 +60,17 @@ Database. The source is only read. Each person is copied in their own
 transaction, read back and compared with the source; a mismatch rolls that
 person back and is reported. Password hashes and Google identities come
 across, so nobody resets a password at the switch.
+
+## Switching the current site onto this backend (step M2)
+
+Once the API runs on a server reachable from the site:
+1. On the server: `GNOSIS_SERVICE_TOKENS=<a long random token>` (and `GNOSIS_DATABASE_URL`).
+2. Import the data: `python -m gnosis.migrate.supabase --source … --dry-run`, then without `--dry-run`.
+3. In the site's secrets (Streamlit → Settings → Secrets): `GNOSIS_API_URL = "https://api.staging…"` and
+   `GNOSIS_API_TOKEN = "<the same token>"`. Reboot the app.
+
+Sign-in stays the old one until step M3; every read and write goes to our API. Removing the two
+secrets switches the site back to Supabase at once (rollback).
+
+Until M3 the API trusts the site's server, which proves itself with the service token and names the
+person it has signed in (`gnosis/api/deps.py`). Nothing reaches the API from a browser.

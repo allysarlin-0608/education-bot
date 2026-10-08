@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     api_url: str = "http://localhost:8000"
     log_level: str = "INFO"
     log_json: bool = True
+    # Step M2 (until our own sign-in, M3): the current app's server is the only
+    # caller. It signs people in and tells the API who is acting, proving
+    # itself with one of these tokens (comma-separated, so one can be rotated
+    # without downtime). Never given to a browser.
+    service_tokens: SecretStr = SecretStr("")
+    timezone: str = "Asia/Taipei"        # the server's "today" for counts (as the old database function did)
     db_pool_size: int = 5
     db_timeout_seconds: float = 10.0
 

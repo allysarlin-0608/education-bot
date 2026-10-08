@@ -128,6 +128,10 @@ def make_store():
                 appconfig.get_setting("SUPABASE_URL"), appconfig.get_setting("SUPABASE_KEY"),
                 scoped=public, current_user=auth.get_current_user_id,
                 access_token=auth.access_token if public else None,
+                # our own backend (step M2), once configured for the public site
+                api_url=appconfig.get_setting("GNOSIS_API_URL") if public else "",
+                api_token=appconfig.get_setting("GNOSIS_API_TOKEN") if public else "",
+                current_email=lambda: (auth.identity() or {}).get("email", ""),
             )
         except storage.StorageError as e:
             st.error(f"The app isn't set up correctly: {e}.")

@@ -87,6 +87,10 @@ def add_invite(conn: Connection, email: str, note: str = "", invited_by: str = N
                  .on_conflict_do_update(index_elements=["email"], set_={"note": note}))
 
 
+def remove_invite(conn: Connection, email: str) -> None:
+    conn.execute(delete(t.invites).where(t.invites.c.email == email.lower()))
+
+
 def is_invited(conn: Connection, email: str) -> bool:
     return conn.execute(select(t.invites.c.email).where(t.invites.c.email == email.lower())).first() is not None
 

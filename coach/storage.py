@@ -817,7 +817,154 @@ class SupabaseStore(_Scope):
         return bool(rows)
 
 
-def make_store(url: str = "", key: str = "", session=None, scoped=False, current_user=None, access_token=None):
+class ApiStore(_Scope):
+    """The same operations, on our own backend (backend/, step M2 of
+    docs/ARCHITECTURE_ASSESSMENT.md) instead of Supabase. This app's server
+    signs people in as before and tells the API who is acting: a service
+    token (a server secret, never sent to a browser) and the person's id and
+    email. Reads are retried once on a dropped connection or a 502/503/504;
+    writes never are (as in SupabaseStore)."""
+    name = "api"
+    settings_missing = False
+    books_error = None
+    paths_error = None
+
+    def __init__(self, base_url: str, token: str, session=None, scoped=True, current_user=None, current_email=None):
+        if not base_url or not token:
+            raise StorageError("the API address or its service token is missing")
+        self.base = base_url.strip().rstrip("/")
+        self.token = token
+        self.session = session or requests.Session()
+        self.scoped = scoped
+        self.current_user = current_user
+        self.current_email = current_email or (lambda: "")
+        self.missing_columns = set()
+
+    def _headers(self, person: bool = True) -> dict:
+        h = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
+        if person:
+            h["X-Gnosis-Subject"] = self._uid()
+            email = self.current_email() or ""
+            if email:
+                h["X-Gnosis-Email"] = email
+        return h
+
+    def _request(self, method: str, path: str, json=None, params=None, person: bool = True):
+        headers = self._headers(person)
+        tries = READ_TRIES if method == "GET" else 1
+        for attempt in range(1, tries + 1):
+            try:
+                resp = self.session.request(method, f"{self.base}{path}", json=json, params=params, headers=headers,
+                                            timeout=TIMEOUT)
+            except requests.RequestException as e:
+                if attempt < tries and isinstance(e, requests.ConnectionError):
+                    logger.warning("api %s %s unreachable (%s); trying once more", method, path.split("/")[2], e)
+                    _sleep(RETRY_PAUSE)
+                    continue
+                logger.error("api %s %s unreachable: %s", method, path.split("/")[2], e)
+                raise StorageError("can't reach the server right now") from e
+            if resp.status_code in TRANSIENT and attempt < tries:
+                _sleep(RETRY_PAUSE)
+                continue
+            break
+        if resp.status_code >= 400:
+            # (the path names the kind of call only: no dates, emails or ids in the log)
+            logger.error("api %s %s -> %s: %s", method, "/".join(path.split("/")[:4]), resp.status_code, resp.text[:300])
+            if resp.status_code == 401:
+                # (the person is signed in here; a refusal means this app's service token is wrong: a setup
+                # problem, not a session to refresh, so no status that would send her round a reload loop)
+                raise StorageError("the app can't sign in to its server; this needs fixing in its settings",
+                                   detail=resp.text[:300])
+            raise StorageError("the server isn't responding right now", status=resp.status_code, detail=resp.text[:300])
+        return resp
+
+    # her record
+    def load(self) -> dict:
+        return core.parse_log(self._request("GET", "/v1/me/record").json())
+
+    def load_entry(self, day: str, topic: str):
+        found = self._request("GET", f"/v1/me/days/{day}/{topic}").json()["entry"]
+        return core.parse_log({"entries": [found]})["entries"][0] if found else None
+
+    def load_books(self) -> list:
+        return self.load()["books"]
+
+    def save_entry(self, log: dict, entry: dict) -> None:
+        self._request("PUT", f"/v1/me/days/{entry['date']}/{entry['topic']}", json=entry)
+
+    def save_book(self, log: dict, book: dict) -> None:
+        self._request("PUT", f"/v1/me/books/{book['id']}", json=book)
+
+    def save_path(self, log: dict, path: dict) -> None:
+        self._request("PUT", f"/v1/me/goals/{path['id']}", json=path)
+
+    def replace(self, log: dict) -> None:
+        self._request("PUT", "/v1/me/record", json=log)
+
+    # her account
+    def load_settings(self):
+        row = self._request("GET", "/v1/me/settings").json()["settings"]
+        # (the row is hers: in this app's terms that is the id she signed in with, which settings.normalize checks)
+        return dict(row, user_id=self._uid()) if row else None
+
+    def save_settings(self, row: dict) -> None:
+        self._request("PUT", "/v1/me/settings", json={k: row.get(k) for k in SETTINGS_COLUMNS})
+
+    def load_prefs(self):
+        return self._request("GET", "/v1/me/preferences").json()["preferences"]
+
+    def save_prefs(self, data: dict) -> None:
+        self._request("PUT", "/v1/me/preferences", json=data)
+
+    def touch_user(self, email: str, name: str, picture: str = "") -> None:
+        self._request("POST", "/v1/me/seen", json={"email": email, "display_name": name, "avatar_url": picture})
+
+    def user_row(self):
+        return self._request("GET", "/v1/me/export").json()["user"]
+
+    def usage_today(self, day: str) -> dict:
+        return self._request("GET", f"/v1/me/usage/{day}").json()
+
+    def add_usage(self, day: str, requests_: int, tokens_: int) -> None:
+        self._request("POST", "/v1/me/usage", json={"day": day, "requests": requests_, "tokens": tokens_})
+
+    def add_event(self, day: str, event: str) -> None:
+        self._request("POST", "/v1/me/events", json={"event": event})      # (the server's date, as before)
+
+    def export_my_data(self) -> dict:
+        return self._request("GET", "/v1/me/export").json()
+
+    def delete_my_account(self) -> None:
+        self._request("DELETE", "/v1/me")
+
+    # invitations and admins
+    def is_invited(self, email: str) -> bool:
+        return self._request("GET", f"/v1/invites/{email.lower()}", person=False).json()["invited"]
+
+    def is_admin(self, email: str) -> bool:
+        roles = self._request("GET", f"/v1/people/{self._uid()}/roles", person=False).json()["roles"]
+        return bool({"admin", "super_admin"} & set(roles))
+
+    def list_invites(self) -> list:
+        return self._request("GET", "/v1/admin/invites").json()
+
+    def add_invite(self, email: str, note: str = "") -> None:
+        self._request("POST", "/v1/admin/invites", json={"email": email, "note": note})
+
+    def remove_invite(self, email: str) -> None:
+        self._request("DELETE", f"/v1/admin/invites/{email.lower()}")
+
+    def metrics(self, since: date, today: date) -> dict:
+        return self._request("GET", "/v1/admin/metrics", params={"since": since.isoformat()}).json()
+
+
+def make_store(url: str = "", key: str = "", session=None, scoped=False, current_user=None, access_token=None,
+               api_url: str = "", api_token: str = "", current_email=None):
+    """Our own backend when it is configured (GNOSIS_API_URL + GNOSIS_API_TOKEN),
+    else Supabase when that is, else local files."""
+    if api_url and api_token:
+        return ApiStore(api_url, api_token, session=session, scoped=True, current_user=current_user,
+                        current_email=current_email)
     if url and key:
         return SupabaseStore(url, key, session=session, scoped=scoped, current_user=current_user,
                              access_token=access_token)

@@ -42,7 +42,10 @@ def test_only_the_pure_domain_is_shared():
     assert used <= PURE_DOMAIN, used - PURE_DOMAIN
 
 
-def test_routes_go_through_repositories():
+def test_routes_go_through_services_and_repositories():
+    """A route may name the connection type it is handed, never build a query or touch a table."""
     for m, found in modules().items():
         if m.startswith("gnosis/api/"):
-            assert "sqlalchemy" not in {i.split(".")[0] for i in found}, f"{m} talks to the database itself"
+            direct = {i for i in found if (i.startswith("sqlalchemy") and i != "sqlalchemy.engine")
+                      or i.startswith("gnosis.data.schema")}
+            assert not direct, f"{m} talks to the database itself: {direct}"
