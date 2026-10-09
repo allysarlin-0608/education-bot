@@ -13,7 +13,7 @@ SECRET = "Zanzibar-quokka private note"
 
 
 def test_two_accounts_never_see_each_other(public_app, pages):
-    covers("W-topnav-nav_search", "W-settings-data_download", "W-settings-data_prepare")
+    covers("W-topnav-nav_search", "W-account-data_download", "W-account-data_prepare")
     app = public_app
     a, b = pages(width=1180), pages(width=1180)
     ea = f"alice{next(_n)}-{int(time.time() * 1000)}@example.com"
@@ -32,7 +32,8 @@ def test_two_accounts_never_see_each_other(public_app, pages):
     flows.take_quiz(a, correct=False)
     # Bob looks everywhere
     seen = []
-    for path in ("/", "/review", "/records", "/course?subject=philosophy", "/settings"):
+    for path in ("/", "/review", "/records", "/course?subject=philosophy", "/settings", "/courses", "/path",
+                 "/account"):
         flows.open_app(b, app, path)
         flows.idle(b.page)
         t = b.page.evaluate("document.body.innerText")
@@ -50,7 +51,7 @@ def test_two_accounts_never_see_each_other(public_app, pages):
     assert flows.wait_text(b.page, "0 of 260 lessons passed", 10), "Bob's map is his own"
     assert not seen, f"Alice's data reached Bob on {seen}"
     # Bob's own data download holds only Bob
-    flows.open_app(b, app, "/settings")
+    flows.open_app(b, app, "/account")
     b.page.get_by_role("button", name="Download my data").click()      # gathered now, as her
     with b.page.expect_download() as dl:
         b.page.get_by_role("button", name="Save my data as a file").click()

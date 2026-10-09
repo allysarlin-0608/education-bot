@@ -239,7 +239,7 @@ with st.container(key="today_links", horizontal=True):
                 ui.enter_world(topic)
     if st.button("Course map", type="tertiary", key="today_course"):   # the whole path
         ui.open_course(topic)
-    if mastery.topics(log) and st.button("Skill map", type="tertiary", key="today_skills"):   # what she knows
+    if mastery.topics(log) and st.button("Knowledge map", type="tertiary", key="today_skills"):   # what she knows
         st.switch_page("views/skills.py")
 # review: noticed when something is due, never in the way of the day's lesson
 due_now = ui.review_due(log)
@@ -312,7 +312,7 @@ if not habits.get("seen_init"):
     ui.update_prefs(seen=[m["key"] for m in habit.milestones(log, today)], seen_init=True)
 elif (fresh := habit.new_milestones(log, today, habits["seen"])):
     with st.container(key="milestone", horizontal=True, vertical_alignment="center"):
-        more = f" (and {len(fresh) - 1} more on Progress)" if len(fresh) > 1 else ""
+        more = f" (and {len(fresh) - 1} more in your Learning Record)" if len(fresh) > 1 else ""
         st.html(f'<p class="hb-text"><span class="hb-eyebrow">Milestone</span>{escape(fresh[-1]["text"])}{escape(more)}</p>')
         st.button("Thanks", key="ms_seen", type="tertiary", on_click=seen_now, args=([m["key"] for m in fresh],))
 
@@ -327,7 +327,7 @@ if habits.get("week_seen") != habit.week_key(last_monday) and habit.week(log, la
 goal = catalog.path(topic)
 if catalog.is_goal(topic) and goal is None:       # her goal couldn't be read just now (never a lesson in its place)
     st.warning(getattr(st.session_state.coach_store, "paths_error", None)
-               or "Today's goal couldn't be found. Choose your goals again in Settings.")
+               or "Today's goal couldn't be found. Choose your goals again in Learning Plan.")
     st.stop()
 if goal and not paths.started(log, topic):
     with st.container(key="goal_intro"):

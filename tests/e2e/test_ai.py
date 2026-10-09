@@ -51,9 +51,9 @@ def test_clicking_elsewhere_while_a_lesson_is_written_loses_nothing(public_app, 
     app.set_llm(delay=3.0)
     flows.button(p, "Start this lesson", wait=False)
     p.page.wait_for_timeout(700)
-    flows.go(p, app, "Progress")            # leave while it's being written
+    flows.go(p, app, "Record")            # leave while it's being written
     app.set_llm()
-    flows.go(p, app, "Today")
+    flows.go(p, app, "Home")
     text = p.page.evaluate("document.body.innerText")
     started = "Take the quiz" in text
     can_start = "Start this lesson" in text
@@ -69,9 +69,9 @@ def test_leaving_while_the_lesson_streams_leaves_no_half_lesson(public_app, page
     app.set_llm(chunk_delay=0.15)           # the lesson is visibly being written
     flows.button(p, "Start this lesson", wait=False)
     assert flows.wait_text(p.page, "Earth", 20), "the lesson didn't start streaming"
-    flows.go(p, app, "Progress")            # leave mid-stream
+    flows.go(p, app, "Record")            # leave mid-stream
     app.set_llm()
-    flows.go(p, app, "Today")
+    flows.go(p, app, "Home")
     text = p.page.evaluate("document.body.innerText")
     if "Take the quiz" in text:
         assert "Key Idea" in text, "the quiz is offered but the lesson itself is missing"

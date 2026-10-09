@@ -75,7 +75,7 @@ def test_a_completed_day_then_the_next_morning(public_app, pages, clock):
     flows.button(p, "See today's summary →")
     assert flows.wait_text(p.page, "Current streak: 2 days")
     clock(D + timedelta(days=3), "01:00:00")        # a day missed
-    flows.go(p, app, "Progress")
+    flows.go(p, app, "Record")
     flows.open_app(p, app, "/records")
     figures = p.page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.figure')].map(f =>
         [f.querySelector('.figure-label').innerText.trim(), f.querySelector('.figure-value').innerText.replace(/\\s+/g, ' ').trim()]))""")

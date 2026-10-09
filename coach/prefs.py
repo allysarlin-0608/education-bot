@@ -15,7 +15,7 @@ SEEN_LIMIT = 200          # milestones remembered (the oldest go first)
 def blank() -> dict:
     return {"reminder_on": False, "reminder_time": DEFAULT_TIME, "reminder_email": False,
             "light_day": "", "seen": [], "seen_init": False, "week_seen": "", "reminded_on": "", "reminder_hit": "",
-            "practice": None, "practice_made": ""}
+            "practice": None, "practice_made": "", "plan_choice": ""}
 
 
 def normalize(row) -> dict:
@@ -28,7 +28,8 @@ def normalize(row) -> dict:
         p["reminder_time"] = row["reminder_time"]
     p["reminder_email"] = row.get("reminder_email") is True
     p["seen_init"] = row.get("seen_init") is True
-    for key in ("light_day", "week_seen", "reminded_on", "reminder_hit", "practice_made"):
+    # the plan she chose in the setup (what she asked for; her plan is coach/plans.plan_of)
+    for key in ("light_day", "week_seen", "reminded_on", "reminder_hit", "practice_made", "plan_choice"):
         if isinstance(row.get(key), str) and len(row[key]) <= 12:
             p[key] = row[key]
     if isinstance(row.get("seen"), list):

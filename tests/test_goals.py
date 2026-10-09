@@ -347,10 +347,34 @@ def test_goals_that_couldnt_be_read_stay_in_her_turns():
         catalog.bind(*was)
 
 
-@pytest.mark.parametrize("old, now", [(1, "subjects"), (2, "pace"), (3, "level"), (4, "reading"), (5, "summary")])
+@pytest.mark.parametrize("old, now", [(1, "subjects"), (2, "customize"), (3, "customize"), (4, "reading"),
+                                      (5, "review")])
 def test_a_setup_draft_from_before_goals_opens_on_the_same_step(old, now):
     d = settings.draft_of(dict(settings.blank("u"), onboarding={"step": old, "subjects": ["cosmos"]}))
     assert settings.STEPS[d["step"]] == now
+
+
+@pytest.mark.parametrize("old, now", [(0, "welcome"), (1, "goal"), (2, "path"), (3, "subjects"), (4, "customize"),
+                                      (5, "customize"), (6, "reading"), (7, "review")])
+def test_a_setup_draft_from_before_plans_opens_on_the_same_step(old, now):
+    d = settings.draft_of(dict(settings.blank("u"), onboarding={"step": old, "goal": {"text": "x"}}))
+    assert settings.STEPS[d["step"]] == now and d["plan"] is None, "(her plan is asked: the setup goes back to it)"
+
+
+def test_a_draft_keeps_its_plan_and_her_order_of_turns():
+    p = a_path()
+    saved = dict(settings.new_draft(), step=settings.STEPS.index("price"), plan="plus", subjects=["cosmos", "philosophy"],
+                 path=p, path_original=p, goal_at=1)
+    d = settings.draft_of(dict(settings.blank("u"), onboarding=saved))
+    assert settings.STEPS[d["step"]] == "price" and d["plan"] == "plus"
+    assert settings.rotation(d) == ["cosmos", settings.GOAL, "philosophy"]
+    d = settings.move_turn(d, "philosophy", -2)
+    assert settings.rotation(d) == ["philosophy", "cosmos", settings.GOAL]
+    d = settings.move_turn(d, settings.GOAL, -9)                     # (as far as it goes)
+    assert settings.rotation(d) == [settings.GOAL, "philosophy", "cosmos"]
+    d["levels"] = {}
+    done = settings.finish(settings.blank("u"), d, "2026-10-09T00:00:00+00:00")
+    assert done["subjects"] == [p["id"], "philosophy", "cosmos"], "saved in her order"
 
 
 def test_the_weekly_average_rounds_as_the_database_does():

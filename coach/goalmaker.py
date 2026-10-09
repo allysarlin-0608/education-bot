@@ -69,12 +69,6 @@ def _use(key: str, text: str, get, put) -> None:
     put(d)
 
 
-def _pace(key: str, get, put) -> None:
-    d = get()
-    d["units_per_day"] = st.session_state.get(_k(key, "pace")) or d["units_per_day"]
-    put(d)
-
-
 def _ask(key: str) -> None:
     st.session_state[_k(key, "go")] = True
 
@@ -119,11 +113,10 @@ def design(key: str, d: dict, put, pace: int) -> bool:
 
 
 # ------------------------------------------------------------------- the form
-def form(key: str, get, put, *, ask_pace: bool = True, pace: int = settings.DEFAULT_PACE, skip=None,
-         on_path=None) -> None:
-    """What she wants to learn. get() -> the draft; put(d) keeps it. With
-    ask_pace, how much time she has is asked here too (the setup); else
-    `pace` is her settings'. skip: (label, callback) for the other way in.
+def form(key: str, get, put, *, pace: int = settings.DEFAULT_PACE, skip=None, on_path=None) -> None:
+    """What she wants to learn. get() -> the draft; put(d) keeps it. `pace`:
+    the lessons a day the path is sized for (the setup's draft, or her
+    settings; the setup asks it at Customize). skip: (label, callback) for the other way in.
     on_path(): called once a path is designed (the page moves on to it)."""
     unreadable = getattr(st.session_state.get("coach_store"), "paths_error", None)
     if unreadable:                 # goals can't be kept now: no path is designed for nothing
@@ -134,7 +127,7 @@ def form(key: str, get, put, *, ask_pace: bool = True, pace: int = settings.DEFA
         return
     d = get()
     if st.session_state.pop(_k(key, "go"), False):
-        if design(key, d, put, d["units_per_day"] if ask_pace else pace):
+        if design(key, d, put, pace):
             if on_path:
                 on_path()
             st.rerun()
@@ -172,13 +165,6 @@ def form(key: str, get, put, *, ask_pace: bool = True, pace: int = settings.DEFA
         st.segmented_control("Where are you now?", list(paths.STARTS), format_func=lambda s: paths.STARTS[s][0],
                              key=_k(key, "start"), required=True, width="stretch",
                              on_change=_keep, args=(key, get, put))
-    if ask_pace:
-        st.session_state.setdefault(_k(key, "pace"), d["units_per_day"])
-        with st.container(key=_k(key, "pace_sw")):
-            st.segmented_control("How much time each day?", list(settings.PACES),
-                                 format_func=lambda n: f"{settings.PACES[n][1].lstrip('~')} a day",
-                                 key=_k(key, "pace"), required=True, width="stretch",
-                                 on_change=_pace, args=(key, get, put))
     note = st.session_state.pop(_k(key, "note"), "")
     if note:
         st.html(f'<p class="ob-note gm-note" role="status">{escape(note)}</p>')

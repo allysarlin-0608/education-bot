@@ -108,7 +108,7 @@ def test_review_the_next_day(public_app, pages, clock, width):
     assert all(c["last"] == (D + timedelta(days=1)).isoformat() for c in reviewed)
     assert sum(c["box"] == 0 for c in reviewed) >= 1 and sum(c["box"] == 1 for c in reviewed) >= 1
     # reviewing doesn't make the day count for the streak
-    flows.go(p, app, "Progress")
+    flows.go(p, app, "Record")
     figures = page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.figure')].map(f =>
         [f.querySelector('.figure-label').innerText.trim(), f.querySelector('.figure-value').innerText.replace(/\\s+/g, ' ').trim()]))""")
     assert figures["Current streak"] == "0 days", figures

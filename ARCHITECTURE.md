@@ -11,7 +11,7 @@ the model.
 |---|---|---|---|
 | Entry | `streamlit_app.py`, `gnosis.py` | `st.App` with the sign-in routes; every run: `coach.freshen()`, style, the gate (password or account), the page list | hold logic of its own |
 | Pages (UI) | `views/*.py` | draw one page from the session's data; call domain functions; save through `coach.ui` | talk to Supabase or Groq directly; compute progress |
-| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
+| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py`, `pathview.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
 | Config | `clock.py`, `appconfig.py` | the one clock (the learner's timezone, today, now) and the one way to read a setting | depend on Streamlit's UI or on any other module |
 | Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
 | AI | `llm.py`, `quizgen.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
@@ -39,8 +39,9 @@ the model.
   (`curriculum._load`), its name is the path's title; it joins her turns in
   `user_settings.subjects`. Its outline is fixed once its first lesson is
   written (lesson numbers are positions); before that she adjusts it freely.
-- **learner_prefs** (`goals.sql`): her habit preferences (Phase 2), and
-  today's practice set where she left it (Phase 3).
+- **learner_prefs** (`goals.sql`): her habit preferences (Phase 2),
+  today's practice set where she left it (Phase 3), and the plan she chose
+  in the setup (`plan_choice`).
 - **learning_signals** (`mastery.sql`): per person, per day, a count of
   nine learning events (Phase 3, below), added only through
   `add_learning_signal()`; admins read totals through `gnosis_metrics()`.
@@ -50,7 +51,7 @@ the model.
   (visit, setup_done, goal_created, lesson_passed, reminder_shown,
   reminded_session), added only through
   `add_usage_event()`; admins read totals through `gnosis_metrics()`
-  (Settings → Insights). No content is ever kept for these.
+  (Account → Insights). No content is ever kept for these.
 - **reading_books**, **ai_usage**, **allowed_users** (invites), **app_admins**.
 - Row-level security: every table is read and written only as the signed-in
   user; `ai_usage` only grows (a security-definer function adds to it).
@@ -102,8 +103,9 @@ the sidebar all use them.
   `user_settings.onboarding` (`settings.goal_draft_of`), so a refresh or
   another tab keeps it. Adjusting (depth, shorter, skip/move a part, remove a
   lesson) never calls the AI.
-- **Her turns**: a new goal goes first in the setup, and from the New goal
-  page takes today's turn when today isn't started (`settings.add_goal`).
+- **Her turns**: a new goal goes first in the setup unless she moves it
+  (Customize), and from the New goal page takes today's turn when today
+  isn't started (`settings.add_goal`).
 - **Lessons** for a goal (`core.goal_section`): her goal and reasons, the
   path, well-established knowledge only, sources named for important facts,
   no personal medical/legal/financial advice; lesson 1 is short with a small
@@ -111,7 +113,53 @@ the sidebar all use them.
   (`prompts/learner_public.md`, `core.PUBLIC_EDITS`); the personal app's
   prompt is unchanged (`prompts/learner.md` + `core.md`).
 - **Plans** (`plans.py`): what each plan would include; not enforced
-  (`ENFORCED = False`), no page mentions plans.
+  (`ENFORCED = False`). The setup shows them (below); prices are not set.
+
+## The site's structure: the setup and the menu
+
+**The setup** (`views/setup.py`, one decision a step; `route()` gives the
+steps her answers call for, `settings.STEPS` names them all):
+
+| # | Step | Does | Reuses |
+|---|---|---|---|
+| 1 | Welcome | what GNOSIS is | — |
+| 2 | Plans | Free / Plus side by side, one chosen | `plans.py`, `choices.rows` |
+| 3 | Courses & subjects | our subjects within the plan's limit; or a goal of her own (sub-step Your goal: the AI designs its path) | `stage`, `choices.rows`, `goalmaker.form` |
+| 4 | Reading plan | only on a plan that includes it; optional | the reading toggle |
+| 5 | Your selection | what she chose, each part changeable | `ob-summary` |
+| 6 | Price summary | plan, what's included, extra costs (none), due today (0); no payment exists, nothing is charged | `plans.py` |
+| 7 | Customize | time each day, how often (every day: fixed for now), the order of her turns (`settings.move_turn`), each subject's start (placement) | `choices.rows`, `choices.placement` |
+| 8 | Your path | the order of her days, each course's first parts, her goal's path to adjust | `pathview.py`, `goalmaker.review` |
+| 9 | Final review | everything, with ways back to change it | — |
+| 10 | Start learning | `settings.finish` → her goal saved, settings saved (`onboarded_at`), `prefs.plan_choice` kept; her first day opens | `ui.save_path`, `ui.save_settings` |
+
+The draft (`settings.draft_of`, version `DRAFT_VERSION`) is kept in
+`user_settings.onboarding` at every answer, so Back, a change from the
+review or a refresh never loses anything. Drafts from earlier setups open at
+the same place under the new step names (`settings._step_of`). A plan that
+doesn't include the reading plan switches it off in the draft. The chosen
+plan is what she asked for (`prefs.plan_choice`), not a subscription: her
+plan stays Free (`plans.plan_of`) until payments exist.
+
+**The navigation** (`gnosis.py`, `coach/topnav.py`): the bar holds the pages
+of every day (Home, Review, Reading, Record, Plan); **Menu** holds every part,
+grouped (`topnav.SECTIONS`), each a link to the one page that does it:
+
+| Section | Page | Concept |
+|---|---|---|
+| Home | `daily.py` (/) | today's lessons |
+| Subjects & Courses | `subjects.py` (/courses) | the curriculum: every course |
+| Learning Path | `path.py` (/path) | her sequence: the order of her days, where each course goes next |
+| Learning Plan | `settings.py` (/settings) | her choices: subjects, goals, pace, levels, reminders, reading on/off |
+| Reading Plan | `reading.py` (/reading) | when she has one (else the Menu points to Learning Plan) |
+| Knowledge Map | `skills.py` (/skills) | what she knows, idea by idea |
+| Assessments | `review.py`, `practice.py` | review and practice (quizzes live in each lesson) |
+| Learning Record | `records.py` (/records), `week.py` | her history |
+| Profile, Subscription & Account Settings | `account.py` (/account) | who she is, her plan as it is, her data, admin tools |
+
+Not built yet, and listed in the Menu as "not available yet" (never as an
+empty page): Knowledge Exploration, Examinations, Research, Research
+Portfolio, Certificates.
 
 ## Coming back (Phase 2)
 

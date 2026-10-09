@@ -89,9 +89,9 @@ with st.container(key="ob_grid"):
                    if not d["path"] else "Designed for your goal. Make it yours before you start.") + "</p>")
     with st.container(key="ob_body"):
         if room <= 0:
-            st.html(f'<p class="ob-note">You have {active} goals going. Pause one in Settings to add another.</p>')
+            st.html(f'<p class="ob-note">You have {active} goals going. Pause one in Learning Plan to add another.</p>')
         elif not d["path"]:
-            goalmaker.form("goal", draft, put, ask_pace=False, pace=settings.units(config))
+            goalmaker.form("goal", draft, put, pace=settings.units(config))
         else:
             goalmaker.review("gpath", draft, put, settings.units(config))
             problem = st.session_state.pop("goal_problem", "")

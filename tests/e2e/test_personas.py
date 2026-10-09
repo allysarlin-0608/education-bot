@@ -60,7 +60,7 @@ def test_coming_back(public_app, pages, clock, away):
     if "to go today" in t:
         left = int(t.split(" to go today")[0].split("·")[-1].strip())
         assert left <= 20, f"no flood after an absence: {left}"
-    flows.go(p, app, "Progress")
+    flows.go(p, app, "Record")
     figures = p.page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.figure')].map(f =>
         [f.querySelector('.figure-label').innerText.trim(), f.querySelector('.figure-value').innerText.replace(/\\s+/g, ' ').trim()]))""")
     # ten days with a lesson passed (the last one passed two of three); away two weeks breaks the streak

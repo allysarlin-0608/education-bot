@@ -17,7 +17,7 @@ def setup_with_a_lesson(app, pages, tag):
 
 
 def open_backup(p, app):
-    flows.go(p, app, "Progress")
+    flows.go(p, app, "Record")
     p.page.get_by_text("Backup and restore", exact=True).click()
     flows.idle(p.page)
 
@@ -79,7 +79,7 @@ def test_wrong_types_never_break_a_page(public_app, pages, tmp_path):
         "user_id": "someone-else"}
     text = upload(p, tmp_path, "evil.json", json.dumps(evil).encode())
     assert "Traceback" not in text
-    for page_name in ("Today", "Progress", "Settings"):
+    for page_name in ("Home", "Record", "Plan"):
         flows.go(p, app, page_name)
         assert "Traceback" not in p.page.evaluate("document.body.innerText"), page_name
     p.page.goto(app.url + "/reading")

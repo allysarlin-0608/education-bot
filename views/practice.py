@@ -169,7 +169,7 @@ if p["done"] and st.session_state.get("pr_shown") is None:     # (after the last
     if not more or problem:
         st.caption(problem or "That's all the practice ready for today. New exercises come tomorrow.")
     with st.container(horizontal=True, key="pr_end"):
-        if st.button("Skill map", type="primary", key="pr_map"):
+        if st.button("Knowledge map", type="primary", key="pr_map"):
             st.switch_page("views/skills.py")
         if more and st.button("Another set", key="pr_more", type="tertiary"):
             st.session_state.pr_again = True

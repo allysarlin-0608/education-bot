@@ -39,9 +39,9 @@ def test_a_slow_network_still_works(public_app, pages):
     cdp.send("Network.emulateNetworkConditions", {"offline": False, "latency": 400,
                                                   "downloadThroughput": 50_000, "uploadThroughput": 20_000})
     t0 = time.time()
-    flows.go(p, app, "Progress")
+    flows.go(p, app, "Record")
     assert flows.wait_text(p.page, "Backup and restore", 30)
-    flows.go(p, app, "Today")
+    flows.go(p, app, "Home")
     flows.start_lesson(p)
     assert time.time() - t0 < 90
     assert "Traceback" not in text(p)

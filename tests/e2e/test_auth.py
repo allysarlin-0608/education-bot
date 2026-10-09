@@ -231,7 +231,7 @@ def test_google_cancel_comes_back_quietly(public_app, pages):
 
 @pytest.mark.parametrize("width", [1440, 390])
 def test_account_menu_settings_and_sign_out(public_app, pages, width):
-    covers("W-auth-account_menu", "W-auth-views_settings_py")
+    covers("W-auth-account_menu", "W-auth-views_settings_py", "W-auth-views_account_py")
     app = public_app
     email = new_email("menu")
     p = pages(width=width)
@@ -241,7 +241,11 @@ def test_account_menu_settings_and_sign_out(public_app, pages, width):
     menu = p.page.locator(".st-key-account_menu button").first
     flows.tap(p, menu)
     assert flows.wait_text(p.page, email, 10), "the menu shows who is signed in"
-    flows.tap(p, p.page.get_by_role("link", name="Settings").last)
+    flows.tap(p, p.page.get_by_role("link", name="Account").last)
+    flows.idle(p.page)
+    assert "/account" in p.page.url and flows.wait_text(p.page, email, 10), "her profile"
+    flows.tap(p, p.page.locator(".st-key-account_menu button").first)
+    flows.tap(p, p.page.get_by_role("link", name="Learning Plan").last)
     flows.idle(p.page)
     assert "/settings" in p.page.url
     assert p.page.get_by_text("Sign out", exact=True).count() == 0, "the menu stays open over the new page"

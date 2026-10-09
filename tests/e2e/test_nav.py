@@ -45,7 +45,7 @@ def test_top_bar_goes_everywhere_and_back_forward_work(public_app, pages):
     covers("W-topnav-p")
     app = public_app
     p, _, _ = person(app, pages)
-    for name, path in (("Progress", "/records"), ("Settings", "/settings"), ("Today", "/")):
+    for name, path in (("Record", "/records"), ("Plan", "/settings"), ("Home", "/")):
         flows.go(p, app, name)
         assert (urlparse(p.page.url).path.rstrip("/") or "/") == (path.rstrip("/") or "/"), p.page.url
     p.page.go_back()
@@ -57,6 +57,31 @@ def test_top_bar_goes_everywhere_and_back_forward_work(public_app, pages):
     p.page.go_forward()
     flows.idle(p.page)
     assert "/settings" in p.page.url and flows.wait_text(p.page, "Daily pace", 10)
+
+
+def test_the_menu_reaches_every_part_and_names_what_isnt_built(public_app, pages):
+    covers("W-topnav-site_menu", "W-topnav-page", "W-topnav-by_title_learning_plan")
+    app = public_app
+    p, _, _ = person(app, pages)
+    reached = {"Subjects & Courses": ("/courses", "More subjects"),
+               "Learning Path": ("/path", "Your next days"), "Learning Plan": ("/settings", "Daily pace"),
+               "Knowledge Map": ("/skills", "Knowledge Map"), "Review": ("/review", "Review"),
+               "Practice": ("/practice", "Practice"), "Learning Record": ("/records", "Learning Record"),
+               "Your week": ("/week", "week"), "Profile": ("/account", "Profile"),
+               "Home": ("/", "Start this lesson")}
+    for label, (path, marker) in reached.items():
+        flows.menu(p, label)
+        assert (urlparse(p.page.url).path.rstrip("/") or "/") == (path.rstrip("/") or "/"), (label, p.page.url)
+        assert flows.wait_text(p.page, marker, 15), (label, marker)
+        assert "Traceback" not in text(p)
+    flows.menu(p, "Profile")
+    flows.open_menu(p)
+    t = text(p)
+    assert "Subscription & Account Settings" in t and t.count("you are here") == 2, "Account: both its entries marked"
+    for soon in ("Knowledge Exploration", "Examinations", "Research Portfolio", "Certificates"):
+        assert soon in t, soon
+    assert t.count("not available yet") >= 5, "the parts not built are named as such, not linked"
+    assert "Reading Plan · off" in t, "no reading plan: the menu says where to turn it on"
 
 
 @pytest.mark.parametrize("path,marker", [("/records", "Backup and restore"), ("/settings", "Daily pace"),
@@ -155,7 +180,7 @@ def test_the_first_enter_always_searches(public_app, pages):
     failures = []
     for k in range(20):
         if k % 5 == 2:
-            flows.go(p, app, ["Progress", "Settings", "Today"][k % 3])
+            flows.go(p, app, ["Record", "Plan", "Home"][k % 3])
         flows.button(p, "Search", exact=False, wait=False)
         box = page.get_by_placeholder("Lessons, subjects, books, your notes…")
         box.wait_for(timeout=10000)

@@ -37,6 +37,14 @@ def has(at, key) -> bool:
     return True
 
 
+def to_goal(at, plan="free"):
+    """From the welcome, past the plans, to a goal of her own."""
+    at.button(key="ob_next").click().run()                         # Get started
+    at.button(key=f"pick_plan_{plan}").click().run()
+    at.button(key="ob_next").click().run()                         # on to the subjects
+    at.button(key="ob_to_goal").click().run()                      # or a goal of her own
+
+
 def texts(at):
     return html.unescape( " ".join(str(h.proto) for h in at.get("html")) + " ".join(m.value for m in at.markdown))
 
@@ -67,14 +75,17 @@ def test_the_setup_from_a_goal_to_the_first_day(monkeypatch, tmp_path):
     calls = ai(monkeypatch, {"status": "clarify", "message": "What for?", "questions": ["For work?"],
                              "suggestions": ["Read a company's financial statements"]}, design_reply())
     at = app(monkeypatch, tmp_path, subjects=(), history=False, onboarded=False)
-    at.button(key="ob_next").click().run()                         # Get started
+    to_goal(at)
     at.text_area(key="obg_text").input("Get good at business stuff").run()
     at.button(key="obg_design").click().run()
     assert not at.exception and "What for?" in texts(at), "a vague goal is asked about"
     at.button(key="obg_sugg_0").click().run()                     # her pick of the suggestions
     at.text_input(key="obg_why").input("I want to invest").run()
     at.button(key="obg_design").click().run()
-    assert len(calls) == 2 and "Reading financial statements" in texts(at), "on to her path"
+    assert len(calls) == 2 and "Reading financial statements" in texts(at), "her goal's path"
+    for _ in range(4):                                              # goal → selection → price → customize → path
+        at.button(key="ob_next").click().run()
+    assert "Your path" in texts(at) and "Part 1" in texts(at)
     # covers: W-goalmaker-k_key_f_up_i
     at.button(key="obp_skip_0").click().run()                     # she knows the first part
     at.button(key="obp_up_1").click().run()
@@ -83,9 +94,8 @@ def test_the_setup_from_a_goal_to_the_first_day(monkeypatch, tmp_path):
     at.button(key="obp_undo").click().run()
     assert len(stored(tmp_path)[0]["onboarding"]["path"]["units"]) == 4
     at.button(key="obp_lighter").click().run()
-    for _ in range(3):                                              # path → subjects → reading → summary
-        at.button(key="ob_next").click().run()
-    assert "Your goal" in texts(at) and not at.exception
+    at.button(key="ob_next").click().run()                          # path → final review
+    assert "Final review" in texts(at) and "Your goal" in texts(at) and "USD 0.00" in texts(at) and not at.exception
     at.button(key="ob_next").click().run()                          # Start learning
     s, log = stored(tmp_path)
     goal_id = log["paths"][0]["id"]
@@ -97,7 +107,7 @@ def test_the_setup_from_a_goal_to_the_first_day(monkeypatch, tmp_path):
 def test_a_refresh_mid_goal_keeps_her_words_and_path(monkeypatch, tmp_path):
     ai(monkeypatch, design_reply())
     at = app(monkeypatch, tmp_path, subjects=(), history=False, onboarded=False)
-    at.button(key="ob_next").click().run()
+    to_goal(at)
     at.text_area(key="obg_text").input("Read a company's financial statements").run()
     at.button(key="obg_design").click().run()
     calls = ai(monkeypatch)                                        # no more answers: a call would fail the test
@@ -106,25 +116,30 @@ def test_a_refresh_mid_goal_keeps_her_words_and_path(monkeypatch, tmp_path):
     assert not again.exception and "Reading financial statements" in texts(again) and not calls
 
 
-def test_back_from_the_path_to_her_words_and_forward_again(monkeypatch, tmp_path):
-    # covers: W-setup-ob_to_path
+def test_back_to_her_goal_and_a_different_one(monkeypatch, tmp_path):
+    # covers: W-setup-ob_to_goal, W-setup-ob_again
     calls = ai(monkeypatch, design_reply())
     at = app(monkeypatch, tmp_path, subjects=(), history=False, onboarded=False)
-    at.button(key="ob_next").click().run()
+    to_goal(at)
     at.text_area(key="obg_text").input("Read a company's financial statements").run()
     at.button(key="obg_design").click().run()
-    at.button(key="ob_back").click().run()
-    assert at.text_area(key="obg_text").value == "Read a company's financial statements"
-    at.button(key="ob_to_path").click().run()
+    at.button(key="ob_next").click().run()                          # on to her selection
+    assert "Your selection" in texts(at)
+    at.button(key="ob_back").click().run()                          # back: her goal, as it was
     assert "Reading financial statements" in texts(at) and len(calls) == 1
+    at.button(key="ob_back").click().run()                          # back to the subjects: the goal is named
+    assert "Read" in texts(at) and has(at, "ob_to_goal")
+    at.button(key="ob_to_goal").click().run()
+    at.button(key="ob_again").click().run()                         # a different goal: her words stay
+    assert at.text_area(key="obg_text").value == "Read a company's financial statements" and len(calls) == 1
 
 
 def test_subjects_instead_of_a_goal_is_the_setup_as_before(monkeypatch, tmp_path):
     # covers: W-goalmaker-k_key_skip
     at = app(monkeypatch, tmp_path, subjects=(), history=False, onboarded=False)
-    at.button(key="ob_next").click().run()
+    to_goal(at)
     at.button(key="obg_skip").click().run()
-    assert not at.exception and "Choose up to three" in texts(at)
+    assert not at.exception and "Choose up to 3 of our subjects" in texts(at) and has(at, "ob_to_goal")
 
 
 @pytest.mark.parametrize("reply, shown", [
@@ -136,7 +151,7 @@ def test_subjects_instead_of_a_goal_is_the_setup_as_before(monkeypatch, tmp_path
 def test_a_goal_that_cant_be_planned_is_answered_kindly(monkeypatch, tmp_path, reply, shown):
     ai(monkeypatch, reply)
     at = app(monkeypatch, tmp_path, subjects=(), history=False, onboarded=False)
-    at.button(key="ob_next").click().run()
+    to_goal(at)
     at.text_area(key="obg_text").input("Become a doctor by next month").run()
     at.button(key="obg_design").click().run()
     assert not at.exception and shown in texts(at)
@@ -239,7 +254,7 @@ def test_setup_offers_our_subjects_while_goals_cant_be_saved(monkeypatch, tmp_pa
     monkeypatch.setattr(storage.FileStore, "paths_error", storage.PATHS_TABLE_MISSING)
     calls = ai(monkeypatch)
     at = app(monkeypatch, tmp_path, subjects=(), history=False, onboarded=False)
-    at.button(key="ob_next").click().run()
+    to_goal(at)
     assert "goals.sql" in texts(at) and not has(at, "obg_design")
     at.button(key="obg_skip").click().run()
-    assert not at.exception and "Choose up to three" in texts(at) and not calls
+    assert not at.exception and "Choose up to 3 of our subjects" in texts(at) and not calls

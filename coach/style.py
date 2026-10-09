@@ -1399,6 +1399,21 @@ NAV = """
 .st-key-nav_search button p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .st-key-nav_search button:active { color: var(--label); transform: none !important; }
 @media (hover: hover) { .st-key-nav_search button:hover { color: var(--label); } }
+/* Menu: the same quiet control as Search, an icon with its word beside it on a wide page */
+.st-key-site_menu { margin-left: 8px; display: flex; align-items: center; }
+.st-key-site_menu button {
+  height: 56px; min-height: 56px; padding: 0 10px !important; border-radius: 0; border: none !important;
+  background: transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important; color: var(--label-2); touch-action: manipulation;
+}
+.st-key-site_menu button p { font-size: 0.875rem; color: inherit; }
+.st-key-site_menu button:focus-visible { outline: 1px solid var(--outline) !important; outline-offset: -8px; }
+@media (hover: hover) { .st-key-site_menu button:hover { color: var(--label); } }
+@media (max-width: 640px) {
+  .st-key-site_menu { margin-left: 2px; }
+  .st-key-site_menu button { padding: 0 6px !important; }
+  .st-key-site_menu button p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 /* the right: the app's own actions (Share, Star, Edit, GitHub, the menu) on
    the same surface, in the same quiet grey, answering like the pages do */
 [data-testid="stToolbar"] { align-items: center; }
@@ -1638,6 +1653,33 @@ SETUP = """
   .ob-summary > div { grid-template-columns: 1fr; gap: 4px; padding: 14px 0; }
   .ob-lede { font-size: 1rem; }
 }
+
+/* ---------- Plans: what each includes, side by side ---------- */
+.ob-plans { width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.45; margin: var(--space-3) 0 var(--space-2); }
+.ob-plans th, .ob-plans td { text-align: left; padding: 10px 8px 10px 0; border-bottom: 1px solid var(--line-1); vertical-align: top; color: var(--label); }
+.ob-plans thead th { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); font-weight: 500; }
+.ob-plans tbody th { font-weight: 400; color: var(--label-2); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* ---------- Customize: her turns, each movable ---------- */
+[class*="st-key-ob_turn_"] { border-bottom: 1px solid var(--line-1); padding: 4px 0; gap: var(--space-2) !important; }
+.ob-turn { margin: 0; font-size: 0.9375rem; color: var(--label); }
+.ob-turn span { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); margin-right: 8px; }
+/* ---------- A learning path: the order of her days, and where each course goes first ---------- */
+.pv-turns ol { list-style: none; margin: 0 0 var(--space-2); padding: 0; border-top: 1px solid var(--line-1); }
+.pv-turns li { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--space-3); padding: 10px 0; border-bottom: 1px solid var(--line-1); font-size: 0.9375rem; color: var(--label); }
+.pv-day { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); padding-top: 2px; }
+.pv-course { margin: var(--space-4) 0 0; }
+.pv-name { margin: 0 0 var(--space-2); font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.25rem; color: var(--label); }
+.pv-name small { font-family: inherit; font-size: 0.875rem; color: var(--label-2); }
+.pv-units { margin: 0 0 var(--space-2); padding-left: 1.75rem; display: grid; gap: 6px; font-size: 0.9375rem; color: var(--label); }
+.pv-units li small { display: block; font-size: 0.8125rem; color: var(--label-3); }
+.pv-units li::marker { color: var(--label-3); font-variant-numeric: tabular-nums; }
+/* ---------- The menu: every part of GNOSIS, grouped ---------- */
+.mn-group { margin: var(--space-3) 0 4px; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); }
+.mn-soon { margin: 0; padding: 6px 0 6px 8px; font-size: 0.875rem; color: var(--label-3); }
+.mn-soon small, .mn-here small { margin-left: 6px; font-size: 0.75rem; }
+.mn-here { margin: 0; padding: 6px 0 6px 8px; font-size: 0.875rem; font-weight: 500; color: var(--label); border-left: 2px solid var(--label); }
+.mn-here small { font-weight: 400; color: var(--label-3); }
 
 /* ---------- Settings: sections on hairlines; wide, the name beside its controls ---------- */
 [class*="st-key-set_sec_"] { gap: var(--space-4) !important; padding-top: var(--space-5); border-top: 1px solid var(--line-1); }

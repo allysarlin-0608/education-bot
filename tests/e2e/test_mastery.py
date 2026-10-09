@@ -75,7 +75,7 @@ def signals(app, email):
 def skill_of(p, app, title):
     """The skill map's word for one idea."""
     flows.open_app(p, app, "/skills")
-    assert flows.wait_text(p.page, "Skill map")
+    assert flows.wait_text(p.page, "Knowledge Map")
     row = p.page.locator(".sk-ideas li", has_text=title).first
     return row.locator(".sk-chip").inner_text().strip()
 
@@ -146,8 +146,8 @@ def test_an_idea_rises_fades_and_practice_brings_it_back(public_app, pages, cloc
     assert len(ev) == 2, f"one piece of evidence per answer, never two: {ev}"
     assert signals(app, email).get("practice_done") == 1
     assert "That's all the practice ready for today" in text(p), "twice an idea a day: never a loop on one"
-    flows.button(p, "Skill map")
-    assert flows.wait_text(p.page, "Skill map")
+    flows.button(p, "Knowledge map")
+    assert flows.wait_text(p.page, "Knowledge Map")
 
 
 def test_every_kind_answered_wrong_or_partly_says_exactly_what_was_wrong(public_app, pages, clock):
@@ -361,7 +361,7 @@ def test_the_numbers_an_admin_sees_include_learning(public_app, pages):
     flows.admin_sign_in(p, app)
     if flows.wait_text(p.page, "Get started", 3):
         flows.onboard(p)
-    flows.open_app(p, app, "/settings")
+    flows.open_app(p, app, "/account")
     assert flows.wait_text(p.page, "Insights")
     t = text(p)
     for row in ("Ideas got wrong, then right later", "Still known after two weeks", "Ideas mastered",

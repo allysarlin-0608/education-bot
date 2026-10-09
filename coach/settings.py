@@ -127,13 +127,22 @@ def now_iso() -> str:
 # ------------------------------------------------------------
 # The setup in progress (kept in the row until it's finished)
 # ------------------------------------------------------------
-STEPS = ("welcome", "goal", "path", "subjects", "pace", "level", "reading", "summary")
+# The setup's steps (views/setup.py: route() picks the ones her answers call for):
+# Welcome, Plans, the subjects (and a goal of her own), Reading (a plan that
+# includes it), Your selection, Price, Customize, Your path, Final review;
+# Start learning is the review's button.
+STEPS = ("welcome", "plans", "subjects", "goal", "reading", "selection", "price", "customize", "path", "review")
+DRAFT_VERSION = 2
+# drafts saved by earlier setups: their steps, and where each now is
+V1_STEPS = ("welcome", "goal", "path", "subjects", "pace", "level", "reading", "summary")
 OLD_STEPS = ("welcome", "subjects", "pace", "level", "reading", "summary")      # (drafts saved before goals)
+MOVED = {"pace": "customize", "level": "customize", "summary": "review"}
+GOAL = "goal"           # the goal being made, in the draft's order of turns
 
 
 def new_draft() -> dict:
-    return {"step": 0, "subjects": [], "units_per_day": DEFAULT_PACE, "levels": {},
-            "reading_enabled": False, **new_goal_draft()}
+    return {"v": DRAFT_VERSION, "step": 0, "plan": None, "subjects": [], "units_per_day": DEFAULT_PACE, "levels": {},
+            "reading_enabled": False, "want_goal": False, "goal_at": 0, **new_goal_draft()}
 
 
 def new_goal_draft() -> dict:
@@ -167,10 +176,12 @@ def draft_of(s: dict) -> dict:
     """Her answers so far, checked (a draft is stored as she goes)."""
     d, saved = new_draft(), s.get("onboarding") or {}
     if isinstance(saved.get("step"), int):
-        step = saved["step"]
-        if "goal" not in saved and 0 <= step < len(OLD_STEPS):     # a draft from before goals: the same step
-            step = STEPS.index(OLD_STEPS[step])
-        d["step"] = min(max(step, 0), len(STEPS) - 1)
+        d["step"] = _step_of(saved)
+    if isinstance(saved.get("plan"), str) and len(saved["plan"]) <= 12:
+        d["plan"] = saved["plan"]
+    d["want_goal"] = saved.get("want_goal") is True
+    if isinstance(saved.get("goal_at"), int) and saved["goal_at"] >= 0:
+        d["goal_at"] = saved["goal_at"]
     if isinstance(saved.get("subjects"), list):
         d["subjects"] = [t for t in dict.fromkeys(saved["subjects"]) if t in SUBJECTS][:MAX_SUBJECTS]
     if saved.get("units_per_day") in PACES:
@@ -180,6 +191,38 @@ def draft_of(s: dict) -> dict:
     d["reading_enabled"] = bool(saved.get("reading_enabled"))
     d.update(goal_draft_of(saved))
     return d
+
+
+def _step_of(saved: dict) -> int:
+    """The step a stored draft is at, in today's steps (a draft from an
+    earlier setup: the same place, under its new name)."""
+    step = saved["step"]
+    if saved.get("v") == DRAFT_VERSION:
+        return min(max(step, 0), len(STEPS) - 1)
+    old = V1_STEPS if "goal" in saved else OLD_STEPS
+    name = old[min(max(step, 0), len(old) - 1)]
+    return STEPS.index(MOVED.get(name, name))
+
+
+def rotation(d: dict) -> list:
+    """Her turns, in order: the chosen subjects, with the goal being made
+    (GOAL) where she put it (first unless she moved it)."""
+    items = list(d["subjects"])
+    if d.get("path"):
+        items.insert(min(d.get("goal_at", 0), len(items)), GOAL)
+    return items
+
+
+def move_turn(d: dict, item: str, k: int) -> dict:
+    """The draft with one of her turns moved k places (earlier: -1)."""
+    items = rotation(d)
+    if item not in items:
+        return d
+    i = items.index(item)
+    j = max(0, min(i + k, len(items) - 1))
+    items.insert(j, items.pop(i))
+    return dict(d, subjects=[t for t in items if t != GOAL],
+                goal_at=items.index(GOAL) if GOAL in items else d.get("goal_at", 0))
 
 
 def toggle_subject(subjects: list, topic: str) -> list:
@@ -216,8 +259,9 @@ def draft_levels(d: dict) -> dict:
 def finish(s: dict, d: dict, when: str) -> dict:
     """The settings she chose, ready to save: onboarded, draft cleared.
     Raises ValueError if anything is missing (never saved half done)."""
-    goal = [d["path"]["id"]] if d.get("path") else []        # her goal first: her first day is for it
-    done = dict(s, subjects=goal + list(d["subjects"]), units_per_day=d["units_per_day"],
+    # in her order of turns (her goal first unless she moved it: her first day is for it)
+    items = [d["path"]["id"] if t == GOAL else t for t in rotation(d)]
+    done = dict(s, subjects=items, units_per_day=d["units_per_day"],
                 subject_levels=draft_levels(d), reading_enabled=bool(d["reading_enabled"]),
                 onboarding=None, onboarded_at=when, updated_at=when)
     problems = errors(done)

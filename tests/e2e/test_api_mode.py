@@ -44,5 +44,5 @@ def test_the_site_runs_on_our_backend(api_app, pages):
     assert {"setup_done", "lesson_passed", "visit"} <= counts
     old = app.get("/__dump")["tables"].get("learning_entries", [])
     assert not [r for r in old if r.get("lessons")], "nothing written to the old system's tables"
-    flows.go(p, app, "Progress")
+    flows.go(p, app, "Record")
     assert flows.wait_text(p.page, "Lessons passed") and "Traceback" not in text(p)

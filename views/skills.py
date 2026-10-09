@@ -13,7 +13,7 @@ from coach import catalog, mastery, ui
 log = st.session_state.coach_log
 today = ui.today()
 st.html('<div id="skills-page" hidden></div>')
-st.markdown("## Skill map")
+st.markdown("## Knowledge Map")
 st.caption("What you really know, idea by idea: each lesson is one idea. An idea is solid once it holds on "
            "another day, mastered once it keeps holding over a week or more, and it fades if it isn't practised.")
 

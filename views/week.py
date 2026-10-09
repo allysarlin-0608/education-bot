@@ -63,7 +63,7 @@ with st.container(key="wk_body"):
     shaky = mastery.needs_practice(log, today)[:3]
     if shaky:
         st.html('<p class="wk-note">Shaky now: ' + ", ".join(f"“{escape(x['title'])}”" for _, _, x in shaky) + ".</p>")
-    if st.button("Skill map", type="tertiary", key="wk_skills"):
+    if st.button("Knowledge map", type="tertiary", key="wk_skills"):
         st.switch_page("views/skills.py")
 
     st.markdown("#### Worth a second look")

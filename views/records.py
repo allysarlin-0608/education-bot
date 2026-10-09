@@ -22,7 +22,7 @@ config = ui.config()
 subjects = settings.shown_subjects(config)       # only the subjects she has chosen
 
 st.html('<div id="progress-page" hidden></div>')      # lets the page use the width (style.py)
-st.markdown("## Progress")
+st.markdown("## Learning Record")
 
 if not log["entries"]:
     st.info("No records yet. They start building up after your first lesson.")
@@ -137,7 +137,7 @@ if sum(known.values()):
         st.html(f'<p class="prog-rest"><b>What you know:</b> {known["mastered"]} '
                 f'{"idea" if known["mastered"] == 1 else "ideas"} mastered, {known["solid"]} solid, '
                 f'{known["learning"]} still being learned, of {met} you\'ve met.</p>')
-        if st.button("Skill map", type="tertiary", key="prog_skills_open"):
+        if st.button("Knowledge map", type="tertiary", key="prog_skills_open"):
             st.switch_page("views/skills.py")
 
 # how her streak is kept: rest days, in one calm line, and her week

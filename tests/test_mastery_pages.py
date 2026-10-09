@@ -29,7 +29,7 @@ def test_the_skill_map_with_two_subjects(monkeypatch, tmp_path):
     at = app(monkeypatch, tmp_path, entries=history_until(ui.today() - timedelta(days=1)))
     loads(at, "views/skills.py")
     t = texts(at)
-    assert "Skill map" in t and "learning" in t and "Learning" in t and "ideas met" in t
+    assert "Knowledge Map" in t and "learning" in t and "Learning" in t and "ideas met" in t
     assert has(at, "sk_practice") and "shakiest" in str(at.button(key="sk_practice").proto.label)
     other = [x for x in at.segmented_control[0].options if x != at.segmented_control[0].value][0]
     at.segmented_control[0].set_value(other).run()

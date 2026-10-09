@@ -515,5 +515,6 @@ def account_menu() -> None:
                if who["picture"].startswith("https://") else "")
         st.html(f'<div class="acct-who">{pic}<div><p class="acct-name">{html.escape(who["name"])}</p>'
                 f'<p class="acct-email">{html.escape(who["email"])}</p></div></div>')
-        st.page_link("views/settings.py", label="Settings", icon=":material/settings:")
+        st.page_link("views/account.py", label="Account", icon=":material/person:")
+        st.page_link("views/settings.py", label="Learning Plan", icon=":material/tune:")
         _raw(f'<a class="acct-out" href="{html.escape(signout_url())}">Sign out</a>')

@@ -13,13 +13,13 @@ from conftest import ADMIN, covers
 _n = itertools.count()
 
 
-def person(app, pages, width=1440, email=None, **onboard):
+def person(app, pages, width=1440, email=None, page="/settings", **onboard):
     p = pages(width=width)
     email = email or f"set{next(_n)}-{int(time.time() * 1000)}@example.com"
     flows.sign_in(p, app, email=email)
     if flows.wait_text(p.page, "Get started", 3):      # (an account used before is already set up)
         flows.onboard(p, **onboard)
-    flows.open_app(p, app, "/settings")
+    flows.open_app(p, app, page)
     return p, email
 
 
@@ -49,7 +49,7 @@ def test_pace_changes_today(public_app, pages):
     p, email = person(app, pages)
     pick(p, ".st-key-set_sec_pace", "Focused")
     assert settings_row(app, email)["units_per_day"] == 5
-    flows.go(p, app, "Today")
+    flows.go(p, app, "Home")
     assert flows.wait_text(p.page, "Lesson 1 of 5"), "Today follows the new pace"
 
 
@@ -65,7 +65,7 @@ def test_subjects_add_remove_and_keep_one(public_app, pages):
     pick(p, ".st-key-set_sec_subjects", "Astronomy")          # the last one can't go
     assert flows.wait_text(p.page, "Keep at least one subject or goal.")
     assert settings_row(app, email)["subjects"] == ["cosmos"]
-    flows.go(p, app, "Today")
+    flows.go(p, app, "Home")
     assert flows.wait_text(p.page, "Astronomy"), "Today's subject follows the change"
 
 
@@ -97,13 +97,13 @@ def test_reading_toggle_adds_and_removes_the_page(public_app, pages):
     flows.idle(p.page)
     assert settings_row(app, email)["reading_enabled"] is True
     assert flows.wait_text(p.page, "Reading", 5) and "Reading" in p.page.locator(".st-key-topnav").inner_text()
-    flows.go(p, app, "Progress")
+    flows.go(p, app, "Record")
     p.page.get_by_role("radio", name="Subjects").or_(p.page.get_by_role("button", name="Subjects", exact=True)).first.click()
     flows.idle(p.page)
     flows.tap(p, p.page.get_by_role("link", name="Reading · 0 books finished"))
     flows.idle(p.page)
     assert "/reading" in p.page.url
-    flows.go(p, app, "Settings")
+    flows.go(p, app, "Plan")
     p.page.locator('.st-key-set_sec_reading [role="switch"], .st-key-set_sec_reading input').first.uncheck(force=True)
     flows.idle(p.page)
     assert settings_row(app, email)["reading_enabled"] is False
@@ -119,13 +119,13 @@ def test_enter_a_world_from_settings(public_app, pages):
 
 
 def test_invites_only_for_admins(public_app, pages):
-    covers("W-settings-inv_email", "W-settings-inv_note", "W-settings-inv_add_btn", "W-settings-inv_rm",
-           "D-settings-add_invite", "D-settings-remove_invite")
+    covers("W-account-inv_email", "W-account-inv_note", "W-account-inv_add_btn", "W-account-inv_rm",
+           "D-account-add_invite", "D-account-remove_invite")
     app = public_app
-    p, _ = person(app, pages)
+    p, _ = person(app, pages, page="/account")
     assert "Invites" not in text(p), "a learner sees no invite list"
     p.close()
-    p, _ = person(app, pages, email=ADMIN)
+    p, _ = person(app, pages, email=ADMIN, page="/account")
     assert flows.wait_text(p.page, "Invites")
     box = p.page.locator(".st-key-inv_add")
     box.get_by_label("Email").fill("not an email")
@@ -146,13 +146,13 @@ def test_invites_only_for_admins(public_app, pages):
 
 
 def test_download_my_data_is_only_mine(public_app, pages):
-    covers("W-settings-data_download")
+    covers("W-account-data_download")
     app = public_app
     other, _ = person(app, pages)
-    flows.go(other, app, "Today")
+    flows.go(other, app, "Home")
     flows.start_lesson(other)
     other.close()
-    p, email = person(app, pages)
+    p, email = person(app, pages, page="/account")
     p.page.get_by_role("button", name="Download my data").click()      # gathered now, as her
     with p.page.expect_download() as dl:
         p.page.get_by_role("button", name="Save my data as a file").click()
@@ -165,13 +165,14 @@ def test_download_my_data_is_only_mine(public_app, pages):
 
 
 def test_delete_my_account_removes_everything(public_app, pages):
-    covers("W-settings-data_delete", "W-settings-del_confirm", "W-settings-del_go", "W-settings-del_cancel",
-           "D-settings-delete_my_account")
+    covers("W-account-data_delete", "W-account-del_confirm", "W-account-del_go", "W-account-del_cancel",
+           "D-account-delete_my_account")
     app = public_app
     p, email = person(app, pages)
-    flows.go(p, app, "Today")
+    flows.go(p, app, "Home")
     flows.start_lesson(p)
-    flows.go(p, app, "Settings")
+    flows.menu(p, "Subscription & Account Settings")
+    assert "/account" in p.page.url
     flows.button(p, "Delete my account")
     assert flows.wait_text(p.page, "This permanently deletes your account")
     go = p.page.get_by_role("button", name="Delete everything")
@@ -198,15 +199,15 @@ def test_delete_my_account_removes_everything(public_app, pages):
 
 
 def test_personal_mode_has_no_account_sections(personal_app, pages):
-    covers("W-settings-data_download")
+    covers("W-account-data_download")
     app = personal_app
     p = pages(width=1440)
-    flows.open_app(p, app, "/settings")
+    flows.open_app(p, app, "/account")
     if flows.wait_text(p.page, "Get started", 3):
         flows.onboard(p)
-        flows.open_app(p, app, "/settings")
+        flows.open_app(p, app, "/account")
     t = text(p)
-    assert "Settings" in t and "Your data" not in t and "Invites" not in t
+    assert "Account" in t and "no account to sign in to" in t and "Your data" not in t and "Invites" not in t
 
 
 @pytest.mark.parametrize("width", [390, 1024])
@@ -228,12 +229,12 @@ def _agree(p, app, topic, name, email):
     chosen = topic in stored
     assert stage.startswith("Chosen") == chosen, (stage, stored)
     assert (name in levels) == chosen, (levels, stored)
-    flows.go(p, app, "Progress")
+    flows.go(p, app, "Record")
     p.page.get_by_role("radio", name="Subjects").or_(p.page.get_by_role("button", name="Subjects", exact=True)).first.click()
     flows.idle(page)
     progress = page.locator(".st-key-subj_list").inner_text()
     assert (name in progress) == chosen, (progress[:200], stored)
-    flows.go(p, app, "Today")
+    flows.go(p, app, "Home")
     today_subject = page.locator(".st-key-course_card").inner_text()
     from coach import core
     assert any(core.TOPICS[t] in today_subject for t in stored), (today_subject[:80], stored)

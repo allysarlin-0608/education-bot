@@ -139,7 +139,7 @@ def test_keyboard_reaches_everything_with_a_visible_focus(public_app, pages):
         reached.append(info["name"])
         if not info["ring"] and not info["within"]:
             invisible.append(info["name"] + " :: " + info["html"])
-    for must in ("Today", "Progress", "Settings", "Start this lesson"):
+    for must in ("Home", "Record", "Plan", "Menu", "Start this lesson"):
         assert any(must in r for r in reached), f"Tab never reaches {must!r}: {reached}"
     assert not invisible, f"focused without a visible ring: {sorted(set(invisible))}"
 
@@ -148,8 +148,8 @@ def test_reduced_motion_turns_movement_off(public_app, pages):
     covers("W-topnav-p")
     app = public_app
     p = person(app, pages, reduced_motion=True)
-    flows.go(p, app, "Progress")
-    flows.go(p, app, "Today")
+    flows.go(p, app, "Record")
+    flows.go(p, app, "Home")
     moving = p.page.evaluate("""() => [...document.querySelectorAll('*')].filter(e => {
         const s = getComputedStyle(e);
         const long = v => v.split(',').some(x => parseFloat(x) * (x.includes('ms') ? 1 : 1000) > 10);

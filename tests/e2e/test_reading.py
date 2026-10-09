@@ -307,7 +307,7 @@ def test_leaving_while_the_coach_reads_loses_nothing(public_app, pages):
     box.fill(SHARE)
     box.press("Enter")
     p.page.wait_for_timeout(1500)
-    flows.go(p, app, "Progress")                  # leave while it's being checked
+    flows.go(p, app, "Record")                  # leave while it's being checked
     app.set_llm()
     p.page.wait_for_timeout(4000)
     flows.go(p, app, "Reading")

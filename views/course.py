@@ -134,7 +134,7 @@ with st.container(key="cm_next"):
             st.caption(f"Today is {catalog.name(ui.topic_for(today), 'another subject')}'s day: "
                        "your subjects take turns, one a day.")
     with st.container(key="cm_links", horizontal=True):
-        if st.button("Skill map", type="tertiary", key="cm_skills"):
+        if st.button("Knowledge map", type="tertiary", key="cm_skills"):
             st.session_state.sk_topic = topic
             st.switch_page("views/skills.py")
         if visuals.known(topic) and st.button(f"Enter {course.subject_name(topic)}", type="tertiary", key="cm_world"):

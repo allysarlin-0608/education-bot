@@ -142,25 +142,36 @@ def admin_sign_in(p, app):
 
 
 # ---- setup ------------------------------------------------------------------
-def to_subjects(p):
-    """From the welcome to our subjects (past the goal of her own)."""
+def to_subjects(p, plan="Free"):
+    """From the welcome, past the plans, to the courses and subjects."""
     button(p, "Get started")
-    button(p, "Choose from our subjects instead")
+    button(p, plan)
+    button(p, "Continue")
+
+
+def to_goal(p, plan="Free"):
+    """From the welcome to a goal of her own."""
+    to_subjects(p, plan)
+    button(p, "Or set a goal of your own")
 
 
 def onboard(p, subjects=("Philosophy",), pace=None, reading=False):
-    to_subjects(p)
+    """The whole setup: a plan (Plus when she wants a reading plan: only it
+    includes one), subjects, then on through each step to Start learning."""
+    to_subjects(p, "Plus" if reading else "Free")
     for s in subjects:
         button(p, s)
     button(p, "Continue")                  # subjects
-    if pace:
-        button(p, pace)
-    button(p, "Continue")                  # pace
-    button(p, "Continue")                  # level
     if reading:
         p.page.locator('[data-testid="stToggle"] input, [role="switch"]').first.check(force=True)
         idle(p.page)
-    button(p, "Continue")                  # reading
+        button(p, "Continue")              # reading plan
+    button(p, "Continue")                  # your selection
+    button(p, "Continue")                  # price summary
+    if pace:
+        button(p, pace)
+    button(p, "Continue")                  # customize
+    button(p, "Continue")                  # your path
     button(p, "Start learning")
     idle(p.page, 30)
 
@@ -169,6 +180,20 @@ def go(p, app, name):
     """Top navigation by its label."""
     loc = p.page.locator('.st-key-topnav [data-testid="stPageLink-NavLink"]', has_text=name).first
     tap(p, loc)
+    idle(p.page)
+
+
+def open_menu(p):
+    """The Menu at the top: every part of GNOSIS, grouped."""
+    tap(p, p.page.locator(".st-key-site_menu button").first)
+    idle(p.page)
+    assert wait_text(p.page, "Subjects & Courses", 10), "the menu didn't open"
+
+
+def menu(p, label):
+    """A page by its name in the Menu."""
+    open_menu(p)
+    tap(p, p.page.get_by_role("link", name=label, exact=True).last)
     idle(p.page)
 
 

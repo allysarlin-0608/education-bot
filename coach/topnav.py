@@ -1,6 +1,7 @@
-"""The top of every page: one connected control for the pages
-(Today, Reading when she has a reading plan, Progress, Settings) with a single active surface that travels
-between them, and Search at its end.
+"""The top of every page: one connected control for the pages of every
+day (Home, Review, Reading when she has a reading plan, Record, Plan) with a
+single active surface that travels between them; then Menu, every part of
+GNOSIS grouped (menu()), and Search at its end.
 
 Which page is on comes from one place: Streamlit's own navigation (the
 page's address). The links are st.page_link, so moving between pages is
@@ -14,17 +15,34 @@ import streamlit as st
 from coach import auth, search, settings, ui
 
 
-ICONS = {"Review": ":material/replay:", "Reading": ":material/menu_book:", "Progress": ":material/insights:",
-         "Settings": ":material/settings:"}
+# the bar's short names for the pages of every day (their full names are in the menu)
+SHORT = {"Reading Plan": "Reading", "Learning Record": "Record", "Learning Plan": "Plan"}
+ICONS = {"Review": ":material/replay:", "Reading Plan": ":material/menu_book:", "Learning Record": ":material/insights:",
+         "Learning Plan": ":material/tune:"}
+
+# The site's sections, in order: (group, [(label, page title, or None: not built yet)]).
+# Pages are found by their title among the ones gnosis.py registered; a part
+# GNOSIS doesn't have yet is listed as such, never as a link to an empty page.
+SECTIONS = (
+    ("Learn", (("Home", "Home"), ("Subjects & Courses", "Subjects & Courses"), ("Learning Path", "Learning Path"),
+               ("Learning Plan", "Learning Plan"), ("Reading Plan", "Reading Plan"),
+               ("Knowledge Map", "Knowledge Map"), ("Knowledge Exploration", None))),
+    ("Assessments & Examinations", (("Review", "Review"), ("Practice", "Practice"), ("Examinations", None))),
+    ("Research", (("Research", None), ("Research Portfolio", None))),
+    ("Achievements", (("Learning Record", "Learning Record"), ("Your week", "Your week"), ("Certificates", None))),
+    ("Account", (("Profile", "Account"), ("Subscription & Account Settings", "Account"))),
+)
+NOT_YET = "not available yet"
 
 
-def render(pages: list, log: dict) -> None:
+def render(pages: list, log: dict, everything: list = (), here: str = None) -> None:
     with st.container(key="topnav", horizontal=True, vertical_alignment="center", gap=None):
         with st.container(key="topnav_items", horizontal=True, vertical_alignment="center", gap=None):
             for p in pages:                        # (a subject's world isn't in the bar)
                 # its name on a wide page; where the bar is narrow, Review, Reading and
-                # Settings become icons (style.py), like Search beside them
-                st.page_link(p, label=p.title, icon=ICONS.get(p.title))
+                # Plan become icons (style.py), like Search beside them
+                st.page_link(p, label=SHORT.get(p.title, p.title), icon=ICONS.get(p.title))
+        menu(list(pages) + list(everything), here)
         # cards waiting: a quiet dot on Review (place.py puts it on the link)
         waiting = len(ui.review_due(log))
         st.html(f'<div id="review-due" hidden data-n="{waiting}"></div>')
@@ -32,6 +50,28 @@ def render(pages: list, log: dict) -> None:
             _search(log)
         if auth.is_public():
             auth.account_menu()          # at the right end: who is signed in, Settings, Sign out
+
+
+def menu(pages: list, here: str = None) -> None:
+    """Every part of GNOSIS, grouped (SECTIONS): a link to each page there
+    is (the page she is on, `here` (its url_path), marked, not linked), and
+    the parts not built yet named as such. Reading Plan, while she has none,
+    points to where it is turned on."""
+    by_title = {p.title: p for p in pages}
+    with st.popover("Menu", icon=":material/menu:", key="site_menu", on_change="rerun"):
+        with st.container(key="site_menu_list", gap=None):
+            for group, items in SECTIONS:
+                st.html(f'<p class="mn-group">{_e(group)}</p>')
+                for label, title in items:
+                    page = by_title.get(title) if title else None
+                    if page is not None and page.url_path == here:
+                        st.html(f'<p class="mn-here" aria-current="page">{_e(label)}<small>you are here</small></p>')
+                    elif page is not None:
+                        st.page_link(page, label=label)
+                    elif title == "Reading Plan" and "Learning Plan" in by_title:
+                        st.page_link(by_title["Learning Plan"], label="Reading Plan · off: turn it on in Learning Plan")
+                    else:
+                        st.html(f'<p class="mn-soon">{_e(label)}<small>{NOT_YET}</small></p>')
 
 
 def _e(text) -> str:
