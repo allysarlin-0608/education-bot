@@ -191,6 +191,43 @@ class App:
             path.write_text(json.dumps({"version": 1, "entries": [e for e in have if (e["date"], e["topic"]) not in keep]
                                         + entries}))
 
+    def user_id(self, email):
+        """The id her rows are kept under (the personal app has one person)."""
+        if self.mode == "personal":
+            return "e2e-owner"
+        if self.mode == "api":
+            return self.api_sql("select id from users where email = :e", e=email.lower())[0]["id"]
+        return next(u["id"] for u in self.get("/__dump")["users"] if u["email"] == email.lower())
+
+    def seed_settings(self, email, row):
+        """Her settings row (coach/settings.py's shape), straight into this
+        app's store: someone who set up before (the built-in subjects aren't
+        offered to new learners any more, but people already learning them
+        keep them)."""
+        from datetime import datetime, timezone
+        uid = self.user_id(email)
+        try:                               # (the app's clock, as harness/app_entry.fake_now_iso: her first day)
+            c = json.loads((self.state / "clock.json").read_text())
+            when = datetime.fromisoformat(f'{c["date"]}T{c.get("time", "02:00:00")}+00:00').isoformat()
+        except (FileNotFoundError, ValueError, KeyError):
+            when = datetime.now(timezone.utc).isoformat()
+        row = {"user_id": uid, "units_per_day": 3, "subject_levels": {}, "reading_enabled": False,
+               "onboarding": None, "onboarded_at": when, "updated_at": when, **row}
+        row["subject_levels"] = row["subject_levels"] or {t: "Beginner" for t in row["subjects"]}
+        if self.mode == "personal":
+            (self.state / "user_settings.json").write_text(json.dumps({"user_settings": [row]}))
+        elif self.mode == "public":
+            self.post("/__seed", {"user_settings": [row]})
+        else:
+            for t in ("user_settings", "user_subjects", "subject_levels"):
+                self.api_sql(f"delete from {t} where user_id = :u", u=uid)
+            self.api_sql("insert into user_settings (user_id, units_per_day, reading_enabled, onboarded_at, updated_at) "
+                         "values (:u, :n, :r, :w, :w)", u=uid, n=row["units_per_day"], r=row["reading_enabled"], w=when)
+            for k, t in enumerate(row["subjects"]):
+                self.api_sql("insert into user_subjects (user_id, subject, position) values (:u, :t, :k)", u=uid, t=t, k=k)
+                self.api_sql("insert into subject_levels (user_id, subject, level) values (:u, :t, :l)",
+                             u=uid, t=t, l=row["subject_levels"][t])
+
     def log_text(self):
         return self.log_path.read_text(errors="replace")
 

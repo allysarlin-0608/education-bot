@@ -41,8 +41,8 @@ def no_goals():
     ("Read a company's financial statements", True),
     ("hi", False),                                  # too short to plan
     ("x" * (paths.GOAL_MAX_CHARS + 1), False),     # too much at once
-    ("business", False),                            # a field, not a goal
-    ("learn history", False),
+    ("business", True),                             # a whole field: planned as an overview
+    ("learn history", True),
     ("history of Japan before a trip", True),
 ])
 def test_a_goal_is_looked_at_before_any_ai_call(text, ok):
@@ -347,34 +347,43 @@ def test_goals_that_couldnt_be_read_stay_in_her_turns():
         catalog.bind(*was)
 
 
-@pytest.mark.parametrize("old, now", [(1, "subjects"), (2, "customize"), (3, "customize"), (4, "reading"),
-                                      (5, "review")])
+@pytest.mark.parametrize("old, now", [(1, "want"), (2, "confirm"), (3, "confirm"), (4, "purpose"),
+                                      (5, "confirm")])
 def test_a_setup_draft_from_before_goals_opens_on_the_same_step(old, now):
     d = settings.draft_of(dict(settings.blank("u"), onboarding={"step": old, "subjects": ["cosmos"]}))
     assert settings.STEPS[d["step"]] == now
 
 
-@pytest.mark.parametrize("old, now", [(0, "welcome"), (1, "goal"), (2, "path"), (3, "subjects"), (4, "customize"),
-                                      (5, "customize"), (6, "reading"), (7, "review")])
+@pytest.mark.parametrize("old, now", [(0, "identity"), (1, "want"), (2, "scope"), (3, "want"), (4, "confirm"),
+                                      (5, "confirm"), (6, "purpose"), (7, "confirm")])
 def test_a_setup_draft_from_before_plans_opens_on_the_same_step(old, now):
     d = settings.draft_of(dict(settings.blank("u"), onboarding={"step": old, "goal": {"text": "x"}}))
-    assert settings.STEPS[d["step"]] == now and d["plan"] is None, "(her plan is asked: the setup goes back to it)"
+    assert settings.STEPS[d["step"]] == now
 
 
-def test_a_draft_keeps_its_plan_and_her_order_of_turns():
+@pytest.mark.parametrize("old, now", [(0, "identity"), (1, "identity"), (2, "want"), (3, "want"), (4, "purpose"),
+                                      (6, "confirm"), (8, "scope"), (9, "confirm")])
+def test_a_setup_draft_from_before_the_new_questions_opens_where_it_now_is(old, now):
+    d = settings.draft_of(dict(settings.blank("u"), onboarding={"v": 2, "step": old}))
+    assert settings.STEPS[d["step"]] == now
+
+
+def test_a_draft_keeps_who_she_is_and_what_she_chose():
     p = a_path()
-    saved = dict(settings.new_draft(), step=settings.STEPS.index("price"), plan="plus", subjects=["cosmos", "philosophy"],
-                 path=p, path_original=p, goal_at=1)
+    saved = dict(settings.new_draft(), step=settings.STEPS.index("purpose"), identity="Retired", knows=False,
+                 exploring=True, explore=["Society", "Economics"], scope="some", purpose="For a trip",
+                 path=p, path_original=p)
     d = settings.draft_of(dict(settings.blank("u"), onboarding=saved))
-    assert settings.STEPS[d["step"]] == "price" and d["plan"] == "plus"
-    assert settings.rotation(d) == ["cosmos", settings.GOAL, "philosophy"]
-    d = settings.move_turn(d, "philosophy", -2)
-    assert settings.rotation(d) == ["philosophy", "cosmos", settings.GOAL]
-    d = settings.move_turn(d, settings.GOAL, -9)                     # (as far as it goes)
-    assert settings.rotation(d) == [settings.GOAL, "philosophy", "cosmos"]
-    d["levels"] = {}
+    assert settings.STEPS[d["step"]] == "purpose"
+    assert (d["identity"], d["exploring"], d["explore"], d["scope"], d["purpose"]) == \
+        ("Retired", True, ["Society", "Economics"], "some", "For a trip")
+    bad = settings.draft_of(dict(settings.blank("u"), onboarding={"v": 3, "step": 9, "scope": "half",
+                                                                 "identity": "x" * 99, "explore": "Arts"}))
+    assert bad["scope"] is None and len(bad["identity"]) == 60 and bad["explore"] == []
+    assert settings.STEPS[bad["step"]] == "confirm"
+    catalog.use([p])
     done = settings.finish(settings.blank("u"), d, "2026-10-09T00:00:00+00:00")
-    assert done["subjects"] == [p["id"], "philosophy", "cosmos"], "saved in her order"
+    assert done["subjects"] == [p["id"]] and not settings.errors(done)
 
 
 def test_the_weekly_average_rounds_as_the_database_does():

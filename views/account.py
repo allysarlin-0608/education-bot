@@ -12,7 +12,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import auth, metrics, plans, storage, ui
+from coach import auth, directions, metrics, plans, storage, ui
 
 st.html('<div id="settings-page" hidden></div>')        # (the same quiet sections as Learning Plan)
 st.markdown("## Account")
@@ -29,6 +29,27 @@ with st.container(key="set_sec_profile"):
     else:
         st.html('<p class="ob-note">This is your personal GNOSIS: there is no account to sign in to, '
                 "and your learning is kept with this app.</p>")
+
+# ---------- About you: who she said she is in the setup (fewer questions later) ----------
+OTHER = "Something else"
+
+
+def set_identity() -> None:
+    pick = st.session_state.get("acct_identity")
+    own = str(st.session_state.get("acct_identity_own") or "").strip()[:60]
+    ui.update_prefs(identity=own if pick == OTHER else ("" if pick == "Not set" else pick))
+
+
+with st.container(key="set_sec_about"):
+    st.markdown("#### About you")
+    now = ui.prefs().get("identity", "")
+    options = ["Not set", *directions.IDENTITIES, OTHER]
+    st.session_state.setdefault("acct_identity", now if now in directions.IDENTITIES else (OTHER if now else "Not set"))
+    st.selectbox("Who you are", options, key="acct_identity", on_change=set_identity)
+    if st.session_state.get("acct_identity") == OTHER:
+        st.session_state.setdefault("acct_identity_own", "" if now in directions.IDENTITIES else now)
+        st.text_input("In a few words", key="acct_identity_own", max_chars=60, on_change=set_identity)
+    st.html('<p class="ob-note">It shapes the ideas and goals suggested when you add something to learn.</p>')
 
 # ---------- Subscription (only once plans are shown: coach/plans.SHOWN) ----------
 if plans.SHOWN:

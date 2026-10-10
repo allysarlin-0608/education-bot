@@ -15,7 +15,7 @@ SEEN_LIMIT = 200          # milestones remembered (the oldest go first)
 def blank() -> dict:
     return {"reminder_on": False, "reminder_time": DEFAULT_TIME, "reminder_email": False,
             "light_day": "", "seen": [], "seen_init": False, "week_seen": "", "reminded_on": "", "reminder_hit": "",
-            "practice": None, "practice_made": "", "plan_choice": ""}
+            "practice": None, "practice_made": "", "plan_choice": "", "identity": ""}
 
 
 def normalize(row) -> dict:
@@ -32,6 +32,9 @@ def normalize(row) -> dict:
     for key in ("light_day", "week_seen", "reminded_on", "reminder_hit", "practice_made", "plan_choice"):
         if isinstance(row.get(key), str) and len(row[key]) <= 12:
             p[key] = row[key]
+    # who she said she is in the setup (coach/directions.py), or her own words
+    if isinstance(row.get("identity"), str):
+        p["identity"] = row["identity"].strip()[:60]
     if isinstance(row.get("seen"), list):
         p["seen"] = [s for s in row["seen"] if isinstance(s, str) and len(s) <= 120][-SEEN_LIMIT:]
     p["practice"] = practice_set(row.get("practice"))

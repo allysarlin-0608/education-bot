@@ -70,7 +70,7 @@ def test_subjects_add_remove_and_keep_one(public_app, pages):
 
 
 def test_retake_placement_and_cancel(public_app, pages):
-    covers("W-settings-setretake", "W-settings-setcancel", "W-choices-pqnext", "W-choices-pqagain")
+    covers("W-settings-setretake", "W-settings-setcancel", "W-choices-pqnext", "W-choices-pqagain", "W-choices-pqprev")
     app = public_app
     p, email = person(app, pages)
     flows.button(p, "Retake placement quiz")
@@ -83,6 +83,10 @@ def test_retake_placement_and_cancel(public_app, pages):
                "a virtuous person would follow", "God's plan for each person"]  # two wrong
     for k in range(5):
         pick(p, ".st-key-set_sec_level", answers[k])
+        if k == 1:                                        # back one and forward again: the answer is kept
+            flows.button(p, "Previous")
+            assert flows.wait_text(p.page, "QUESTION 1 OF 5")
+            flows.button(p, "Next question")
         flows.button(p, "See my level" if k == 4 else "Next question")
     assert flows.wait_text(p.page, "Philosophy now starts at Intermediate (3 of 5 right).")
     assert settings_row(app, email)["subject_levels"]["philosophy"] == "Intermediate"

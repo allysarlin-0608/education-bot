@@ -1703,6 +1703,14 @@ SETUP = """
 [data-testid="stApp"][data-test-script-state="running"] [data-testid="stMain"] :is(button[kind="primary"], button[kind="primaryFormSubmit"]) {
   pointer-events: none; cursor: progress; opacity: 0.55; transition: opacity 0s linear 0.4s; }
 
+/* ---------- The setup: an outline's lessons, and the sentence of everything she chose ---------- */
+.gm-lessons { margin: 4px 0 var(--space-3); padding-left: 1.5rem; display: grid; gap: 2px; font-size: 0.875rem; line-height: 1.45; color: var(--label-2); }
+.gm-lessons li::marker { color: var(--label-3); }
+[class*="st-key-obs_unit_"], [class*="st-key-gs_unit_"] { border-top: 1px solid var(--line-1); padding-top: var(--space-2); gap: 4px !important; }
+.ob-sentence { margin: 0 0 var(--space-4); font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.375rem; line-height: 1.4; color: var(--label); }
+[class*="st-key-obp_purposes"], [class*="st-key-gp_purposes"] { gap: var(--space-2) !important; }
+[class*="st-key-obp_purposes"] .stButton button, [class*="st-key-gp_purposes"] .stButton button { width: 100%; justify-content: flex-start; min-height: 48px; }
+
 /* ---------- A page that failed: calm, and ways on ---------- */
 .calm-fail { margin: var(--space-6) 0 var(--space-3); }
 .calm-fail-t { margin: 0 0 6px; font-size: 1.125rem; color: var(--label); }

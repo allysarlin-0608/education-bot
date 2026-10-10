@@ -29,7 +29,7 @@ MIN_LESSONS, MAX_LESSONS = 2, 8          # in a unit
 MAX_TOTAL = 48
 MIN_DESIGNED = 4                          # lessons the AI must give; she may then take it down to one
 TITLE_LIMIT, NAME_LIMIT, LESSON_LIMIT, TEXT_LIMIT = 60, 80, 110, 400
-GOAL_MIN_CHARS, GOAL_MAX_CHARS = 8, 300
+GOAL_MIN_CHARS, GOAL_MAX_CHARS = 3, 300
 DESIGN_ATTEMPTS = 2                       # AI calls one new goal may use (a vague goal gets one more after its answer)
 
 # where she is now, in her words → the level the path starts at
@@ -96,10 +96,8 @@ def precheck(goal: str):
         return "Tell us a little more: what would you like to be able to do?"
     if len(text) > GOAL_MAX_CHARS:
         return f"That's a lot to plan at once. Try one goal in a sentence or two (under {GOAL_MAX_CHARS} characters)."
-    words = re.findall(r"[a-zA-Z']+", text.lower())
-    if words and len(words) <= 2 and all(w in VAGUE or w in {"learn", "about", "the", "to", "a", "i", "want"} for w in words):
-        return (f"“{text}” is a big field. What would you like to be able to do with it? "
-                "For example: read a balance sheet, explain how a market works, or plan a first project.")
+    # (a field in a word or two, "history", is planned too: an outline of the
+    # whole, from which she keeps the parts she wants: the setup's scope step)
     return None
 
 
@@ -112,8 +110,12 @@ The goal may be written in any language; write everything you reply in English (
 
 First decide the status:
 - "ok": a clear goal that can be learned in about four weeks of short daily lessons.
-- "clarify": too vague to plan (e.g. "learn business"). Ask 1-2 short questions and give 3 well-shaped goals they could pick instead.
-- "narrow": far too big for a few weeks (e.g. "become a doctor", "learn all of physics"). Explain kindly in one sentence and give 3 first-step goals that fit a few weeks.
+- A whole field named in a word or two ("history", "physics", "investing") is "ok": design an overview of the
+  field, its main parts as units, from the foundations; the learner then keeps the parts they want.
+- "clarify": only when you can't tell what it is about at all (e.g. "stuff I need"). Ask 1-2 short questions and
+  give 3 well-shaped goals they could pick instead.
+- "narrow": a whole career or degree (e.g. "become a doctor"). Explain kindly in one sentence and give 3
+  first-step goals that fit a few weeks.
 - "decline": not something to teach here: instructions that could cause harm; a diagnosis, treatment plan or legal advice for the learner's own situation; which stocks or coins to buy; cheating on tests; hateful or sexual content; topics where accuracy can't be ensured (events after 2024, rules that change by region without a source). Explain kindly in one sentence, and give 3 educational alternatives (e.g. "how blood pressure works" instead of "treat my blood pressure").
 
 For "ok", design the path:
@@ -263,62 +265,11 @@ def remove_lesson(path: dict, i: int, k: int) -> dict:
     return dict(path, units=units, updated_at=now_iso())
 
 
-def set_aside(path: dict, original: dict) -> list:
-    """What she has taken out of the path the AI designed, item by item, so
-    each can be brought back on its own: whole parts she skipped
-    {"kind": "unit", "unit": name, "lessons": n}, and single lessons taken
-    out of a part still there {"kind": "lesson", "unit": name, "title": t}
-    (Make it shorter takes lessons out too). In the original's order."""
-    if not original:
-        return []
-    now = {u["name"]: set(u["lessons"]) for u in path["units"]}
-    out = []
-    for u in original["units"]:
-        if u["name"] not in now:
-            out.append({"kind": "unit", "unit": u["name"], "lessons": len(u["lessons"])})
-        else:
-            out += [{"kind": "lesson", "unit": u["name"], "title": t} for t in u["lessons"] if t not in now[u["name"]]]
-    return out
-
-
-def bring_back(path: dict, original: dict, item: dict) -> dict:
-    """The path with one set-aside item back in its place: a part goes back
-    after the part that came before it in the design (at the start if none
-    is left), whole; a lesson goes back into its part in the designed order.
-    Everything else she changed stays as it is."""
-    names = [u["name"] for u in original["units"]]
-    orig = {u["name"]: u for u in original["units"]}
-    units = [dict(u) for u in path["units"]]
-    have = [u["name"] for u in units]
-    if item.get("kind") == "unit" and item.get("unit") in orig and item["unit"] not in have:
-        before = names[:names.index(item["unit"])]
-        at = max((have.index(n) + 1 for n in before if n in have), default=0)
-        units.insert(at, dict(orig[item["unit"]]))
-    elif item.get("kind") == "lesson" and item.get("unit") in have and item.get("title") in orig.get(item["unit"], {}).get("lessons", []):
-        u = units[have.index(item["unit"])]
-        keep = set(u["lessons"]) | {item["title"]}
-        u["lessons"] = [t for t in orig[item["unit"]]["lessons"] if t in keep] + \
-                       [t for t in u["lessons"] if t not in orig[item["unit"]]["lessons"]]
-    else:
-        return path
-    return dict(path, units=units, updated_at=now_iso())
-
-
-def order_note(path: dict, original: dict):
-    """A gentle note when she has put a part before one it was designed to
-    build on (the designed order is foundations first). None when the order
-    keeps the design's; never a block: she may know what she is doing."""
-    if not original:
-        return None
-    rank = {u["name"]: k for k, u in enumerate(original["units"])}
-    seen = []
-    for u in path["units"]:
-        later = [n for n in seen if n in rank and u["name"] in rank and rank[n] > rank[u["name"]]]
-        if later:
-            return (f"“{later[0]}” now comes before “{u['name']}”, which it was designed to build on. "
-                    "That's fine if you know the basics already.")
-        seen.append(u["name"])
-    return None
+def keep_units(original: dict, names) -> dict:
+    """The designed path with only the parts she ticked, in the designed order
+    (at least one part always stays: with none ticked, the whole path)."""
+    keep = [u for u in original["units"] if u["name"] in set(names)]
+    return dict(original, units=keep or list(original["units"]), updated_at=now_iso())
 
 
 def started(log: dict, goal_id: str) -> bool:

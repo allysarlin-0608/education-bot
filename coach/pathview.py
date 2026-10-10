@@ -1,11 +1,10 @@
 """Her learning path, drawn: the order her subjects and goals take turns in
-(one a day), and where each one's course goes first. Shared by the setup's
-Your path step (views/setup.py) and the Learning Path page (views/path.py),
-so both say the same thing the same way. HTML only; no model calls (lesson
+(one a day), and where each one's course goes first, for the Learning Path
+page (views/path.py). HTML only; no model calls (lesson
 titles come from the syllabus, or her goal's path)."""
 from html import escape
 
-from coach import catalog, curriculum, settings
+from coach import catalog, curriculum
 
 SHOWN_UNITS = 3
 
@@ -53,9 +52,3 @@ def outline_html(topic: str, name: str = "", level: str = "", units: list = None
             + (f' <small>· starts at {escape(level)}</small>' if level else "")
             + f'</p><ol class="pv-units">{items}</ol>{tail}</div>')
 
-
-def subject_outline(topic: str, level: str = "") -> str:
-    """A subject of ours (its syllabus file)."""
-    if not curriculum.has_syllabus(topic):
-        return ""
-    return outline_html(topic, level=level or (settings.LEVELS[0]))

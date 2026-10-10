@@ -477,8 +477,9 @@ def clear_goal_draft() -> None:
     """A new goal starts from nothing: the goal part of her draft (words,
     reply, path) is emptied, and so are the New goal page's boxes."""
     refresh_settings()
-    save_settings(dict(config(), onboarding=dict(settings.draft_of(config()), **settings.new_goal_draft())))
-    for k in [k for k in st.session_state if k.startswith(("goal_", "gpath_"))]:
+    save_settings(dict(config(), onboarding=dict(settings.draft_of(config()), scope=None, purpose="",
+                                                 **settings.new_goal_draft())))
+    for k in [k for k in st.session_state if k.startswith(("goal_", "gpath_", "gs_", "gp_"))]:
         del st.session_state[k]
 
 

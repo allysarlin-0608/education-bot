@@ -13,7 +13,7 @@ the model.
 | Pages (UI) | `views/*.py` | draw one page from the session's data; call domain functions; save through `coach.ui` | talk to Supabase or Groq directly; compute progress |
 | UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py`, `pathview.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
 | Config | `clock.py`, `appconfig.py` | the one clock (the learner's timezone, today, now) and the one way to read a setting | depend on Streamlit's UI or on any other module |
-| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
+| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `directions.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
 | AI | `llm.py`, `quizgen.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
 | Data | `storage.py` (file store and Supabase store), `supa_auth.py`, `auth.py`, `session_cookie.py`, `routes.py` | read/write entries, books, settings, usage; sign-in, sessions, invites | trust anything the browser sends without the signed-in user's token |
 | Schema | `supabase/*.sql` | tables, row-level security, the usage function | be changed without the owner's approval |
@@ -40,8 +40,10 @@ the model.
   `user_settings.subjects`. Its outline is fixed once its first lesson is
   written (lesson numbers are positions); before that she adjusts it freely.
 - **learner_prefs** (`goals.sql`): her habit preferences (Phase 2),
-  today's practice set where she left it (Phase 3), and the plan she chose
-  in the setup (`plan_choice`).
+  today's practice set where she left it (Phase 3), who she said she is in
+  the setup (`identity`, at most 60 characters; changeable in Account), and
+  a plan chosen in an earlier setup (`plan_choice`). Stored as JSON: no
+  schema change.
 - **learning_signals** (`mastery.sql`): per person, per day, a count of
   nine learning events (Phase 3, below), added only through
   `add_learning_signal()`; admins read totals through `gnosis_metrics()`.
@@ -91,21 +93,23 @@ the sidebar all use them.
 ## A goal of her own (Phase 1)
 
 - **Making it** (`goalmaker.py`, used by the setup and `views/goal.py`): her
-  words, why, where she is, how much time → one AI call
+  words (a whole field in a word or two is fine: it gets an overview of its
+  main parts), where she is, how much time → one AI call
   (`paths.design_messages`, `tokens.PATH_MAX_TOKENS`) → `paths.read_design`:
   a path, or a kind answer (clarify, narrow, decline) with goals that fit.
-  A goal too short or too vague is answered before any call
+  A goal too short or too long is answered before any call
   (`paths.precheck`). The same answers are never designed twice (the reply
   is kept with the answers it was for, saved before anything is drawn); a
   goal may be asked about once more with her answer
   (`paths.DESIGN_ATTEMPTS`). Every call counts toward her daily allowance.
 - **The draft** (her words, the reply, the path being adjusted) lives in
   `user_settings.onboarding` (`settings.goal_draft_of`), so a refresh or
-  another tab keeps it. Adjusting (depth, shorter, skip/move a part, remove a
-  lesson) never calls the AI.
-- **Her turns**: a new goal goes first in the setup unless she moves it
-  (Customize), and from the New goal page takes today's turn when today
-  isn't started (`settings.add_goal`).
+  another tab keeps it. Then `goalmaker.scope`: all of it, or only the parts
+  she ticks (`paths.keep_units`, from the designed outline: nothing is lost),
+  and `goalmaker.purpose`: what it's for (goals that fit who she is, her own
+  words, or "all of it"), saved as the path's `why`. Neither calls the AI.
+- **Her turns**: a goal from the setup is her first turn; from the New goal
+  page it takes today's turn when today isn't started (`settings.add_goal`).
 - **Lessons** for a goal (`core.goal_section`): her goal and reasons, the
   path, well-established knowledge only, sources named for important facts,
   no personal medical/legal/financial advice; lesson 1 is short with a small
@@ -122,24 +126,25 @@ steps her answers call for, `settings.STEPS` names them all):
 
 | # | Step | Does | Reuses |
 |---|---|---|---|
-| 1 | Welcome | what GNOSIS is | — |
-| 2 | Plans | Free / Plus side by side, one chosen | `plans.py`, `choices.rows` |
-| 3 | Courses & subjects | our subjects within the plan's limit; or a goal of her own (sub-step Your goal: the AI designs its path) | `stage`, `choices.rows`, `goalmaker.form` |
-| 4 | Reading plan | only on a plan that includes it; optional | the reading toggle |
-| 5 | Your selection | what she chose, each part changeable | `ob-summary` |
-| 6 | Price summary | plan, what's included, extra costs (none), due today (0); no payment exists, nothing is charged | `plans.py` |
-| 7 | Customize | time each day, how often (every day: fixed for now), the order of her turns (`settings.move_turn`), each subject's start (placement) | `choices.rows`, `choices.placement` |
-| 8 | Your path | the order of her days, each course's first parts, her goal's path to adjust | `pathview.py`, `goalmaker.review` |
-| 9 | Final review | everything, with ways back to change it | — |
-| 10 | Start learning | `settings.finish` → her goal saved, settings saved (`onboarded_at`), `prefs.plan_choice` kept; her first day opens | `ui.save_path`, `ui.save_settings` |
+| 1 | About you | who she is (Student, Working adult, Changing careers, Retired, Learning for the love of it, or her words); skipped only by ticking "I know exactly what I want to learn". Kept as `prefs.identity`, changeable in Account | `directions.IDENTITIES`, `choices.rows` |
+| 2 | What to learn | her words; ideas shown first fit who she is (`directions.IDEAS`); "I don't know yet" → Explore | `goalmaker.form` |
+| 2b | Find a topic | broad directions (Languages, Math, Natural science, Society, Arts, Technology), then narrower, a third level where useful; the last choice becomes her words and is designed at once | `directions.narrower`, `directions.topic_of` |
+| 3 | All of it, or some parts | the outline and its number of lessons; all of it, or tick the parts | `goalmaker.scope` |
+| 4 | What it's for | goals that fit who she is, her words, or (ticked) "I want to learn all of it" | `goalmaker.purpose`, `directions.purposes` |
+| 5 | Confirm | one sentence of everything, each part changeable and straight back; pace is Steady (3 a day), changeable in Learning Plan; Start learning → `settings.finish`, her goal saved with its purpose, `prefs.identity` kept; her first day opens | `ui.save_path`, `ui.save_settings` |
 
-The draft (`settings.draft_of`, version `DRAFT_VERSION`) is kept in
-`user_settings.onboarding` at every answer, so Back, a change from the
-review or a refresh never loses anything. Drafts from earlier setups open at
-the same place under the new step names (`settings._step_of`). A plan that
-doesn't include the reading plan switches it off in the draft. The chosen
-plan is what she asked for (`prefs.plan_choice`), not a subscription: her
-plan stays Free (`plans.plan_of`) until payments exist.
+One AI call per goal (the outline). Our built-in subjects are not offered to
+new learners; anyone already learning one keeps them (Learning Plan's
+Subjects section and Courses' "More subjects" show only when
+`settings.builtin_offered`). Reading and the placement check are no longer
+asked in the setup (both stay in Learning Plan).
+
+The draft (`settings.draft_of`, version `DRAFT_VERSION` 3) is kept in
+`user_settings.onboarding` at every answer, so Back, a change from Confirm
+or a refresh never loses anything. Drafts from earlier setups open at the
+nearest new step (`settings.MOVED`, `settings._step_of`). The setup's
+widgets are always drawn from the draft (not from a widget's remembered
+value), so a step left and come back to shows her answers as kept.
 
 **The navigation** (`gnosis.py`, `coach/topnav.py`): the bar holds the pages
 of every day (Home, Review, Reading, Record, Plan); **Menu** holds every part,
@@ -163,8 +168,7 @@ Portfolio, Certificates. On a phone the bar holds Home, Review and Menu;
 everything else is in the Menu by its full name.
 
 **Plans** are hidden while `plans.SHOWN` is off (env `PLANS_SHOWN=1` shows
-them): the setup then has no Plans or Price step and no plan row, and
-Account has no Subscription section.
+them): Account then has a Subscription section. The setup never asks for a plan.
 
 **State rules** (ISS-062…064): a finished setup is never given a draft
 (`setup.put`); every run, a goal her settings name but the session lacks

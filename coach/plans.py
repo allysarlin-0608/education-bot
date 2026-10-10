@@ -2,10 +2,10 @@
 everyone has the app's own limits (settings.MAX_GOALS, the reading plan)
 whatever plan she chose, and nothing is charged.
 
-The setup (views/setup.py) lets her choose a plan and shows what it
-includes. The choice is kept with her preferences (prefs "plan_choice") as
-what she asked for; her plan stays "free" (plan_of) until plans are stored
-with accounts and paid through a real payment service.
+The setup no longer asks for a plan. A plan chosen in an earlier setup is
+kept with her preferences (prefs "plan_choice") as what she asked for; her
+plan stays "free" (plan_of) until plans are stored with accounts and paid
+through a real payment service.
 
 The plan names and what each includes are a proposal (PRODUCT_PLAN.md §3);
 the reading plan as a paid feature follows the site-structure brief. Prices
@@ -18,8 +18,7 @@ import os
 from coach import settings
 
 ENFORCED = False
-# Plans and prices on the pages (the setup's Plans and Price steps, the plan in
-# the review, Account → Subscription). Off until plans and prices are decided
+# Plans and prices on the pages (Account → Subscription, the menu). Off until plans and prices are decided
 # and payments exist: until then nobody sees a plan or a price, and everyone
 # has every feature (ENFORCED is False). PLANS_SHOWN=1 shows them (testing).
 SHOWN = os.environ.get("PLANS_SHOWN") == "1"

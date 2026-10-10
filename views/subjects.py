@@ -15,8 +15,8 @@ mine = settings.shown_subjects(config)
 
 st.html('<div id="settings-page" hidden></div>')        # (quiet sections on hairlines, as Learning Plan)
 st.markdown("## Subjects & Courses")
-st.caption("Every course you can take. Each subject has a course of short lessons in order; a goal of your own "
-           "has the path designed for it. What you learn each day is chosen in Learning Plan.")
+st.caption("Your courses: each is a series of short lessons in order. To learn something new, add a goal "
+           "in Learning Plan.")
 
 
 def describe(t: str) -> str:
@@ -55,7 +55,7 @@ with st.container(key="set_sec_mine"):
         course_row(t, "mine", True)
 
 rest = [t for t in settings.SUBJECTS if t not in mine]
-if rest:
+if rest and settings.builtin_offered(config, log):         # (new learners: their own goals only)
     with st.container(key="set_sec_more"):
         st.markdown("#### More subjects")
         for t in rest:

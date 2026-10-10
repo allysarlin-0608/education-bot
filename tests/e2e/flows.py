@@ -114,6 +114,7 @@ def open_app(p, app, path="/"):
 
 
 def personal_sign_in(p, app):
+    p.app, p.email = app, ""
     open_app(p, app)
 
 
@@ -122,6 +123,7 @@ def public_sign_in(p, app, email, password=PASSWORD, create=True):
     signed in through the real sign-in form."""
     if create:
         app.post("/__user", {"email": email, "password": password})
+    p.app, p.email = app, email          # (for onboard: whose settings)
     open_app(p, app)
     p.page.get_by_label("Email", exact=True).fill(email)
     p.page.get_by_label("Password", exact=True).fill(password)
@@ -142,41 +144,50 @@ def admin_sign_in(p, app):
 
 
 # ---- setup ------------------------------------------------------------------
-def to_subjects(p, plan="Free"):
-    """From the welcome (past the plans, when they are shown) to the courses and subjects."""
+# the built-in subjects (people already learning them keep them; new learners
+# aren't offered them): their names on the pages → their ids
+SUBJECT_IDS = {"Philosophy": "philosophy", "Astronomy": "cosmos", "Stocks, Investing & Crypto": "investing",
+               "Business Planning": "business", "Fashion & Clothing": "fashion", "Jewelry & Craft": "jewelry",
+               "General Knowledge": "free"}
+PACES = {"Light": 1, "Steady": 3, "Focused": 5}
+
+
+def to_goal(p, identity="Working adult"):
+    """From who she is (asked once) to what she wants to learn."""
+    button(p, identity)
     button(p, "Get started")
-    if p.page.get_by_text("Choose a plan", exact=True).count():
-        button(p, plan)
-        button(p, "Continue")
-
-
-def to_goal(p, plan="Free"):
-    """From the welcome to a goal of her own."""
-    to_subjects(p, plan)
-    button(p, "Or set a goal of your own")
 
 
 def onboard(p, subjects=("Philosophy",), pace=None, reading=False):
-    """The whole setup: subjects, the reading plan (on or skipped), then on
-    through each step to Start learning (a plan and its price only when
-    plans are shown)."""
-    to_subjects(p, "Plus" if reading else "Free")
-    for s in subjects:
-        button(p, s)
-    button(p, "Continue")                  # subjects
-    if reading:
-        p.page.locator('[data-testid="stToggle"] input, [role="switch"]').first.check(force=True)
-        idle(p.page)
-        button(p, "Continue")              # reading plan
-    elif p.page.get_by_role("button", name="Skip for now").count():
-        button(p, "Skip for now")          # reading plan, not now
-    button(p, "Continue")                  # your selection
-    if p.page.get_by_text("Price summary", exact=True).count():
-        button(p, "Continue")              # price summary
-    if pace:
-        button(p, pace)
-    button(p, "Continue")                  # customize
-    button(p, "Continue")                  # your path
+    """Someone already learning these subjects: her settings, as a setup
+    finished before (the setup itself no longer offers our subjects; it is
+    walked through in test_setup.py and test_goals.py). Then the app, fresh."""
+    p.app.seed_settings(p.email, {"subjects": [SUBJECT_IDS[s] for s in subjects],
+                                  "units_per_day": PACES.get(pace, 3), "reading_enabled": bool(reading)})
+    open_app(p, p.app)
+
+
+def set_up_goal(p, goal="Read a company's financial statements", identity="Working adult", each=None):
+    """The setup, as a new learner walks it: who she is, what she wants to
+    learn (designed by the fake model), all of it, what it's for, Start
+    learning. each(name): called on every step, before leaving it."""
+    each = each or (lambda name: None)
+    each("identity")
+    to_goal(p, identity)
+    each("want")
+    p.page.get_by_label("In your own words").fill(goal)
+    button(p, "Design my path")
+    wait_text(p.page, "All of it, or some parts?", 40)
+    tap(p, p.page.get_by_text("Yes, all of it", exact=True))
+    idle(p.page)
+    each("scope")
+    button(p, "Continue")
+    tap(p, p.page.locator('[class*="st-key-obp_pp_0"] button').first)       # (the first goal offered)
+    idle(p.page)
+    each("purpose")
+    button(p, "Continue")
+    wait_text(p.page, "Is this right?")
+    each("confirm")
     button(p, "Start learning")
     idle(p.page, 30)
 

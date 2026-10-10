@@ -128,21 +128,27 @@ def now_iso() -> str:
 # The setup in progress (kept in the row until it's finished)
 # ------------------------------------------------------------
 # The setup's steps (views/setup.py: route() picks the ones her answers call for):
-# Welcome, Plans, the subjects (and a goal of her own), Reading (a plan that
-# includes it), Your selection, Price, Customize, Your path, Final review;
-# Start learning is the review's button.
-STEPS = ("welcome", "plans", "subjects", "goal", "reading", "selection", "price", "customize", "path", "review")
-DRAFT_VERSION = 2
+# who she is; what she wants to learn (in her words, or found among broad
+# directions: explore); all of it or some parts (scope); what it's for
+# (purpose); and a confirmation, whose button is Start learning.
+STEPS = ("identity", "want", "explore", "scope", "purpose", "confirm")
+DRAFT_VERSION = 3
 # drafts saved by earlier setups: their steps, and where each now is
+V2_STEPS = ("welcome", "plans", "subjects", "goal", "reading", "selection", "price", "customize", "path", "review")
 V1_STEPS = ("welcome", "goal", "path", "subjects", "pace", "level", "reading", "summary")
 OLD_STEPS = ("welcome", "subjects", "pace", "level", "reading", "summary")      # (drafts saved before goals)
-MOVED = {"pace": "customize", "level": "customize", "summary": "review"}
+MOVED = {"welcome": "identity", "plans": "identity", "subjects": "want", "goal": "want", "path": "scope",
+         "reading": "purpose", "selection": "confirm", "price": "confirm", "customize": "confirm",
+         "review": "confirm", "pace": "confirm", "level": "confirm", "summary": "confirm"}
 GOAL = "goal"           # the goal being made, in the draft's order of turns
+SCOPES = ("all", "some")
 
 
 def new_draft() -> dict:
     return {"v": DRAFT_VERSION, "step": 0, "plan": None, "subjects": [], "units_per_day": DEFAULT_PACE, "levels": {},
-            "reading_enabled": False, "want_goal": False, "goal_at": 0, "back_to": None, **new_goal_draft()}
+            "reading_enabled": False, "want_goal": False, "goal_at": 0, "back_to": None,
+            "identity": "", "knows": False, "exploring": False, "explore": [], "scope": None, "purpose": "",
+            **new_goal_draft()}
 
 
 def new_goal_draft() -> dict:
@@ -183,6 +189,13 @@ def draft_of(s: dict) -> dict:
     if isinstance(saved.get("goal_at"), int) and saved["goal_at"] >= 0:
         d["goal_at"] = saved["goal_at"]
     d["back_to"] = saved.get("back_to") if saved.get("back_to") in STEPS else None    # (a change from the review)
+    d["identity"] = str(saved.get("identity") or "")[:60]
+    d["knows"] = saved.get("knows") is True
+    d["exploring"] = saved.get("exploring") is True
+    if isinstance(saved.get("explore"), list):
+        d["explore"] = [str(x)[:60] for x in saved["explore"]][:3]
+    d["scope"] = saved.get("scope") if saved.get("scope") in SCOPES else None
+    d["purpose"] = str(saved.get("purpose") or "")[:paths.TEXT_LIMIT]
     if isinstance(saved.get("subjects"), list):
         d["subjects"] = [t for t in dict.fromkeys(saved["subjects"]) if t in SUBJECTS][:MAX_SUBJECTS]
     if saved.get("units_per_day") in PACES:
@@ -200,30 +213,18 @@ def _step_of(saved: dict) -> int:
     step = saved["step"]
     if saved.get("v") == DRAFT_VERSION:
         return min(max(step, 0), len(STEPS) - 1)
-    old = V1_STEPS if "goal" in saved else OLD_STEPS
+    old = V2_STEPS if saved.get("v") == 2 else V1_STEPS if "goal" in saved else OLD_STEPS
     name = old[min(max(step, 0), len(old) - 1)]
     return STEPS.index(MOVED.get(name, name))
 
 
 def rotation(d: dict) -> list:
-    """Her turns, in order: the chosen subjects, with the goal being made
-    (GOAL) where she put it (first unless she moved it)."""
+    """Her turns, in order: the goal being made (GOAL) first, then any
+    subjects in the draft (a draft from an earlier setup may have some)."""
     items = list(d["subjects"])
     if d.get("path"):
         items.insert(min(d.get("goal_at", 0), len(items)), GOAL)
     return items
-
-
-def move_turn(d: dict, item: str, k: int) -> dict:
-    """The draft with one of her turns moved k places (earlier: -1)."""
-    items = rotation(d)
-    if item not in items:
-        return d
-    i = items.index(item)
-    j = max(0, min(i + k, len(items) - 1))
-    items.insert(j, items.pop(i))
-    return dict(d, subjects=[t for t in items if t != GOAL],
-                goal_at=items.index(GOAL) if GOAL in items else d.get("goal_at", 0))
 
 
 def toggle_subject(subjects: list, topic: str) -> list:
@@ -361,6 +362,15 @@ def add_goal(s: dict, goal_id: str, when: str, first_day: date = None, tz=None) 
     else:
         items.append(goal_id)
     return dict(s, subjects=items, updated_at=when)
+
+
+def builtin_offered(s: dict, log: dict = None) -> bool:
+    """Our built-in subjects are offered only to someone who has learnt one
+    of them (chosen now, or in her record): since anything can be learnt
+    from her own words, a new learner isn't shown a fixed list."""
+    if is_legacy(s) or any(t in SUBJECTS for t in s.get("subjects") or []):
+        return True
+    return any(e.get("topic") in SUBJECTS for e in (log or {}).get("entries", []))
 
 
 def shown_subjects(s: dict) -> list:

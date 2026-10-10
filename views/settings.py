@@ -85,41 +85,43 @@ problem = st.session_state.pop("set_problem", "")
 
 # ---------- Subjects ----------
 # the same stage as the setup's: the subject in focus, and the way into its world
-with st.container(key="set_sec_subjects"):
-    st.markdown("#### Subjects")
-    chosen = settings.chosen_subjects(config)
-    builtin = [t for t in chosen if t in settings.SUBJECTS]       # (her goals have their own section)
-    # the subject in focus: the one she touched last, else the one the address
-    # names (a link from a world). The address isn't rewritten to follow it:
-    # Streamlit adds a browser history step for every such change, so Back
-    # would walk through them instead of leaving the page.
-    asked = st.query_params.get("subject")
-    looked = st.session_state.get("set_focus")
-    focus = stage.focus_of(looked if looked in settings.SUBJECTS else asked, builtin)
-    st.session_state.set_focus = focus
-    with st.container(key="set_grid_subjects"):
-        with st.container(key="set_stage"):
-            st.html(stage.html(focus, "setsubj"))
-            # the ways into a subject are for hers; one not chosen is added by tapping its row
-            if focus in builtin:
-                with st.container(key="set_links", horizontal=True):
-                    with st.container(key=f"enter_{focus}", horizontal=True):
-                        if st.button(f"Enter {visuals.subject(focus)['title']}", type="tertiary", key="set_world"):
-                            ui.enter_world(focus)
-                    if st.button("Course map", type="tertiary", key="set_course"):
-                        ui.open_course(focus)
-            else:
-                st.html(f'<p class="ob-note set-notyet">Not in your days yet. Tap '
-                        f'{escape(visuals.subject(focus)["title"])} in the list to add it.</p>')
-        with st.container(key="set_body"):
-            # (each row's day is its place among all her turns, goals included)
-            choices.rows("setsubj", stage.rows(), chosen, pick_subject, multi=True,
-                         full=len(builtin) >= settings.MAX_SUBJECTS, focus=focus, style="index")
-            order = " → ".join(catalog.name(t) for t in chosen)
-            st.html(f'<p class="ob-note">{len(builtin)} of {settings.MAX_SUBJECTS} · one a day, in this order: {escape(order)}</p>'
-                    + (f'<p class="ob-note">{escape(problem)}</p>' if problem else "")
-                    + ('<p class="ob-note set-kept">Your existing learning history will be preserved.</p>'
-                       if st.session_state.get("set_subjects_changed") else ""))
+offered = settings.builtin_offered(config, st.session_state.coach_log)     # (new learners: their own goals only)
+chosen = settings.chosen_subjects(config)
+builtin = [t for t in chosen if t in settings.SUBJECTS]       # (her goals have their own section)
+if offered:
+    with st.container(key="set_sec_subjects"):
+        st.markdown("#### Subjects")
+        # the subject in focus: the one she touched last, else the one the address
+        # names (a link from a world). The address isn't rewritten to follow it:
+        # Streamlit adds a browser history step for every such change, so Back
+        # would walk through them instead of leaving the page.
+        asked = st.query_params.get("subject")
+        looked = st.session_state.get("set_focus")
+        focus = stage.focus_of(looked if looked in settings.SUBJECTS else asked, builtin)
+        st.session_state.set_focus = focus
+        with st.container(key="set_grid_subjects"):
+            with st.container(key="set_stage"):
+                st.html(stage.html(focus, "setsubj"))
+                # the ways into a subject are for hers; one not chosen is added by tapping its row
+                if focus in builtin:
+                    with st.container(key="set_links", horizontal=True):
+                        with st.container(key=f"enter_{focus}", horizontal=True):
+                            if st.button(f"Enter {visuals.subject(focus)['title']}", type="tertiary", key="set_world"):
+                                ui.enter_world(focus)
+                        if st.button("Course map", type="tertiary", key="set_course"):
+                            ui.open_course(focus)
+                else:
+                    st.html(f'<p class="ob-note set-notyet">Not in your days yet. Tap '
+                            f'{escape(visuals.subject(focus)["title"])} in the list to add it.</p>')
+            with st.container(key="set_body"):
+                # (each row's day is its place among all her turns, goals included)
+                choices.rows("setsubj", stage.rows(), chosen, pick_subject, multi=True,
+                             full=len(builtin) >= settings.MAX_SUBJECTS, focus=focus, style="index")
+                order = " → ".join(catalog.name(t) for t in chosen)
+                st.html(f'<p class="ob-note">{len(builtin)} of {settings.MAX_SUBJECTS} · one a day, in this order: {escape(order)}</p>'
+                        + (f'<p class="ob-note">{escape(problem)}</p>' if problem else "")
+                        + ('<p class="ob-note set-kept">Your existing learning history will be preserved.</p>'
+                           if st.session_state.get("set_subjects_changed") else ""))
 
 # ---------- Your goals: her own, each with the path designed for it ----------
 def pause_goal(goal_id: str) -> None:

@@ -36,16 +36,14 @@ def mine(app, email, table):
     return [r for r in d["tables"][table] if r["user_id"] == uid]
 
 
-def write_goal(p, goal, why=""):
+def write_goal(p, goal):
     box = p.page.get_by_label("In your own words")
     box.fill(goal)
-    if why:
-        p.page.get_by_label("Why does it matter to you? (optional)").fill(why)
     p.page.keyboard.press("Tab")
     flows.idle(p.page)
 
 
-def design(p, wait_for="Start over with a different goal"):
+def design(p, wait_for="All of it, or some parts?"):
     flows.button(p, "Design my path", wait=False)
     assert flows.wait_text(p.page, wait_for, 40), f"{wait_for!r} never came"
     flows.idle(p.page)
@@ -58,70 +56,51 @@ def clock(public_app):
 
 
 def test_from_the_first_screen_to_a_first_lesson_made_for_her(public_app, pages):
-    covers("W-setup-ob_next", "W-goalmaker-k_key_text", "W-goalmaker-k_key_why", "W-goalmaker-k_key_start",
-           "W-goalmaker-k_key_design", "AI-goalmaker-ask_json", "W-goalmaker-k_key_f_skip_i",
-           "W-goalmaker-k_key_f_down_i", "W-goalmaker-k_key_level", "W-goalmaker-k_key_f_rmpop_i",
-           "W-goalmaker-k_key_f_rm_i_k", "W-goalmaker-k_key_lighter", "W-goalmaker-k_key_undo", "W-setup-ob_next-2",
-           "D-setup-save_settings")
+    covers("W-setup-ob_next", "W-goalmaker-k_key_text", "W-goalmaker-k_key_start",
+           "W-goalmaker-k_key_design", "AI-goalmaker-ask_json", "W-goalmaker-k_key_scope",
+           "W-goalmaker-k_key_f_part_i", "W-goalmaker-k_key_f_pp_i", "W-setup-ob_next-2", "D-setup-save_settings")
     app = public_app
     app.set_llm()
     p, email = new_person(app, pages)
     flows.to_goal(p)
-    assert flows.wait_text(p.page, "A goal of your own")
-    write_goal(p, GOAL, why="I want to invest my savings well")
+    assert flows.wait_text(p.page, "What do you want to learn?")
+    write_goal(p, GOAL)
     flows.tap(p, p.page.get_by_text("I know the basics", exact=True))
     flows.idle(p.page)
     app.reset_calls()
     design(p)
     t = text(p)
     assert "Reading financial statements" in t and "By the end you will be able to" in t
-    assert "Because: “I want to invest my savings well”" in t, "her reason shows"
-    flows.button(p, "Continue")                     # goal → reading plan
-    flows.button(p, "Skip for now")                 # → your selection
-    assert flows.wait_text(p.page, "Your selection") and "Reading financial statements" in text(p)
-    assert "Price" not in text(p) and "Plus" not in text(p), "no plan or price shown"
-    flows.button(p, "Continue")                     # → customize: her time each day
-    flows.button(p, "Light")
-    flows.button(p, "Continue")                     # → your path
+    assert "16 lessons in 4 parts" in t and "Price" not in t and "Plus" not in t
+    # only some parts: she knows the first one
+    flows.tap(p, p.page.get_by_text("No, only some parts", exact=True))
+    flows.idle(p.page)
+    flows.tap(p, p.page.get_by_text("Part 1: Foundations", exact=False))
+    flows.idle(p.page)
+    assert flows.wait_text(p.page, "You chose 12 of 16 lessons")
+    flows.button(p, "Continue")
+    flows.tap(p, p.page.locator('[class*="st-key-obp_pp_0"] button').first)   # Useful at work
+    flows.idle(p.page)
+    flows.button(p, "Continue")
     t = text(p)
-    assert "16 lessons in 4 parts" in t and "about 16 study days at 1 a day" in t, "sized to her time"
-    # make it hers: skip a part, move one, take a lesson out, deeper, shorter, then undo it all
-    flows.button(p, "I know this: skip it")
-    assert flows.wait_text(p.page, "12 lessons in 3 parts")
-    flows.button(p, "Move down")
-    flows.tap(p, p.page.get_by_role("button", name="Remove a lesson").first)
-    flows.idle(p.page)
-    flows.tap(p, p.page.get_by_role("button", name="Putting it together: idea 1", exact=True))
-    flows.idle(p.page)
-    assert flows.wait_text(p.page, "11 lessons in 3 parts")
-    flows.tap(p, p.page.get_by_text("Advanced", exact=True))
-    flows.idle(p.page)
-    assert flows.wait_text(p.page, "· Advanced ·")
-    flows.button(p, "Undo my changes")
-    assert flows.wait_text(p.page, "16 lessons in 4 parts")
-    flows.button(p, "Make it shorter")
-    assert flows.wait_text(p.page, "12 lessons in 4 parts")
-    flows.button(p, "Continue")                     # path → final review
-    t = text(p)
-    assert "Final review" in t and "Reading financial statements" in t and "Every day" in t
+    assert "Is this right?" in t and "Reading financial statements" in t and "Useful at work" in t
     flows.button(p, "Start learning")
     flows.idle(p.page, 30)
     assert flows.wait_text(p.page, "MADE FOR YOU"), "her first day opens on her goal"
-    assert "Reading financial statements" in text(p)
-    assert len(app.calls("design")) == 1, "one AI call made the path"
+    assert "Reading financial statements" in text(p) and "Because: “Useful at work”" in text(p)
+    assert len(app.calls("design")) == 1, "one AI call made the outline"
     flows.pass_lesson(p)
     assert flows.wait_text(p.page, "First step done. 11 lessons to go"), "a small win, said plainly"
     goals = mine(app, email, "learning_paths")
-    assert len(goals) == 1 and goals[0]["data"]["level"] == "Intermediate" and goals[0]["data"]["why"]
+    assert len(goals) == 1 and goals[0]["data"]["why"] == "Useful at work"
     events = {r["event"]: r["count"] for r in mine(app, email, "usage_events")}
     assert events == {"visit": 1, "setup_done": 1, "goal_created": 1, "lesson_passed": 1}, events
-    lesson_prompt = [c for c in app.calls("lesson")]
-    assert lesson_prompt, "the lesson was written"
+    assert app.calls("lesson"), "the lesson was written"
 
 
 def test_vague_huge_and_unsuitable_goals_are_answered_kindly(public_app, pages):
     covers("W-goalmaker-k_key_answers", "W-goalmaker-k_key_f_sugg_k", "W-goalmaker-k_key_f_idea_group",
-           "W-setup-ob_again", "W-setup-obg", "W-goalmaker-k_key_idea_group", "W-setup-ob_to_goal-2")
+           "W-setup-ob_again", "W-setup-obg", "W-goalmaker-k_key_idea_group")
     app = public_app
     app.set_llm()
     p, email = new_person(app, pages, width=390)
@@ -133,8 +112,9 @@ def test_vague_huge_and_unsuitable_goals_are_answered_kindly(public_app, pages):
     p.page.keyboard.press("Tab")
     flows.idle(p.page)
     design(p)
-    assert "Reading financial statements" not in text(p) and "Start over with a different goal" in text(p)
-    flows.button(p, "Start over with a different goal")
+    assert "Reading financial statements" not in text(p), "her answer made it clear: an outline for that"
+    flows.button(p, "Back")
+    flows.button(p, "Something else")
     assert flows.wait_text(p.page, "Design my path")
     write_goal(p, "Become a doctor")
     design(p, wait_for="Becoming a doctor takes years")
@@ -143,7 +123,7 @@ def test_vague_huge_and_unsuitable_goals_are_answered_kindly(public_app, pages):
     write_goal(p, "hack my school's grade system")
     design(p, wait_for="We can't help with that here")
     assert "Understand how investing works" in text(p), "with what we can teach instead"
-    write_goal(p, "learn")                           # too little to plan: no AI call
+    write_goal(p, "ab")                              # too little to plan: no AI call
     n = len(app.calls("design"))
     flows.button(p, "Design my path")
     assert flows.wait_text(p.page, "Tell us a little more") and len(app.calls("design")) == n
@@ -167,7 +147,7 @@ def test_the_ai_failing_slow_or_clicked_twice_and_a_refresh(public_app, pages):
     app.reset_calls()
     btn = p.page.get_by_role("button", name="Design my path")
     btn.dblclick()
-    assert flows.wait_text(p.page, "Start over with a different goal", 40)
+    assert flows.wait_text(p.page, "All of it, or some parts?", 40)
     flows.idle(p.page)
     assert len(app.calls("design")) == 1, "a second click never asks again"
     app.set_llm()
@@ -190,6 +170,10 @@ def test_a_second_goal_takes_its_turn_and_can_be_paused(public_app, pages, clock
     assert flows.wait_text(p.page, "What do you want to learn?")
     write_goal(p, GOAL)
     design(p, wait_for="Add this goal")
+    flows.tap(p, p.page.get_by_text("Yes, all of it", exact=True))
+    flows.idle(p.page)
+    flows.tap(p, p.page.get_by_text("No particular goal: I want to learn all of it", exact=True))
+    flows.idle(p.page)
     flows.button(p, "Add this goal")
     flows.idle(p.page, 30)
     assert flows.wait_text(p.page, "MADE FOR YOU"), "today is free: the goal starts now"
@@ -232,25 +216,23 @@ def test_insights_for_admins_only(public_app, pages):
     assert "Insights" not in text(q)
 
 
-def test_a_goal_and_three_subjects_can_start_learning(public_app, pages):
-    """ISS-061: her own goal plus three subjects is four entries; Start
-    learning must save them and open her first day (it did nothing where the
-    database still allowed three)."""
-    covers("W-setup-ob_next-2")
+def test_a_goal_added_to_three_subjects_is_saved(public_app, pages):
+    """ISS-061: her own goal plus three subjects is four entries; it must be
+    saved and take its turn (it did nothing where the database still
+    allowed three). Someone already learning three of our subjects."""
+    covers("W-goal-goal_add")
     app = public_app
     app.set_llm()
     p, email = new_person(app, pages, width=1180)
-    flows.to_subjects(p)
-    for s in ("Philosophy", "Astronomy", "Stocks, Investing & Crypto"):
-        flows.button(p, s)
-    flows.button(p, "Or set a goal of your own")
+    flows.onboard(p, subjects=("Philosophy", "Astronomy", "Stocks, Investing & Crypto"))
+    flows.open_app(p, app, "/goal")
     write_goal(p, GOAL)
-    design(p)
-    flows.button(p, "Continue")                         # goal → reading plan
-    flows.button(p, "Skip for now")
-    for _ in range(3):                                  # selection → customize → path → review
-        flows.button(p, "Continue")
-    flows.button(p, "Start learning")
+    design(p, wait_for="Add this goal")
+    flows.tap(p, p.page.get_by_text("Yes, all of it", exact=True))
+    flows.idle(p.page)
+    flows.tap(p, p.page.locator('[class*="st-key-gp_pp_0"] button').first)
+    flows.idle(p.page)
+    flows.button(p, "Add this goal")
     flows.idle(p.page, 30)
     flows.open_app(p, app)
     assert flows.wait_text(p.page, "MADE FOR YOU", 20), text(p)[:600]

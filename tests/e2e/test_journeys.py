@@ -3,7 +3,7 @@ at phone, iPad and desktop widths: every page on the way loads without an
 error, nothing scrolls sideways, each step lands where it should and shows
 what she chose, and the obvious next step is there.
 
-1. Sign in → setup (a subject and a goal of her own) → first lesson → quiz
+1. Sign in → setup (who she is, a goal of her own) → first lesson → quiz
    failed, then passed → the rest of the day → the next day → review, course
    map, knowledge map, record, plan, courses, path, account, practice, week.
 2. Plan: pace, a subject added and taken out, reading on, a goal added,
@@ -40,22 +40,26 @@ def test_a_new_learner_from_sign_in_to_her_second_day(public_app, pages, width):
     app.set_clock(D)
     p = pages(width=width)
     flows.sign_in(p, app, email=f"jny{width}-{int(time.time() * 1000)}@example.com")
-    assert "Learn what you want" in sound(p, "welcome")
+    assert "Who are you?" in sound(p, "welcome")
+    flows.button(p, "Working adult")
     flows.button(p, "Get started")
-    flows.button(p, "Philosophy")
-    flows.button(p, "Or set a goal of your own")
     assert p.page.evaluate("document.querySelector('[data-testid=\"stMain\"]').scrollTop") < 40, \
         "a new step opens at its top"
     p.page.get_by_label("In your own words").fill("Read a company's financial statements")
     p.page.keyboard.press("Tab")
     flows.idle(p.page)
     flows.button(p, "Design my path", wait=False)
-    assert flows.wait_text(p.page, "Start over with a different goal", 40)
-    for step in ("Continue", "Skip for now", "Continue", "Continue", "Continue"):
-        flows.button(p, step)
-        sound(p, step)
-    t = sound(p, "review")
-    assert "Final review" in t and "Reading financial statements → Philosophy" in t
+    assert flows.wait_text(p.page, "All of it, or some parts?", 40)
+    sound(p, "outline")
+    flows.tap(p, p.page.get_by_text("Yes, all of it", exact=True))
+    flows.idle(p.page)
+    flows.button(p, "Continue")
+    sound(p, "what it's for")
+    flows.tap(p, p.page.locator('[class*="st-key-obp_pp_0"] button').first)
+    flows.idle(p.page)
+    flows.button(p, "Continue")
+    t = sound(p, "confirm")
+    assert "Is this right?" in t and "Reading financial statements" in t
     assert "Price" not in t and "Plus" not in t
     flows.button(p, "Start learning")
     flows.idle(p.page, 30)
@@ -75,8 +79,10 @@ def test_a_new_learner_from_sign_in_to_her_second_day(public_app, pages, width):
     app.set_clock(D + timedelta(days=1))
     flows.open_app(p, app)
     t = sound(p, "next day")
-    assert "Philosophy" in t and "Review ·" in t, "the next turn, and what's due"
-    for path, marker in (("/review", "Review"), ("/course?subject=philosophy", "COURSE MAP"),
+    assert "Reading financial statements" in t and "Review ·" in t, "her goal again, and what's due"
+    goal = next(g["data"]["id"] for g in app.get("/__dump")["tables"]["learning_paths"]
+                if g["user_id"] == app.user_id(p.email))
+    for path, marker in (("/review", "Review"), (f"/course?subject={goal}", "COURSE MAP"),
                          ("/skills", "Knowledge Map"), ("/records", "Learning Record"), ("/settings", "Learning Plan"),
                          ("/courses", "Subjects & Courses"), ("/path", "Your next days"), ("/account", "Profile"),
                          ("/practice", "Practice"), ("/week", "Your week")):
@@ -112,6 +118,10 @@ def test_changing_her_plan_and_coming_back_after_signing_out(public_app, pages, 
     flows.idle(p.page)
     flows.button(p, "Design my path", wait=False)
     assert flows.wait_text(p.page, "Add this goal", 40)
+    flows.tap(p, p.page.get_by_text("Yes, all of it", exact=True))
+    flows.idle(p.page)
+    flows.tap(p, p.page.locator('[class*="st-key-gp_pp_0"] button').first)
+    flows.idle(p.page)
     flows.button(p, "Add this goal")
     flows.idle(p.page, 30)
     sound(p, "goal added")

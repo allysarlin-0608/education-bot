@@ -113,11 +113,13 @@ def design(key: str, d: dict, put, pace: int) -> bool:
 
 
 # ------------------------------------------------------------------- the form
-def form(key: str, get, put, *, pace: int = settings.DEFAULT_PACE, skip=None, on_path=None) -> None:
+def form(key: str, get, put, *, pace: int = settings.DEFAULT_PACE, skip=None, on_path=None,
+         ideas: str = None) -> None:
     """What she wants to learn. get() -> the draft; put(d) keeps it. `pace`:
-    the lessons a day the path is sized for (the setup's draft, or her
-    settings; the setup asks it at Customize). skip: (label, callback) for the other way in.
-    on_path(): called once a path is designed (the page moves on to it)."""
+    the lessons a day the path is sized for. skip: (label, callback) for the
+    other way in. on_path(): called once a path is designed (the page moves
+    on to it). `ideas`: the group of ideas shown first (from who she is).
+    What it's for is asked after the path (purpose())."""
     unreadable = getattr(st.session_state.get("coach_store"), "paths_error", None)
     if unreadable:                 # goals can't be kept now: no path is designed for nothing
         st.html(f'<p class="ob-note" role="status">{escape(unreadable)}</p>')
@@ -155,12 +157,11 @@ def form(key: str, get, put, *, pace: int = settings.DEFAULT_PACE, skip=None, on
     with st.container(key=_k(key, "ideas")):
         # one kind of learner's ideas at a time (work, curiosity, study), so the list stays short
         group = st.segmented_control("Or start from an idea", list(paths.SUGGESTIONS), key=_k(key, "idea_group"),
-                                     default=next(iter(paths.SUGGESTIONS)), required=True)
+                                     default=ideas if ideas in paths.SUGGESTIONS else next(iter(paths.SUGGESTIONS)),
+                                     required=True)
         with st.container(key=_k(key, "idea_list")):
             st.pills(group, paths.SUGGESTIONS[group], key=_k(key, f"idea_{group}"), label_visibility="collapsed",
                      on_change=_use_idea, args=(key, group, get, put))
-    st.text_input("Why does it matter to you? (optional)", key=_k(key, "why"), max_chars=paths.TEXT_LIMIT,
-                  placeholder="e.g. I want to start investing this year", on_change=_keep, args=(key, get, put))
     with st.container(key=_k(key, "start_sw")):
         st.segmented_control("Where are you now?", list(paths.STARTS), format_func=lambda s: paths.STARTS[s][0],
                              key=_k(key, "start"), required=True, width="stretch",
@@ -174,32 +175,6 @@ def form(key: str, get, put, *, pace: int = settings.DEFAULT_PACE, skip=None, on
             st.button(skip[0], key=_k(key, "skip"), type="tertiary", on_click=skip[1])
     st.html('<p class="ob-note">One short lesson at a time, written when you reach it. '
             "Lessons teach well-established knowledge, each with links to check it yourself.</p>")
-
-
-# ---------------------------------------------------------- the path, adjusted
-def _change(get, put, how) -> None:
-    d = get()
-    if d.get("path"):
-        d["path"] = how(d["path"])
-        put(d)
-
-
-def _level(key: str, get, put) -> None:
-    level = st.session_state.get(_k(key, "level"))
-    _change(get, put, lambda p: paths.with_level(p, level))
-
-
-def _undo(get, put) -> None:
-    d = get()
-    d["path"] = d["path_original"]
-    put(d)
-
-
-def _bring_back(get, put, item: dict) -> None:
-    d = get()
-    if d.get("path") and d.get("path_original"):
-        d["path"] = paths.bring_back(d["path"], d["path_original"], item)
-        put(d)
 
 
 def again(get, put) -> None:
@@ -221,57 +196,94 @@ def summary_html(p: dict, pace: int, eyebrow: str = "Made for you", title: bool 
             f'about {days} study {"day" if days == 1 else "days"} at {pace} a day</p></div>')
 
 
-def review(key: str, get, put, pace: int) -> None:
-    """The path she got, to adjust before she starts: deeper or gentler,
-    shorter, parts moved or skipped, lessons taken out (no AI call)."""
+# ------------------------------------------------- all of it, or some parts
+def _set_scope(key: str, get, put) -> None:
     d = get()
-    p = d["path"]
-    st.html(summary_html(p, pace))
-    st.session_state[_k(key, "level")] = p["level"]
-    with st.container(key=_k(key, "adjust"), horizontal=True, vertical_alignment="bottom"):
-        st.segmented_control("Depth", list(paths.LEVELS), key=_k(key, "level"), required=True,
-                             on_change=_level, args=(key, get, put))
-        shorter = paths.lighter(p)
-        st.button("Make it shorter", key=_k(key, "lighter"), type="tertiary",
-                  disabled=paths.lesson_count(shorter) == paths.lesson_count(p),
-                  on_click=_change, args=(get, put, paths.lighter))
-        if p["units"] != (d.get("path_original") or {}).get("units") or p["level"] != (d.get("path_original") or {}).get("level"):
-            st.button("Undo my changes", key=_k(key, "undo"), type="tertiary", on_click=_undo, args=(get, put))
-    first = 1
-    with st.container(key=_k(key, "units")):
-        for i, u in enumerate(p["units"]):
+    picked = st.session_state.get(_k(key, "scope"))
+    if picked not in settings.SCOPES:       # (a tap on the one already chosen, or a control coming back
+        return                              # without its value: her answer stays as it is)
+    d["scope"] = picked
+    if d["scope"] == "all" and d.get("path_original"):
+        d["path"] = d["path_original"]               # (all of it: every part, as designed)
+    put(d)
+
+
+def _tick(key: str, get, put) -> None:
+    d = get()
+    orig = d.get("path_original")
+    if orig:
+        names = [u["name"] for i, u in enumerate(orig["units"]) if st.session_state.get(_k(key, f"part_{i}"))]
+        d["path"] = paths.keep_units(orig, names)
+        put(d)
+
+
+def scope(key: str, get, put) -> None:
+    """The outline of what she asked for, how many lessons it is, and her
+    choice: all of it, or only the parts she ticks (any part can be ticked
+    again: nothing is lost)."""
+    d = get()
+    orig, p = d.get("path_original") or d["path"], d["path"]
+    n_all = paths.lesson_count(orig)
+    st.html(f'<div class="gm-path"><p class="gm-eyebrow">The outline</p><h3>{escape(orig["title"])}</h3>'
+            f'<p class="gm-outcome">{escape(orig["outcome"])}</p>'
+            f'<p class="gm-meta">{n_all} lessons in {len(orig["units"])} parts · {escape(orig["level"])}</p></div>')
+    st.session_state[_k(key, "scope")] = d.get("scope") or None      # (always her answer as kept)
+    with st.container(key=_k(key, "scope_sw")):
+        st.segmented_control(f"Do you want to learn all of {orig['title']}?", ["all", "some"],
+                             format_func=lambda v: "Yes, all of it" if v == "all" else "No, only some parts",
+                             key=_k(key, "scope"), width="stretch", on_change=_set_scope, args=(key, get, put))
+    some = d.get("scope") == "some"
+    kept = {u["name"] for u in p["units"]}
+    with st.container(key=_k(key, "outline")):
+        for i, u in enumerate(orig["units"]):
             with st.container(key=_k(key, f"unit_{i}")):
-                st.html(f'<div class="gm-unit"><p class="gm-u"><span>Part {i + 1}</span>{escape(u["name"])}</p>'
-                        f'<ol start="{first}">' + "".join(f"<li>{escape(t)}</li>" for t in u["lessons"]) + "</ol></div>")
-                first += len(u["lessons"])
-                with st.container(key=_k(key, f"unit_act_{i}"), horizontal=True):
-                    if i > 0:
-                        st.button("Move up", key=_k(key, f"up_{i}"), type="tertiary",
-                                  on_click=_change, args=(get, put, lambda p, i=i: paths.move_unit(p, i, -1)))
-                    if i < len(p["units"]) - 1:
-                        st.button("Move down", key=_k(key, f"down_{i}"), type="tertiary",
-                                  on_click=_change, args=(get, put, lambda p, i=i: paths.move_unit(p, i, 1)))
-                    if len(p["units"]) > 1:
-                        st.button("I know this: skip it", key=_k(key, f"skip_{i}"), type="tertiary",
-                                  on_click=_change, args=(get, put, lambda p, i=i: paths.remove_unit(p, i)))
-                    if paths.lesson_count(p) > 1:
-                        with st.popover("Remove a lesson", type="tertiary", key=_k(key, f"rmpop_{i}")):
-                            for k, t in enumerate(u["lessons"]):
-                                st.button(t, key=_k(key, f"rm_{i}_{k}"), type="tertiary",
-                                          on_click=_change, args=(get, put, lambda p, i=i, k=k: paths.remove_lesson(p, i, k)))
-    note = paths.order_note(p, d.get("path_original"))
-    if note:
-        st.html(f'<p class="ob-note gm-order" role="note">{escape(note)}</p>')
-    aside = paths.set_aside(p, d.get("path_original"))
-    if aside:
-        # what she took out, each on its own line, each brought back on its own
-        with st.container(key=_k(key, "aside")):
-            st.html('<p class="gm-aside-h">Set aside</p>')
-            for i, item in enumerate(aside):
-                what = (f"{item['unit']} · {item['lessons']} {'lesson' if item['lessons'] == 1 else 'lessons'}"
-                        if item["kind"] == "unit" else f"{item['title']} · from {item['unit']}")
-                with st.container(key=_k(key, f"aside_{i}"), horizontal=True, vertical_alignment="center"):
-                    st.html(f'<p class="gm-aside"><span>{"Part" if item["kind"] == "unit" else "Lesson"}</span>'
-                            f'{escape(what)}</p>')
-                    st.button(f"Bring back {item['unit'] if item['kind'] == 'unit' else item['title']}",
-                              key=_k(key, f"back_{i}"), type="tertiary", on_click=_bring_back, args=(get, put, item))
+                if some:
+                    st.session_state[_k(key, f"part_{i}")] = u["name"] in kept      # (always as kept)
+                    st.checkbox(f"Part {i + 1}: {u['name']} · {len(u['lessons'])} lessons", key=_k(key, f"part_{i}"),
+                                on_change=_tick, args=(key, get, put))
+                else:
+                    st.html(f'<p class="gm-u"><span>Part {i + 1}</span>{escape(u["name"])}</p>')
+                st.html('<ol class="gm-lessons">' + "".join(f"<li>{escape(t)}</li>" for t in u["lessons"]) + "</ol>")
+    if some:
+        st.html(f'<p class="ob-note" role="status">You chose {paths.lesson_count(p)} of {n_all} lessons '
+                f'({len(p["units"])} of {len(orig["units"])} parts).</p>')
+
+
+# ------------------------------------------------------ what it's for
+def _purpose(key: str, get, put, value=None) -> None:
+    d = get()
+    if value is not None:
+        d["purpose"] = value
+        st.session_state[_k(key, "own")] = ""        # (her own words give way to the one she picked)
+    else:
+        own = str(st.session_state.get(_k(key, "own")) or "").strip()
+        d["purpose"] = own[:paths.TEXT_LIMIT]
+    put(d)
+
+
+def _all_of_it(key: str, get, put) -> None:
+    from coach import directions
+    d = get()
+    d["purpose"] = directions.ALL_OF_IT if st.session_state.get(_k(key, "all")) else ""
+    put(d)
+
+
+def purpose(key: str, get, put, identity: str = "") -> None:
+    """What it's for: the goals that fit who she is, or her own words. To
+    skip it she says so (no particular goal: all of it)."""
+    from coach import directions
+    d = get()
+    chosen = d.get("purpose") or ""
+    options = list(directions.purposes(identity))
+    with st.container(key=_k(key, "purposes"), gap=None):
+        for i, o in enumerate(options):
+            on = chosen == o
+            st.button(f"{o}{', selected' if on else ''}", key=_k(key, f"pp_{i}"), type="primary" if on else "secondary",
+                      on_click=_purpose, args=(key, get, put, o))
+    own = chosen if chosen and chosen not in options and chosen != directions.ALL_OF_IT else ""
+    st.session_state[_k(key, "own")] = own          # (always her answer as kept)
+    st.text_input("Or in your own words", key=_k(key, "own"), max_chars=paths.TEXT_LIMIT,
+                  placeholder="e.g. Understand the news about the economy", on_change=_purpose, args=(key, get, put))
+    st.session_state[_k(key, "all")] = chosen == directions.ALL_OF_IT
+    st.checkbox("No particular goal: I want to learn all of it", key=_k(key, "all"), on_change=_all_of_it,
+                args=(key, get, put))

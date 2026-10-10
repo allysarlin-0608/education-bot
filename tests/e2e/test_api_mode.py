@@ -41,7 +41,7 @@ def test_the_site_runs_on_our_backend(api_app, pages):
     settings = app.api_sql("select units_per_day from user_settings where user_id = :u", u=uid)
     assert settings == [{"units_per_day": 1}]
     counts = {r["event"] for r in app.api_sql("select event from usage_events where user_id = :u", u=uid)}
-    assert {"setup_done", "lesson_passed", "visit"} <= counts
+    assert {"lesson_passed", "visit"} <= counts            # (her setup is seeded: flows.onboard)
     old = app.get("/__dump")["tables"].get("learning_entries", [])
     assert not [r for r in old if r.get("lessons")], "nothing written to the old system's tables"
     flows.go(p, app, "Record")
