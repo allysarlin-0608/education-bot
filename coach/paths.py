@@ -89,7 +89,10 @@ def precheck(goal: str):
     designer, else a short, kind reason and what to try (no cost to her
     daily allowance)."""
     text = _text(goal, 2000)
-    if len(text) < GOAL_MIN_CHARS:
+    # a Chinese, Japanese or Korean character says about as much as a short word:
+    # 我想學吉他 is a whole goal in five characters (it was "too short" when counted as letters)
+    dense = len(re.findall(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af\uf900-\ufaff]", text))
+    if len(text) + 2 * dense < GOAL_MIN_CHARS:
         return "Tell us a little more: what would you like to be able to do?"
     if len(text) > GOAL_MAX_CHARS:
         return f"That's a lot to plan at once. Try one goal in a sentence or two (under {GOAL_MAX_CHARS} characters)."
@@ -105,6 +108,7 @@ DESIGN_SYSTEM = """You design short, structured learning paths for adults who le
 Reply with ONE JSON object and nothing else.
 
 Read the learner's goal, why it matters to them, where they are now, and how many lessons a day they have.
+The goal may be written in any language; write everything you reply in English (the app's language).
 
 First decide the status:
 - "ok": a clear goal that can be learned in about four weeks of short daily lessons.
@@ -118,6 +122,12 @@ For "ok", design the path:
 - "units": {units_min}-{units_max} units in a sensible order; each has "name" (max 6 words) and "lessons": {lessons_min}-{lessons_max} lesson titles.
 - Total lessons: {total_min}-{total_max}. Each lesson title names ONE idea or skill a 10-minute lesson can teach, in plain words (max 10 words), building on the ones before. No duplicates, no "Introduction"/"Conclusion"/"Review" lessons, no exam or quiz lessons.
 - Only well-established knowledge; nothing that depends on recent news.
+- Fit where they are now. For someone new, start with the way beginners really start: the simplest
+  tools and shortcuts people use today (e.g. a tuner app before tuning by ear, a phrasebook phrase
+  before grammar tables, an index fund before stock picking). Skills that take months of practice
+  (by ear, from memory, at speed) come late or not at all; every lesson can be done by a beginner
+  after the lessons before it. For someone with experience, skip what they already know.
+- Units go from foundations to what builds on them; a later unit must not be needed for an earlier one.
 
 JSON shape:
 {{"status": "ok|clarify|narrow|decline", "message": "one kind sentence (for clarify/narrow/decline)",
@@ -251,6 +261,64 @@ def remove_lesson(path: dict, i: int, k: int) -> dict:
         if lessons:
             units.append(dict(u, lessons=lessons))
     return dict(path, units=units, updated_at=now_iso())
+
+
+def set_aside(path: dict, original: dict) -> list:
+    """What she has taken out of the path the AI designed, item by item, so
+    each can be brought back on its own: whole parts she skipped
+    {"kind": "unit", "unit": name, "lessons": n}, and single lessons taken
+    out of a part still there {"kind": "lesson", "unit": name, "title": t}
+    (Make it shorter takes lessons out too). In the original's order."""
+    if not original:
+        return []
+    now = {u["name"]: set(u["lessons"]) for u in path["units"]}
+    out = []
+    for u in original["units"]:
+        if u["name"] not in now:
+            out.append({"kind": "unit", "unit": u["name"], "lessons": len(u["lessons"])})
+        else:
+            out += [{"kind": "lesson", "unit": u["name"], "title": t} for t in u["lessons"] if t not in now[u["name"]]]
+    return out
+
+
+def bring_back(path: dict, original: dict, item: dict) -> dict:
+    """The path with one set-aside item back in its place: a part goes back
+    after the part that came before it in the design (at the start if none
+    is left), whole; a lesson goes back into its part in the designed order.
+    Everything else she changed stays as it is."""
+    names = [u["name"] for u in original["units"]]
+    orig = {u["name"]: u for u in original["units"]}
+    units = [dict(u) for u in path["units"]]
+    have = [u["name"] for u in units]
+    if item.get("kind") == "unit" and item.get("unit") in orig and item["unit"] not in have:
+        before = names[:names.index(item["unit"])]
+        at = max((have.index(n) + 1 for n in before if n in have), default=0)
+        units.insert(at, dict(orig[item["unit"]]))
+    elif item.get("kind") == "lesson" and item.get("unit") in have and item.get("title") in orig.get(item["unit"], {}).get("lessons", []):
+        u = units[have.index(item["unit"])]
+        keep = set(u["lessons"]) | {item["title"]}
+        u["lessons"] = [t for t in orig[item["unit"]]["lessons"] if t in keep] + \
+                       [t for t in u["lessons"] if t not in orig[item["unit"]]["lessons"]]
+    else:
+        return path
+    return dict(path, units=units, updated_at=now_iso())
+
+
+def order_note(path: dict, original: dict):
+    """A gentle note when she has put a part before one it was designed to
+    build on (the designed order is foundations first). None when the order
+    keeps the design's; never a block: she may know what she is doing."""
+    if not original:
+        return None
+    rank = {u["name"]: k for k, u in enumerate(original["units"])}
+    seen = []
+    for u in path["units"]:
+        later = [n for n in seen if n in rank and u["name"] in rank and rank[n] > rank[u["name"]]]
+        if later:
+            return (f"“{later[0]}” now comes before “{u['name']}”, which it was designed to build on. "
+                    "That's fine if you know the basics already.")
+        seen.append(u["name"])
+    return None
 
 
 def started(log: dict, goal_id: str) -> bool:

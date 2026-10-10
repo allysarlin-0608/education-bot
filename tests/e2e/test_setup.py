@@ -48,52 +48,44 @@ def pick_option(p, name):
 def test_every_step_and_what_is_saved(mode, pages, request):
     covers("W-choices-pick", "W-choices-key", "W-choices-pqprev", "W-choices-pqnext", "W-choices-pqagain",
            "W-setup-ob_back", "W-setup-ob_next", "W-setup-ob_next-2", "W-setup-ob_reading", "D-setup-save_settings",
-           "D-ui-save_settings", "W-setup-ob_change", "W-setup-ob_up", "W-setup-ob_down")
+           "D-ui-save_settings", "W-setup-ob_change", "W-setup-ob_up", "W-setup-ob_down", "W-setup-ob_to_review")
     app = request.getfixturevalue(f"{mode}_app")
     if mode == "personal":
         for f in ("learning_log.json", "user_settings.json", "learner_prefs.json"):
             (app.state / f).unlink(missing_ok=True)
     p, email = new_person(app, pages)
-    # 1 Welcome → 2 Plans
+    # Welcome (no plan or price while plans aren't shown: coach/plans.SHOWN)
     flows.button(p, "Get started")
-    assert flows.wait_text(p.page, "Choose a plan") and "Price not set yet" in text(p)
-    assert p.page.get_by_role("button", name="Continue").is_disabled(), "a plan is chosen first"
-    pick_option(p, "Plus")
-    flows.button(p, "Continue")
-    # 3 Courses & subjects
+    # Courses & subjects
     assert flows.wait_text(p.page, "Choose at least one subject to continue.")
     assert p.page.get_by_role("button", name="Continue").is_disabled()
     for name in ("Philosophy", "Astronomy", "Business Planning"):
         pick_option(p, name)
-    assert flows.wait_text(p.page, "3 of 3 chosen · the most you can choose") and "Plus plan: up to 3 subjects" in text(p)
+    assert flows.wait_text(p.page, "3 of 3 chosen · the most you can choose") and "plan:" not in text(p)
     pick_option(p, "General Knowledge")                   # a fourth isn't added
     assert "3 of 3 chosen" in text(p)
     pick_option(p, "Astronomy")                           # taken out again
     assert flows.wait_text(p.page, "2 of 3 chosen")
     flows.button(p, "Continue")
-    # 4 Reading plan (Plus includes it)
-    assert flows.wait_text(p.page, "Reading plan") and "Included in Plus" in text(p)
+    # Reading plan (optional)
+    assert flows.wait_text(p.page, "Reading plan") and "Plus" not in text(p)
     p.page.locator('[data-testid="stToggle"] input, [role="switch"]').first.check(force=True)
     flows.idle(p.page)
     flows.button(p, "Continue")
-    # 5 Your selection, and back to change it: nothing else is lost
+    # Your selection, and back to change it: nothing else is lost
     t = text(p)
-    assert "Your selection" in t and "Philosophy, Business Planning" in t and "Plus" in t and "On" in t
-    flows.button(p, "Change subjects or goal")
+    assert "Your selection" in t and "Philosophy, Business Planning" in t and "On" in t and "Plus" not in t
+    flows.button(p, "Change subjects")
     assert flows.wait_text(p.page, "2 of 3 chosen")
     flows.button(p, "Continue")
     assert p.page.locator('[role="switch"]').first.is_checked(), "the reading plan is kept"
     flows.button(p, "Continue")
     flows.button(p, "Continue")
-    # 6 Price summary
-    t = text(p)
-    assert "Price summary" in t and "Price not set yet" in t and "USD 0.00" in t and "Nothing is charged" in t
-    flows.button(p, "Continue")
-    # 7 Customize: time, order, depth
+    # Customize: time, order, depth
     assert flows.wait_text(p.page, "Customize your learning")
     pick_option(p, "Light")
     flows.button(p, "Later")                              # Philosophy after Business Planning
-    flows.button(p, "Back")                               # back to the price, and forward: Light kept
+    flows.button(p, "Back")                               # back to the selection, and forward: Light kept
     flows.button(p, "Continue")
     assert "Light, selected" in p.page.evaluate("[...document.querySelectorAll('button')].map(b => b.innerText).join('|')")
     box = p.page.locator(".st-key-sw_lvl_philosophy")
@@ -119,15 +111,21 @@ def test_every_step_and_what_is_saved(mode, pages, request):
     flows.idle(p.page)
     flows.button(p, "Later")                                                                  # …and again
     flows.button(p, "Continue")
-    # 8 Your path
+    # Your path
     t = text(p)
     assert "Your path" in t and "DAY 1" in t.upper() and "DAY 2" in t.upper() and "starts at Advanced" in t
     flows.button(p, "Continue")
-    # 9 Final review
+    # Final review: every change goes to its step and straight back
     t = text(p)
     assert "Final review" in t and "Business Planning → Philosophy" in t and "Light" in t and "1 lesson a day" in t
-    assert "Advanced" in t and "5 of 5 right" in t and "from the basics" in t and "USD 0.00" in t
-    # 10 Start learning
+    assert "Advanced" in t and "5 of 5 right" in t and "from the basics" in t and "USD" not in t
+    for change, lands in (("Change subjects", "What would you like to learn?"), ("Change reading plan", "Add a 14-day"),
+                          ("Change time, order or level", "Customize your learning"), ("Change your path", "Your path")):
+        flows.button(p, change)
+        assert flows.wait_text(p.page, lands), change
+        flows.button(p, "Back to final review")
+        assert flows.wait_text(p.page, "Final review") and "Business Planning → Philosophy" in text(p), change
+    # Start learning
     flows.button(p, "Start learning")
     flows.idle(p.page, 30)
     row = settings_row(app, email)
@@ -136,11 +134,6 @@ def test_every_step_and_what_is_saved(mode, pages, request):
     assert row["subject_levels"] == {"philosophy": "Advanced", "business": "Beginner"}
     assert row["reading_enabled"] is True and row["onboarded_at"]
     assert "subject=business" in p.page.url, "setup ends in the first day's subject"
-    if mode == "public":
-        d = app.get("/__dump")
-        uid = next(u["id"] for u in d["users"] if u["email"] == email)
-        prefs = next(r for r in d["tables"]["learner_prefs"] if r["user_id"] == uid)
-        assert prefs["data"]["plan_choice"] == "plus", "the plan she chose is kept (nothing charged)"
 
 
 def test_a_refresh_mid_setup_keeps_the_step_and_choices(public_app, pages):
@@ -150,14 +143,15 @@ def test_a_refresh_mid_setup_keeps_the_step_and_choices(public_app, pages):
     flows.to_subjects(p)
     pick_option(p, "Astronomy")
     pick_option(p, "Philosophy")
-    for _ in range(3):                                    # → selection → price → customize
-        flows.button(p, "Continue")
+    flows.button(p, "Continue")                           # → reading
+    flows.button(p, "Skip for now")                       # → selection
+    flows.button(p, "Continue")                           # → customize
     pick_option(p, "Focused")
     flows.open_app(p, app)
     assert flows.wait_text(p.page, "Customize your learning"), "the refresh went back to another step"
     assert "Focused, selected" in p.page.evaluate(
         "[...document.querySelectorAll('button')].map(b => b.innerText).join('|')")
-    for _ in range(3):
+    for _ in range(3):                                    # → selection → reading → subjects
         flows.button(p, "Back")
     assert flows.wait_text(p.page, "2 of 3 chosen")
     assert "Astronomy, selected, day 1" in p.page.evaluate(
@@ -170,7 +164,9 @@ def test_double_click_start_learning(public_app, pages):
     p, email = new_person(app, pages)
     flows.to_subjects(p)
     pick_option(p, "Philosophy")
-    for _ in range(5):                                    # → selection, price, customize, path, review
+    flows.button(p, "Continue")                           # → reading
+    flows.button(p, "Skip for now")
+    for _ in range(3):                                    # → customize, path, review
         flows.button(p, "Continue")
     p.page.get_by_role("button", name="Start learning").dblclick()
     flows.idle(p.page, 30)

@@ -31,20 +31,21 @@ with st.container(key="set_sec_profile"):
         st.html('<p class="ob-note">This is your personal GNOSIS: there is no account to sign in to, '
                 "and your learning is kept with this app.</p>")
 
-# ---------- Subscription ----------
-with st.container(key="set_sec_plan"):
-    st.markdown("#### Subscription")
-    current = plans.plan_of(ui.config())
-    chosen = ui.prefs().get("plan_choice")
-    rows = [("Your plan", plans.NAMES[current], plans.price_line(current))]
-    if plans.known(chosen) and chosen != current:
-        rows.append(("You chose", plans.NAMES[chosen], plans.price_line(chosen)))
-    rows.append(("Payments", "None", "Nothing has been charged"))
-    st.html('<dl class="ins-list">' + "".join(
-        f'<div><dt>{escape(a)}</dt><dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c in rows) + "</dl>"
-        '<p class="ob-note">Paid plans aren\'t open yet. While they are being prepared, everyone can use every '
-        "feature that exists, at no cost. Upgrading, changing and cancelling a plan will be here once payments "
-        "open.</p>")
+# ---------- Subscription (only once plans are shown: coach/plans.SHOWN) ----------
+if plans.SHOWN:
+    with st.container(key="set_sec_plan"):
+        st.markdown("#### Subscription")
+        current = plans.plan_of(ui.config())
+        chosen = ui.prefs().get("plan_choice")
+        rows = [("Your plan", plans.NAMES[current], plans.price_line(current))]
+        if plans.known(chosen) and chosen != current:
+            rows.append(("You chose", plans.NAMES[chosen], plans.price_line(chosen)))
+        rows.append(("Payments", "None", "Nothing has been charged"))
+        st.html('<dl class="ins-list">' + "".join(
+            f'<div><dt>{escape(a)}</dt><dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c in rows) + "</dl>"
+            '<p class="ob-note">Paid plans aren\'t open yet. While they are being prepared, everyone can use every '
+            "feature that exists, at no cost. Upgrading, changing and cancelling a plan will be here once payments "
+            "open.</p>")
 
 
 # ---------- Invites (public, admins only): who may sign in while in beta ----------

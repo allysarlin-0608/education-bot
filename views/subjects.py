@@ -35,12 +35,16 @@ def course_row(t: str, k: str, chosen: bool) -> None:
         st.html(f'<p class="set-goal"><span>{escape(catalog.name(t))}</span><b>{escape(where)}</b></p>'
                 f'<p class="ob-note">{escape(describe(t))}</p>')
         with st.container(key=f"sc_acts_{k}_{t}", horizontal=True):
-            if st.button("Course map", key=f"sc_map_{k}_{t}", type="tertiary"):
-                ui.open_course(t)
-            if visuals.known(t) and st.button(f"Enter {catalog.name(t)}", key=f"sc_enter_{k}_{t}", type="tertiary"):
-                ui.enter_world(t)
-            if not chosen and st.button("Add in Learning Plan", key=f"sc_add_{k}_{t}", type="tertiary"):
-                st.switch_page("views/settings.py", query_params={"subject": t})
+            if chosen:                     # hers: its map and its world
+                if st.button("Course map", key=f"sc_map_{k}_{t}", type="tertiary"):
+                    ui.open_course(t)
+                if visuals.known(t) and st.button(f"Enter {catalog.name(t)}", key=f"sc_enter_{k}_{t}", type="tertiary"):
+                    ui.enter_world(t)
+            else:                          # not hers yet: what it covers, and the way to add it
+                if st.button("Add to my days", key=f"sc_add_{k}_{t}", type="tertiary"):
+                    st.switch_page("views/settings.py", query_params={"subject": t})
+                if st.button("See what it covers", key=f"sc_map_{k}_{t}", type="tertiary"):
+                    ui.open_course(t)
 
 
 with st.container(key="set_sec_mine"):

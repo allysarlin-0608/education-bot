@@ -159,7 +159,24 @@ grouped (`topnav.SECTIONS`), each a link to the one page that does it:
 
 Not built yet, and listed in the Menu as "not available yet" (never as an
 empty page): Knowledge Exploration, Examinations, Research, Research
-Portfolio, Certificates.
+Portfolio, Certificates. On a phone the bar holds Home, Review and Menu;
+everything else is in the Menu by its full name.
+
+**Plans** are hidden while `plans.SHOWN` is off (env `PLANS_SHOWN=1` shows
+them): the setup then has no Plans or Price step and no plan row, and
+Account has no Subscription section.
+
+**State rules** (ISS-062…064): a finished setup is never given a draft
+(`setup.put`); every run, a goal her settings name but the session lacks
+re-reads the records (`ui.sync_goals`); an account with no turns goes back
+to the setup, never to a fixed subject; a new goal starts from an empty
+draft (`ui.clear_goal_draft`) and can't repeat one she has.
+
+**Lessons' sources and diagrams**: no source the model names is shown
+(`lesson_view.unsourced`); each lesson links to Wikipedia and Britannica
+searches for its title (`lesson_view.check_links`). Diagram nodes get
+readable labels (`lesson_view.humane`); one box or a tangle is left out.
+The quiz checker reads the lesson (`quiz.check_request(questions, lesson)`).
 
 ## Coming back (Phase 2)
 

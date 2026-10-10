@@ -1411,8 +1411,8 @@ NAV = """
 @media (hover: hover) { .st-key-site_menu button:hover { color: var(--label); } }
 @media (max-width: 640px) {
   .st-key-site_menu { margin-left: 2px; }
-  .st-key-site_menu button { padding: 0 6px !important; }
-  .st-key-site_menu button p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .st-key-site_menu button { padding: 0 8px !important; }
+  .st-key-site_menu button [data-testid="stIconMaterial"] { display: none; }
 }
 /* the right: the app's own actions (Share, Star, Edit, GitHub, the menu) on
    the same surface, in the same quiet grey, answering like the pages do */
@@ -1514,11 +1514,14 @@ SETUP = """
 .st-key-topnav [data-testid="stPageLink-NavLink"][data-due]::after {
   content: ""; position: absolute; top: 14px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--label);
 }
+/* a phone: the bar keeps words, never bare icons: Home, Review and Menu (with
+   Search). Reading, Record and Plan are in the Menu, each by its full name.
+   The sidebar's way in (») is left out: Home shows what the sidebar holds. */
 @media (max-width: 640px) {
-  .st-key-topnav [data-testid="stPageLink-NavLink"] > span:has([data-testid="stIconMaterial"]) { display: inline-flex; align-items: center; margin: 0; }
-  .st-key-topnav [data-testid="stPageLink-NavLink"]:has([data-testid="stIconMaterial"]) > span:not(:has([data-testid="stIconMaterial"])) {
-    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-  }
+  .st-key-topnav_items [data-testid="stPageLink"]:has(a[href$="reading"]),
+  .st-key-topnav_items [data-testid="stPageLink"]:has(a[href$="records"]),
+  .st-key-topnav_items [data-testid="stPageLink"]:has(a[href$="settings"]) { display: none !important; }
+  [data-testid="stExpandSidebarButton"] { display: none !important; }
 }
 
 /* ---------- setup and Settings: the same product, one decision at a time ---------- */
@@ -1680,6 +1683,19 @@ SETUP = """
 .mn-soon small, .mn-here small { margin-left: 6px; font-size: 0.75rem; }
 .mn-here { margin: 0; padding: 6px 0 6px 8px; font-size: 0.875rem; font-weight: 500; color: var(--label); border-left: 2px solid var(--label); }
 .mn-here small { font-weight: 400; color: var(--label-3); }
+
+/* ---------- A path: what she set aside, each to bring back on its own ---------- */
+[class*="st-key-"][class*="_aside"]:not([class*="_aside_"]) { margin-top: var(--space-4); gap: 0 !important; border-top: 1px solid var(--line-1); }
+.gm-aside-h { margin: var(--space-3) 0 4px; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); }
+[class*="st-key-"][class*="_aside_"] { padding: 6px 0; border-bottom: 1px solid var(--line-1); gap: var(--space-2) !important; }
+[class*="st-key-"][class*="_aside_"] > div:first-child { flex: 1 1 auto !important; min-width: 0; }
+.gm-aside { margin: 0; font-size: 0.9375rem; line-height: 1.4; color: var(--label-2); overflow-wrap: anywhere; }
+.gm-aside span { display: block; font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); }
+.gm-order { margin-top: var(--space-3) !important; }
+
+/* ---------- A lesson: where to check it, a quiet line under it ---------- */
+.l-check { margin: var(--space-2) 0 0; font-size: 0.8125rem; color: var(--label-3); }
+.l-check a { color: var(--label-2); text-decoration: underline; text-underline-offset: 2px; }
 
 /* ---------- Settings: sections on hairlines; wide, the name beside its controls ---------- */
 [class*="st-key-set_sec_"] { gap: var(--space-4) !important; padding-top: var(--space-5); border-top: 1px solid var(--line-1); }

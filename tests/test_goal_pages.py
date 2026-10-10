@@ -38,10 +38,12 @@ def has(at, key) -> bool:
 
 
 def to_goal(at, plan="free"):
-    """From the welcome, past the plans, to a goal of her own."""
+    """From the welcome (past the plans, while they are shown) to a goal of her own."""
+    from coach import plans
     at.button(key="ob_next").click().run()                         # Get started
-    at.button(key=f"pick_plan_{plan}").click().run()
-    at.button(key="ob_next").click().run()                         # on to the subjects
+    if plans.SHOWN:
+        at.button(key=f"pick_plan_{plan}").click().run()
+        at.button(key="ob_next").click().run()                     # on to the subjects
     at.button(key="ob_to_goal").click().run()                      # or a goal of her own
 
 
@@ -83,7 +85,7 @@ def test_the_setup_from_a_goal_to_the_first_day(monkeypatch, tmp_path):
     at.text_input(key="obg_why").input("I want to invest").run()
     at.button(key="obg_design").click().run()
     assert len(calls) == 2 and "Reading financial statements" in texts(at), "her goal's path"
-    for _ in range(4):                                              # goal → selection → price → customize → path
+    for _ in range(4):                                              # goal → reading → selection → customize → path
         at.button(key="ob_next").click().run()
     assert "Your path" in texts(at) and "Part 1" in texts(at)
     # covers: W-goalmaker-k_key_f_up_i
@@ -95,7 +97,9 @@ def test_the_setup_from_a_goal_to_the_first_day(monkeypatch, tmp_path):
     assert len(stored(tmp_path)[0]["onboarding"]["path"]["units"]) == 4
     at.button(key="obp_lighter").click().run()
     at.button(key="ob_next").click().run()                          # path → final review
-    assert "Final review" in texts(at) and "Your goal" in texts(at) and "USD 0.00" in texts(at) and not at.exception
+    t = texts(at)
+    assert "Final review" in t and "Your goal" in t and not at.exception
+    assert "USD" not in t and "Price" not in t and "Plan</dt>" not in t, "no plan or price while plans aren't shown"
     at.button(key="ob_next").click().run()                          # Start learning
     s, log = stored(tmp_path)
     goal_id = log["paths"][0]["id"]
@@ -123,8 +127,8 @@ def test_back_to_her_goal_and_a_different_one(monkeypatch, tmp_path):
     to_goal(at)
     at.text_area(key="obg_text").input("Read a company's financial statements").run()
     at.button(key="obg_design").click().run()
-    at.button(key="ob_next").click().run()                          # on to her selection
-    assert "Your selection" in texts(at)
+    at.button(key="ob_next").click().run()                          # on to the reading plan
+    assert "Reading plan" in texts(at)
     at.button(key="ob_back").click().run()                          # back: her goal, as it was
     assert "Reading financial statements" in texts(at) and len(calls) == 1
     at.button(key="ob_back").click().run()                          # back to the subjects: the goal is named

@@ -167,9 +167,6 @@ def test_goal_screens(public_app, pages, width, scheme):
     flows.sign_in(p, app, email=email)
     shot(p, f"20_welcome_{tag}", problems)
     flows.button(p, "Get started")
-    shot(p, f"20b_plans_{tag}", problems)
-    flows.button(p, "Free")
-    flows.button(p, "Continue")
     shot(p, f"20c_subjects_{tag}", problems)
     flows.button(p, "Or set a goal of your own")
     shot(p, f"21_goal_{tag}", problems)
@@ -185,7 +182,11 @@ def test_goal_screens(public_app, pages, width, scheme):
     flows.button(p, "Design my path", wait=False)
     assert flows.wait_text(p.page, "Start over with a different goal", 40)
     shot(p, f"22b_goal_designed_{tag}", problems)
-    for name in ("24a_selection", "24b_price", "24c_customize", "23_path", "24_review"):
+    flows.button(p, "Continue")
+    shot(p, f"24r_reading_{tag}", problems)
+    flows.button(p, "Skip for now")
+    shot(p, f"24a_selection_{tag}", problems)
+    for name in ("24c_customize", "23_path", "24_review"):
         flows.button(p, "Continue")
         shot(p, f"{name}_{tag}", problems)
     flows.button(p, "Start learning")

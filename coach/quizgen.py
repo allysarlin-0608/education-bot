@@ -79,7 +79,7 @@ def make(slot, where, step=_quietly, context=None):
     if recall is not None:
         questions = questions + [recall]
     for attempt in range(quiz.CHECK_ROUNDS + 1):
-        system, messages = quiz.check_request(questions)
+        system, messages = quiz.check_request(questions, slot.get("lesson", "") if isinstance(slot, dict) else "")
         with step("Checking every answer…"):
             data, error = llm.ask_json(system, messages)
         flagged = quiz.problems(data, len(questions)) if data else None

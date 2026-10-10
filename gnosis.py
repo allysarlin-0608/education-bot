@@ -23,9 +23,12 @@ if st.session_state.get("coach_visit_day") != ui.today():     # one "visit" a da
     ui.record("visit")
 ui.show_pending_error()
 
+ui.sync_goals()           # every goal her settings name is in this session's records
 config = ui.config()
-if not settings.onboarded(config):
-    # first time: the setup, on its own, until she presses Start learning
+if not settings.onboarded(config) or not (settings.is_legacy(config) or settings.chosen_subjects(config)):
+    # first time: the setup, on its own, until she presses Start learning. (A set-up
+    # account with nothing left to learn, which shouldn't happen, sets up again
+    # rather than being shown a subject she never chose.)
     st.navigation([st.Page("views/setup.py", title="Welcome", default=True)], position="hidden").run()
     st.stop()
 

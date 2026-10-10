@@ -173,7 +173,7 @@ def form(key: str, get, put, *, pace: int = settings.DEFAULT_PACE, skip=None, on
         if skip:
             st.button(skip[0], key=_k(key, "skip"), type="tertiary", on_click=skip[1])
     st.html('<p class="ob-note">One short lesson at a time, written when you reach it. '
-            "Lessons teach well-established knowledge, with sources for the important facts.</p>")
+            "Lessons teach well-established knowledge, each with links to check it yourself.</p>")
 
 
 # ---------------------------------------------------------- the path, adjusted
@@ -193,6 +193,13 @@ def _undo(get, put) -> None:
     d = get()
     d["path"] = d["path_original"]
     put(d)
+
+
+def _bring_back(get, put, item: dict) -> None:
+    d = get()
+    if d.get("path") and d.get("path_original"):
+        d["path"] = paths.bring_back(d["path"], d["path_original"], item)
+        put(d)
 
 
 def again(get, put) -> None:
@@ -252,3 +259,19 @@ def review(key: str, get, put, pace: int) -> None:
                             for k, t in enumerate(u["lessons"]):
                                 st.button(t, key=_k(key, f"rm_{i}_{k}"), type="tertiary",
                                           on_click=_change, args=(get, put, lambda p, i=i, k=k: paths.remove_lesson(p, i, k)))
+    note = paths.order_note(p, d.get("path_original"))
+    if note:
+        st.html(f'<p class="ob-note gm-order" role="note">{escape(note)}</p>')
+    aside = paths.set_aside(p, d.get("path_original"))
+    if aside:
+        # what she took out, each on its own line, each brought back on its own
+        with st.container(key=_k(key, "aside")):
+            st.html('<p class="gm-aside-h">Set aside</p>')
+            for i, item in enumerate(aside):
+                what = (f"{item['unit']} · {item['lessons']} {'lesson' if item['lessons'] == 1 else 'lessons'}"
+                        if item["kind"] == "unit" else f"{item['title']} · from {item['unit']}")
+                with st.container(key=_k(key, f"aside_{i}"), horizontal=True, vertical_alignment="center"):
+                    st.html(f'<p class="gm-aside"><span>{"Part" if item["kind"] == "unit" else "Lesson"}</span>'
+                            f'{escape(what)}</p>')
+                    st.button(f"Bring back {item['unit'] if item['kind'] == 'unit' else item['title']}",
+                              key=_k(key, f"back_{i}"), type="tertiary", on_click=_bring_back, args=(get, put, item))

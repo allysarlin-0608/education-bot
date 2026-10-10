@@ -76,10 +76,10 @@ def test_from_the_first_screen_to_a_first_lesson_made_for_her(public_app, pages)
     t = text(p)
     assert "Reading financial statements" in t and "By the end you will be able to" in t
     assert "Because: “I want to invest my savings well”" in t, "her reason shows"
-    flows.button(p, "Continue")                     # goal → your selection
+    flows.button(p, "Continue")                     # goal → reading plan
+    flows.button(p, "Skip for now")                 # → your selection
     assert flows.wait_text(p.page, "Your selection") and "Reading financial statements" in text(p)
-    flows.button(p, "Continue")                     # → price summary
-    assert flows.wait_text(p.page, "Price summary") and "USD 0.00" in text(p)
+    assert "Price" not in text(p) and "Plus" not in text(p), "no plan or price shown"
     flows.button(p, "Continue")                     # → customize: her time each day
     flows.button(p, "Light")
     flows.button(p, "Continue")                     # → your path
@@ -246,7 +246,9 @@ def test_a_goal_and_three_subjects_can_start_learning(public_app, pages):
     flows.button(p, "Or set a goal of your own")
     write_goal(p, GOAL)
     design(p)
-    for _ in range(5):                                  # goal → selection → price → customize → path → review
+    flows.button(p, "Continue")                         # goal → reading plan
+    flows.button(p, "Skip for now")
+    for _ in range(3):                                  # selection → customize → path → review
         flows.button(p, "Continue")
     flows.button(p, "Start learning")
     flows.idle(p.page, 30)

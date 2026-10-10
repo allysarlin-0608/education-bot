@@ -143,10 +143,11 @@ def admin_sign_in(p, app):
 
 # ---- setup ------------------------------------------------------------------
 def to_subjects(p, plan="Free"):
-    """From the welcome, past the plans, to the courses and subjects."""
+    """From the welcome (past the plans, when they are shown) to the courses and subjects."""
     button(p, "Get started")
-    button(p, plan)
-    button(p, "Continue")
+    if p.page.get_by_text("Choose a plan", exact=True).count():
+        button(p, plan)
+        button(p, "Continue")
 
 
 def to_goal(p, plan="Free"):
@@ -156,8 +157,9 @@ def to_goal(p, plan="Free"):
 
 
 def onboard(p, subjects=("Philosophy",), pace=None, reading=False):
-    """The whole setup: a plan (Plus when she wants a reading plan: only it
-    includes one), subjects, then on through each step to Start learning."""
+    """The whole setup: subjects, the reading plan (on or skipped), then on
+    through each step to Start learning (a plan and its price only when
+    plans are shown)."""
     to_subjects(p, "Plus" if reading else "Free")
     for s in subjects:
         button(p, s)
@@ -166,8 +168,11 @@ def onboard(p, subjects=("Philosophy",), pace=None, reading=False):
         p.page.locator('[data-testid="stToggle"] input, [role="switch"]').first.check(force=True)
         idle(p.page)
         button(p, "Continue")              # reading plan
+    elif p.page.get_by_role("button", name="Skip for now").count():
+        button(p, "Skip for now")          # reading plan, not now
     button(p, "Continue")                  # your selection
-    button(p, "Continue")                  # price summary
+    if p.page.get_by_text("Price summary", exact=True).count():
+        button(p, "Continue")              # price summary
     if pace:
         button(p, pace)
     button(p, "Continue")                  # customize
@@ -176,11 +181,19 @@ def onboard(p, subjects=("Philosophy",), pace=None, reading=False):
     idle(p.page, 30)
 
 
+# the bar's short names, and the pages' full names in the Menu
+FULL = {"Record": "Learning Record", "Plan": "Learning Plan", "Reading": "Reading Plan"}
+
+
 def go(p, app, name):
-    """Top navigation by its label."""
+    """Top navigation by its label (on a phone, the pages that aren't in the
+    bar are reached through the Menu, by their full names)."""
     loc = p.page.locator('.st-key-topnav [data-testid="stPageLink-NavLink"]', has_text=name).first
-    tap(p, loc)
-    idle(p.page)
+    if loc.count() and loc.is_visible():
+        tap(p, loc)
+        idle(p.page)
+    else:
+        menu(p, FULL.get(name, name))
 
 
 def open_menu(p):

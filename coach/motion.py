@@ -26,6 +26,20 @@ SCRIPT = r"""
 (function () {
   const w = window.parent, doc = w.document;
   if (w.__cxControls) return; w.__cxControls = true;
+  // Every button's name is its words: Streamlit writes aria-label="" on
+  // buttons given no label of their own, and an empty aria-label hides the
+  // words from screen readers (each was read as just "button"). Removed
+  // wherever it appears, now and on every redraw.
+  const named = (root) => {
+    (root.querySelectorAll ? root.querySelectorAll('[aria-label=""]') : []).forEach((b) => b.removeAttribute('aria-label'));
+    if (root.getAttribute && root.getAttribute('aria-label') === '') root.removeAttribute('aria-label');
+  };
+  named(doc);
+  let naming = false;           // (one pass a frame, however many changes came in)
+  new w.MutationObserver(() => {
+    if (naming) return; naming = true;
+    w.requestAnimationFrame(() => { naming = false; named(doc); });
+  }).observe(doc.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-label'] });
   const reduced = () => w.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const strip = (p) => p.replace(/\/+$/, '') || '/';
   const here = () => strip(w.location.pathname);

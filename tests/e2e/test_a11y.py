@@ -205,3 +205,36 @@ def test_keyboard_on_review_and_the_course_map(public_app, pages, path, must):
         page.locator('[data-testid="stButtonGroup"] button').first.focus()
         page.keyboard.press("ArrowRight")
         assert page.evaluate("() => document.activeElement.innerText.trim()") == "Collection"
+
+
+UNNAMED = """() => [...document.querySelectorAll('button, a[href], [role="button"], input, textarea')]
+    .filter(e => e.offsetParent !== null)
+    .filter(e => {
+      const label = (e.getAttribute('aria-label') || '').trim();
+      const byId = e.id && document.querySelector('label[for="' + e.id + '"]');
+      const named = label || (e.textContent || '').trim() || (e.getAttribute('title') || '').trim()
+                    || (e.getAttribute('placeholder') || '').trim() || (byId && byId.innerText.trim())
+                    || e.closest('label') || e.getAttribute('aria-labelledby');
+      return !named || e.getAttribute('aria-label') === '';
+    }).map(e => e.outerHTML.slice(0, 160))"""
+
+
+def test_every_button_has_a_name_on_every_page(public_app, pages):
+    """Streamlit writes aria-label="" on buttons given no label of their own,
+    which hides their words from screen readers; the page script removes it
+    (coach/motion.py). Every button, link and field on every page has a name."""
+    covers("W-topnav-p")
+    app = public_app
+    p = person(app, pages)
+    unnamed = {}
+    for path in ("/", "/review", "/records", "/settings", "/courses", "/path", "/account", "/skills", "/practice",
+                 "/course?subject=philosophy", "/goal", "/week"):
+        flows.open_app(p, app, path)
+        found = None
+        for _ in range(2):                    # what is unnamed once the page has settled (not mid-animation)
+            p.page.wait_for_timeout(900)
+            now = set(p.page.evaluate(UNNAMED))
+            found = now if found is None else found & now
+        if found:
+            unnamed[path] = sorted(found)[:5]
+    assert not unnamed, unnamed

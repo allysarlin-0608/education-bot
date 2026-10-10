@@ -27,11 +27,11 @@ def put(d: dict) -> None:
     ui.save_settings(dict(ui.config(), onboarding=d))
 
 
-def clear() -> None:
-    ui.refresh_settings()
-    put(dict(draft(), **settings.new_goal_draft()))
-    for k in [k for k in st.session_state if k.startswith(("goal_", "gpath_"))]:
-        del st.session_state[k]
+def same_goal(p: dict):
+    """One of her goals that this path repeats (the same id, or the same title), or None."""
+    title = p["title"].strip().casefold()
+    return next((g for g in catalog.goals(active_only=False)
+                 if g["id"] == p["id"] or g["title"].strip().casefold() == title), None)
 
 
 def started_today() -> bool:
@@ -45,6 +45,11 @@ def add() -> None:
     ui.refresh_settings()
     d = draft()
     if not d["path"]:
+        return
+    twin = same_goal(d["path"])
+    if twin:                    # never two of the same goal
+        st.session_state.goal_problem = (f"“{twin['title']}” is already one of your goals"
+                                         + ("." if twin["status"] == "active" else ": resume it in Learning Plan."))
         return
     first = today if not started_today() else today + timedelta(days=1)
     try:
@@ -81,6 +86,9 @@ if added and catalog.path(added):
 active = len(settings.chosen_goals(config))
 room = plans.active_goals_allowed(config) - active
 d = draft()
+if d["path"] and catalog.path(d["path"]["id"]):     # a path already saved, left in the draft: start fresh
+    ui.clear_goal_draft()
+    d = draft()
 with st.container(key="ob_grid"):
     with st.container(key="ob_lead"):
         st.markdown("## What do you want to learn?" if not d["path"] else "## Your path")
@@ -101,5 +109,5 @@ with st.container(key="ob_grid"):
                 st.button("Add this goal", key="goal_add", type="primary", on_click=add)
                 st.button("Start over", key="goal_again", type="tertiary", on_click=goalmaker.again, args=(draft, put))
         if st.button("Cancel", key="goal_cancel", type="tertiary"):
-            clear()
+            ui.clear_goal_draft()
             st.switch_page("views/settings.py")

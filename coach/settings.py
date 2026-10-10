@@ -142,7 +142,7 @@ GOAL = "goal"           # the goal being made, in the draft's order of turns
 
 def new_draft() -> dict:
     return {"v": DRAFT_VERSION, "step": 0, "plan": None, "subjects": [], "units_per_day": DEFAULT_PACE, "levels": {},
-            "reading_enabled": False, "want_goal": False, "goal_at": 0, **new_goal_draft()}
+            "reading_enabled": False, "want_goal": False, "goal_at": 0, "back_to": None, **new_goal_draft()}
 
 
 def new_goal_draft() -> dict:
@@ -182,6 +182,7 @@ def draft_of(s: dict) -> dict:
     d["want_goal"] = saved.get("want_goal") is True
     if isinstance(saved.get("goal_at"), int) and saved["goal_at"] >= 0:
         d["goal_at"] = saved["goal_at"]
+    d["back_to"] = saved.get("back_to") if saved.get("back_to") in STEPS else None    # (a change from the review)
     if isinstance(saved.get("subjects"), list):
         d["subjects"] = [t for t in dict.fromkeys(saved["subjects"]) if t in SUBJECTS][:MAX_SUBJECTS]
     if saved.get("units_per_day") in PACES:

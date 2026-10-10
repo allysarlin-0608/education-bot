@@ -16,6 +16,9 @@ def draft(tmp_path):
 
 
 def test_the_plan_decides_the_reading_step_and_nothing_is_charged(monkeypatch, tmp_path):
+    # covers: S-plans_shown
+    from coach import plans
+    monkeypatch.setattr(plans, "SHOWN", True)              # (plans shown: coach/plans.SHOWN)
     at = app(monkeypatch, tmp_path, subjects=(), history=False, onboarded=False)
     at.button(key="ob_next").click().run()                         # Get started
     assert "Choose a plan" in texts(at) and at.button(key="ob_next").disabled, "a plan is chosen first"
@@ -65,7 +68,7 @@ def test_a_goal_can_be_left_and_removed(monkeypatch, tmp_path):
 
 
 def test_courses_and_path_pages_lead_to_each_course(monkeypatch, tmp_path):
-    # covers: W-subjects-sc_map, W-subjects-sc_enter, W-subjects-sc_add, W-path-lp_map
+    # covers: W-subjects-sc_map, W-subjects-sc_map-2, W-subjects-sc_enter, W-subjects-sc_add, W-path-lp_map
     from test_pages_smoke import loads
     at = app(monkeypatch, tmp_path, subjects=("philosophy", "cosmos"))
     loads(at, "views/subjects.py")
@@ -79,6 +82,10 @@ def test_courses_and_path_pages_lead_to_each_course(monkeypatch, tmp_path):
     loads(at, "views/subjects.py")
     at.button(key="sc_add_more_investing").click().run()
     assert not at.exception and "Learning Plan" in texts(at)
+    loads(at, "views/subjects.py")
+    assert not any(b.key == "sc_enter_more_investing" for b in at.button), "no way into a subject that isn't hers"
+    at.button(key="sc_map_more_investing").click().run()            # what it covers
+    assert not at.exception and "course-page" in texts(at)
     loads(at, "views/path.py")
     t = texts(at)
     assert "Your next days" in t and "Today" in t and "Tomorrow" in t and "Next: lesson" in t

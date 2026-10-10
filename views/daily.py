@@ -473,7 +473,7 @@ for k, message in enumerate(chat[1:], start=1):   # the kickoff line is shown as
         st.html(place.latest_anchor())
     with st.chat_message(message["role"]):
         if k == 1:
-            lesson_view.render(message["content"], topic, key=chat_key(slot))  # cards, tables and diagrams
+            lesson_view.render(message["content"], topic, key=chat_key(slot), title=slot.get("title", ""))  # cards, tables, diagrams
         elif message["role"] == "assistant":
             body, where, _ = practice.split_reply(message["content"], slot.get("lesson", ""))
             st.markdown(body)

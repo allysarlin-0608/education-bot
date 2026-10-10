@@ -457,6 +457,30 @@ def refresh_entry(log, day, topic):
         del st.session_state.coach_chats[key]          # rebuilt from the stored lessons
 
 
+def clear_goal_draft() -> None:
+    """A new goal starts from nothing: the goal part of her draft (words,
+    reply, path) is emptied, and so are the New goal page's boxes."""
+    refresh_settings()
+    save_settings(dict(config(), onboarding=dict(settings.draft_of(config()), **settings.new_goal_draft())))
+    for k in [k for k in st.session_state if k.startswith(("goal_", "gpath_"))]:
+        del st.session_state[k]
+
+
+def sync_goals() -> None:
+    """Her settings name her goals by id; their paths are in this session's
+    records. When the settings name a goal this session hasn't got (it was
+    made in another tab, or before a refresh of the settings), the records
+    are read again, so no page ever runs on turns it can't resolve (a goal
+    missing here would drop out of her turns, and an empty list of turns
+    used to fall back to the old weekday schedule: a subject she never chose)."""
+    log = st.session_state.get("coach_log")
+    if log is None:
+        return
+    have = {p["id"] for p in log.get("paths", [])}
+    if any(catalog.is_goal(t) and t not in have for t in config().get("subjects") or []):
+        refresh_log(log)
+
+
 def refresh_log(log) -> None:
     """Her whole record as stored now, in place of this session's copy (another
     tab or device may have moved on since it was loaded): for pages that show

@@ -54,7 +54,7 @@ def open_lesson(n):
     st.caption(" · ".join(x for x in meta if x))
     read, quiz_tab, notes = st.tabs(["Lesson", "Quiz", "Notes"])
     with read:
-        lesson_view.render_tabs(slot["lesson"], topic, key=f"cm_{topic}_{n}")
+        lesson_view.render_tabs(slot["lesson"], topic, key=f"cm_{topic}_{n}", title=slot.get("title", ""))
     with quiz_tab:
         if q and q.get("answers") is not None and q.get("score") is None:
             st.caption("Your last answers are in, but the short answers weren't marked yet: Today marks them.")

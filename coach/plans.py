@@ -13,9 +13,16 @@ are not decided (PRODUCT_PLAN.md §6, decision 3): the paid price stays None
 until they are, and the pages say so instead of showing a number.
 
 Pure functions, no Streamlit."""
+import os
+
 from coach import settings
 
 ENFORCED = False
+# Plans and prices on the pages (the setup's Plans and Price steps, the plan in
+# the review, Account → Subscription). Off until plans and prices are decided
+# and payments exist: until then nobody sees a plan or a price, and everyone
+# has every feature (ENFORCED is False). PLANS_SHOWN=1 shows them (testing).
+SHOWN = os.environ.get("PLANS_SHOWN") == "1"
 DEFAULT = "free"
 
 PLANS = {

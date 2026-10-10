@@ -22,8 +22,8 @@ from coach import catalog, choices, goalmaker, pathview, plans, settings, stage,
 STEP_NAMES = {"welcome": "Welcome", "plans": "Plans", "subjects": "Courses & subjects", "goal": "Your goal",
               "reading": "Reading plan", "selection": "Your selection", "price": "Price summary",
               "customize": "Customize learning", "path": "Your path", "review": "Final review"}
-CHANGE = {"plans": "Change plan", "subjects": "Change subjects or goal", "reading": "Change reading plan",
-          "customize": "Change time, order or level", "path": "Change your path"}
+CHANGE = {"plans": "Change plan", "subjects": "Change subjects", "goal": "Change your goal",
+          "reading": "Change reading plan", "customize": "Change time, order or level", "path": "Change your path"}
 
 
 def draft() -> dict:
@@ -31,23 +31,38 @@ def draft() -> dict:
 
 
 def put(d: dict) -> None:
-    """Keep her answers so far (not yet a finished setup: onboarded_at stays empty)."""
+    """Keep her answers so far (not yet a finished setup: onboarded_at stays empty).
+    Once the setup is finished (Start learning, here or in another tab), a
+    click left on a setup page saves nothing: a draft written onto a
+    finished setup mixed old answers into her account (and the New goal page
+    then opened the setup's path as if it were new)."""
     ui.refresh_settings()       # onto the row as stored now (another tab may have changed it; ISS-044)
+    if settings.onboarded(ui.config()):
+        return                  # (the next run opens the app as it now is)
     ui.save_settings(dict(ui.config(), onboarding=d))
 
 
+def plan(d: dict) -> str:
+    """Her plan for the setup: the one she chose while plans are shown
+    (plans.SHOWN); else nobody chooses one, and everyone has every feature."""
+    return d["plan"] if plans.SHOWN else plans.DEFAULT
+
+
 def reading_offered(d: dict) -> bool:
-    """The reading plan is offered on a plan that includes it."""
+    """The reading plan is offered on a plan that includes it (to everyone
+    while plans aren't shown: no feature is held back then)."""
+    if not plans.SHOWN:
+        return True
     return plans.known(d["plan"]) and bool(plans.includes(d["plan"], "reading_plan"))
 
 
 def route(d: dict) -> list:
     """The steps her answers call for: Your goal once she asked for a goal
     of her own (or has one), Reading plan only on a plan that includes it."""
-    out = ["welcome", "plans", "subjects"]
+    out = ["welcome"] + (["plans"] if plans.SHOWN else []) + ["subjects"]
     out += ["goal"] if d["want_goal"] or d["path"] else []
     out += ["reading"] if reading_offered(d) else []
-    return out + ["selection", "price", "customize", "path", "review"]
+    return out + ["selection"] + (["price"] if plans.SHOWN else []) + ["customize", "path", "review"]
 
 
 def reachable(d: dict) -> str:
@@ -59,7 +74,7 @@ def reachable(d: dict) -> str:
     while name not in steps:
         name = settings.STEPS[settings.STEPS.index(name) - 1]
     at = steps.index(name)
-    if not plans.known(d["plan"]):
+    if plans.SHOWN and not plans.known(d["plan"]):
         at = min(at, steps.index("plans"))
     if not d["subjects"] and not d["path"]:
         at = min(at, steps.index("goal") if "goal" in steps else steps.index("subjects"))
@@ -68,7 +83,10 @@ def reachable(d: dict) -> str:
     return steps[at]
 
 
-def go(name: str) -> None:
+def go(name: str, back_to=None) -> None:
+    """To a step of her route (as far as her answers allow). back_to: the
+    step a change was asked from (the final review), offered again on the
+    way ("Back to final review"), so a change never means walking every step."""
     d = draft()
     now = reachable(d)
     steps = route(d)
@@ -78,7 +96,15 @@ def go(name: str) -> None:
     st.session_state.ob_from = steps.index(now)
     d["step"] = settings.STEPS.index(name)
     d["step"] = settings.STEPS.index(reachable(d))
+    d["back_to"] = None if settings.STEPS[d["step"]] == "review" else back_to or d.get("back_to")
     put(d)
+
+
+def can_return(d: dict) -> bool:
+    """Back to the final review is offered once her answers allow it again."""
+    if d.get("back_to") != "review":
+        return False
+    return reachable(dict(d, step=settings.STEPS.index("review"))) == "review"
 
 
 def step_by(k: int):
@@ -162,7 +188,8 @@ def start() -> None:
         return
     # the plan she chose, as asked for (nothing is charged; her plan is plans.plan_of). A
     # preference that can't be kept (its table missing) doesn't hold up her start.
-    ui.update_prefs(plan_choice=d["plan"])
+    if plans.SHOWN:
+        ui.update_prefs(plan_choice=d["plan"])
     st.session_state.pop("coach_save_error", None)
     ui.record("setup_done")
     if d["path"]:
@@ -183,6 +210,9 @@ def nav(back: bool = True, label: str = "Continue", ready: bool = True, note: st
             st.button("Back", key="ob_back", type="tertiary", on_click=go, args=(step_by(-1),))
         else:
             st.html('<span class="pq-gap"></span>')
+        if can_return(d) and step != "review" and not on:
+            st.button("Back to final review", key="ob_to_review", type="tertiary", disabled=not ready,
+                      on_click=go, args=("review",))
         st.button(label, key="ob_next", type="primary", disabled=not ready,
                   on_click=on or go, args=() if on else (step_by(1),))
 
@@ -193,10 +223,12 @@ def lead(title: str, lede: str) -> None:
 
 
 def changes(*names) -> None:
-    """Ways back to an earlier step (what she chose elsewhere is kept)."""
+    """Ways back to an earlier step (what she chose elsewhere is kept; from
+    the final review, the way back to it is offered on every step after)."""
     with st.container(key="ob_changes", horizontal=True):
         for name in names:
-            st.button(CHANGE[name], key=f"ob_change_{name}", type="tertiary", on_click=go, args=(name,))
+            st.button(CHANGE[name], key=f"ob_change_{name}", type="tertiary", on_click=go,
+                      args=(name, step if step == "review" else None))
 
 
 def turn_names(d: dict) -> list:
@@ -218,13 +250,14 @@ def level_line(d: dict, t: str) -> str:
 
 def chosen_rows(d: dict) -> str:
     """What she chose: the plan, subjects, goal, reading plan."""
-    plan = d["plan"]
-    out = row("Plan", escape(plans.NAMES[plan]), plans.price_line(plan))
+    plan_ = plan(d)
+    out = row("Plan", escape(plans.NAMES[plan_]), plans.price_line(plan_)) if plans.SHOWN else ""
     if d["subjects"]:
         objs = "".join(visuals.object_html(t, "ob-obj", list(settings.SUBJECTS).index(t) + 1) for t in d["subjects"])
         out += row("Subjects", f'<span class="ob-objs">{objs}</span>'
                    + escape(", ".join(catalog.name(t) for t in d["subjects"])),
-                   f"{len(d['subjects'])} of {plans.includes(plan, 'subjects')} on your plan")
+                   f"{len(d['subjects'])} of {plans.includes(plan_, 'subjects')}"
+                   + (" on your plan" if plans.SHOWN else ""))
     if d["path"]:
         out += row("Your goal", escape(d["path"]["title"]), "A path designed for it")
     if reading_offered(d):
@@ -272,10 +305,10 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
             st.html('<p class="ob-lede">GNOSIS teaches the subjects you choose, or a goal of your own, in short '
                     "daily lessons. Each lesson has a quiz to check it stayed, review brings back what you "
                     "might forget, and your record shows what you know.</p>"
-                    '<p class="ob-note">Next: choose a plan, then what to learn. You can go back at any step; '
-                    "nothing is final until you press Start learning.</p>")
+                    f'<p class="ob-note">Next: {"choose a plan, then " if plans.SHOWN else ""}what to learn. '
+                    "You can go back at any step; nothing is final until you press Start learning.</p>")
             with st.container(key="ob_nav", horizontal=True, horizontal_alignment="left"):
-                st.button("Get started", key="ob_next", type="primary", on_click=go, args=("plans",))
+                st.button("Get started", key="ob_next", type="primary", on_click=go, args=(steps[1],))
 
     elif step == "plans":
         with st.container(key="ob_grid"):
@@ -297,7 +330,7 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
                 nav(ready=plans.known(d["plan"]), note="" if plans.known(d["plan"]) else "Choose a plan to continue.")
 
     elif step == "subjects":
-        limit, goals = plans.includes(d["plan"], "subjects"), plans.includes(d["plan"], "active_goals")
+        limit, goals = plans.includes(plan(d), "subjects"), plans.includes(plan(d), "active_goals")
         with st.container(key="ob_grid_subjects"):
             with st.container(key="ob_lead"):
                 lead("What would you like to learn?",
@@ -319,8 +352,8 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
                 n = len(d["subjects"])
                 counted = (f"{n} of {limit} chosen" + (" · the most you can choose" if full else "") if n
                            else "" if d["path"] or d["want_goal"] else "Choose at least one subject to continue.")
-                plan_note = (f"{plans.NAMES[d['plan']]} plan: up to {limit} subjects and "
-                             f"{goals} {'goal' if goals == 1 else 'goals'} of your own at a time.")
+                plan_note = (f"{plans.NAMES[plan(d)]} plan: up to {limit} subjects and "
+                             f"{goals} {'goal' if goals == 1 else 'goals'} of your own at a time." if plans.SHOWN else "")
                 nav(ready=n >= settings.MIN_SUBJECTS or bool(d["path"]) or d["want_goal"],
                     note=" · ".join(x for x in (counted, plan_note) if x))
 
@@ -346,8 +379,8 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
     elif step == "reading":
         with st.container(key="ob_grid"):
             with st.container(key="ob_lead"):
-                lead("Reading plan", f"Included in {plans.NAMES[d['plan']]}, and optional. Choose a book and it "
-                                     "is split into 14 days: read your part each day, then talk it through.")
+                lead("Reading plan", (f"Included in {plans.NAMES[plan(d)]}, and optional. " if plans.SHOWN else "Optional. ")
+                     + "Choose a book and it is split into 14 days: read your part each day, then talk it through.")
             with st.container(key="ob_body"):
                 with st.container(key="ob_toggle"):
                     st.toggle("Add a 14-day reading plan", value=d["reading_enabled"], key="ob_reading",
@@ -360,7 +393,8 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
                 lead("Your selection", "What you chose so far. Change anything before you go on.")
             with st.container(key="ob_body"):
                 st.html(f'<dl class="ob-summary">{chosen_rows(d)}</dl>')
-                changes("plans", "subjects", *(["reading"] if reading_offered(d) else []))
+                changes(*(["plans"] if plans.SHOWN else []), "subjects", *(["goal"] if d["path"] else []),
+                        *(["reading"] if reading_offered(d) else []))
                 nav()
 
     elif step == "price":
@@ -459,9 +493,11 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
                 enter = turns[0] if turns and turns[0] != settings.GOAL else ""
                 st.html((f'<div hidden data-enter="{enter}"></div>' if enter else "")
                         + f'<dl class="ob-summary">{chosen_rows(d)}{learning_rows(d)}'
-                        + row("Due today", f"{plans.CURRENCY} {plans.due_today(d['plan']):.2f}", "Nothing is charged")
+                        + (row("Due today", f"{plans.CURRENCY} {plans.due_today(plan(d)):.2f}", "Nothing is charged")
+                           if plans.SHOWN else "")
                         + "</dl>")
-                changes("plans", "subjects", "customize", "path")
+                changes(*(["plans"] if plans.SHOWN else []), "subjects", *(["goal"] if d["path"] else []),
+                        *(["reading"] if reading_offered(d) else []), "customize", "path")
                 problem = st.session_state.pop("ob_problem", "")
                 levels = settings.draft_levels(d)
                 nav(label="Start learning", ready=bool(turns) and not any(v is None for v in levels.values()),

@@ -114,11 +114,14 @@ CHECKER = """You check a quiz before a learner sees it. For each question, decid
   common, main, best or usual thing, the true answer is among the options; each note on a wrong
   option (why it's wrong) is accurate.
 - "blank": exactly one word or phrase (or the listed variants) fits the blank, and it is correct.
-- "order": the steps are correct and there is exactly one defensible order (the one given).
+- "order": the steps are correct and there is exactly one defensible order (the one given), and the
+  lesson itself teaches that sequence; steps that could reasonably go in another order are a problem.
 - "match": every pair is factually correct and no term could reasonably match a different meaning.
 - "short": the model answer is factually correct and answers the question.
 - "apply": the question can be answered from her own life, and the criteria are fair and correct.
 Judge by real-world facts, not only by what a lesson might have said.
+When the lesson is given: a question (other than one marked "earlier lesson") is a problem if the
+lesson doesn't teach what it needs, so a learner who read the lesson carefully couldn't answer it.
 
 Reply with JSON only: {"problems": [{"id": 0, "issue": "one sentence"}]} listing only the questions
 with a problem; {"problems": []} if every question is sound."""
@@ -373,9 +376,17 @@ def _describe(k: int, q: dict) -> str:
     return f"id {k} ({q['type']}): {q['question']}\n  {label}: {q['answer']}"
 
 
-def check_request(questions: list):
-    """(system, messages) asking the model to vet every question."""
-    return CHECKER, [{"role": "user", "content": "\n\n".join(_describe(k, q) for k, q in enumerate(questions))}]
+CHECK_LESSON_CHARS = 6000        # the lesson the checker reads (its whole text, as a rule)
+
+
+def check_request(questions: list, lesson: str = ""):
+    """(system, messages) asking the model to vet every question; with the
+    lesson, also that each question tests only what the lesson taught (one
+    call either way: the lesson is more words to read, not another call)."""
+    qs = "\n\n".join(_describe(k, q) + ("  (earlier lesson)" if q.get("from") else "")
+                      for k, q in enumerate(questions))
+    body = (f"The lesson:\n<<<\n{lesson[:CHECK_LESSON_CHARS]}\n>>>\n\nThe quiz:\n{qs}" if lesson else qs)
+    return CHECKER, [{"role": "user", "content": body}]
 
 
 def problems(data, n: int):

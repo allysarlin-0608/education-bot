@@ -77,7 +77,8 @@ def test_the_menu_reaches_every_part_and_names_what_isnt_built(public_app, pages
     flows.menu(p, "Profile")
     flows.open_menu(p)
     t = text(p)
-    assert "Subscription & Account Settings" in t and t.count("you are here") == 2, "Account: both its entries marked"
+    assert "Account settings" in t and t.count("you are here") == 2, "Account: both its entries marked"
+    assert "Subscription" not in t, "no plan while plans aren't shown"
     for soon in ("Knowledge Exploration", "Examinations", "Research Portfolio", "Certificates"):
         assert soon in t, soon
     assert t.count("not available yet") >= 5, "the parts not built are named as such, not linked"

@@ -85,7 +85,7 @@ def show_entry(e, where):
                 s = readable[pick]
                 with st.container(key=f"reader_{key}_{pick}"):
                     st.markdown(f"**Lesson {s['n']}: {s['title']}**")
-                    lesson_view.render_tabs(s["lesson"], e["topic"], key=f"rec_{key}_{s['n']}")
+                    lesson_view.render_tabs(s["lesson"], e["topic"], key=f"rec_{key}_{s['n']}", title=s.get("title", ""))
         if e.get("followup_question"):
             st.markdown(f"**Question to explore:** {e['followup_question']}")
         return

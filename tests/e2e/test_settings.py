@@ -171,7 +171,7 @@ def test_delete_my_account_removes_everything(public_app, pages):
     p, email = person(app, pages)
     flows.go(p, app, "Home")
     flows.start_lesson(p)
-    flows.menu(p, "Subscription & Account Settings")
+    flows.menu(p, "Account settings")
     assert "/account" in p.page.url
     flows.button(p, "Delete my account")
     assert flows.wait_text(p.page, "This permanently deletes your account")

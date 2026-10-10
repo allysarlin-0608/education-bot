@@ -30,7 +30,7 @@ SECTIONS = (
     ("Assessments & Examinations", (("Review", "Review"), ("Practice", "Practice"), ("Examinations", None))),
     ("Research", (("Research", None), ("Research Portfolio", None))),
     ("Achievements", (("Learning Record", "Learning Record"), ("Your week", "Your week"), ("Certificates", None))),
-    ("Account", (("Profile", "Account"), ("Subscription & Account Settings", "Account"))),
+    ("Account", (("Profile", "Account"), ("Account settings", "Account"))),
 )
 NOT_YET = "not available yet"
 
@@ -52,6 +52,15 @@ def render(pages: list, log: dict, everything: list = (), here: str = None) -> N
             auth.account_menu()          # at the right end: who is signed in, Settings, Sign out
 
 
+def _sections():
+    """SECTIONS as shown: Account's second entry is Subscription & Account
+    Settings once plans are shown (coach/plans.SHOWN), else Account settings."""
+    from coach import plans
+    if not plans.SHOWN:
+        return SECTIONS
+    return SECTIONS[:-1] + (("Account", (("Profile", "Account"), ("Subscription & Account Settings", "Account"))),)
+
+
 def menu(pages: list, here: str = None) -> None:
     """Every part of GNOSIS, grouped (SECTIONS): a link to each page there
     is (the page she is on, `here` (its url_path), marked, not linked), and
@@ -60,7 +69,7 @@ def menu(pages: list, here: str = None) -> None:
     by_title = {p.title: p for p in pages}
     with st.popover("Menu", icon=":material/menu:", key="site_menu", on_change="rerun"):
         with st.container(key="site_menu_list", gap=None):
-            for group, items in SECTIONS:
+            for group, items in _sections():
                 st.html(f'<p class="mn-group">{_e(group)}</p>')
                 for label, title in items:
                     page = by_title.get(title) if title else None

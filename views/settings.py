@@ -100,12 +100,17 @@ with st.container(key="set_sec_subjects"):
     with st.container(key="set_grid_subjects"):
         with st.container(key="set_stage"):
             st.html(stage.html(focus, "setsubj"))
-            with st.container(key="set_links", horizontal=True):
-                with st.container(key=f"enter_{focus}", horizontal=True):
-                    if st.button(f"Enter {visuals.subject(focus)['title']}", type="tertiary", key="set_world"):
-                        ui.enter_world(focus)
-                if st.button("Course map", type="tertiary", key="set_course"):
-                    ui.open_course(focus)
+            # the ways into a subject are for hers; one not chosen is added by tapping its row
+            if focus in builtin:
+                with st.container(key="set_links", horizontal=True):
+                    with st.container(key=f"enter_{focus}", horizontal=True):
+                        if st.button(f"Enter {visuals.subject(focus)['title']}", type="tertiary", key="set_world"):
+                            ui.enter_world(focus)
+                    if st.button("Course map", type="tertiary", key="set_course"):
+                        ui.open_course(focus)
+            else:
+                st.html(f'<p class="ob-note set-notyet">Not in your days yet. Tap '
+                        f'{escape(visuals.subject(focus)["title"])} in the list to add it.</p>')
         with st.container(key="set_body"):
             choices.rows("setsubj", stage.rows(), builtin, pick_subject, multi=True,
                          full=len(builtin) >= settings.MAX_SUBJECTS, focus=focus, style="index")
@@ -161,6 +166,7 @@ with st.container(key="set_sec_goals"):
     if goal_problem:
         st.html(f'<p class="ob-note">{escape(goal_problem)}</p>')
     if st.button("Add a goal", key="set_goal_add"):
+        ui.clear_goal_draft()                     # a new goal: never a draft left from before
         st.switch_page("views/goal.py")
 
 # ---------- Daily pace ----------
