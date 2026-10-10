@@ -2259,8 +2259,336 @@ WORLDS = """
 </style>
 """
 
+EDITORIAL = """
+<style>
+/* ==========================================================================
+   EDITORIAL: the last layer. The same black and white page, its type and its
+   objects, finished: no grey slabs. A thing that holds content is set off by
+   a hairline (--rule), not a fill; a field or a secondary button is drawn as
+   an outline that turns to ink under the hand; the page's own colour shows
+   everywhere else. Everything lines up on the text's left edge.
+   ========================================================================== */
+:root {
+  --rule: light-dark(#DCDCDC, #262626);          /* the hairline: visible, never loud */
+  --rule-strong: light-dark(#B8B8B8, #3D3D3D);   /* an outline you can act on */
+  --surface: var(--env);                         /* no grey slabs at rest */
+  --surface-2: light-dark(#F3F3F3, #111111);     /* the faintest wash, under the hand only */
+  --field: transparent;
+  --wash: light-dark(rgba(0, 0, 0, 0.035), rgba(255, 255, 255, 0.045));
+}
+
+/* ---------- the side panel: the page itself, a hairline at its edge ---------- */
+[data-testid="stSidebar"] { background: var(--env) !important; border-right: 1px solid var(--rule) !important; }
+[data-testid="stSidebar"] > div { background: transparent !important; }
+
+/* ---------- secondary buttons: an outline, ink under the hand ----------
+   (not the controls drawn as something else: calendar days, the rows of a
+   list, the bar at the top, a row's hidden button) */
+.stApp :is(.stButton button[kind="secondary"], .stDownloadButton button, .stFormSubmitButton button[kind="secondaryFormSubmit"], [data-testid="stPopover"] button):not(:is(
+    [class*="st-key-cal_"], [class*="st-key-calgrid_"], [class*="st-key-calw_"], [class*="st-key-oncal_"], [class*="st-key-step_"],
+    [class*="st-key-lesson_steps"], [class*="st-key-opt_"], [class*="st-key-sres_"], .st-key-topnav, .st-key-site_menu,
+    .st-key-nav_search, .st-key-account_menu, .st-key-w_others, [class*="st-key-enter_"], [data-testid="stSidebar"], .st-key-start_book) *) {
+  background: transparent !important; color: var(--label) !important;
+  border: 1px solid var(--rule-strong) !important; box-shadow: none !important; border-radius: var(--radius-small);
+  transition: background-color var(--t-micro) var(--ease), color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease);
+}
+@media (hover: hover) {
+  .stApp :is(.stButton button[kind="secondary"], .stDownloadButton button, .stFormSubmitButton button[kind="secondaryFormSubmit"], [data-testid="stPopover"] button):not(:is(
+      [class*="st-key-cal_"], [class*="st-key-calgrid_"], [class*="st-key-calw_"], [class*="st-key-oncal_"], [class*="st-key-step_"],
+      [class*="st-key-lesson_steps"], [class*="st-key-opt_"], [class*="st-key-sres_"], .st-key-topnav, .st-key-site_menu,
+      .st-key-nav_search, .st-key-account_menu, .st-key-w_others, [class*="st-key-enter_"], [data-testid="stSidebar"], .st-key-start_book) *):not(:disabled):hover {
+    background: var(--strong) !important; color: var(--env) !important; border-color: var(--strong) !important;
+  }
+  .stApp :is(.stButton button[kind="secondary"], .stDownloadButton button, [data-testid="stPopover"] button):not(:disabled):hover :is(p, span) { color: inherit !important; }
+}
+.stApp .stButton button[kind="secondary"]:disabled { background: transparent !important; border: 1px solid var(--rule) !important; color: var(--label-3) !important; }
+/* the first book: the same outline */
+.st-key-start_book button { background: transparent !important; border: 1px solid var(--rule-strong) !important; }
+@media (hover: hover) { .st-key-start_book button:hover { background: var(--strong) !important; color: var(--env) !important; border-color: var(--strong) !important; }
+  .st-key-start_book button:hover p { color: var(--env) !important; } }
+/* the primary button: ink, and on hover a step softer, never grey */
+@media (hover: hover) {
+  .stButton button[kind="primary"]:not(:disabled):hover, .stFormSubmitButton button[kind="primaryFormSubmit"]:not(:disabled):hover { background: var(--label) !important; }
+}
+.stButton button[kind="primary"]:disabled { background: transparent !important; border: 1px solid var(--rule) !important; color: var(--label-3) !important; }
+
+/* ---------- links that are buttons (tertiary): words on the text's edge,
+   a hairline under them that inks in under the hand (not the words drawn
+   as something else: a list's rows, the calendar, the bar, Back) ---------- */
+.stMainBlockContainer .stButton button[kind="tertiary"]:not(:is([class*="st-key-opt_"], [class*="st-key-cal"], [class*="st-key-oncal_"], .st-key-topnav,
+    [class*="st-key-sres_"], .st-key-w_others, .st-key-w_back, [class*="st-key-lesson_steps"], [class*="st-key-step_"], .st-key-ob_nav,
+    [class*="st-key-pqnav_"], [class*="st-key-ob_up_"], [class*="st-key-ob_down_"], .st-key-rv_back, .st-key-sk_back, .st-key-pr_back) *) {
+  padding: 0 !important; min-width: 32px; min-height: 40px; color: var(--label) !important; background: transparent !important;
+  border: none !important; border-radius: 0 !important; box-shadow: none !important; text-decoration: none !important;
+}
+.stMainBlockContainer .stButton button[kind="tertiary"]:not(:is([class*="st-key-opt_"], [class*="st-key-cal"], [class*="st-key-oncal_"], .st-key-topnav,
+    [class*="st-key-sres_"], .st-key-w_others, .st-key-w_back, [class*="st-key-lesson_steps"], [class*="st-key-step_"], .st-key-ob_nav,
+    [class*="st-key-pqnav_"], [class*="st-key-ob_up_"], [class*="st-key-ob_down_"], .st-key-rv_back, .st-key-sk_back, .st-key-pr_back) *) p {
+  font-size: 0.875rem; letter-spacing: 0.01em; padding-bottom: 3px;
+  background: linear-gradient(var(--rule-strong), var(--rule-strong)) left bottom / 100% 1px no-repeat;
+}
+@media (hover: hover) {
+  .stMainBlockContainer .stButton button[kind="tertiary"]:not(:is([class*="st-key-opt_"], [class*="st-key-cal"], [class*="st-key-oncal_"], .st-key-topnav,
+      [class*="st-key-sres_"], .st-key-w_others, .st-key-w_back, [class*="st-key-lesson_steps"], [class*="st-key-step_"], .st-key-ob_nav,
+      [class*="st-key-pqnav_"], [class*="st-key-ob_up_"], [class*="st-key-ob_down_"], .st-key-rv_back, .st-key-sk_back, .st-key-pr_back) *):hover p {
+    color: var(--strong); background-image: linear-gradient(var(--strong), var(--strong)); }
+}
+.st-key-ob_nav .stButton button[kind="tertiary"] { margin-left: 0 !important; padding: 0 !important; }
+/* a row of such links: one even measure between them */
+:is(.st-key-today_links, .st-key-set_links, [class*="st-key-prog_links_"], .st-key-cm_links, .st-key-w_actions) { column-gap: var(--space-5) !important; row-gap: 0 !important; }
+
+/* ---------- fields: an outline on the page, ink when in use ---------- */
+[data-testid="stSelectbox"] [role="group"], [data-testid="stDateInputField"], [data-testid="stTextInputRootElement"],
+[data-testid="stTextAreaRootElement"], [data-testid="stNumberInputContainer"], [data-baseweb="select"] > div {
+  background: transparent !important; border: 1px solid var(--rule-strong) !important;
+}
+:is([data-testid="stSelectbox"] [role="group"], [data-testid="stDateInputField"], [data-testid="stTextInputRootElement"],
+    [data-testid="stTextAreaRootElement"], [data-testid="stNumberInputContainer"], [data-baseweb="select"] > div):focus-within { border-color: var(--strong) !important; }
+[data-baseweb="input"], [data-baseweb="base-input"], [data-baseweb="textarea"] { background: transparent !important; }
+.stApp :is(input, textarea)::placeholder { color: var(--label-3) !important; opacity: 1; }
+[class*="_reply_"] [data-baseweb="input"], [class*="_reply_"] [data-baseweb="base-input"], [class*="_reply_"] input { background: transparent !important; }
+
+/* ---------- the question box at the foot of a lesson: an outline on the page ---------- */
+[data-testid="stChatInput"] { background: var(--env) !important; border: 1px solid var(--rule-strong) !important; }
+[data-testid="stChatInput"]:focus-within { border-color: var(--strong) !important; }
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) { background: transparent; border: 1px solid var(--rule); }
+
+/* ---------- a disclosure: a hairline row, the chevron and the words on the text's edge ---------- */
+[data-testid="stExpander"] details { background: transparent !important; border: none !important; border-top: 1px solid var(--rule) !important; border-bottom: 1px solid var(--rule) !important; border-radius: 0 !important; }
+[data-testid="stExpander"] summary { background: transparent !important; padding-left: 0 !important; padding-right: 0 !important; }
+[data-testid="stExpander"] summary p { font-size: 0.9375rem; color: var(--label); }
+[data-testid="stExpander"] summary [data-testid="stIconMaterial"] { color: var(--label-2); }
+@media (hover: hover) { [data-testid="stExpander"] summary:hover { background: transparent !important; } [data-testid="stExpander"] summary:hover [data-testid="stIconMaterial"] { color: var(--strong); } }
+[data-testid="stExpanderDetails"] { padding-left: 0 !important; padding-right: 0 !important; }
+[data-testid="stExpander"] + [data-testid="stExpander"] details, [data-testid="stElementContainer"]:has([data-testid="stExpander"]) + [data-testid="stElementContainer"] [data-testid="stExpander"] details { border-top: none !important; }
+
+/* ---------- a choice among answers (the quiz): each one a row on a hairline,
+   a ring that fills with ink when it is hers ---------- */
+[data-testid="stRadio"] [role="radiogroup"] { gap: 0 !important; border-top: 1px solid var(--rule); margin-top: var(--space-2); }
+[data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] { border-top: none; gap: var(--space-4) !important; }
+[data-testid="stRadioOption"] { margin: 0 !important; padding: 12px 4px 12px 0; min-height: 48px; box-sizing: border-box; align-items: center;
+  border-bottom: 1px solid var(--rule); cursor: pointer; transition: color var(--t-micro) var(--ease); }
+[role="radiogroup"][aria-orientation="horizontal"] [data-testid="stRadioOption"] { border-bottom: none; padding: 8px 0; }
+[data-testid="stRadioOption"] > div { align-items: center; gap: 14px; }
+[data-testid="stRadioOption"] > div > div:first-child {
+  width: 18px !important; height: 18px !important; flex: 0 0 18px; margin: 0 !important; box-sizing: border-box;
+  background: transparent !important; border: 1px solid var(--label-3) !important; border-radius: 50% !important;
+  display: grid; place-items: center; box-shadow: none !important; transition: border-color var(--t-micro) var(--ease);
+}
+[data-testid="stRadioOption"] > div > div:first-child > div {
+  width: 8px !important; height: 8px !important; border-radius: 50%; margin: 0 !important; background: var(--strong) !important;
+  transform: scale(0); transition: transform var(--t-state) var(--ease);
+}
+[data-testid="stRadioOption"]:has(input:checked) > div > div:first-child { border-color: var(--strong) !important; }
+[data-testid="stRadioOption"]:has(input:checked) > div > div:first-child > div { transform: scale(1); }
+[data-testid="stRadioOption"] p { font-size: 0.9375rem; line-height: 1.45; color: var(--label-2); transition: color var(--t-micro) var(--ease); }
+[data-testid="stRadioOption"]:has(input:checked) p { color: var(--label); font-weight: 500; }
+@media (hover: hover) { [data-testid="stRadioOption"]:hover p { color: var(--label); } [data-testid="stRadioOption"]:hover > div > div:first-child { border-color: var(--label); } }
+[data-testid="stRadioOption"]:has(input:focus-visible) { outline: 1px solid var(--outline); outline-offset: 2px; }
+[data-testid="stRadio"] > [data-testid="stWidgetLabel"] p { font-size: 1rem; line-height: 1.5; color: var(--label); }
+
+/* ---------- a switch: a hairline track, an ink knob ---------- */
+[data-testid="stCheckbox"] label > div:has(> svg) { background: transparent !important; border: 1px solid var(--label-3) !important; }
+[data-testid="stCheckbox"][data-selected="true"] label > div:has(> svg) { background: var(--strong) !important; border-color: var(--strong) !important; }
+
+/* ---------- a list of options (subjects, plans, the pace): rows on hairlines,
+   each with its own mark, so it is plain that a row is a thing to tap:
+   an empty box (or ring) when it isn't chosen, filled with ink and ticked when it is ---------- */
+[class*="st-key-optlist_"] { border-bottom: 1px solid var(--rule) !important; }
+[class*="st-key-opt_"] { border-top: 1px solid var(--rule) !important; }
+.opt-mark { min-width: 32px; min-height: 18px; }
+.opt-mark::before {
+  content: ""; position: absolute; left: 50%; top: 0; width: 18px; height: 18px; margin-left: -9px; box-sizing: border-box;
+  border: 1px solid var(--label-3); border-radius: 50%; background: transparent;
+  transition: background-color var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease);
+}
+.opt[data-multi="1"] .opt-mark::before { border-radius: 3px; }
+.opt-mark::after { top: 3px !important; z-index: 1; border-color: var(--env) !important; }
+[class*="st-key-opt_"][class*="__sel"]:not([data-on="0"]) .opt-mark::before,
+[class*="st-key-opt_"][data-on="1"] .opt-mark::before { background: var(--strong); border-color: var(--strong); }
+.opt-day { margin-top: 26px; }
+@media (hover: hover) { [class*="st-key-opt_"]:not([class*="__dis"]):hover .opt-mark::before { border-color: var(--label); } }
+/* past the limit: the box is drawn faint, and the row's line says why */
+[class*="st-key-opt_"][class*="__dis"]:not([data-on="1"]) .opt-mark::before { border-style: dashed; border-color: var(--rule-strong); }
+[class*="st-key-opt_"][class*="__dis"]:not([data-on="1"]) .opt-t { color: var(--label-2); }
+/* the list of subjects in the setup runs the stage's full width, so its marks line up with the stage's edge */
+.st-key-ob_grid_subjects .st-key-ob_body { max-width: none; }
+
+/* ---------- things that hold content: a hairline above, no slab, on the text's edge ---------- */
+.st-key-welcome_back, .st-key-milestone, .st-key-goal_intro, [class*="_reply_"], [class*="st-key-obp_unit_"], [class*="st-key-gpath_unit_"],
+[class*="st-key-prog_day_"], [class*="st-key-reader_"] {
+  background: transparent !important; border: none !important; border-top: 1px solid var(--rule) !important; border-radius: 0 !important;
+  padding-left: 0 !important; padding-right: 0 !important;
+}
+[class*="st-key-prog_day_"] { border-top-color: var(--strong) !important; }
+.bk-shelf { background: transparent !important; border-top: 1px solid var(--rule); }
+.ex-scenario { background: transparent !important; border-left: 1px solid var(--strong); border-radius: 0 !important; padding: 2px 0 2px var(--space-4) !important; }
+
+/* ---------- small marks (a lesson's state, an idea's level): small capitals on a hairline, no pill ---------- */
+.sk-chip { background: transparent !important; border: 1px solid var(--rule-strong); border-radius: 2px !important; padding: 0 6px !important;
+  font-size: 0.625rem !important; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.7; color: var(--label-2) !important; vertical-align: 2px; }
+.sk-chip.sk-solid { color: var(--label) !important; border-color: var(--label-3); }
+.sk-chip.sk-mastered { color: var(--env) !important; background: var(--strong) !important; border-color: var(--strong); }
+/* the course map's rows: the number in its own column, so every title starts on one line */
+.cm-n { flex: 0 0 3rem; min-width: 3rem; white-space: nowrap; }
+.cm-t { display: inline-flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--space-2); }
+.cm-t .sk-chip { margin-left: 0; }
+[class*="st-key-cm_row_"] { border-top: 1px solid var(--rule); }
+
+/* ---------- ideas to start from: words on a hairline outline ---------- */
+[class*="_idea_list"] [data-testid="stButtonGroup"] button { background: transparent !important; border: 1px solid var(--rule-strong) !important; border-radius: var(--radius-small) !important; color: var(--label-2) !important; }
+@media (hover: hover) { [class*="_idea_list"] [data-testid="stButtonGroup"] button:hover { color: var(--strong) !important; border-color: var(--strong) !important; } }
+[class*="_idea_list"] [data-testid="stButtonGroup"] button[aria-checked="true"] { background: var(--strong) !important; color: var(--env) !important; border-color: var(--strong) !important; box-shadow: none !important; }
+
+/* ---------- the calendar: the day picked is outlined in ink, not a grey square ---------- */
+[class*="st-key-cal_20"][class*="_sel"] .stButton button, [class*="st-key-cal_20"] .stButton button[data-picking] {
+  background: transparent !important; box-shadow: inset 0 0 0 1px var(--strong) !important; }
+@media (hover: hover) { [class*="st-key-cal_20"]:not([class*="_sel"]) .stButton button:not(:disabled):not([data-picking]):hover { background: transparent !important; box-shadow: inset 0 0 0 1px var(--rule-strong) !important; } }
+.st-key-cal_nav .stButton button { background: transparent !important; border: 1px solid var(--rule-strong) !important; }
+
+/* ---------- the account: a two-column table, each value on the same edge ---------- */
+.st-key-set_sec_profile .ins-list > div { display: grid; grid-template-columns: 7rem minmax(0, 1fr); justify-content: start; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.st-key-set_sec_profile .ins-list > div:first-child { border-top: 1px solid var(--rule); }
+.st-key-set_sec_profile .ins-list dd { flex-wrap: wrap; justify-content: flex-start; column-gap: var(--space-3); min-width: 0; overflow-wrap: break-word; }
+.st-key-set_sec_profile .ins-list small { text-align: left; min-width: 0; }
+.st-key-set_sec_profile .ins-list small:empty { display: none; }
+
+@media (max-width: 640px) {
+  .cm-n { flex: 0 0 2.5rem; min-width: 2.5rem; }
+  .cm-t { flex: 1 1 calc(100% - 2.5rem - var(--space-3)); }
+  .cm-m { padding-left: calc(2.5rem + var(--space-3)); }
+}
+@media (max-width: 520px) {
+  .st-key-set_sec_profile .ins-list > div { grid-template-columns: 4.5rem minmax(0, 1fr); }
+  .st-key-set_sec_profile .ins-list dd { font-size: 0.9375rem; overflow-wrap: break-word; word-break: normal; }
+}
+
+/* ---------- dialogs (Search, a lesson): drawn in the page's own scheme, over a near-solid veil ---------- */
+:root[data-scheme="dark"] [role="dialog"] { color-scheme: dark; }
+:root:not([data-scheme="dark"]) [role="dialog"] { color-scheme: light; }
+[role="dialog"] { background: var(--env) !important; color: var(--label); border: 1px solid var(--rule) !important; box-shadow: none !important; }
+[role="dialog"] [data-testid="stCaptionContainer"], [role="dialog"] .stCaption { color: var(--label-2) !important; }
+:root[data-scheme="dark"] [data-testid="stDialog"] { color-scheme: dark; }
+:root:not([data-scheme="dark"]) [data-testid="stDialog"] { color-scheme: light; }
+[class*="st-key-sres_"] { border-top: 1px solid var(--rule) !important; }
+.sr { padding: 14px 0; }
+.sr-t { font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 400; font-size: 1.125rem; }
+@media (hover: hover) { [class*="st-key-sres_"]:hover { background: transparent !important; } [class*="st-key-sres_"]:hover .sr-t { text-decoration: underline; text-underline-offset: 0.2em; text-decoration-thickness: 1px; } }
+
+/* ---------- the plans side by side: a ruled table, every column on one edge ---------- */
+.ob-plans { border-collapse: collapse; width: 100%; }
+.ob-plans th, .ob-plans td { border-bottom: 1px solid var(--rule) !important; padding: 12px 12px 12px 0 !important; text-align: left !important; vertical-align: top; }
+.ob-plans thead th { border-bottom: 1px solid var(--strong) !important; font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-2); font-weight: 500; }
+
+/* ---------- rows of link-words anywhere: one even measure between them ---------- */
+.stMainBlockContainer [data-testid="stHorizontalBlock"]:has(> [data-testid="stElementContainer"] .stButton button[kind="tertiary"]):not(:has([class*="st-key-opt_"], [class*="st-key-cal"])) { column-gap: var(--space-5) !important; }
+/* ---------- the quiz's answers run the column's full width ---------- */
+[data-testid="stElementContainer"]:has(> [data-testid="stRadio"]), [data-testid="stRadio"], [data-testid="stRadio"] [role="radiogroup"], [data-testid="stRadio"] [role="radiogroup"] > div, [data-testid="stRadioOption"] { width: 100% !important; max-width: none !important; }
+[data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] > div, [role="radiogroup"][aria-orientation="horizontal"] [data-testid="stRadioOption"] { width: auto; }
+/* ---------- the next days: a ruled list, the day's name in a column wide enough for "Tomorrow" ---------- */
+.pv-turns ol { border-top: 1px solid var(--rule); }
+.pv-turns li { grid-template-columns: 6.5rem minmax(0, 1fr); border-bottom: 1px solid var(--rule); }
+/* ---------- a toast: the page's colour on a hairline, not a grey slab ---------- */
+:root[data-scheme="dark"] [data-testid="stToast"] { color-scheme: dark; }
+:root:not([data-scheme="dark"]) [data-testid="stToast"] { color-scheme: light; }
+[data-testid="stToast"] { background: var(--env) !important; color: var(--label) !important; border: 1px solid var(--rule-strong) !important; box-shadow: none !important; }
+/* ---------- a dialog's veil: the page's own colour, nearly solid ---------- */
+[data-testid="stDialog"] { background: light-dark(rgba(255, 255, 255, 0.88), rgba(0, 0, 0, 0.88)) !important; backdrop-filter: none !important; }
+[data-testid="stDialog"] > div:not([role="dialog"]) { background: transparent !important; }
+
+/* ==========================================================================
+   A SUBJECT'S WORLD, finished: the name set large across the top, a clear
+   breath under it, then the object at the left and its words at the right,
+   beginning on the object's top edge under a hairline, so the two read as
+   one spread; nothing rises into the name.
+   ========================================================================== */
+[class*="st-key-world_"] { row-gap: clamp(28px, 5vh, 56px) !important; align-items: start !important; }
+[class*="st-key-world_"] > :has(> .st-key-w_object) { margin-top: 0 !important; }
+[class*="st-key-world_"] > :has(> .st-key-w_copy) { align-self: start; }
+.st-key-w_copy { padding: var(--space-5) 0 0 !important; border-top: 1px solid var(--rule); gap: var(--space-4) !important; }
+.w-object.is-cut { background-position: center top !important; }
+.w-object { height: min(60vh, 600px); }
+.w-about { font-size: 1.25rem; line-height: 1.5; color: var(--label); }
+.w-meta { color: var(--label-2); }
+.st-key-w_actions { column-gap: var(--space-5) !important; row-gap: var(--space-2) !important; }
+@media (max-width: 899px) {
+  [class*="st-key-world_"] { row-gap: 0 !important; }
+  [class*="st-key-world_"] > :has(> .st-key-w_object) { margin-top: var(--space-5) !important; }
+  .w-object { height: 46vh; }
+  .w-object.is-cut { background-position: center center !important; }
+  .st-key-w_copy { margin-top: var(--space-5); }
+  .w-about { font-size: 1.0625rem; }
+}
+
+/* ==========================================================================
+   THE STAGE, finished: the object and its words side by side, never on top
+   of one another. On a wide page the object stands at the left, the full
+   height of the stage; the subject's number, its name, its words and where
+   it stands for her sit at the right, centred on the object. On a narrow
+   page the stage is a band: the words at the left, the object in its own
+   plate at the right.
+   ========================================================================== */
+:root { --lap: 0px; }
+.sg-stage { container-type: inline-size; }
+.sg-status { display: grid; gap: 4px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.sg-status p { margin: 0; }
+.sg-state { margin-top: 0 !important; font-size: 0.8125rem; letter-spacing: 0.01em; color: var(--label); display: flex; align-items: center; gap: 10px; }
+.sg-state::before { content: ""; flex: none; width: 11px; height: 11px; box-sizing: border-box; border: 1px solid var(--label-2); border-radius: 50%; }
+.sg-status[data-on="1"] .sg-state::before, .sg-state[data-on="1"]::before {
+  width: 11px; height: 11px; margin: 0; border: none; border-radius: 50%; transform: none; background: var(--strong); }
+.sg-how { font-size: 0.8125rem; line-height: 1.5; color: var(--label-2); padding-left: 21px; }
+@media (min-width: 900px) {
+  .sg-stage { height: clamp(440px, 62vh, 600px); }
+  .sg-layer { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+    grid-template-rows: minmax(0, 1fr) auto auto minmax(0, 1fr);
+    grid-template-areas: "art ." "art head" "art copy" "art ."; column-gap: clamp(40px, 6cqi, 88px); padding: 0; }
+  .sg-art, .sg-art.is-cut, .sg-art.no-art { grid-area: art; position: relative; inset: auto; margin: 0 !important; min-height: 0; height: 100%; }
+  .sg-art.is-cut { background-position: center center !important; background-size: contain !important; }
+  .sg-art.is-cut[data-layout="pendant"] { background-position: center top !important; }
+  .sg-art.no-art { justify-content: center; align-items: center; padding: 0; }
+  .sg-head { grid-area: head; align-self: end; padding: 0 !important; }
+  .sg-copy { grid-area: copy; align-self: start; max-width: 30rem; padding: 0 !important; margin-top: clamp(16px, 2.4cqi, 28px); gap: 10px; }
+  .sg-stage .sg-title { font-size: clamp(2.5rem, 7.2cqi, 5.25rem); line-height: 1.02 !important; letter-spacing: -0.02em; text-wrap: balance; }
+  .sg-stage .sg-title-tracked .sg-title { font-size: clamp(1.5rem, 3.6cqi, 2.75rem); letter-spacing: 0.24em; line-height: 1.3 !important; }
+  .sg-desc { font-size: 1.125rem; margin-top: 0 !important; }
+  .sg-kicker { margin-bottom: 10px !important; }
+}
+@media (min-width: 900px) and (max-height: 1050px) {
+  .sg-stage { height: max(340px, 48vh); }
+  .sg-stage .sg-title { font-size: clamp(2.25rem, 6cqi, 3.75rem); }
+  .sg-stage .sg-title-tracked .sg-title { font-size: clamp(1.375rem, 3cqi, 2.125rem); }
+  .sg-desc { font-size: 1rem; }
+  .sg-status { margin-top: 12px; padding-top: 12px; }
+  .sg-kicker { margin-bottom: 6px !important; }
+}
+@media (max-width: 899px) {
+  .sg-stage { height: 264px; }
+  .sg-layer { justify-content: flex-end; padding: 16px 0 18px; box-sizing: border-box; }
+  /* the object in its own plate at the right; the words never run under it */
+  .sg-art, .sg-art.is-cut, .sg-art.no-art, .sg-art.is-cut[data-layout="pendant"] {
+    position: absolute; inset: 16px 16px 18px auto !important; width: 38%; margin: 0; }
+  .sg-art:not(.is-cut):not(.no-art) { background-size: cover !important; }
+  .sg-art.is-cut { background-size: contain !important; background-position: right center !important; }
+  .sg-art.is-cut[data-layout="pendant"] { background-size: auto 150% !important; background-position: 50% 96% !important; }
+  .sg-art.no-art { padding: 0; justify-content: flex-end; align-items: flex-start; }
+  .sg-head, .sg-copy { width: calc(62% - 32px); box-sizing: content-box; }
+  .sg-head { padding: 0 0 0 16px !important; }
+  .sg-copy { padding: 0 0 0 16px !important; gap: 0; }
+  .sg-stage .sg-title { font-size: clamp(1.875rem, 5.6vw, 2.75rem); line-height: 1.04 !important; margin-top: 6px !important; text-wrap: balance; }
+  .sg-stage .sg-title-tracked .sg-title { font-size: clamp(1.125rem, 3.4vw, 1.625rem); letter-spacing: 0.2em; line-height: 1.3 !important; }
+  .sg-status { margin-top: 12px; padding-top: 10px; gap: 2px; }
+  .sg-how { font-size: 0.75rem; line-height: 1.45; }
+}
+@media (min-width: 600px) and (max-width: 899px) {
+  .sg-stage { height: 300px; }
+  .sg-art, .sg-art.is-cut, .sg-art.no-art { width: 40%; }
+}
+</style>
+"""
+
+
 def stylesheet() -> str:
-    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, WORLDS, ACCOUNT, TOUCH))
+    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, WORLDS, ACCOUNT, TOUCH, EDITORIAL))
     return CSS.replace("</style>", rest + "</style>")
 
 

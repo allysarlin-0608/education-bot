@@ -27,7 +27,8 @@ def html(focus: str, group: str) -> str:
             f'<p class="sg-title">{escape(s["title"])}</p></div>'
             f'<div class="sg-copy"><p class="sg-desc">{escape(s["description"])}</p>'
             f'<p class="sg-meta">{f["units"]} topics · {f["lessons"]} lessons · begins with {escape(f["first"])}</p>'
-            f'<p class="sg-state" data-on="0">Not chosen</p>'
+            f'<div class="sg-status" data-on="0"><p class="sg-state">Not chosen</p>'
+            f'<p class="sg-how">Tap {escape(s["title"])} in the list to add it to your days.</p></div>'
             + (f'<p class="sg-credit">{escape(s["credit"])}</p>' if s["credit"] else "")
             + "</div></div>")
     return (f'<div class="sg-stage" data-focus="{escape(focus)}" data-group="{escape(group)}" role="region" '
