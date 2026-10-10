@@ -108,9 +108,7 @@ with st.container(key="set_sec_subjects"):
                             ui.enter_world(focus)
                     if st.button("Course map", type="tertiary", key="set_course"):
                         ui.open_course(focus)
-            else:
-                st.html(f'<p class="ob-note set-notyet">Not in your days yet. Tap '
-                        f'{escape(visuals.subject(focus)["title"])} in the list to add it.</p>')
+            # (one not chosen: the stage itself says how to add it)
         with st.container(key="set_body"):
             choices.rows("setsubj", stage.rows(), builtin, pick_subject, multi=True,
                          full=len(builtin) >= settings.MAX_SUBJECTS, focus=focus, style="index")
