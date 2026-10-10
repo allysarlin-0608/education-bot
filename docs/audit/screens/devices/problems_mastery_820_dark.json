@@ -1,6 +1,8 @@
 {
  "50_quiz_kinds_820_dark": {
   "small": [
+   "Wikipedia 56x15",
+   "Britannica 58x15",
    "Open 30x42",
    "Open 30x42",
    "Open 30x42",
@@ -8,6 +10,24 @@
    "Open 30x42",
    "Open 30x42",
    "Open 30x42"
+  ]
+ },
+ "51_quiz_feedback_820_dark": {
+  "small": [
+   "Wikipedia 56x15",
+   "Britannica 58x15"
+  ]
+ },
+ "52_explain_820_dark": {
+  "small": [
+   "Wikipedia 56x15",
+   "Britannica 58x15"
+  ]
+ },
+ "53_tutor_820_dark": {
+  "small": [
+   "Wikipedia 56x15",
+   "Britannica 58x15"
   ]
  }
 }

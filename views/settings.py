@@ -110,9 +110,7 @@ if offered:
                                 ui.enter_world(focus)
                         if st.button("Course map", type="tertiary", key="set_course"):
                             ui.open_course(focus)
-                else:
-                    st.html(f'<p class="ob-note set-notyet">Not in your days yet. Tap '
-                            f'{escape(visuals.subject(focus)["title"])} in the list to add it.</p>')
+                # (one not chosen: the stage itself says how to add it)
             with st.container(key="set_body"):
                 # (each row's day is its place among all her turns, goals included)
                 choices.rows("setsubj", stage.rows(), chosen, pick_subject, multi=True,

@@ -1,6 +1,14 @@
 {
+ "03_lesson_1180_dark": {
+  "small": [
+   "Wikipedia 56x15",
+   "Britannica 58x15"
+  ]
+ },
  "04_quiz_1180_dark": {
   "small": [
+   "Wikipedia 56x15",
+   "Britannica 58x15",
    "Open 30x42",
    "Open 30x42",
    "Open 30x42",
@@ -8,6 +16,18 @@
    "Open 30x42",
    "Open 30x42",
    "Open 30x42"
+  ]
+ },
+ "05_quiz_failed_1180_dark": {
+  "small": [
+   "Wikipedia 56x15",
+   "Britannica 58x15"
+  ]
+ },
+ "06_passed_1180_dark": {
+  "small": [
+   "Wikipedia 56x15",
+   "Britannica 58x15"
   ]
  },
  "10_settings_1180_dark": {
@@ -18,16 +38,16 @@
  },
  "17_menu_1180_dark": {
   "small": [
-   "Home 50x26",
-   "Subjects & Courses 130x26",
-   "Learning Path 97x26",
-   "Learning Plan 96x26",
-   "Reading Plan 94x26",
-   "Knowledge Map 109x26",
-   "Review 58x26",
-   "Practice 62x26",
-   "Learning Record 112x26",
-   "Your week 76x26"
+   "Home 52x26",
+   "Subjects & Courses 136x26",
+   "Learning Path 101x26",
+   "Learning Plan 100x26",
+   "Reading Plan 96x26",
+   "Knowledge Map 115x26",
+   "Review 59x26",
+   "Practice 66x26",
+   "Learning Record 117x26",
+   "Your week 80x26"
   ]
  },
  "12_search_1180_dark": {

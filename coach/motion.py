@@ -191,15 +191,24 @@ SCRIPT = r"""
       });
       const layer = st.querySelector('.sg-layer[data-t="' + st.dataset.focus + '"]');
       const state = layer && layer.querySelector('.sg-state');
+      const how = layer && layer.querySelector('.sg-how');
       if (!state || !f) return;
-      let text = /__dis/.test(f.className) ? 'Not chosen · three are chosen already, so take one out to add this' : 'Not chosen';
-      if (chosen(f)) {
+      // what the subject is to her now, and how to change it: the row in the list is the switch
+      const name = ((layer.querySelector('.sg-title') || {}).textContent || 'it').trim();
+      const on = chosen(f);
+      let text = 'Not chosen', hint = 'Tap ' + name + ' in the list to add it to your days.';
+      if (/__dis/.test(f.className) && !on) hint = 'You have chosen the most you can. Remove one in the list to add ' + name + '.';
+      if (on) {
         const o = f.querySelector('.opt');
         const day = o && o.dataset.day ? +o.dataset.day : rows.filter((r) => chosen(r) && r !== f).length + 1;
-        text = 'Chosen · day ' + day + ' of the rotation';
+        text = 'Chosen · day ' + day + ' of your rotation';
+        hint = 'Tap ' + name + ' in the list again to remove it.';
       }
       if (state.textContent !== text) state.textContent = text;
-      state.dataset.on = chosen(f) ? '1' : '0';
+      if (how && how.textContent !== hint) how.textContent = hint;
+      const box = state.closest('.sg-status') || state;
+      if (box.dataset.on !== (on ? '1' : '0')) box.dataset.on = on ? '1' : '0';
+      if (state.dataset.on !== box.dataset.on) state.dataset.on = box.dataset.on;
     });
   }
   let queued = false, leftFrom = null, leftAt = 0, sawStale = false;
