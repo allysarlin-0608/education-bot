@@ -162,3 +162,57 @@ def test_a_goal_in_chinese_japanese_or_korean_is_not_too_short():
         assert paths.precheck(goal) is None, goal
     assert paths.precheck("學") is not None, "one character is still too little to plan"
     assert "write everything you reply in English" in paths.DESIGN_SYSTEM
+
+
+def test_a_page_that_breaks_shows_a_calm_message_not_an_error(monkeypatch, tmp_path):
+    # covers: W-ui-calm_retry, W-ui-calm_home, S-gnosis_raise_errors
+    monkeypatch.setenv("GNOSIS_RAISE_ERRORS", "0")
+    from coach import course
+    at = app(monkeypatch, tmp_path, subjects=("philosophy",))
+
+    def boom(*a, **k):
+        raise RuntimeError("secret internal detail")
+    monkeypatch.setattr(course, "build", boom)
+    loads(at, "views/subjects.py")
+    t = texts(at)
+    assert "Something went wrong on this page" in t and "secret internal detail" not in t
+    assert has(at, "calm_retry") and has(at, "calm_home")
+
+
+def test_a_paused_goal_can_be_removed_and_its_lessons_stay(monkeypatch, tmp_path):
+    # covers: W-settings-setgoal_remove, W-settings-setgoal_remove_go, W-settings-setgoal_remove_cancel
+    goal = a_path(status="archived")
+    at = app(monkeypatch, tmp_path, subjects=("philosophy",), paths=[goal], history=False)
+    loads(at, "views/settings.py")
+    at.button(key=f"setgoal_remove_{goal['id']}").click().run()
+    assert "stay in your Learning Record" in texts(at)
+    at.button(key=f"setgoal_remove_cancel_{goal['id']}").click().run()
+    assert not has(at, f"setgoal_remove_go_{goal['id']}"), "cancelled: nothing changed"
+    at.button(key=f"setgoal_remove_{goal['id']}").click().run()
+    at.button(key=f"setgoal_remove_go_{goal['id']}").click().run()
+    log = json.loads((tmp_path / "log.json").read_text())
+    assert log["paths"][0]["status"] == "removed", "kept, marked removed: nothing deleted"
+    assert not has(at, f"setgoal_resume_{goal['id']}") and "was removed" in texts(at)
+    catalog.use([paths.parse_path(log["paths"][0])])
+    assert catalog.goals(active_only=False) == [] and catalog.name(goal["id"]) == goal["title"], \
+        "off her list, still named in her record"
+    catalog.use([])
+
+
+def test_the_menu_holds_only_what_works_unless_a_preview_is_asked_for(monkeypatch):
+    # covers: S-gnosis_show_coming
+    from coach import topnav
+    shown = [label for _, items in topnav._sections() for label, t in items]
+    assert all(t for _, items in topnav._sections() for _, t in items), "no entry without a page"
+    assert "Research" not in shown and "Certificates" not in shown and "Knowledge Exploration" not in shown
+    monkeypatch.setattr(topnav, "SHOW_COMING", True)
+    assert "Research Portfolio" in [label for _, items in topnav._sections() for label, _ in items]
+
+
+def test_an_empty_record_says_how_to_start(monkeypatch, tmp_path):
+    # covers: W-records-prog_start
+    at = app(monkeypatch, tmp_path, subjects=("philosophy",), history=False)
+    loads(at, "views/records.py")
+    assert "Your record starts with your first lesson" in texts(at)
+    at.button(key="prog_start").click().run()
+    assert not at.exception and "Start this lesson" in " ".join(str(b.proto) for b in at.button)

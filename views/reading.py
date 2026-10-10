@@ -7,7 +7,7 @@ from coach import core, reading, ui
 log = st.session_state.coach_log
 today = ui.today()
 
-st.markdown("## Reading")
+st.markdown("## Reading Plan")
 st.markdown(f'<p class="page-sub reading-page">{core.weekday_name(today)}, {today:%B} {today.day} · '
             "Read a little every day, then come back and talk about it.</p>", unsafe_allow_html=True)
 reading.render(log, today)

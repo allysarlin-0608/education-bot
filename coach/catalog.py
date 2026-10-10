@@ -80,9 +80,12 @@ def path(topic):
 
 
 def goals(active_only: bool = True) -> list:
-    """Her goals, oldest first."""
+    """Her goals, oldest first: the active ones, or (active_only=False) every
+    one on her list, paused ones too (one she removed isn't on it)."""
     out = sorted(_paths().values(), key=lambda p: p.get("created_at") or "")
-    return [p for p in out if p.get("status") == "active"] if active_only else out
+    if active_only:
+        return [p for p in out if p.get("status") == "active"]
+    return [p for p in out if p.get("status") != "removed"]
 
 
 def name(topic, default: str = None) -> str:

@@ -8,6 +8,7 @@ page's address). The links are st.page_link, so moving between pages is
 Streamlit's routing, unchanged. The script (motion.py) only draws the
 travelling surface and hands off to the page."""
 import html
+import os
 from datetime import date
 
 import streamlit as st
@@ -33,6 +34,9 @@ SECTIONS = (
     ("Account", (("Profile", "Account"), ("Account settings", "Account"))),
 )
 NOT_YET = "not available yet"
+# The parts not built yet are named in the Menu only with GNOSIS_SHOW_COMING=1 (a
+# preview of the structure); for everyone else the Menu holds only what works.
+SHOW_COMING = os.environ.get("GNOSIS_SHOW_COMING") == "1"
 
 
 def render(pages: list, log: dict, everything: list = (), here: str = None) -> None:
@@ -54,11 +58,15 @@ def render(pages: list, log: dict, everything: list = (), here: str = None) -> N
 
 def _sections():
     """SECTIONS as shown: Account's second entry is Subscription & Account
-    Settings once plans are shown (coach/plans.SHOWN), else Account settings."""
+    Settings once plans are shown (coach/plans.SHOWN), else Account settings;
+    the parts not built yet only with SHOW_COMING (a group left empty goes)."""
     from coach import plans
-    if not plans.SHOWN:
-        return SECTIONS
-    return SECTIONS[:-1] + (("Account", (("Profile", "Account"), ("Subscription & Account Settings", "Account"))),)
+    out = SECTIONS if not plans.SHOWN else \
+        SECTIONS[:-1] + (("Account", (("Profile", "Account"), ("Subscription & Account Settings", "Account"))),)
+    if SHOW_COMING:
+        return out
+    kept = tuple((g, tuple((label, t) for label, t in items if t)) for g, items in out)
+    return tuple((g, items) for g, items in kept if items)
 
 
 def menu(pages: list, here: str = None) -> None:

@@ -241,23 +241,24 @@ with st.container(key="today_links", horizontal=True):
         ui.open_course(topic)
     if mastery.topics(log) and st.button("Knowledge map", type="tertiary", key="today_skills"):   # what she knows
         st.switch_page("views/skills.py")
-# review: noticed when something is due, never in the way of the day's lesson
+# review and practice: one quiet list under the day's links, noticed when there
+# is something to do, never in the way of the day's lesson
 due_now = ui.review_due(log)
-if due_now:
-    with st.container(key="review_entry"):
-        minutes = max(1, round(len(due_now) * 0.4))
-        if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due · about {minutes} min",
-                     type="tertiary", key="today_review"):
-            st.switch_page("views/review.py")
-# practice on the ideas she knows least: offered when some are shaky or fading, never in the way
 shaky = mastery.needs_practice(log, today)
 practised = (ui.prefs().get("practice") or {}).get("date") == today.isoformat()
-if shaky and not practised:
-    with st.container(key="practice_entry"):
-        n_ideas = min(3, len(shaky))
-        if st.button(f"Practice · {n_ideas} {'idea' if n_ideas == 1 else 'ideas'} to strengthen · about "
-                     f"{min(practice.SET_SIZE, practice.PER_IDEA * n_ideas)} min", type="tertiary", key="today_practice"):
-            st.switch_page("views/practice.py")
+if due_now or (shaky and not practised):
+    with st.container(key="today_extras", gap=None):
+        if due_now:
+            minutes = max(1, round(len(due_now) * 0.4))
+            if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due · about {minutes} min",
+                         type="tertiary", key="today_review"):
+                st.switch_page("views/review.py")
+        if shaky and not practised:
+            n_ideas = min(3, len(shaky))
+            if st.button(f"Practice · {n_ideas} {'idea' if n_ideas == 1 else 'ideas'} to strengthen · about "
+                         f"{min(practice.SET_SIZE, practice.PER_IDEA * n_ideas)} min", type="tertiary",
+                         key="today_practice"):
+                st.switch_page("views/practice.py")
 # ============================================================
 # COMING BACK (coach/habit.py): a welcome after a break, a light day, her
 # reminder, a milestone just reached, last week in review. Calm, and never

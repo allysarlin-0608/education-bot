@@ -59,7 +59,7 @@ def test_top_bar_goes_everywhere_and_back_forward_work(public_app, pages):
     assert "/settings" in p.page.url and flows.wait_text(p.page, "Daily pace", 10)
 
 
-def test_the_menu_reaches_every_part_and_names_what_isnt_built(public_app, pages):
+def test_the_menu_reaches_every_part_and_shows_nothing_unbuilt(public_app, pages):
     covers("W-topnav-site_menu", "W-topnav-page", "W-topnav-by_title_learning_plan")
     app = public_app
     p, _, _ = person(app, pages)
@@ -79,9 +79,8 @@ def test_the_menu_reaches_every_part_and_names_what_isnt_built(public_app, pages
     t = text(p)
     assert "Account settings" in t and t.count("you are here") == 2, "Account: both its entries marked"
     assert "Subscription" not in t, "no plan while plans aren't shown"
-    for soon in ("Knowledge Exploration", "Examinations", "Research Portfolio", "Certificates"):
-        assert soon in t, soon
-    assert t.count("not available yet") >= 5, "the parts not built are named as such, not linked"
+    for soon in ("Knowledge Exploration", "Examinations", "Research", "Certificates", "not available yet"):
+        assert soon not in t, f"{soon}: nothing unbuilt is shown"
     assert "Reading Plan · off" in t, "no reading plan: the menu says where to turn it on"
 
 

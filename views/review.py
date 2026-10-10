@@ -156,7 +156,7 @@ def today_view():
             if waiting:
                 parts = [f"That's today's {review.DAILY_LIMIT}. The other {len(waiting)} wait for tomorrow."]
             st.caption(" ".join(parts))
-        if st.button("Back to Today", key="rv_back", type="tertiary"):
+        if st.button("Back to Home", key="rv_back", type="tertiary"):
             st.switch_page("views/daily.py")
         return
     _, _, card = due[0]

@@ -29,7 +29,10 @@ if not settings.onboarded(config) or not (settings.is_legacy(config) or settings
     # first time: the setup, on its own, until she presses Start learning. (A set-up
     # account with nothing left to learn, which shouldn't happen, sets up again
     # rather than being shown a subject she never chose.)
-    st.navigation([st.Page("views/setup.py", title="Welcome", default=True)], position="hidden").run()
+    try:
+        st.navigation([st.Page("views/setup.py", title="Welcome", default=True)], position="hidden").run()
+    except Exception:
+        ui.calm_failure("setup")
     st.stop()
 
 # the pages of every day, in the bar (coach/topnav.py)
@@ -86,4 +89,7 @@ st.html(place.keep_clear(), unsafe_allow_javascript=True)     # new controls nev
 st.session_state.lq_entering = st.session_state.get("lq_page") != page.url_path
 st.session_state.lq_page = page.url_path
 sidebar.render(st.session_state.coach_log)     # today's date, subject and progress, on every page
-page.run()
+try:
+    page.run()
+except Exception:                  # (Streamlit's own stop and rerun aren't Exceptions: they pass)
+    ui.calm_failure(page.url_path or "home")

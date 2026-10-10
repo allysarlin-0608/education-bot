@@ -23,7 +23,7 @@ import secrets
 from coach import clock
 
 LEVELS = ("Beginner", "Intermediate", "Advanced")
-STATUSES = ("active", "archived")
+STATUSES = ("active", "archived", "removed")     # archived: paused; removed: off her list (its lessons stay in her record)
 MIN_UNITS, MAX_UNITS = 2, 8
 MIN_LESSONS, MAX_LESSONS = 2, 8          # in a unit
 MAX_TOTAL = 48
@@ -329,6 +329,12 @@ def started(log: dict, goal_id: str) -> bool:
 
 def archive(path: dict) -> dict:
     return dict(path, status="archived", updated_at=now_iso())
+
+
+def remove(path: dict) -> dict:
+    """Off her list: not in her turns, not among her goals. Nothing is deleted:
+    the lessons she took for it stay in her record, under its name."""
+    return dict(path, status="removed", updated_at=now_iso())
 
 
 def restore(path: dict) -> dict:

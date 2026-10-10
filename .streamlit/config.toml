@@ -77,3 +77,6 @@ maxUploadSize = 20          # MB: a backup of a year's lessons is about 2 MB
 
 [client]
 toolbarMode = "viewer"
+# an error nobody caught shows no technical details to a visitor (pages show a
+# calm message of their own: ui.calm_failure); the tests turn details back on
+showErrorDetails = "none"

@@ -79,7 +79,7 @@ if added and catalog.path(added):
     st.markdown(f"## {catalog.name(added)}")
     st.html(f'<p class="ob-lede">Added. Your first lesson is on '
             f'{when:%A}, {when:%B} {when.day}.</p>' if when else '<p class="ob-lede">Added.</p>')
-    if st.button("Back to Today", type="primary", key="goal_today"):
+    if st.button("Back to Home", type="primary", key="goal_today"):
         st.switch_page("views/daily.py")
     st.stop()
 

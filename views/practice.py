@@ -120,7 +120,7 @@ if p is None or (p["done"] and st.session_state.get("pr_again")):
         st.markdown("### Nothing to practise yet")
         st.caption("Practice opens once you've taken a lesson's quiz: it then picks the ideas you know least "
                    "and mixes short exercises on them.")
-        if st.button("Back to Today", key="pr_back", type="tertiary"):
+        if st.button("Back to Home", key="pr_back", type="tertiary"):
             st.switch_page("views/daily.py")
         st.stop()
     names = [f"{i['title']}" for _, _, i in (weak or mastery.weakest(log, today, limit=3))[:practice.IDEAS_PER_SET]]
@@ -174,7 +174,7 @@ if p["done"] and st.session_state.get("pr_shown") is None:     # (after the last
         if more and st.button("Another set", key="pr_more", type="tertiary"):
             st.session_state.pr_again = True
             st.rerun()
-        if st.button("Back to Today", key="pr_today", type="tertiary"):
+        if st.button("Back to Home", key="pr_today", type="tertiary"):
             st.switch_page("views/daily.py")
     st.stop()
 

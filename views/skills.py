@@ -22,7 +22,7 @@ if not topics:
     st.markdown("### Your map starts with your first lesson")
     st.caption("Take a lesson and its quiz: the idea appears here, and grows with review, practice and "
                "explaining it in your own words.")
-    if st.button("Back to Today", key="sk_back", type="tertiary"):
+    if st.button("Back to Home", key="sk_back", type="tertiary"):
         st.switch_page("views/daily.py")
     st.stop()
 
@@ -92,5 +92,5 @@ if ahead:
 with st.container(key="sk_links", horizontal=True):
     if st.button("Course map", key="sk_course", type="tertiary"):
         ui.open_course(pick)
-    if st.button("Back to Today", key="sk_today", type="tertiary"):
+    if st.button("Back to Home", key="sk_today", type="tertiary"):
         st.switch_page("views/daily.py")

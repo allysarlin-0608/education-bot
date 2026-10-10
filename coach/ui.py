@@ -457,6 +457,22 @@ def refresh_entry(log, day, topic):
         del st.session_state.coach_chats[key]          # rebuilt from the stored lessons
 
 
+def calm_failure(where: str) -> None:
+    """Something on a page broke unexpectedly: never a raw error. The
+    details go to the log; she sees a calm line and ways on (everything
+    she did up to then is already saved: every action saves as it happens)."""
+    if appconfig.get_setting("GNOSIS_RAISE_ERRORS") == "1":
+        raise                       # (the tests see the real error, never the calm page)
+    logger.exception("a page failed: %s", where)
+    st.html('<div class="calm-fail" role="alert"><p class="calm-fail-t">Something went wrong on this page.</p>'
+            '<p class="ob-note">What you did before is saved. Try again, or go back to Home.</p></div>')
+    with st.container(key="calm_fail_nav", horizontal=True):
+        if st.button("Try again", key="calm_retry", type="primary"):
+            st.rerun()
+        if st.button("Go to Home", key="calm_home", type="tertiary"):
+            st.switch_page("views/daily.py")
+
+
 def clear_goal_draft() -> None:
     """A new goal starts from nothing: the goal part of her draft (words,
     reply, path) is emptied, and so are the New goal page's boxes."""

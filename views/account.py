@@ -22,11 +22,10 @@ with st.container(key="set_sec_profile"):
     st.markdown("#### Profile")
     who = auth.identity() if auth.is_public() else None
     if who:
-        st.html('<dl class="ins-list">'
-                f'<div><dt>Name</dt><dd>{escape(who["name"] or "—")}<small></small></dd></div>'
-                f'<div><dt>Email</dt><dd>{escape(who["email"])}<small>Used to sign in</small></dd></div></dl>'
-                '<p class="ob-note">Your name and picture come from how you signed in. Changing them here '
-                "isn't available yet.</p>")
+        st.html('<dl class="ob-summary acct-profile">'
+                + (f'<div><dt>Name</dt><dd>{escape(who["name"])}</dd></div>' if who["name"] else "")
+                + f'<div><dt>Email</dt><dd>{escape(who["email"])}<small>You sign in with it</small></dd></div></dl>'
+                '<p class="ob-note">Your name and picture come from the way you signed in.</p>')
     else:
         st.html('<p class="ob-note">This is your personal GNOSIS: there is no account to sign in to, '
                 "and your learning is kept with this app.</p>")

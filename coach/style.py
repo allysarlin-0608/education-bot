@@ -1697,6 +1697,16 @@ SETUP = """
 .l-check { margin: var(--space-2) 0 0; font-size: 0.8125rem; color: var(--label-3); }
 .l-check a { color: var(--label-2); text-decoration: underline; text-underline-offset: 2px; }
 
+/* ---------- While the app is working (a lesson, a quiz, a path being written):
+   its main buttons take no second press, and after a moment show they're
+   waiting, so nothing is ever started twice ---------- */
+[data-testid="stApp"][data-test-script-state="running"] [data-testid="stMain"] :is(button[kind="primary"], button[kind="primaryFormSubmit"]) {
+  pointer-events: none; cursor: progress; opacity: 0.55; transition: opacity 0s linear 0.4s; }
+
+/* ---------- A page that failed: calm, and ways on ---------- */
+.calm-fail { margin: var(--space-6) 0 var(--space-3); }
+.calm-fail-t { margin: 0 0 6px; font-size: 1.125rem; color: var(--label); }
+
 /* ---------- Settings: sections on hairlines; wide, the name beside its controls ---------- */
 [class*="st-key-set_sec_"] { gap: var(--space-4) !important; padding-top: var(--space-5); border-top: 1px solid var(--line-1); }
 [class*="st-key-set_sec_"] h4 { padding-top: 0 !important; }
@@ -2144,6 +2154,18 @@ WORLDS = """
   box-shadow: none !important; backdrop-filter: none !important; padding: 0 2px; min-height: 40px; }
 @media (hover: hover) { :is([class*="st-key-enter_"], .st-key-today_links, .st-key-set_links, [class*="st-key-prog_links_"], .st-key-cm_links, .st-key-review_entry) .stButton button[kind="tertiary"]:hover { color: var(--label); } }
 .st-key-review_entry .stButton button[kind="tertiary"] { color: var(--label); }
+/* Today: review and practice, one quiet list of rows on hairlines, each leading on (›) */
+.st-key-today_extras { gap: 0 !important; border-top: 1px solid var(--line-1); }
+.st-key-today_extras .stButton, .st-key-today_extras .stButton button { width: 100% !important; }
+.st-key-today_extras .stButton button[kind="tertiary"] {
+  justify-content: space-between; min-height: 52px; padding: 0 2px !important; border-radius: 0;
+  background: transparent !important; border: none !important; border-bottom: 1px solid var(--line-1) !important;
+  box-shadow: none !important; color: var(--label); }
+.st-key-today_extras .stButton button p { text-align: left; font-size: 0.9375rem; }
+.st-key-today_extras .stButton button::after { content: "›"; color: var(--label-3); font-size: 1.125rem; margin-left: var(--space-3); }
+@media (hover: hover) { .st-key-today_extras .stButton button[kind="tertiary"]:hover { color: var(--label); background: var(--fill-1, transparent) !important; } }
+.pv-turns li { grid-template-columns: 6.5rem minmax(0, 1fr) !important; }
+.ob-summary dd { overflow-wrap: anywhere; }
 /* Settings' subjects: the same stage, held at the top while the list scrolls under it */
 .st-key-set_grid_subjects { display: flex !important; flex-direction: column; align-items: stretch !important; row-gap: var(--space-4); }
 .st-key-set_grid_subjects > * { width: 100% !important; }

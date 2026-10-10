@@ -57,7 +57,7 @@ def open_lesson(n):
         lesson_view.render_tabs(slot["lesson"], topic, key=f"cm_{topic}_{n}", title=slot.get("title", ""))
     with quiz_tab:
         if q and q.get("answers") is not None and q.get("score") is None:
-            st.caption("Your last answers are in, but the short answers weren't marked yet: Today marks them.")
+            st.caption("Your last answers are in, but the short answers weren't marked yet: they're marked on Home.")
         elif not q or q.get("answers") is None:
             st.caption("No quiz taken on this lesson yet." if not passed else "Passed before quizzes were kept.")
         else:
@@ -140,8 +140,8 @@ with st.container(key="cm_next"):
         if visuals.known(topic) and st.button(f"Enter {course.subject_name(topic)}", type="tertiary", key="cm_world"):
             ui.enter_world(topic)       # (a goal has no world)
         others = [t for t in mine if t != topic and curriculum.has_syllabus(t)]
-        for t in others:
-            if st.button(course.subject_name(t), type="tertiary", key=f"cm_other_{t}"):
+        for t in others:                     # her other courses' maps, named as such
+            if st.button(f"{course.subject_name(t)}: course map", type="tertiary", key=f"cm_other_{t}"):
                 ui.open_course(t)
 
 
@@ -176,7 +176,7 @@ def rows(unit):
 units, cur = m["units"], m["current"]
 with st.container(key="cm_path"):
     if cur is None:
-        st.caption("This subject's course isn't available yet.")
+        st.caption("There's nothing on this course map yet: its lessons appear here once they're set.")
     else:
         behind = [u for k, u in enumerate(units) if k < cur]
         done_units = [u for u in behind if u["state"] == "done"]

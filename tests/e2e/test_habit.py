@@ -100,7 +100,7 @@ def test_the_reminder_at_her_time_and_not_after_midnight(public_app, pages, cloc
     flows.open_app(p, app, "/settings")
     p.page.get_by_text("Remind me to learn").click()
     flows.idle(p.page)
-    assert flows.wait_text(p.page, "Today shows a short, friendly note")
+    assert flows.wait_text(p.page, "Home shows a short, friendly note")
     day(clock, MON + timedelta(days=1), "18:40")
     flows.open_app(p, app)
     assert "learning time" not in text(p)

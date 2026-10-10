@@ -17,7 +17,7 @@ config = ui.config()
 
 st.html('<div id="settings-page" hidden></div>')
 st.markdown("## Learning Plan")
-st.caption("What you learn, how much each day, and in what order. Your profile, plan and data are in Account.")
+st.caption("What you learn, how much each day, and in what order. Your profile and your data are in Account.")
 
 if settings.is_legacy(config):
     st.caption("Settings need their table in the database first. Run supabase/user_settings.sql in "
@@ -112,7 +112,8 @@ with st.container(key="set_sec_subjects"):
                 st.html(f'<p class="ob-note set-notyet">Not in your days yet. Tap '
                         f'{escape(visuals.subject(focus)["title"])} in the list to add it.</p>')
         with st.container(key="set_body"):
-            choices.rows("setsubj", stage.rows(), builtin, pick_subject, multi=True,
+            # (each row's day is its place among all her turns, goals included)
+            choices.rows("setsubj", stage.rows(), chosen, pick_subject, multi=True,
                          full=len(builtin) >= settings.MAX_SUBJECTS, focus=focus, style="index")
             order = " → ".join(catalog.name(t) for t in chosen)
             st.html(f'<p class="ob-note">{len(builtin)} of {settings.MAX_SUBJECTS} · one a day, in this order: {escape(order)}</p>'
@@ -129,6 +130,14 @@ def pause_goal(goal_id: str) -> None:
         return
     if update(subjects=rest):
         ui.save_path(st.session_state.coach_log, paths.archive(catalog.path(goal_id)))
+
+
+def remove_goal(goal_id: str) -> None:
+    """A paused goal off her list (not in her turns already; its lessons stay in her record)."""
+    st.session_state.pop("goal_removing", None)
+    p = catalog.path(goal_id)
+    if p and ui.save_path(st.session_state.coach_log, paths.remove(p)):
+        st.session_state.goal_set_problem = f"“{p['title']}” was removed. Its lessons stay in your Learning Record."
 
 
 def resume_goal(goal_id: str) -> None:
@@ -162,6 +171,18 @@ with st.container(key="set_sec_goals"):
                 st.button("Pause", key=f"setgoal_pause_{g['id']}", type="tertiary", on_click=pause_goal, args=(g["id"],))
             else:
                 st.button("Resume", key=f"setgoal_resume_{g['id']}", type="tertiary", on_click=resume_goal, args=(g["id"],))
+                st.button("Remove", key=f"setgoal_remove_{g['id']}", type="tertiary",
+                          on_click=lambda gid=g["id"]: st.session_state.update(goal_removing=gid))
+        if st.session_state.get("goal_removing") == g["id"]:
+            # the same pattern as every confirmation: what happens, then the two choices
+            with st.container(key=f"setgoal_confirm_{g['id']}"):
+                st.html(f'<p class="del-warn" role="alert">Remove “{escape(g["title"])}” from your goals? The lessons '
+                        "you took for it stay in your Learning Record.</p>")
+                with st.container(key=f"setgoal_confirm_btns_{g['id']}", horizontal=True):
+                    st.button("Remove goal", key=f"setgoal_remove_go_{g['id']}", type="primary",
+                              on_click=remove_goal, args=(g["id"],))
+                    st.button("Cancel", key=f"setgoal_remove_cancel_{g['id']}", type="tertiary",
+                              on_click=lambda: st.session_state.pop("goal_removing", None))
     goal_problem = st.session_state.pop("goal_set_problem", "")
     if goal_problem:
         st.html(f'<p class="ob-note">{escape(goal_problem)}</p>')
@@ -214,7 +235,7 @@ with st.container(key="set_sec_reminders"):
         st.time_input("At", value=dtime(hh, mm), step=timedelta(minutes=30), key="set_rem_time",
                       on_change=set_reminder)
     st.html('<p class="ob-note">'
-            + (f"If you haven't studied by {escape(habits['reminder_time'])}, Today shows a short, friendly note. "
+            + (f"If you haven't studied by {escape(habits['reminder_time'])}, Home shows a short, friendly note. "
                "Never more than once a day." if habits["reminder_on"]
                else "Off. Turn it on for a short, friendly note at a time you choose, once a day at most.")
             + "</p>")

@@ -256,7 +256,7 @@ def chosen_rows(d: dict) -> str:
         objs = "".join(visuals.object_html(t, "ob-obj", list(settings.SUBJECTS).index(t) + 1) for t in d["subjects"])
         out += row("Subjects", f'<span class="ob-objs">{objs}</span>'
                    + escape(", ".join(catalog.name(t) for t in d["subjects"])),
-                   f"{len(d['subjects'])} of {plans.includes(plan_, 'subjects')}"
+                   f"{len(d['subjects'])} of {plans.includes(plan_, 'subjects')} subjects"
                    + (" on your plan" if plans.SHOWN else ""))
     if d["path"]:
         out += row("Your goal", escape(d["path"]["title"]), "A path designed for it")
@@ -341,8 +341,9 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
                 st.html(stage.html(focus, "subj"))
             with st.container(key="ob_body"):
                 full = len(d["subjects"]) >= limit
+                # each row's day is its place among all her turns (her goal's included)
                 choices.rows("subj", stage.rows(),
-                             d["subjects"], pick_subject, multi=True, full=full, focus=focus, style="index")
+                             settings.rotation(d), pick_subject, multi=True, full=full, focus=focus, style="index")
                 with st.container(key="ob_goal_way", horizontal=True, vertical_alignment="center"):
                     if d["path"]:
                         st.html(f'<p class="ob-note">Your goal: <b>{escape(d["path"]["title"])}</b></p>')
@@ -431,7 +432,7 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
                              [d["units_per_day"]], pick_pace, style="pace")
                 st.html('<p class="ob-subject">How often</p>'
                         '<p class="ob-note">Every day, one subject or goal a day. Other rhythms (weekdays only, '
-                        "say) aren't available yet; you can take a rest day from Today.</p>")
+                        "say) aren't available yet; you can make any day a light day from Home.</p>")
                 if len(turns) > 1:
                     st.html('<p class="ob-subject">Order and priority</p>'
                             '<p class="ob-note">The first comes on your first day; then they take turns.</p>')

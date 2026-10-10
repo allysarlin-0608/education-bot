@@ -25,7 +25,11 @@ st.html('<div id="progress-page" hidden></div>')      # lets the page use the wi
 st.markdown("## Learning Record")
 
 if not log["entries"]:
-    st.info("No records yet. They start building up after your first lesson.")
+    # nothing yet: say what will be here, and the one way to start it
+    st.markdown("### Your record starts with your first lesson")
+    st.caption("Each day you learn shows up here: lessons passed, streaks, and what you know.")
+    if st.button("Go to today's lesson", key="prog_start", type="primary"):
+        st.switch_page("views/daily.py")
 
 
 def days(n):

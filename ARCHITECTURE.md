@@ -172,6 +172,15 @@ re-reads the records (`ui.sync_goals`); an account with no turns goes back
 to the setup, never to a fixed subject; a new goal starts from an empty
 draft (`ui.clear_goal_draft`) and can't repeat one she has.
 
+**Polish rules** (ISS-072…080): a page that fails shows `ui.calm_failure`
+(never a raw error; `GNOSIS_RAISE_ERRORS=1` in the tests); a new page or
+setup step opens at its top (`motion.py`); while a run is in progress the
+main buttons take no second press (CSS on `data-test-script-state`); the
+Menu holds only what works (`GNOSIS_SHOW_COMING=1` previews the rest); a
+goal can be paused, resumed and removed (status `removed`: off her list,
+its lessons kept). `tests/e2e/test_journeys.py` walks the whole journey at
+three widths.
+
 **Lessons' sources and diagrams**: no source the model names is shown
 (`lesson_view.unsourced`); each lesson links to Wikipedia and Britannica
 searches for its title (`lesson_view.check_links`). Diagram nodes get

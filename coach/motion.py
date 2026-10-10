@@ -35,10 +35,26 @@ SCRIPT = r"""
     if (root.getAttribute && root.getAttribute('aria-label') === '') root.removeAttribute('aria-label');
   };
   named(doc);
+  // A new page, or a new step of the setup, opens at its top: Streamlit keeps
+  // the scroll position, so a step reached from a button at the foot of a
+  // long one opened halfway down (on a phone, past its question).
+  const where = () => {
+    const step = doc.querySelector('[class*="st-key-ob_step_"]');
+    const m = step && String(step.className).match(/st-key-ob_step_(\d+)/);
+    return w.location.pathname + w.location.search + '#' + (m ? m[1] : '');
+  };
+  let place = where();
+  const toTop = () => {
+    const now = where();
+    if (now === place) return;
+    place = now;
+    const scroller = doc.querySelector('[data-testid="stMain"]');
+    if (scroller && scroller.scrollTop) scroller.scrollTo({ top: 0, behavior: 'instant' });
+  };
   let naming = false;           // (one pass a frame, however many changes came in)
   new w.MutationObserver(() => {
     if (naming) return; naming = true;
-    w.requestAnimationFrame(() => { naming = false; named(doc); });
+    w.requestAnimationFrame(() => { naming = false; named(doc); toTop(); });
   }).observe(doc.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-label'] });
   const reduced = () => w.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const strip = (p) => p.replace(/\/+$/, '') || '/';

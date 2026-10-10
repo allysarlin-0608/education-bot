@@ -167,7 +167,7 @@ def test_matching_recall_not_yet_keep_and_show_more(public_app, pages, clock):
     assert flows.wait_text(page, "Not quite.", 10) and flows.wait_text(page, "comes back tomorrow", 5)
     flows.button(p, "Finish")
     assert flows.wait_text(page, "All reviewed for today", 10)
-    flows.button(p, "Back to Today", exact=False)
+    flows.button(p, "Back to Home", exact=False)
     assert flows.wait_text(page, "Start this lesson", 15) or flows.wait_text(page, "Today's done", 5)
     flows.open_app(p, app, "/review")
     page.get_by_role("button", name="Collection").or_(page.get_by_role("radio", name="Collection")).first.click()
