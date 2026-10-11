@@ -128,7 +128,9 @@ def test_every_call_is_recorded_with_its_tokens(public, monkeypatch):
     assert store.added == [(1, 321)]
 
 
-def test_a_storage_error_never_blocks_learning(public, monkeypatch):
+def test_an_allowance_that_cant_be_read_makes_no_call(public, monkeypatch):
+    """Stage 1 of the audit plan: it once let the call through, so the daily
+    limit (and its cost) didn't hold while the database didn't answer."""
     signed_in(monkeypatch, sub="1", email="friend@example.com")
 
     class Down:
@@ -139,5 +141,7 @@ def test_a_storage_error_never_blocks_learning(public, monkeypatch):
             raise storage.StorageError("down")
 
     with_store(monkeypatch, Down())
-    assert not quota.over_limit()
-    quota.record(5)                        # logged, not raised
+    assert quota.over_limit() and quota.blocked() == quota.UNCHECKED
+    monkeypatch.setattr(llm, "get_client", lambda: pytest.fail("the model was called"))
+    assert llm.ask_json("s", [{"role": "user", "content": "q"}]) == (None, quota.UNCHECKED)
+    quota.record(5)                        # a count that can't be written: logged, not raised

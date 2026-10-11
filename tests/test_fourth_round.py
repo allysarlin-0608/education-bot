@@ -161,16 +161,17 @@ def test_the_outline_counts_follow_each_tick_on_add_a_goal(monkeypatch, tmp_path
 
 # ---------------------------------------------------------------- 4. more than one goal, taking turns
 def test_the_order_of_her_days_can_be_set_from_today():
-    from datetime import date, timezone
+    from datetime import timezone
+    from coach import clock
     a, b, c = a_path(), a_path(), a_path()
     catalog.use([a, b, c])
     s = dict(settings.blank("u"), subjects=[a["id"], b["id"], c["id"]], onboarded_at="2026-09-01T01:00:00+00:00")
-    day = date(2026, 9, 5)
+    day = clock.today()
     now = [t for _, t in settings.days_ahead(s, day, timezone.utc)]
     want = [now[2], now[0], now[1]]
-    moved = settings.order_from(s, want, day, timezone.utc)
+    moved = settings.order_from(s, want)
     assert [t for _, t in settings.days_ahead(moved, day, timezone.utc)] == want
-    assert settings.order_from(s, want[:2], day, timezone.utc) == s, "never a turn lost"
+    assert settings.order_from(s, want[:2]) == s, "never a turn lost"
 
 
 def test_a_second_goal_says_how_the_days_are_shared(monkeypatch, tmp_path):

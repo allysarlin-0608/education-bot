@@ -168,7 +168,7 @@ def start() -> None:
         st.session_state.ob_problem = "Choose what you want to learn first."
         return
     try:
-        done = settings.finish(ui.config(), d, settings.now_iso())
+        done = settings.finish(ui.config(), d, settings.now_iso(), st.session_state.get("coach_log"))
     except ValueError as e:
         st.session_state.ob_problem = str(e)
         return

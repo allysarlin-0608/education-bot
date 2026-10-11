@@ -231,18 +231,28 @@ def day_label(day) -> str:
     return "Today" if k == 0 else "Tomorrow" if k == 1 else f"{day:%a} {day:%b} {day.day}"
 
 
+def movable() -> tuple:
+    """The rows of Your days that can move: not a day already started (it keeps
+    its subject), and not the one she studied last (the turn after it is today's)."""
+    log = st.session_state.coach_log
+    n = len(settings.chosen_subjects(ui.config()))
+    started = today_started()
+    last = None if started else settings.last_turn(ui.config(), ui.today(), log)
+    return (1 if started else 0), (n - 2 if last else n - 1), started, last
+
+
 def move_day(i: int, k: int) -> None:
     """Her turn on the i-th coming day moved k days (earlier: -1); the others
-    keep their order. A day already started keeps its subject."""
+    keep their order."""
     ui.refresh_settings()
     cfg, day = ui.config(), ui.today()
     order = [t for _, t in settings.days_ahead(cfg, day, ui.TIMEZONE, st.session_state.coach_log)]
+    lo, hi, _, _ = movable()
     j = i + k
-    first = 1 if today_started() else 0
-    if not (first <= i < len(order) and first <= j < len(order)):
+    if not (lo <= i <= hi and lo <= j <= hi):
         return
     order.insert(j, order.pop(i))
-    if ui.save_settings(dict(settings.order_from(cfg, order, day, ui.TIMEZONE), updated_at=settings.now_iso())):
+    if ui.save_settings(dict(settings.order_from(cfg, order), updated_at=settings.now_iso())):
         st.session_state.days_moved = catalog.name(order[j])
 
 
@@ -256,20 +266,20 @@ ahead = settings.days_ahead(config, ui.today(), ui.TIMEZONE, st.session_state.co
 if len(ahead) >= 2:
     with st.container(key="set_sec_order"):
         st.markdown("#### Your days")
-        st.html('<p class="ob-note">One subject or goal a day, taking turns in this order; after the last one it '
-                "starts again. Move one to change what comes when.</p>")
-        locked = today_started()
+        st.html('<p class="ob-note">One subject or goal a day of study, taking turns in this order. The turn moves '
+                "on when you study: a day you skip doesn't skip a goal. Move one to change what comes when.</p>")
+        lo, hi, started, last = movable()
         for i, (day, topic) in enumerate(ahead):
             with st.container(key=f"setday_{i}", horizontal=True, vertical_alignment="center"):
                 st.html(f'<p class="set-day"><span>{escape(day_label(day))}</span>'
                         f'<b>{escape(catalog.name(topic))}</b></p>')
-                if locked and i == 0:
-                    st.html('<span class="set-day-note">started</span>')
+                if not lo <= i <= hi:
+                    st.html(f'<span class="set-day-note">{"started" if started and i == 0 else "studied last"}</span>')
                     continue
                 st.button("Earlier", key=f"setday_up_{i}", type="tertiary", on_click=move_day, args=(i, -1),
-                          disabled=i <= (1 if locked else 0), help=f"Move {catalog.name(topic)} a day earlier")
+                          disabled=i <= lo, help=f"Move {catalog.name(topic)} a day earlier")
                 st.button("Later", key=f"setday_down_{i}", type="tertiary", on_click=move_day, args=(i, 1),
-                          disabled=i >= len(ahead) - 1, help=f"Move {catalog.name(topic)} a day later")
+                          disabled=i >= hi, help=f"Move {catalog.name(topic)} a day later")
         moved = st.session_state.pop("days_moved", "")
         if moved:
             st.html(f'<p class="ob-note" role="status">Moved {escape(moved)}. Home follows the new order.</p>')

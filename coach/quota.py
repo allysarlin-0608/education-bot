@@ -4,8 +4,9 @@ Every call to the model (a lesson, a quiz, its marking, a chat reply, a
 placement check) is counted in ai_usage: one request and its tokens, by
 the signed-in person and today's date. Past AI_DAILY_REQUEST_LIMIT
 requests or AI_DAILY_TOKEN_LIMIT tokens in a day (secrets; 80 and 150000
-by default) no more calls are made that day. Admins have no limit. A
-personal app neither counts nor limits, as before."""
+by default) no more calls are made that day, and none while the allowance
+can't be read. Admins have no limit. A personal app neither counts nor
+limits, as before."""
 import logging
 
 import streamlit as st
@@ -37,17 +38,30 @@ def counted() -> bool:
     return auth.is_public() and _store() is not None and auth.get_current_user_id() is not None
 
 
-def over_limit() -> bool:
-    """True when this person has used up today's allowance (never for admins)."""
+UNCHECKED = "Your daily allowance couldn't be checked just now. Your progress is saved; try again in a moment."
+
+
+def blocked():
+    """Why no AI call can be made for this person now, or None. Past today's
+    allowance; or the allowance can't be read (the database didn't answer):
+    then no call is made either, so the limit always holds (it once let the
+    call through, leaving the cost unguarded). Never for admins."""
     if not counted() or auth.is_admin():
-        return False
+        return None
     try:
         used = _store().usage_today(clock.today().isoformat())
-    except storage.StorageError as e:          # can't tell: let the call through, and say so in the log
-        logger.error("couldn't read today's AI usage: %s", e)
-        return False
+    except storage.StorageError as e:
+        logger.error("couldn't read today's AI usage, no call made: %s", e)
+        return UNCHECKED
     max_requests, max_tokens = limits()
-    return used["request_count"] >= max_requests or used["token_count"] >= max_tokens
+    if used["request_count"] >= max_requests or used["token_count"] >= max_tokens:
+        return LIMIT_REACHED
+    return None
+
+
+def over_limit() -> bool:
+    """True when no AI call may be made for this person now (blocked())."""
+    return blocked() is not None
 
 
 def record(tokens_used: int) -> None:

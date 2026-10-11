@@ -8,7 +8,7 @@ which subject a day is for, how many lessons a day has, the level a
 subject starts at, and whether Reading is on.
 
 Pure functions, no Streamlit, so they can be tested."""
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from coach import catalog, clock, core, paths
 
@@ -268,13 +268,19 @@ def rerun(s: dict, when: str) -> dict:
     return dict(s, onboarded_at=None, onboarding=d, updated_at=when)
 
 
-def finish(s: dict, d: dict, when: str) -> dict:
+def finish(s: dict, d: dict, when: str, log: dict | None = None) -> dict:
     """The settings she chose, ready to save: onboarded, draft cleared.
     Raises ValueError if anything is missing (never saved half done)."""
     # in her order of turns (her goal first unless she moved it: her first day is for it)
     items = [d["path"]["id"] if t == GOAL else t for t in rotation(d)]
     # the setup run again (Account → Run the setup again): what she had stays, after what she chose now
     items = _cap(list(dict.fromkeys(items + [t for t in d.get("keep") or [] if t in SUBJECTS or catalog.is_goal(t)])))
+    if log and d.get("path") and d["path"]["id"] in items:     # (run again: her new goal is her next turn)
+        goal = d["path"]["id"]
+        rest = [t for t in items if t != goal]
+        last = last_turn(dict(s, subjects=rest), clock.today() + timedelta(days=1), log)
+        rest.insert(rest.index(last) + 1 if last in rest else 0, goal)
+        items = rest
     done = dict(s, subjects=items, units_per_day=d["units_per_day"],
                 subject_levels={**(s.get("subject_levels") or {}), **draft_levels(d)},
                 reading_enabled=bool(d["reading_enabled"]),
@@ -311,11 +317,40 @@ def start_day(s: dict, tz) -> date:
     return when.astimezone(tz).date() if when.tzinfo else when.date()
 
 
+# Her turns: her subjects and goals take turns, one a day of study, in her
+# order (a cycle: `subjects`, read round and round). The turn moves on when
+# she studies, not with the calendar: a day she doesn't study leaves the
+# turn where it was. (It once moved with the calendar, so someone with two
+# goals who studied every other day only ever met the first one.)
+def last_turn(s: dict, before: date, log: dict | None) -> str | None:
+    """The last of her turns she studied before `before` (None: none yet).
+    A day she studied more than one of them counts the one whose turn it was."""
+    subjects = chosen_subjects(s)
+    if not log or not subjects:
+        return None
+    by_day = {}
+    for e in log["entries"]:
+        if e["date"] < before.isoformat() and e.get("lessons") and e["topic"] in subjects:
+            by_day.setdefault(e["date"], []).append(e["topic"])
+    last = None
+    for d in sorted(by_day):
+        topics = by_day[d]
+        expected = next_turn(subjects, last)
+        last = expected if expected in topics else min(topics, key=subjects.index)
+    return last
+
+
+def next_turn(subjects: list, last: str | None) -> str:
+    """The turn after `last` in her cycle (the first one when there is none)."""
+    return subjects[(subjects.index(last) + 1) % len(subjects)] if last in subjects else subjects[0]
+
+
 def topic_for(s: dict, day: date, tz, log: dict | None = None) -> str:
-    """The subject for `day`: her subjects take turns, one a day, in the
-    order she chose them, starting with the first on the day she set up.
-    A day she has already started keeps its subject: adding a subject in
-    Settings shifts the turns, and must not swap the day under her (ISS-005)."""
+    """The subject or goal for `day`. A day she has already started keeps it
+    (adding or moving one must not swap the day under her: ISS-005). Up to
+    today: the turn after the last one she studied. After today: one turn a
+    day from today's (as if she studies every day; a day she misses doesn't
+    move it on)."""
     subjects = chosen_subjects(s)
     if is_legacy(s) or not subjects:
         return core.scheduled_topic(day)
@@ -324,26 +359,29 @@ def topic_for(s: dict, day: date, tz, log: dict | None = None) -> str:
                    if e["date"] == day.isoformat() and e.get("lessons") and e["topic"] in subjects]
         if started:
             return started[0]
-    return subjects[(day - start_day(s, tz)).days % len(subjects)]
+    today = clock.today()
+    if day <= today:
+        return next_turn(subjects, last_turn(s, day, log))
+    now = topic_for(s, today, tz, log)
+    return subjects[(subjects.index(now) + (day - today).days) % len(subjects)]
 
 
 def days_ahead(s: dict, day: date, tz, log: dict | None = None) -> list:
     """Her coming turns, one per subject or goal: [(day, topic)] from `day`,
     as many days as she has turns (then they repeat)."""
-    from datetime import timedelta
     n = len(chosen_subjects(s))
     return [(day + timedelta(days=k), topic_for(s, day + timedelta(days=k), tz, log)) for k in range(n)]
 
 
-def order_from(s: dict, order: list, day: date, tz) -> dict:
-    """Her settings with the turns in `order` from `day` on: day → order[0],
-    the next day → order[1]... (the rotation keeps its first day; the list is
-    turned so that this order starts on `day`)."""
+def order_from(s: dict, order: list) -> dict:
+    """Her settings with her turns in `order` (a cycle: what comes after
+    what). Shown from today, `order` starts with today's turn and ends with
+    the one she studied last (or today's, when today is started): kept in
+    place by Goals & Settings → Your days, so the turn after it is order[0]."""
     items = chosen_subjects(s)
-    if sorted(order) != sorted(items) or not items or is_legacy(s) or not s.get("onboarded_at"):
+    if sorted(order) != sorted(items) or not items or is_legacy(s):
         return s
-    offset = (day - start_day(s, tz)).days % len(items)
-    return dict(s, subjects=[order[(i - offset) % len(items)] for i in range(len(items))])
+    return dict(s, subjects=list(order))
 
 
 def units(s: dict) -> int:
@@ -380,17 +418,18 @@ def chosen_goals(s: dict) -> list:
     return [t for t in chosen_subjects(s) if catalog.is_goal(t)]
 
 
-def add_goal(s: dict, goal_id: str, when: str, first_day: date = None, tz=None) -> dict:
+def add_goal(s: dict, goal_id: str, when: str, first_day: date = None, tz=None, log: dict | None = None) -> dict:
     """Her settings with a goal added to her turns. With first_day, the goal
-    is placed so that its first turn is that day (the turns after it shift
-    by one, as adding a subject in Settings does; a day already started
-    keeps its subject: topic_for). Archived goals leave the turns."""
+    comes right after the turn she studied last before that day, so that day
+    is its turn (the others follow it as before; a day already started keeps
+    its subject: topic_for). Without, it joins at the end of the cycle.
+    Archived goals leave the turns."""
     items = [t for t in chosen_subjects(s) if t != goal_id]
     if len([t for t in items if catalog.is_goal(t)]) + 1 > MAX_GOALS:
         raise ValueError(f"Keep at most {MAX_GOALS} goals.")
-    if first_day is not None and s.get("onboarded_at") and not is_legacy(s):
-        at = (first_day - start_day(s, tz)).days % (len(items) + 1)
-        items.insert(at, goal_id)
+    if first_day is not None and not is_legacy(s):
+        last = last_turn(dict(s, subjects=items), first_day, log)
+        items.insert(items.index(last) + 1 if last in items else 0, goal_id)
     else:
         items.append(goal_id)
     return dict(s, subjects=items, updated_at=when)

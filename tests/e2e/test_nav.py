@@ -131,20 +131,21 @@ def test_worlds(public_app, pages):
     covers("W-world-w_all", "W-world-w_today", "W-world-w_history", "W-world-w_enter")
     app = public_app
     p, _, _ = person(app, pages, history=True)
-    today_subject = "Philosophy"
-    flows.open_app(p, app, "/subject?subject=philosophy")
+    # her history is Philosophy (yesterday last): the turn after it is today's (audit stage 1)
+    today_subject = "Astronomy"
+    flows.open_app(p, app, "/subject?subject=cosmos")
     assert flows.wait_text(p.page, "Where you are", 10)
     flows.button(p, "Begin today's lessons")
-    assert flows.wait_text(p.page, "Start this lesson", 10)
-    flows.open_app(p, app, "/subject?subject=cosmos")
-    assert flows.wait_text(p.page, "Next on", 10), "a subject not on today says when it's next"
-    flows.button(p, "Enter Philosophy", exact=False)
-    assert "subject=philosophy" in p.page.url
-    flows.button(p, "See its lessons so far")
-    assert "/records" in p.page.url and flows.wait_text(p.page, "sessions", 10)
+    assert flows.wait_text(p.page, "Start this lesson", 10) and "Astronomy" in text(p)
     flows.open_app(p, app, "/subject?subject=philosophy")
+    assert flows.wait_text(p.page, "Next on", 10), "a subject not on today says when it's next"
+    flows.button(p, "Enter Astronomy", exact=False)
+    assert "subject=cosmos" in p.page.url
+    flows.button(p, "See its lessons so far")
+    assert "/records" in p.page.url
+    flows.open_app(p, app, "/subject?subject=cosmos")
     flows.button(p, "All subjects", exact=False)
-    assert "/settings" in p.page.url and "subject=philosophy" in p.page.url
+    assert "/settings" in p.page.url and "subject=cosmos" in p.page.url
     assert today_subject in text(p)
 
 

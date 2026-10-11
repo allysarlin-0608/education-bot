@@ -130,7 +130,8 @@ def _create(client, **kwargs):
     (quota.py): the request now, and its tokens (the reply's usage, or the
     request's estimate while a streamed reply is still coming)."""
     from coach import quota
-    deadline = _now() + TOTAL_SECONDS
+    started = _now()
+    deadline = started + TOTAL_SECONDS
     requested = tokens.calibrated(tokens.estimate_request("", kwargs.get("messages", []), 0)) \
         + kwargs.get("max_completion_tokens", 0)
     for attempt in range(MAX_RETRIES + 1):
@@ -143,6 +144,7 @@ def _create(client, **kwargs):
                 record[1] = used          # what the minute really counts once the reply is in
             if not kwargs.get("stream"):  # a streamed reply is counted when it ends (stream_text)
                 quota.record(used or tokens.estimate_request("", kwargs.get("messages", []), kwargs.get("max_completion_tokens", 0)))
+            _outcome("ok", started, attempt)
             return resp
         except Exception as e:   # noqa: BLE001 - every failure is mapped below
             if _status(e) in (400, 413, 429):
@@ -155,7 +157,16 @@ def _create(client, **kwargs):
                 _sleep(wait)
                 continue
             logger.error("groq call failed (status %s): %s", status, e)
-            raise CoachError(BUSY if status == 429 or _retryable(e) else FAILED) from e
+            busy = status == 429 or _retryable(e)
+            _outcome("busy" if busy else "failed", started, attempt)
+            raise CoachError(BUSY if busy else FAILED) from e
+
+
+def _outcome(how: str, started: float, attempt: int) -> None:
+    """One line per call, the same shape every time, so the AI's capacity can
+    be measured from the logs: how long she waited (pacing to the minute's
+    tokens and retries included) and how it ended (ok / busy / failed)."""
+    logger.info("ai_call outcome=%s wait_s=%.1f retries=%d", how, _now() - started, attempt)
 
 
 def _prepare(system, messages, max_tokens):
@@ -173,8 +184,9 @@ def stream_text(system, messages, max_tokens):
     """Generator of reply text. Raises CoachError on any failure,
     including an empty reply."""
     from coach import quota
-    if quota.over_limit():
-        raise CoachError(LIMIT)
+    why = quota.blocked()
+    if why:
+        raise CoachError(why)
     client = get_client()
     if client is None:
         raise CoachError(NO_KEY)
@@ -244,8 +256,9 @@ def ask_json(system, messages, max_tokens=tokens.JSON_MAX_TOKENS, salvage=None):
     reply that can't be read whole (e.g. one cut off at max_tokens: the
     quiz keeps its complete questions) instead of asking again."""
     from coach import quota
-    if quota.over_limit():
-        return None, LIMIT
+    why = quota.blocked()
+    if why:
+        return None, why
     client = get_client()
     if client is None:
         return None, NO_KEY

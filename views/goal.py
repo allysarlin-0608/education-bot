@@ -68,7 +68,7 @@ def continue_goal(goal_id: str) -> None:
     if goal_id not in settings.chosen_subjects(ui.config()):
         first = today if not started_today() else today + timedelta(days=1)
         try:
-            new = settings.add_goal(ui.config(), goal_id, settings.now_iso(), first, ui.TIMEZONE)
+            new = settings.add_goal(ui.config(), goal_id, settings.now_iso(), first, ui.TIMEZONE, log)
         except ValueError as e:
             st.session_state.goal_problem = str(e)
             return
@@ -120,7 +120,7 @@ def add() -> None:
         return
     first = today if not started_today() else today + timedelta(days=1)
     try:
-        new = settings.add_goal(ui.config(), d["path"]["id"], settings.now_iso(), first, ui.TIMEZONE)
+        new = settings.add_goal(ui.config(), d["path"]["id"], settings.now_iso(), first, ui.TIMEZONE, log)
     except ValueError as e:
         st.session_state.goal_problem = str(e)
         return

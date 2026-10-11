@@ -28,8 +28,12 @@ the model.
   review system are worked out from the record (`review.LEGACY_FROM`) and
   stored only when acted on.
 - **user_settings**: subjects, lessons per day, levels, reading on/off,
-  onboarding. A day already started keeps its subject when subjects change
-  (the new turns start tomorrow); a new pace reshapes today's remaining
+  onboarding. `subjects` is her cycle of turns: the turn moves on when she
+  studies, not with the calendar (`settings.topic_for`: up to today, the turn
+  after the last one she studied, `settings.last_turn`; after today, one turn
+  a day from today's). A day she skips doesn't skip a goal. A day already
+  started keeps its subject when subjects change (the new turns start
+  tomorrow); a new pace reshapes today's remaining
   lessons at once and saves the day (`ui.refit_today`).
 - **learning_paths** (`supabase/goals.sql`): her own goals, one row per
   (user, goal id `g-` + 8 hex), the path as JSON (`paths.parse_path`:
@@ -191,6 +195,12 @@ Menu holds only what works (`GNOSIS_SHOW_COMING=1` previews the rest); a
 goal can be paused, resumed and removed (status `removed`: off her list,
 its lessons kept).
 
+**Audit stage 1** (ISS-092, ISS-093): her turns move with study, not the
+calendar (above); the AI allowance holds when it can't be read
+(`quota.blocked`: no call, a calm message; it once let the call through); every
+AI call logs `ai_call outcome=ok|busy|failed wait_s=… retries=…`, so the AI's
+capacity can be measured from the logs before more people are invited.
+
 **Fourth round** (ISS-084…091):
 - *Check it yourself* searches what the lesson teaches: its title without the
   question around it (`lesson_view.check_query`: "What is an investment and
@@ -210,9 +220,10 @@ its lessons kept).
   (`goalmaker.scope_line`: lessons, parts, study days at her pace); the last
   ticked part can't be unticked.
 - *Her days in turn*: `settings.days_ahead` (the coming days) and
-  `settings.order_from` (an order set from today, the rotation's first day
-  kept); Goals & Settings → Your days moves one earlier or later (a day
-  already started keeps its subject). After adding a goal, the page says when
+  `settings.order_from` (her cycle in a new order); Goals & Settings → Your
+  days moves one earlier or later. A day already started keeps its subject,
+  and the one she studied last stays last (the turn after it is today's). A
+  goal added (`settings.add_goal`) comes right after the one she studied last. After adding a goal, the page says when
   its first turn is and shows the coming days.
 - *Old content*: a quiz carries the rules it was written under in its id
   (`quiz.VERSION`, "v2-…", so every store keeps it with no schema change). A

@@ -17,11 +17,32 @@ def done(subjects, pace=3, levels=None, reading=False, when="2026-09-26T02:00:00
     return settings.finish(s, d, when)
 
 
-def test_subjects_take_turns_in_the_order_chosen_from_setup_day():
+def studied(log, day, topic):
+    log["entries"].append({"date": day.isoformat(), "topic": topic, "lessons": [{"n": 1, "completed": True}]})
+
+
+def test_subjects_take_turns_in_the_order_chosen_one_per_day_of_study():
     s = done(["philosophy", "investing", "fashion"])
-    day1 = date(2026, 9, 26)       # 10:00 in Taipei
-    got = [settings.topic_for(s, day1 + timedelta(days=k), TZ) for k in range(5)]
+    day1, log, got = date(2026, 9, 26), {"entries": []}, []
+    for k in range(5):
+        t = settings.topic_for(s, day1 + timedelta(days=k), TZ, log)
+        got.append(t)
+        studied(log, day1 + timedelta(days=k), t)
     assert got == ["philosophy", "investing", "fashion", "philosophy", "investing"]
+
+
+def test_a_day_she_skips_doesnt_skip_a_turn():
+    """The audit's case: two goals, studied every other day. The turns moved
+    with the calendar, so the second one never came round."""
+    s = done(["philosophy", "investing"])
+    day1, log, got = date(2026, 9, 1), {"entries": []}, []
+    for k in range(0, 20, 2):                        # every other day
+        t = settings.topic_for(s, day1 + timedelta(days=k), TZ, log)
+        got.append(t)
+        studied(log, day1 + timedelta(days=k), t)
+    assert got == ["philosophy", "investing"] * 5
+    for k in range(3):                               # then three days off: still the next one
+        assert settings.topic_for(s, day1 + timedelta(days=21 + k), TZ, log) == "philosophy"
 
 
 def test_one_subject_every_day():
@@ -32,25 +53,27 @@ def test_one_subject_every_day():
 def test_rotation_follows_a_new_selection():
     s = done(["philosophy", "investing", "fashion"])
     s2 = settings.change(s, settings.now_iso(), subjects=["philosophy", "fashion"])
-    assert [settings.topic_for(s2, date(2026, 9, 26) + timedelta(days=k), TZ) for k in range(3)] == \
-        ["philosophy", "fashion", "philosophy"]
+    day, log = date(2026, 9, 26), {"entries": []}
+    assert settings.topic_for(s2, day, TZ, log) == "philosophy"
+    studied(log, day, "philosophy")
+    assert settings.topic_for(s2, day + timedelta(days=1), TZ, log) == "fashion"
 
 
 def test_a_day_already_started_keeps_its_subject_when_one_is_added():
     """ISS-005: adding a third subject shifted the turns, and Today swapped
     to another subject after she had started (or finished) the day."""
     s = done(["philosophy", "investing"])
-    day = date(2026, 9, 28)                                  # day 3: philosophy's turn
-    log = {"entries": [{"date": day.isoformat(), "topic": "philosophy", "lessons": [{"n": 1, "completed": True}]}]}
-    s2 = settings.change(s, settings.now_iso(), subjects=["philosophy", "investing", "fashion"])
-    assert settings.topic_for(s2, day, TZ) == "fashion"      # the turns did move
-    assert settings.topic_for(s2, day, TZ, log) == "philosophy"
-    assert settings.topic_for(s2, day + timedelta(days=1), TZ, log) == "philosophy"   # (the new turns from tomorrow)
+    day = date(2026, 9, 28)
+    log = {"entries": []}
+    studied(log, day, "philosophy")
+    s2 = settings.change(s, settings.now_iso(), subjects=["philosophy", "fashion", "investing"])
+    assert settings.topic_for(s2, day, TZ, log) == "philosophy", "started: kept"
+    assert settings.topic_for(s2, day + timedelta(days=1), TZ, log) == "fashion", "the new turns from the next day"
     # a subject she took out doesn't hold the day
     s3 = settings.change(s, settings.now_iso(), subjects=["investing"])
     assert settings.topic_for(s3, day, TZ, log) == "investing"
     # a day only looked at (no entry) follows the turns
-    assert settings.topic_for(s2, day, TZ, {"entries": []}) == "fashion"
+    assert settings.topic_for(s2, day, TZ, {"entries": []}) == "philosophy"
 
 
 def test_setup_day_is_her_local_day():
