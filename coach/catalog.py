@@ -88,6 +88,19 @@ def goals(active_only: bool = True) -> list:
     return [p for p in out if p.get("status") != "removed"]
 
 
+def removed(topic) -> bool:
+    """A goal she removed: off her list, its reviews and practice stop
+    coming up; its lessons stay in her record, and it can be brought back."""
+    p = path(topic)
+    return bool(p and p.get("status") == "removed")
+
+
+def removed_goals() -> list:
+    """The goals she removed, newest first (each can be brought back)."""
+    return sorted((p for p in _paths().values() if p.get("status") == "removed"),
+                  key=lambda p: p.get("created_at") or "", reverse=True)
+
+
 def name(topic, default: str = None) -> str:
     """The name to show: a subject's, or her goal's title."""
     from coach import core

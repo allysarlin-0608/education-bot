@@ -9,7 +9,7 @@ from urllib.parse import quote_plus
 
 import streamlit as st
 
-from coach import catalog, core
+from coach import core
 
 # 【Key Idea】, **【Key Idea】**, ### 【Key Idea】: at the start of a line
 BLOCK = re.compile(r"^[ \t]*(?:#+[ \t]*)?(?:\*\*)?【([^】\n]+)】(?:\*\*)?[ \t]*[:：]?[ \t]*", re.MULTILINE)
@@ -107,13 +107,39 @@ def _body(text: str, dark: bool) -> None:
             st.graphviz_chart(dot, width="content")
 
 
-def check_links(title: str, topic: str = None) -> None:
-    """Where she can check the lesson herself: searches for it on Wikipedia
-    and Britannica (real pages, built here; nothing the model wrote)."""
-    if not title:
+# words that frame a lesson title but aren't what it teaches: "What is an
+# investment and why it matters" is searched as "investment"
+_LEAD = re.compile(r"^(?:lesson\s+\d+\s*[:.]\s*)?(?:(?:what|who|why|how|when|where)\s+(?:is|are|was|were|do|does|did|"
+                   r"can|to|it|they)?\s*|understanding\s+|introduction\s+to\s+|intro\s+to\s+|the\s+basics\s+of\s+|"
+                   r"getting\s+started\s+with\s+)", re.IGNORECASE)
+_TAIL = re.compile(r"(?:\s*[,:;—–-]\s*|\s+and\s+|\s+)(?:why\s+(?:it|they|this)\s+matters?|how\s+(?:it|they)\s+works?|"
+                   r"for\s+(?:beginners|everyone|dummies)|explained|in\s+practice|an?\s+overview|made\s+simple|"
+                   r"step\s+by\s+step)\s*[?.!]*$", re.IGNORECASE)
+_ARTICLE = re.compile(r"^(?:an?|the)\s+", re.IGNORECASE)
+
+
+def check_query(title: str) -> str:
+    """What a lesson teaches, in a few words to search for: its title without
+    the question or framing around it (never a section heading, never the
+    goal's name)."""
+    q = re.sub(r"\s+", " ", str(title or "")).strip().strip("?.!")
+    asked = re.match(r"(?:how|why)\b", q, re.IGNORECASE)
+    for _ in range(2):                                 # ("What is an X and why it matters": both ends)
+        q = _TAIL.sub("", _LEAD.sub("", q)).strip()
+    if asked:                                          # "How X works", "Why X matters": X
+        q = re.sub(r"\s+(?:works?|matters?|happens?|helps?)$", "", q, flags=re.IGNORECASE)
+    q = _ARTICLE.sub("", q).strip(" ,:;?.!")
+    return q or str(title or "").strip()
+
+
+def check_links(title: str) -> None:
+    """Where she can check the lesson herself: searches for what it teaches
+    on Wikipedia and Britannica (real pages, built here; nothing the model
+    wrote)."""
+    q = check_query(title)
+    if not q:
         return
-    q = quote_plus(f"{title} {catalog.name(topic)}" if topic and catalog.is_goal(topic) else title)
-    links = " · ".join(f'<a href="{escape(url.format(q=q))}" target="_blank" rel="noopener noreferrer">{name}</a>'
+    links = " · ".join(f'<a href="{escape(url.format(q=quote_plus(q)))}" target="_blank" rel="noopener noreferrer">{name}</a>'
                        for name, url in CHECK)
     st.html(f'<p class="l-check">Check it yourself: {links}</p>')
 
@@ -132,15 +158,15 @@ def render(text: str, topic: str = None, key: str = "", title: str = "") -> None
             text = text.replace(line, "")
             footer.append(line)
     tag = hashlib.md5(f"{key}|{text}".encode()).hexdigest()[:10]
-    for k, (title, body) in enumerate(blocks(text.strip())):
-        if not title:
+    for k, (heading, body) in enumerate(blocks(text.strip())):
+        if not heading:
             if body.strip():
                 _body(body, dark)
             continue
         with st.container(key=f"lcard_{tag}_{k}"):
-            st.html(f'<div class="lcard-title">{escape(title)}</div>')
+            st.html(f'<div class="lcard-title">{escape(heading)}</div>')
             _body(body, dark)
-    check_links(title, topic)
+    check_links(title)      # (the lesson's title: not a section heading)
     for line in footer:
         st.caption(line)
 
@@ -156,12 +182,12 @@ def render_tabs(text: str, topic: str = None, key: str = "", title: str = "") ->
     footer = [line for line in (core.DISCLAIMER, core.CLOSING_LINE) if line in text]
     for line in footer:
         text = text.replace(line, "")
-    parts = [(title or "Intro", body) for title, body in blocks(text.strip()) if title or body.strip()]
+    parts = [(heading or "Intro", body) for heading, body in blocks(text.strip()) if heading or body.strip()]
     if not parts:
         return
-    for (title, body), tab in zip(parts, st.tabs([title for title, _ in parts])):
+    for (heading, body), tab in zip(parts, st.tabs([heading for heading, _ in parts])):
         with tab:
             _body(body, dark)
     for line in footer:
         st.caption(line)
-    check_links(title, topic)
+    check_links(title)

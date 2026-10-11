@@ -1439,6 +1439,10 @@ NAV = """
   .st-key-nav_search { margin-left: 4px; }
   .st-key-nav_search button { width: 40px; min-width: 40px; }
   [data-testid="stToolbarActions"] { display: none; }
+  /* the bar sits a little left of centre, so the avatar keeps a clear gap from
+     the app's own ⋮ menu at the right edge (they touched on a phone) */
+  [data-testid="stLayoutWrapper"]:has(> .st-key-topnav) { left: calc(var(--cx-main, 50%) - 30px) !important; }
+  .st-key-account_menu button { margin-left: var(--space-2); }
 }
 @media (max-width: 360px) {
   .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 6px; }
@@ -1515,7 +1519,7 @@ SETUP = """
   content: ""; position: absolute; top: 14px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--label);
 }
 /* a phone: the bar keeps words, never bare icons: Home, Review and Menu (with
-   Search). Reading, Record and Plan are in the Menu, each by its full name.
+   Search). Reading, Record and Goals are in the Menu, each by its full name.
    The sidebar's way in (») is left out: Home shows what the sidebar holds. */
 @media (max-width: 640px) {
   .st-key-topnav_items [data-testid="stPageLink"]:has(a[href$="reading"]),
@@ -1678,6 +1682,10 @@ SETUP = """
 .pv-units li small { display: block; font-size: 0.8125rem; color: var(--label-3); }
 .pv-units li::marker { color: var(--label-3); font-variant-numeric: tabular-nums; }
 /* ---------- The menu: every part of GNOSIS, grouped ---------- */
+/* the Menu: never taller than the screen below the bar; what doesn't fit scrolls inside it,
+   so its last group (You: Goals & Settings, Account) is always reachable */
+.st-key-site_menu_list { max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain;
+                         -webkit-overflow-scrolling: touch; padding: 0 4px 12px; min-width: 15rem; }
 .mn-group { margin: var(--space-3) 0 4px; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); }
 .mn-soon { margin: 0; padding: 6px 0 6px 8px; font-size: 0.875rem; color: var(--label-3); }
 .mn-soon small, .mn-here small { margin-left: 6px; font-size: 0.75rem; }
@@ -1735,6 +1743,21 @@ SETUP = """
 [class*="st-key-setgoal_"] { justify-content: space-between; gap: var(--space-3) !important; min-height: 44px; flex-wrap: wrap; }
 [class*="st-key-setgoal_"] > :first-child { flex: 1 1 14rem; min-width: 0; }
 .set-goal { margin: 0; display: grid; gap: 2px; font-size: 0.9375rem; line-height: 1.4; color: var(--label); }
+/* after adding a goal: the coming days, in turn */
+.goal-turns { list-style: none; margin: 8px 0 4px; padding: 0; border-top: 1px solid var(--rule); }
+.goal-turns li { display: grid; grid-template-columns: 7.5rem 1fr; gap: 12px; padding: 12px 0;
+                 border-bottom: 1px solid var(--rule); font-size: 0.9375rem; }
+.goal-turns span { color: var(--label-2); font-size: 0.8125rem; }
+.goal-turns b { font-weight: 400; color: var(--label); overflow-wrap: anywhere; }
+/* Home: which subject or goal today is, and what comes next */
+.today-turns { margin: 0; color: var(--label-2); font-size: 0.875rem; line-height: 1.45; }
+/* Your days: when, then what (one row a day; Earlier / Later at the end) */
+.set-day { margin: 0; display: grid; grid-template-columns: 7.5rem 1fr; gap: 12px; align-items: baseline;
+           font-size: 0.9375rem; line-height: 1.4; color: var(--label); flex: 1 1 auto; min-width: 0; }
+.set-day span { color: var(--label-2); font-size: 0.8125rem; letter-spacing: 0.01em; }
+.set-day b { font-weight: 400; overflow-wrap: anywhere; }
+.set-day-note { color: var(--label-2); font-size: 0.8125rem; }
+@media (max-width: 520px) { .set-day { grid-template-columns: 1fr; gap: 0; } }
 .set-goal b { font-weight: 400; color: var(--label-2); font-size: 0.8125rem; }
 [class*="st-key-setgoal_"][class*="_off"] .set-goal span { color: var(--label-2); }
 
@@ -2037,7 +2060,8 @@ ACCOUNT = """
 
 /* ---------- the account menu at the bar's right end ---------- */
 .st-key-account_menu button { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 50%;   /* an avatar: round */
-  font-size: 0.8125rem; font-weight: 500; color: var(--label); background: var(--surface) !important;
+  font-size: 0.8125rem; font-weight: 500; color: var(--label);
+  background: rgb(from var(--label) r g b / 0.08) !important;     /* a visible circle on the bar, light or dark */
   border: 1px solid transparent !important; box-shadow: none !important; margin-left: var(--space-3); }
 .st-key-account_menu button [data-testid="stIconMaterial"] { display: none; }
 /* a keyboard user sees where they are here too (as on every other control) */

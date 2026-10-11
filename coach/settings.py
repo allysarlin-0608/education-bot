@@ -147,7 +147,7 @@ SCOPES = ("all", "some")
 def new_draft() -> dict:
     return {"v": DRAFT_VERSION, "step": 0, "plan": None, "subjects": [], "units_per_day": DEFAULT_PACE, "levels": {},
             "reading_enabled": False, "want_goal": False, "goal_at": 0, "back_to": None,
-            "identity": "", "knows": False, "exploring": False, "explore": [], "scope": None, "purpose": "",
+            "identity": "", "knows": False, "exploring": False, "explore": [], "scope": None, "purpose": "", "keep": [],
             **new_goal_draft()}
 
 
@@ -196,6 +196,8 @@ def draft_of(s: dict) -> dict:
         d["explore"] = [str(x)[:60] for x in saved["explore"]][:3]
     d["scope"] = saved.get("scope") if saved.get("scope") in SCOPES else None
     d["purpose"] = str(saved.get("purpose") or "")[:paths.TEXT_LIMIT]
+    if isinstance(saved.get("keep"), list):          # (the setup run again: her turns before it)
+        d["keep"] = [t for t in saved["keep"] if isinstance(t, str) and catalog.valid(t)][:MAX_SUBJECTS + MAX_GOALS]
     if isinstance(saved.get("subjects"), list):
         d["subjects"] = [t for t in dict.fromkeys(saved["subjects"]) if t in SUBJECTS][:MAX_SUBJECTS]
     if saved.get("units_per_day") in PACES:
@@ -258,13 +260,24 @@ def draft_levels(d: dict) -> dict:
     return out
 
 
+def rerun(s: dict, when: str) -> dict:
+    """Her settings with the setup to be run again (a test of the setup on an
+    account already in use): nothing is deleted. Her turns, pace and reading
+    plan are kept in the draft; what she chooses now comes first, then those."""
+    d = dict(new_draft(), keep=chosen_subjects(s), units_per_day=units(s), reading_enabled=bool(s.get("reading_enabled")))
+    return dict(s, onboarded_at=None, onboarding=d, updated_at=when)
+
+
 def finish(s: dict, d: dict, when: str) -> dict:
     """The settings she chose, ready to save: onboarded, draft cleared.
     Raises ValueError if anything is missing (never saved half done)."""
     # in her order of turns (her goal first unless she moved it: her first day is for it)
     items = [d["path"]["id"] if t == GOAL else t for t in rotation(d)]
+    # the setup run again (Account → Run the setup again): what she had stays, after what she chose now
+    items = _cap(list(dict.fromkeys(items + [t for t in d.get("keep") or [] if t in SUBJECTS or catalog.is_goal(t)])))
     done = dict(s, subjects=items, units_per_day=d["units_per_day"],
-                subject_levels=draft_levels(d), reading_enabled=bool(d["reading_enabled"]),
+                subject_levels={**(s.get("subject_levels") or {}), **draft_levels(d)},
+                reading_enabled=bool(d["reading_enabled"]),
                 onboarding=None, onboarded_at=when, updated_at=when)
     problems = errors(done)
     if problems:
@@ -312,6 +325,25 @@ def topic_for(s: dict, day: date, tz, log: dict | None = None) -> str:
         if started:
             return started[0]
     return subjects[(day - start_day(s, tz)).days % len(subjects)]
+
+
+def days_ahead(s: dict, day: date, tz, log: dict | None = None) -> list:
+    """Her coming turns, one per subject or goal: [(day, topic)] from `day`,
+    as many days as she has turns (then they repeat)."""
+    from datetime import timedelta
+    n = len(chosen_subjects(s))
+    return [(day + timedelta(days=k), topic_for(s, day + timedelta(days=k), tz, log)) for k in range(n)]
+
+
+def order_from(s: dict, order: list, day: date, tz) -> dict:
+    """Her settings with the turns in `order` from `day` on: day → order[0],
+    the next day → order[1]... (the rotation keeps its first day; the list is
+    turned so that this order starts on `day`)."""
+    items = chosen_subjects(s)
+    if sorted(order) != sorted(items) or not items or is_legacy(s) or not s.get("onboarded_at"):
+        return s
+    offset = (day - start_day(s, tz)).days % len(items)
+    return dict(s, subjects=[order[(i - offset) % len(items)] for i in range(len(items))])
 
 
 def units(s: dict) -> int:

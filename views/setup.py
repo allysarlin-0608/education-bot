@@ -308,7 +308,7 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
                 lead("All of it, or some parts?", "Here's what it covers. Keep all of it, or tick only the parts "
                                                   "you want; you can change this before you start.")
             with st.container(key="ob_body"):
-                goalmaker.scope("obs", draft, put)
+                goalmaker.scope("obs", draft, put, pace=d["units_per_day"])
                 nav(ready=bool(d["scope"]), note="" if d["scope"] else "Choose all of it, or some parts.")
 
     elif step == "purpose":
@@ -333,7 +333,7 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
                               f"{paths.lesson_count(d['path'])} lessons in {len(d['path']['units'])} parts")
                         + row("For", escape(d["purpose"]))
                         + row("Each day", escape(name), f"{d['units_per_day']} lessons · {minutes} · change it any time "
-                                                        "in Learning Plan")
+                                                        "in Goals & Settings")
                         + "</dl>")
                 with st.container(key="ob_changes", horizontal=True):
                     for n_ in ("identity", "want", "scope", "purpose"):

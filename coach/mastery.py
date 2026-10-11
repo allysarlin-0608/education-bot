@@ -296,7 +296,7 @@ def weakest(log: dict, today: date, limit: int = 3, topic: str = None, before: i
     twice today already (never a loop on one idea). `before`: only lessons
     before this number (earlier ideas, for the lesson and quiz of `topic`)."""
     out = []
-    for t in [topic] if topic else topics(log):
+    for t in [topic] if topic else [t for t in topics(log) if not catalog.removed(t)]:   # (a removed goal: no practice)
         for x in ideas(log, t, today):
             if not x["evidence"] or x["level"] == "mastered" or (before is not None and x["n"] >= before):
                 continue

@@ -136,7 +136,9 @@ SCRIPT = r"""
     for (const c of CONTROLS) {
       doc.querySelectorAll(c.root).forEach((root) => {
         const items = [...root.querySelectorAll(c.item)];
-        const on = items.length && c.on(items);
+        let on = items.length && c.on(items);
+        // the item on is hidden at this width (a phone's bar leaves Record and Goals to the Menu): as if none were
+        if (on && !on.getClientRects().length) on = null;
         // nothing on (a page not in the bar, a subject's world): the surface bows out and no item claims to be here
         if (!on) { const p = root.querySelector(':scope > .cx-pill'); if (p) p.style.opacity = '0'; items.forEach((i) => i.hasAttribute('data-cx-on') && i.removeAttribute('data-cx-on')); const s0 = state.get(root); if (s0) { s0.on = null; state.set(root, s0); } return; }
         const s = state.get(root) || {};

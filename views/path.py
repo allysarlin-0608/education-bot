@@ -1,7 +1,7 @@
-"""Learning Path: her sequence. The order of her coming days (her subjects
+"""Schedule: her sequence. The order of her coming days (her subjects
 and goals take turns, one a day), and for each course where she is and what
 comes next, unit by unit. The order, pace and choices themselves are changed
-in Learning Plan; a goal's path is adjusted from its course map. No AI call."""
+in Goals & Settings; a goal's path is adjusted from its course map. No AI call."""
 from datetime import timedelta
 from html import escape
 
@@ -15,9 +15,9 @@ today = ui.today()
 mine = settings.shown_subjects(config)
 
 st.html('<div id="settings-page" hidden></div>')
-st.markdown("## Learning Path")
+st.markdown("## Schedule")
 st.caption("The order of your days, and where each course goes next. Each lesson opens once the one before "
-           "it is passed. To change the order, the pace or what you learn, go to Learning Plan.")
+           "it is passed. To change the order, the pace or what you learn, go to Goals & Settings.")
 
 with st.container(key="set_sec_days"):
     st.markdown("#### Your next days")
@@ -42,4 +42,4 @@ with st.container(key="set_sec_courses"):
             if st.button("Course map", key=f"lp_map_{t}", type="tertiary"):
                 ui.open_course(t)
     if not mine:
-        st.html('<p class="ob-note">Choose subjects or a goal in Learning Plan to see your path.</p>')
+        st.html('<p class="ob-note">Choose subjects or a goal in Goals & Settings to see your path.</p>')

@@ -111,7 +111,7 @@ def show_entry(e, where):
             ui.show_pending_error()
     if e.get("lesson") and st.toggle("Read the lesson", key=f"rec_lesson_{key}"):
         with st.container(key=f"reader_{key}"):
-            lesson_view.render_tabs(e["lesson"], e["topic"], key=f"rec_{key}")
+            lesson_view.render_tabs(e["lesson"], e["topic"], key=f"rec_{key}", title=e.get("title", ""))
 
 
 # ============================================================

@@ -83,8 +83,8 @@ def test_a_new_learner_from_sign_in_to_her_second_day(public_app, pages, width):
     goal = next(g["data"]["id"] for g in app.get("/__dump")["tables"]["learning_paths"]
                 if g["user_id"] == app.user_id(p.email))
     for path, marker in (("/review", "Review"), (f"/course?subject={goal}", "COURSE MAP"),
-                         ("/skills", "Knowledge Map"), ("/records", "Learning Record"), ("/settings", "Learning Plan"),
-                         ("/courses", "Subjects & Courses"), ("/path", "Your next days"), ("/account", "Profile"),
+                         ("/skills", "Knowledge Map"), ("/records", "Learning Record"), ("/settings", "Goals & Settings"),
+                         ("/courses", "Courses"), ("/path", "Your next days"), ("/account", "Profile"),
                          ("/practice", "Practice"), ("/week", "Your week")):
         flows.open_app(p, app, path)
         assert marker.lower() in sound(p, path).lower(), path

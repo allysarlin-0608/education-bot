@@ -186,7 +186,10 @@ def test_a_new_goal_for_someone_already_learning_starts_today(monkeypatch, tmp_p
     goal_id = log["paths"][0]["id"]
     catalog.use(log["paths"])
     assert goal_id in s["subjects"] and settings.topic_for(s, ui.today(), ui.TIMEZONE) == goal_id
-    assert "Made for you" in texts(at), "straight to her first lesson"
+    assert "first turn is today" in texts(at), "how it shares her days, said first"
+    at.button(key="goal_today").click().run()                       # Start its first lesson
+    loads(at, "views/daily.py")
+    assert "Made for you" in texts(at), "her first lesson"
 
 
 def test_a_new_goal_when_today_is_already_started_begins_tomorrow(monkeypatch, tmp_path):
@@ -207,7 +210,7 @@ def test_a_new_goal_when_today_is_already_started_begins_tomorrow(monkeypatch, t
     all_of_it(at, "gs_scope")
     first_purpose(at, "gp")
     at.button(key="goal_add").click().run()
-    assert not at.exception and "Your first lesson is on" in texts(at)
+    assert not at.exception and "first turn is on" in texts(at), "today is taken: tomorrow"
     s, log = stored(tmp_path)
     catalog.use(log["paths"])
     assert settings.topic_for(s, ui.today() + timedelta(days=1), ui.TIMEZONE) == log["paths"][0]["id"]

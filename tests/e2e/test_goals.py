@@ -176,6 +176,9 @@ def test_a_second_goal_takes_its_turn_and_can_be_paused(public_app, pages, clock
     flows.idle(p.page)
     flows.button(p, "Add this goal")
     flows.idle(p.page, 30)
+    assert flows.wait_text(p.page, "first turn is today"), "how it shares her days, said first"
+    assert "Philosophy" in text(p) and "Tomorrow" in text(p)
+    flows.button(p, "Start its first lesson")
     assert flows.wait_text(p.page, "MADE FOR YOU"), "today is free: the goal starts now"
     flows.pass_lesson(p)
     for k, expect in ((1, "Philosophy"), (2, "Reading financial statements")):

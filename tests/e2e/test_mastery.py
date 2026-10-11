@@ -77,7 +77,7 @@ def skill_of(p, app, title):
     flows.open_app(p, app, "/skills")
     assert flows.wait_text(p.page, "Knowledge Map")
     row = p.page.locator(".sk-ideas li", has_text=title).first
-    return row.locator(".sk-chip").inner_text().strip()
+    return row.locator(".sk-chip").text_content().strip()      # (its words, not their shown capitals)
 
 
 def review_all(p):

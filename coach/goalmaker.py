@@ -217,36 +217,46 @@ def _tick(key: str, get, put) -> None:
         put(d)
 
 
-def scope(key: str, get, put) -> None:
+def scope_line(orig: dict, p: dict, some: bool, pace: int) -> str:
+    """How much she has chosen, and how long it takes at her pace."""
+    n, n_all = paths.lesson_count(p), paths.lesson_count(orig)
+    days = math.ceil(n / max(pace, 1))
+    when = f"about {days} study {'day' if days == 1 else 'days'} at {pace} a day"
+    if not some or n == n_all:
+        return f"{n_all} lessons in {len(orig['units'])} parts · {orig['level']} · {when}"
+    return (f"You chose {n} of {n_all} lessons ({len(p['units'])} of {len(orig['units'])} parts) · "
+            f"{orig['level']} · {when}")
+
+
+def scope(key: str, get, put, pace: int = settings.DEFAULT_PACE) -> None:
     """The outline of what she asked for, how many lessons it is, and her
     choice: all of it, or only the parts she ticks (any part can be ticked
-    again: nothing is lost)."""
+    again: nothing is lost). The count and the time it takes follow every
+    tick at once, at the top where she reads it."""
     d = get()
     orig, p = d.get("path_original") or d["path"], d["path"]
-    n_all = paths.lesson_count(orig)
+    some = d.get("scope") == "some"
     st.html(f'<div class="gm-path"><p class="gm-eyebrow">The outline</p><h3>{escape(orig["title"])}</h3>'
             f'<p class="gm-outcome">{escape(orig["outcome"])}</p>'
-            f'<p class="gm-meta">{n_all} lessons in {len(orig["units"])} parts · {escape(orig["level"])}</p></div>')
+            f'<p class="gm-meta" role="status" aria-live="polite">{escape(scope_line(orig, p, some, pace))}</p></div>')
     st.session_state[_k(key, "scope")] = d.get("scope") or None      # (always her answer as kept)
     with st.container(key=_k(key, "scope_sw")):
         st.segmented_control(f"Do you want to learn all of {orig['title']}?", ["all", "some"],
                              format_func=lambda v: "Yes, all of it" if v == "all" else "No, only some parts",
                              key=_k(key, "scope"), width="stretch", on_change=_set_scope, args=(key, get, put))
-    some = d.get("scope") == "some"
     kept = {u["name"] for u in p["units"]}
     with st.container(key=_k(key, "outline")):
         for i, u in enumerate(orig["units"]):
             with st.container(key=_k(key, f"unit_{i}")):
                 if some:
                     st.session_state[_k(key, f"part_{i}")] = u["name"] in kept      # (always as kept)
+                    last = u["name"] in kept and len(kept) == 1          # (one part at least: the last can't go)
                     st.checkbox(f"Part {i + 1}: {u['name']} · {len(u['lessons'])} lessons", key=_k(key, f"part_{i}"),
-                                on_change=_tick, args=(key, get, put))
+                                on_change=_tick, args=(key, get, put), disabled=last,
+                                help="Keep at least one part." if last else None)
                 else:
                     st.html(f'<p class="gm-u"><span>Part {i + 1}</span>{escape(u["name"])}</p>')
                 st.html('<ol class="gm-lessons">' + "".join(f"<li>{escape(t)}</li>" for t in u["lessons"]) + "</ol>")
-    if some:
-        st.html(f'<p class="ob-note" role="status">You chose {paths.lesson_count(p)} of {n_all} lessons '
-                f'({len(p["units"])} of {len(orig["units"])} parts).</p>')
 
 
 # ------------------------------------------------------ what it's for

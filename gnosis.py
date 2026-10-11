@@ -42,20 +42,20 @@ if settings.reading_on(config):             # no reading plan: no Reading page a
     pages.append(st.Page("views/reading.py", title="Reading Plan", url_path="reading"))
 pages += [
     st.Page("views/records.py", title="Learning Record", url_path="records"),
-    st.Page("views/settings.py", title="Learning Plan", url_path="settings"),
+    st.Page("views/settings.py", title="Goals & Settings", url_path="settings"),
 ]
 # every other part, reached from the Menu (coach/topnav.SECTIONS) and from the pages themselves
 # the curriculum: every course, hers first (the Menu)
-subjects_page = st.Page("views/subjects.py", title="Subjects & Courses", url_path="courses")
+subjects_page = st.Page("views/subjects.py", title="Courses", url_path="courses")
 # her sequence: the order of her days and where each course goes next (the Menu)
-path_page = st.Page("views/path.py", title="Learning Path", url_path="path")
+path_page = st.Page("views/path.py", title="Schedule", url_path="path")
 # her profile, plan and data (the Menu, and the account menu)
 account_page = st.Page("views/account.py", title="Account", url_path="account")
 # each subject's world: one page, reached from the subject (not from the bar)
 world = st.Page("views/world.py", title="Subject", url_path="subject")
-# each subject's course map: reached wherever a subject is named (Today, Record, Learning Plan, its world)
+# each subject's course map: reached wherever a subject is named (Today, Record, Goals & Settings, its world)
 course_map = st.Page("views/course.py", title="Course", url_path="course")
-# a new goal of her own (Learning Plan → Your goals)
+# a new goal of her own (Goals & Settings → Your goals)
 new_goal = st.Page("views/goal.py", title="New goal", url_path="goal")
 # her week in review (Record, and Home when a week has just ended)
 week_page = st.Page("views/week.py", title="Your week", url_path="week")

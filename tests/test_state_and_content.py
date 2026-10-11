@@ -87,10 +87,12 @@ def test_add_a_goal_starts_fresh_and_a_goal_is_never_added_twice(monkeypatch, tm
     ai(monkeypatch, design_reply())
     at.text_area(key="goal_text").input("Read a company's financial statements").run()
     at.button(key="goal_design").click().run()
+    assert "You already have a goal like this" in texts(at), "asked first, before any AI call"
+    at.button(key="goal_dup_new").click().run()                 # she says it's different: designed...
     all_of_it(at, "gs_scope")
     first_purpose(at, "gp")
     at.button(key="goal_add").click().run()
-    assert "already one of your goals" in texts(at)
+    assert "already one of your goals" in texts(at), "...but the very same goal is never added twice"
     log = json.loads((tmp_path / "log.json").read_text())
     assert len(log["paths"]) == 1
 

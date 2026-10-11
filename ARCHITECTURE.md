@@ -131,13 +131,13 @@ steps her answers call for, `settings.STEPS` names them all):
 | 2b | Find a topic | broad directions (Languages, Math, Natural science, Society, Arts, Technology), then narrower, a third level where useful; the last choice becomes her words and is designed at once | `directions.narrower`, `directions.topic_of` |
 | 3 | All of it, or some parts | the outline and its number of lessons; all of it, or tick the parts | `goalmaker.scope` |
 | 4 | What it's for | goals that fit who she is, her words, or (ticked) "I want to learn all of it" | `goalmaker.purpose`, `directions.purposes` |
-| 5 | Confirm | one sentence of everything, each part changeable and straight back; pace is Steady (3 a day), changeable in Learning Plan; Start learning → `settings.finish`, her goal saved with its purpose, `prefs.identity` kept; her first day opens | `ui.save_path`, `ui.save_settings` |
+| 5 | Confirm | one sentence of everything, each part changeable and straight back; pace is Steady (3 a day), changeable in Goals & Settings; Start learning → `settings.finish`, her goal saved with its purpose, `prefs.identity` kept; her first day opens | `ui.save_path`, `ui.save_settings` |
 
 One AI call per goal (the outline). Our built-in subjects are not offered to
-new learners; anyone already learning one keeps them (Learning Plan's
+new learners; anyone already learning one keeps them (Goals & Settings'
 Subjects section and Courses' "More subjects" show only when
 `settings.builtin_offered`). Reading and the placement check are no longer
-asked in the setup (both stay in Learning Plan).
+asked in the setup (both stay in Goals & Settings).
 
 The draft (`settings.draft_of`, version `DRAFT_VERSION` 3) is kept in
 `user_settings.onboarding` at every answer, so Back, a change from Confirm
@@ -147,20 +147,27 @@ widgets are always drawn from the draft (not from a widget's remembered
 value), so a step left and come back to shows her answers as kept.
 
 **The navigation** (`gnosis.py`, `coach/topnav.py`): the bar holds the pages
-of every day (Home, Review, Reading, Record, Plan); **Menu** holds every part,
-grouped (`topnav.SECTIONS`), each a link to the one page that does it:
+of every day (Home, Review, Reading, Record, Goals); **Menu** holds every part,
+grouped (`topnav.SECTIONS`: Learn, Practice, Progress, You), each a link to
+the one page that does it. Each name says one thing (ISS-088): Courses is
+what she learns, Schedule is what comes on which day, Goals & Settings is
+where she changes either.
 
 | Section | Page | Concept |
 |---|---|---|
-| Home | `daily.py` (/) | today's lessons |
-| Subjects & Courses | `subjects.py` (/courses) | the curriculum: every course |
-| Learning Path | `path.py` (/path) | her sequence: the order of her days, where each course goes next |
-| Learning Plan | `settings.py` (/settings) | her choices: subjects, goals, pace, levels, reminders, reading on/off |
-| Reading Plan | `reading.py` (/reading) | when she has one (else the Menu points to Learning Plan) |
+| Home | `daily.py` (/) | today's lessons; with more than one turn, today's and tomorrow's and a way to change the order |
+| Courses | `subjects.py` (/courses) | every course of hers, its progress and course map |
+| Schedule | `path.py` (/path) | the coming days and where each course goes next |
+| Goals & Settings | `settings.py` (/settings) | her goals (pause, resume, remove, bring back), the order of her days, pace, levels, reminders, reading on/off |
+| Reading Plan | `reading.py` (/reading) | when she has one (else the Menu points to Goals & Settings) |
 | Knowledge Map | `skills.py` (/skills) | what she knows, idea by idea |
-| Assessments | `review.py`, `practice.py` | review and practice (quizzes live in each lesson) |
-| Learning Record | `records.py` (/records), `week.py` | her history |
-| Profile, Subscription & Account Settings | `account.py` (/account) | who she is, her plan as it is, her data, admin tools |
+| Review, Practice | `review.py`, `practice.py` | review and practice (quizzes live in each lesson) |
+| Learning Record, Your week | `records.py` (/records), `week.py` | her history |
+| Account | `account.py` (/account) | who she is, her plan as it is, her data, admin and test tools |
+
+The Menu never runs off the screen: its list is capped at the screen's
+height below the bar and scrolls inside itself. On a phone the bar sits a
+little left of centre so the avatar keeps a clear gap from Streamlit's own ⋮.
 
 Not built yet, and listed in the Menu as "not available yet" (never as an
 empty page): Knowledge Exploration, Examinations, Research, Research
@@ -182,12 +189,49 @@ setup step opens at its top (`motion.py`); while a run is in progress the
 main buttons take no second press (CSS on `data-test-script-state`); the
 Menu holds only what works (`GNOSIS_SHOW_COMING=1` previews the rest); a
 goal can be paused, resumed and removed (status `removed`: off her list,
-its lessons kept). `tests/e2e/test_journeys.py` walks the whole journey at
+its lessons kept).
+
+**Fourth round** (ISS-084…091):
+- *Check it yourself* searches what the lesson teaches: its title without the
+  question around it (`lesson_view.check_query`: "What is an investment and
+  why it matters" → "investment"), never a section heading or the goal's name.
+- *A goal she already has*, in other words (`paths.similar`: the same words in
+  any order, or one inside the other; CJK by pairs of characters), is offered
+  before any AI call on Add a goal: continue it (resumed and given its turn if
+  paused or removed), or say it's different; the very same title is never
+  added twice.
+- *Removing a goal* (any goal, with a confirmation that says what happens):
+  out of her turns and her list, status `removed`; nothing is deleted. Its
+  lessons stay in her record; its review cards and practice stop
+  (`catalog.removed`, used by `review.due`, `review.next_due`,
+  `mastery.weakest`); Removed goals → Bring back (paused). The only turn she
+  has can't be removed.
+- *The outline's counts* follow every tick at the top
+  (`goalmaker.scope_line`: lessons, parts, study days at her pace); the last
+  ticked part can't be unticked.
+- *Her days in turn*: `settings.days_ahead` (the coming days) and
+  `settings.order_from` (an order set from today, the rotation's first day
+  kept); Goals & Settings → Your days moves one earlier or later (a day
+  already started keeps its subject). After adding a goal, the page says when
+  its first turn is and shows the coming days.
+- *Old content*: a quiz carries the rules it was written under in its id
+  (`quiz.VERSION`, "v2-…", so every store keeps it with no schema change). A
+  quiz written under older rules and not answered is written again when she
+  starts it (attempts and best carry over); one with answers started is hers
+  to finish or swap ("Use the new quiz"); one she answered is her record,
+  unchanged. A lesson carried over from an earlier day and not passed can be
+  rewritten on request ("Rewrite this lesson": one AI call; her questions and
+  progress stay; its unanswered quiz is retired with `quiz.retire`).
+- *Running the setup again* (`settings.rerun`, Account → Test the setup; on
+  the public site for admins, or everyone with `GNOSIS_TEST_TOOLS=1`; never in
+  the personal app): the setup opens as for a new learner; nothing is
+  deleted; what she chooses comes first, then her turns as they were
+  (`draft["keep"]`), her pace, levels and reading plan kept. `tests/e2e/test_journeys.py` walks the whole journey at
 three widths.
 
 **Lessons' sources and diagrams**: no source the model names is shown
 (`lesson_view.unsourced`); each lesson links to Wikipedia and Britannica
-searches for its title (`lesson_view.check_links`). Diagram nodes get
+searches for what it teaches (`lesson_view.check_links`, `check_query`). Diagram nodes get
 readable labels (`lesson_view.humane`); one box or a tangle is left out.
 The quiz checker reads the lesson (`quiz.check_request(questions, lesson)`).
 

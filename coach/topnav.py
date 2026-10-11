@@ -17,21 +17,22 @@ from coach import auth, search, settings, ui
 
 
 # the bar's short names for the pages of every day (their full names are in the menu)
-SHORT = {"Reading Plan": "Reading", "Learning Record": "Record", "Learning Plan": "Plan"}
+SHORT = {"Reading Plan": "Reading", "Learning Record": "Record", "Goals & Settings": "Goals"}
 ICONS = {"Review": ":material/replay:", "Reading Plan": ":material/menu_book:", "Learning Record": ":material/insights:",
-         "Learning Plan": ":material/tune:"}
+         "Goals & Settings": ":material/tune:"}
 
 # The site's sections, in order: (group, [(label, page title, or None: not built yet)]).
 # Pages are found by their title among the ones gnosis.py registered; a part
 # GNOSIS doesn't have yet is listed as such, never as a link to an empty page.
+# Each name says one thing: Courses (what she is learning), Schedule (what comes
+# on which day), Goals & Settings (where she changes either).
 SECTIONS = (
-    ("Learn", (("Home", "Home"), ("Subjects & Courses", "Subjects & Courses"), ("Learning Path", "Learning Path"),
-               ("Learning Plan", "Learning Plan"), ("Reading Plan", "Reading Plan"),
-               ("Knowledge Map", "Knowledge Map"), ("Knowledge Exploration", None))),
-    ("Assessments & Examinations", (("Review", "Review"), ("Practice", "Practice"), ("Examinations", None))),
+    ("Learn", (("Home", "Home"), ("Courses", "Courses"), ("Schedule", "Schedule"),
+               ("Reading Plan", "Reading Plan"), ("Knowledge Map", "Knowledge Map"), ("Knowledge Exploration", None))),
+    ("Practice", (("Review", "Review"), ("Practice", "Practice"), ("Examinations", None))),
+    ("Progress", (("Learning Record", "Learning Record"), ("Your week", "Your week"), ("Certificates", None))),
     ("Research", (("Research", None), ("Research Portfolio", None))),
-    ("Achievements", (("Learning Record", "Learning Record"), ("Your week", "Your week"), ("Certificates", None))),
-    ("Account", (("Profile", "Account"), ("Account settings", "Account"))),
+    ("You", (("Goals & Settings", "Goals & Settings"), ("Account", "Account"))),
 )
 NOT_YET = "not available yet"
 # The parts not built yet are named in the Menu only with GNOSIS_SHOW_COMING=1 (a
@@ -44,7 +45,7 @@ def render(pages: list, log: dict, everything: list = (), here: str = None) -> N
         with st.container(key="topnav_items", horizontal=True, vertical_alignment="center", gap=None):
             for p in pages:                        # (a subject's world isn't in the bar)
                 # its name on a wide page; where the bar is narrow, Review, Reading and
-                # Plan become icons (style.py), like Search beside them
+                # Goals become icons (style.py), like Search beside them
                 st.page_link(p, label=SHORT.get(p.title, p.title), icon=ICONS.get(p.title))
         menu(list(pages) + list(everything), here)
         # cards waiting: a quiet dot on Review (place.py puts it on the link)
@@ -57,12 +58,12 @@ def render(pages: list, log: dict, everything: list = (), here: str = None) -> N
 
 
 def _sections():
-    """SECTIONS as shown: Account's second entry is Subscription & Account
-    Settings once plans are shown (coach/plans.SHOWN), else Account settings;
+    """SECTIONS as shown: Account is "Account & Subscription" once plans are
+    shown (coach/plans.SHOWN);
     the parts not built yet only with SHOW_COMING (a group left empty goes)."""
     from coach import plans
     out = SECTIONS if not plans.SHOWN else \
-        SECTIONS[:-1] + (("Account", (("Profile", "Account"), ("Subscription & Account Settings", "Account"))),)
+        SECTIONS[:-1] + (("You", (("Goals & Settings", "Goals & Settings"), ("Account & Subscription", "Account"))),)
     if SHOW_COMING:
         return out
     kept = tuple((g, tuple((label, t) for label, t in items if t)) for g, items in out)
@@ -85,8 +86,8 @@ def menu(pages: list, here: str = None) -> None:
                         st.html(f'<p class="mn-here" aria-current="page">{_e(label)}<small>you are here</small></p>')
                     elif page is not None:
                         st.page_link(page, label=label)
-                    elif title == "Reading Plan" and "Learning Plan" in by_title:
-                        st.page_link(by_title["Learning Plan"], label="Reading Plan · off: turn it on in Learning Plan")
+                    elif title == "Reading Plan" and "Goals & Settings" in by_title:
+                        st.page_link(by_title["Goals & Settings"], label="Reading Plan · off: turn it on in Goals & Settings")
                     else:
                         st.html(f'<p class="mn-soon">{_e(label)}<small>{NOT_YET}</small></p>')
 

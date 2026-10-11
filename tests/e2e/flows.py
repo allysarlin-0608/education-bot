@@ -193,7 +193,7 @@ def set_up_goal(p, goal="Read a company's financial statements", identity="Worki
 
 
 # the bar's short names, and the pages' full names in the Menu
-FULL = {"Record": "Learning Record", "Plan": "Learning Plan", "Reading": "Reading Plan"}
+FULL = {"Record": "Learning Record", "Goals": "Goals & Settings", "Reading": "Reading Plan"}
 
 
 def go(p, app, name):
@@ -211,7 +211,7 @@ def open_menu(p):
     """The Menu at the top: every part of GNOSIS, grouped."""
     tap(p, p.page.locator(".st-key-site_menu button").first)
     idle(p.page)
-    assert wait_text(p.page, "Subjects & Courses", 10), "the menu didn't open"
+    assert wait_text(p.page, "Goals & Settings", 10), "the menu didn't open"
 
 
 def menu(p, label):

@@ -101,6 +101,53 @@ def precheck(goal: str):
     return None
 
 
+# ---------------------------------------------------- a goal she already has
+# words that don't tell two goals apart ("Basics of Investing for Beginners" is
+# "Investing Basics for Beginners")
+_FILLER = {"a", "an", "the", "of", "for", "to", "and", "in", "on", "with", "my", "me", "i", "want", "learn", "learning",
+           "about", "how", "what", "basics", "basic", "intro", "introduction", "beginner", "beginners", "understand",
+           "understanding", "get", "good", "at", "better", "some", "more", "be", "able", "is", "are", "it", "its",
+           "fundamentals", "essentials", "guide", "course", "101", "start", "starting", "know", "into"}
+
+
+def _words(text: str) -> set:
+    out = set()
+    for w in re.findall(r"[^\W_]+", str(text or "").casefold()):
+        if w in _FILLER or len(w) < 2 and not w.isdigit() or re.search(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]", w):
+            continue                         # (CJK is compared by pairs of characters, below)
+        if len(w) > 4 and w.endswith("ing"):
+            w = w[:-3]                       # investing ~ invest
+        elif len(w) > 3 and w.endswith("s") and not w.endswith("ss"):
+            w = w[:-1]                       # statements ~ statement
+        out.add(w)
+    dense = re.sub(r"[^\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]", "", str(text or ""))
+    out |= {dense[k:k + 2] for k in range(len(dense) - 1)}       # (CJK: pairs of characters)
+    return out
+
+
+def similar(a: str, b: str) -> bool:
+    """Two goals that are the same thing in other words (or other order)."""
+    x, y = _words(a), _words(b)
+    if not x or not y:
+        return False
+    if x == y:
+        return True
+    small, big = sorted((x, y), key=len)
+    # the same words, or nearly; or the whole of one inside the other ("History of Japan"
+    # in "History of Japan before a trip"): an offer to continue it, never a refusal
+    return len(small) >= 2 and (small <= big or len(small & big) / len(small | big) >= 0.75)
+
+
+def similar_goal(text: str, goals: list, title: str = ""):
+    """One of her goals (on her list) that this one repeats: by what she wrote
+    or by the designed title; None when it is new."""
+    for g in goals:
+        if any(similar(mine, theirs) for mine in (text, title) if mine
+               for theirs in (g.get("title"), g.get("goal")) if theirs):
+            return g
+    return None
+
+
 # ----------------------------------------------------------- asking the AI
 DESIGN_SYSTEM = """You design short, structured learning paths for adults who learn a little every day.
 Reply with ONE JSON object and nothing else.

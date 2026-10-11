@@ -90,7 +90,7 @@ def test_page_load(public_app, learner, path, marker):
 
 @pytest.mark.parametrize("name,frm,to_label,marker", [
     ("nav Today→Progress", "/", "Record", "Longest streak"),
-    ("nav Progress→Settings", "/records", "Plan", "Daily pace"),
+    ("nav Progress→Settings", "/records", "Goals", "Daily pace"),
     ("nav Settings→Today", "/settings", "Home", "Start this lesson"),
     ("nav Today→Reading", "/", "Reading", "Start a new book"),
 ])

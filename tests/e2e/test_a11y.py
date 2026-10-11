@@ -139,7 +139,7 @@ def test_keyboard_reaches_everything_with_a_visible_focus(public_app, pages):
         reached.append(info["name"])
         if not info["ring"] and not info["within"]:
             invisible.append(info["name"] + " :: " + info["html"])
-    for must in ("Home", "Record", "Plan", "Menu", "Start this lesson"):
+    for must in ("Home", "Record", "Goals", "Menu", "Start this lesson"):
         assert any(must in r for r in reached), f"Tab never reaches {must!r}: {reached}"
     assert not invisible, f"focused without a visible ring: {sorted(set(invisible))}"
 

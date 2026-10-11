@@ -191,13 +191,14 @@ def due(log: dict, today: date, limit: int = None) -> list:
     up to what's left of the daily limit (a smaller one on a light or
     returning day: coach/habit.py, so a break never leaves a wall of cards)."""
     waiting = [x for x in cards(log) if not x[2]["paused"] and x[2]["due"] <= today.isoformat()
-               and x[2].get("last") != today.isoformat()]
+               and x[2].get("last") != today.isoformat() and not catalog.removed(x[0]["topic"])]
     waiting.sort(key=lambda x: (x[2]["due"], x[2]["added"], x[2]["id"]))
     return waiting[:max(0, (limit or DAILY_LIMIT) - reviewed_today(log, today))]
 
 
 def next_due(log: dict, today: date):
-    later = [c["due"] for _, _, c in cards(log) if not c["paused"] and c["due"] > today.isoformat()]
+    later = [c["due"] for e, _, c in cards(log) if not c["paused"] and c["due"] > today.isoformat()
+             and not catalog.removed(e["topic"])]
     return date.fromisoformat(min(later)) if later else None
 
 

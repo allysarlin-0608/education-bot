@@ -71,7 +71,7 @@ def test_the_figures_match_the_records(mode, pages, request):
 
 def test_calendar_moves_and_picks_a_day(public_app, pages):
     covers("W-records-cal_prev", "W-records-cal_today", "W-records-cal_next", "W-records-name", "W-records-read",
-           "W-lesson_view-title_for_title_in_parts")
+           "W-lesson_view-heading_for_heading_in_parts")
     app = public_app
     p, _, entries = with_history(app, pages)
     t0 = today()

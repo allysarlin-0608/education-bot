@@ -45,7 +45,7 @@ def test_top_bar_goes_everywhere_and_back_forward_work(public_app, pages):
     covers("W-topnav-p")
     app = public_app
     p, _, _ = person(app, pages)
-    for name, path in (("Record", "/records"), ("Plan", "/settings"), ("Home", "/")):
+    for name, path in (("Record", "/records"), ("Goals", "/settings"), ("Home", "/")):
         flows.go(p, app, name)
         assert (urlparse(p.page.url).path.rstrip("/") or "/") == (path.rstrip("/") or "/"), p.page.url
     p.page.go_back()
@@ -60,24 +60,26 @@ def test_top_bar_goes_everywhere_and_back_forward_work(public_app, pages):
 
 
 def test_the_menu_reaches_every_part_and_shows_nothing_unbuilt(public_app, pages):
-    covers("W-topnav-site_menu", "W-topnav-page", "W-topnav-by_title_learning_plan")
+    covers("W-topnav-site_menu", "W-topnav-page", "W-topnav-by_title_goals_settings")
     app = public_app
     p, _, _ = person(app, pages)
-    reached = {"Subjects & Courses": ("/courses", "More subjects"),
-               "Learning Path": ("/path", "Your next days"), "Learning Plan": ("/settings", "Daily pace"),
+    reached = {"Courses": ("/courses", "More subjects"),
+               "Schedule": ("/path", "Your next days"), "Goals & Settings": ("/settings", "Daily pace"),
                "Knowledge Map": ("/skills", "Knowledge Map"), "Review": ("/review", "Review"),
                "Practice": ("/practice", "Practice"), "Learning Record": ("/records", "Learning Record"),
-               "Your week": ("/week", "week"), "Profile": ("/account", "Profile"),
+               "Your week": ("/week", "week"), "Account": ("/account", "Profile"),
                "Home": ("/", "Start this lesson")}
     for label, (path, marker) in reached.items():
         flows.menu(p, label)
         assert (urlparse(p.page.url).path.rstrip("/") or "/") == (path.rstrip("/") or "/"), (label, p.page.url)
         assert flows.wait_text(p.page, marker, 15), (label, marker)
         assert "Traceback" not in text(p)
-    flows.menu(p, "Profile")
+    flows.menu(p, "Account")
     flows.open_menu(p)
     t = text(p)
-    assert "Account settings" in t and t.count("you are here") == 2, "Account: both its entries marked"
+    assert t.count("you are here") == 1, "the page she is on, marked once"
+    for group in ("Learn", "Practice", "Progress", "You"):
+        assert group.lower() in t.lower(), group
     assert "Subscription" not in t, "no plan while plans aren't shown"
     for soon in ("Knowledge Exploration", "Examinations", "Research", "Certificates", "not available yet"):
         assert soon not in t, f"{soon}: nothing unbuilt is shown"
@@ -180,7 +182,7 @@ def test_the_first_enter_always_searches(public_app, pages):
     failures = []
     for k in range(20):
         if k % 5 == 2:
-            flows.go(p, app, ["Record", "Plan", "Home"][k % 3])
+            flows.go(p, app, ["Record", "Goals", "Home"][k % 3])
         flows.button(p, "Search", exact=False, wait=False)
         box = page.get_by_placeholder("Lessons, subjects, books, your notes…")
         box.wait_for(timeout=10000)

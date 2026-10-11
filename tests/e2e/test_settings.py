@@ -107,7 +107,7 @@ def test_reading_toggle_adds_and_removes_the_page(public_app, pages):
     flows.tap(p, p.page.get_by_role("link", name="Reading · 0 books finished"))
     flows.idle(p.page)
     assert "/reading" in p.page.url
-    flows.go(p, app, "Plan")
+    flows.go(p, app, "Goals")
     p.page.locator('.st-key-set_sec_reading [role="switch"], .st-key-set_sec_reading input').first.uncheck(force=True)
     flows.idle(p.page)
     assert settings_row(app, email)["reading_enabled"] is False
@@ -175,7 +175,7 @@ def test_delete_my_account_removes_everything(public_app, pages):
     p, email = person(app, pages)
     flows.go(p, app, "Home")
     flows.start_lesson(p)
-    flows.menu(p, "Account settings")
+    flows.menu(p, "Account")
     assert "/account" in p.page.url
     flows.button(p, "Delete my account")
     assert flows.wait_text(p.page, "This permanently deletes your account")

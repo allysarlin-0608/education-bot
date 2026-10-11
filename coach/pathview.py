@@ -1,5 +1,5 @@
 """Her learning path, drawn: the order her subjects and goals take turns in
-(one a day), and where each one's course goes first, for the Learning Path
+(one a day), and where each one's course goes first, for the Schedule
 page (views/path.py). HTML only; no model calls (lesson
 titles come from the syllabus, or her goal's path)."""
 from html import escape

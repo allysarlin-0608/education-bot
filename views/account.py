@@ -1,7 +1,8 @@
 """Account: who she is (Profile), her plan (Subscription), and her account
 settings: a copy of her data or all of it deleted; for admins, who may sign
-in and whether GNOSIS works (Insights). Her learning settings are Learning
-Plan (views/settings.py).
+in and whether GNOSIS works (Insights), and a way to run the setup again
+(to test it; nothing is deleted). Her learning settings are Goals & Settings
+(views/settings.py).
 
 The plan is shown as it is: everyone is on Free while plans are prepared
 (coach/plans.py: nothing enforced, no payment exists); the plan she chose in
@@ -12,9 +13,9 @@ from html import escape
 
 import streamlit as st
 
-from coach import auth, directions, metrics, plans, storage, ui
+from coach import auth, directions, metrics, plans, settings, storage, ui
 
-st.html('<div id="settings-page" hidden></div>')        # (the same quiet sections as Learning Plan)
+st.html('<div id="settings-page" hidden></div>')        # (the same quiet sections as Goals & Settings)
 st.markdown("## Account")
 
 # ---------- Profile ----------
@@ -168,6 +169,33 @@ if auth.is_admin():
                 f'<dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c, d in learning) + "</dl>")
             if "missed" not in m:
                 st.html('<p class="ob-note">The learning numbers need supabase/mastery.sql run first.</p>')
+
+# ---------- Run the setup again (public site: admins, or GNOSIS_TEST_TOOLS=1) ----------
+# For testing the setup on an account already in use. Nothing is deleted: her
+# goals, lessons and records stay, and so do her turns (after what she chooses
+# in the setup). Never in the personal app.
+def rerun_setup() -> None:
+    ui.refresh_settings()
+    if ui.save_settings(settings.rerun(ui.config(), settings.now_iso())):
+        for k in [k for k in st.session_state if k.startswith(("ob", "pick_", "acct_rerun"))]:
+            del st.session_state[k]
+        st.session_state.pop("acct_rerun_ask", None)
+
+
+if auth.test_tools():
+    with st.container(key="set_sec_rerun"):
+        st.markdown("#### Test the setup")
+        st.html('<p class="ob-note">Opens the setup as a new learner sees it, on this account. Nothing is '
+                "deleted: your goals, lessons and records stay, and what you choose in the setup comes first "
+                "in your days.</p>")
+        if st.session_state.get("acct_rerun_ask"):
+            with st.container(key="acct_rerun_confirm", horizontal=True):
+                st.button("Run the setup now", key="acct_rerun_go", type="primary", on_click=rerun_setup)
+                st.button("Cancel", key="acct_rerun_cancel", type="tertiary",
+                          on_click=lambda: st.session_state.pop("acct_rerun_ask", None))
+        else:
+            st.button("Run the setup again", key="acct_rerun", type="secondary",
+                      on_click=lambda: st.session_state.update(acct_rerun_ask=True))
 
 # ---------- Your data (public): a copy of it all, or all of it gone ----------
 DELETE_WARNING = "This permanently deletes your account and all your learning history. This can't be undone."

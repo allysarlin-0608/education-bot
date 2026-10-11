@@ -245,7 +245,7 @@ def test_account_menu_settings_and_sign_out(public_app, pages, width):
     flows.idle(p.page)
     assert "/account" in p.page.url and flows.wait_text(p.page, email, 10), "her profile"
     flows.tap(p, p.page.locator(".st-key-account_menu button").first)
-    flows.tap(p, p.page.get_by_role("link", name="Learning Plan").last)
+    flows.tap(p, p.page.get_by_role("link", name="Goals & Settings").last)
     flows.idle(p.page)
     assert "/settings" in p.page.url
     assert p.page.get_by_text("Sign out", exact=True).count() == 0, "the menu stays open over the new page"

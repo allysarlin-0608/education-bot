@@ -152,6 +152,31 @@ def run_followup(i, text):
     st.rerun()                                 # show the checked text, not the raw stream
 
 
+def run_rewrite(i):
+    """An earlier lesson not passed yet, written again under today's rules (she
+    asked: one AI call). Her questions and their answers stay; a quiz she
+    hasn't answered is written again too, when she starts it."""
+    entry = day_entry()
+    owner, slot = work(entry, i)
+    if slot.get("completed") or not slot.get("lesson"):
+        st.rerun()
+    with st.spinner("Rewriting the lesson…"):
+        lesson, error = llm.stream_reply(
+            core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level, public=auth.is_public(),
+                                     weak=practice.weak_titles(log, topic, slot["n"], today)),
+            [{"role": "user", "content": slot.get("kickoff") or core.build_kickoff_message(topic, today, slot=slot)}],
+            max_tokens=tokens.LESSON_MAX_TOKENS)
+    if error:
+        failed("kickoff", error, slot, i=i)
+    slot["lesson"] = core.truthful_note(core.finalize_reply(lesson, lesson=True, topic=topic),
+                                        core.note_fact(log, topic, today, slot["n"]))
+    if slot.get("quiz") and slot["quiz"].get("answers") is None:
+        slot["quiz"] = quiz.retire(slot["quiz"])          # about the old text: written again when she starts it
+    ui.save_day(log, owner, [slot["n"]], page_day=today)
+    st.session_state.coach_rewritten = slot["n"]
+    st.rerun()
+
+
 def run_quiz(i):
     """Write a fresh quiz for lesson i (a new set on every retake), checked
     answer by answer (coach/quizgen.py)."""
@@ -232,6 +257,16 @@ with st.sidebar:
 topic = ui.topic_for(today)
 start_level = settings.start_level(config, topic)
 st.markdown(f"## {core.weekday_name(today)}, {today:%B} {today.day}")
+# with more than one subject or goal: which one today is, what comes next, and where to change it
+coming = settings.days_ahead(config, today, ui.TIMEZONE, log)
+if len(coming) >= 2:
+    with st.container(key="today_turns", horizontal=True, vertical_alignment="center"):
+        nxt = coming[1][1]
+        st.html(f'<p class="today-turns">Today: {escape(catalog.name(topic))} · Tomorrow: {escape(catalog.name(nxt))}'
+                + (f" · then {len(coming) - 2} more, in turn" if len(coming) > 2 else " · then they take turns")
+                + "</p>")
+        if st.button("Change the order", type="tertiary", key="today_order"):
+            st.switch_page("views/settings.py")
 with st.container(key="today_links", horizontal=True):
     if visuals.known(topic):         # into the day's subject, its world (a goal of hers has none)
         with st.container(key=f"enter_{topic}", horizontal=True):
@@ -328,7 +363,7 @@ if habits.get("week_seen") != habit.week_key(last_monday) and habit.week(log, la
 goal = catalog.path(topic)
 if catalog.is_goal(topic) and goal is None:       # her goal couldn't be read just now (never a lesson in its place)
     st.warning(getattr(st.session_state.coach_store, "paths_error", None)
-               or "Today's goal couldn't be found. Choose your goals again in Learning Plan.")
+               or "Today's goal couldn't be found. Choose your goals again in Goals & Settings.")
     st.stop()
 if goal and not paths.started(log, topic):
     with st.container(key="goal_intro"):
@@ -483,6 +518,14 @@ for k, message in enumerate(chat[1:], start=1):   # the kickoff line is shown as
         else:
             st.markdown(message["content"])
 reply_spot = st.container()     # a new question and its answer appear here, under the others
+# an earlier day's lesson not passed yet may have been written under older rules: hers to rewrite
+if st.session_state.pop("coach_rewritten", None) == slot["n"]:
+    st.html('<p class="ob-note" role="status">Rewritten with our latest guidelines.</p>')
+elif not slot.get("completed") and slot.get("lesson") and plan[i].get("from"):      # (carried over from an earlier day)
+    if st.button("Rewrite this lesson", type="tertiary", key=f"rewrite_{slot['n']}",
+                 help="Written again with our latest guidelines (one of today's AI requests). "
+                      "Your questions and progress stay."):
+        run_rewrite(i)
 
 # Key points she wants back later (review): the Key Idea and each Deep Dive point
 points = review.key_points(slot.get("lesson", ""))
@@ -709,6 +752,12 @@ def answer_sheet(i, q):
 st.html('<div class="jump-anchor" id="current-quiz"></div>')
 st.markdown("#### Quiz")
 q = slot.get("quiz")
+# a quiz written under older rules that she hasn't answered: a new one, written and checked under
+# today's rules, takes its place when she starts (attempts and best score carry over; one she
+# answered stays as it was). Started answers on the old one are hers to keep or let go.
+renewed = not passed_here and quiz.outdated(q) and not quiz.has_draft(q)
+if renewed:
+    q = None
 if passed_here:
     if q and quiz.passed(q.get("score")):
         st.markdown("**" + progress_bar.rolled(f"quiz_pass_{q['id']}", f"Passed with {q['score']}%") + "** · "
@@ -753,6 +802,9 @@ elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
                     unsafe_allow_html=True)
         with st.expander("See what you missed", expanded=True):
             show_results(q, missed_only=True)
+    elif renewed:
+        st.caption("This quiz has been rewritten with our latest checks for clear, correct questions. "
+                   "Your earlier attempts still count.")
     else:
         st.caption(f"{quiz.QUESTIONS} questions on this lesson, of several kinds: choices, scenarios, a blank to "
                    f"fill, matching, putting steps in order, and two answers in your own words. "
@@ -764,6 +816,12 @@ elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
         st.session_state.coach_retry = None
         run_quiz(i)
 else:
+    if quiz.outdated(q):           # older rules, answers started: hers to finish, or the new quiz instead
+        with st.container(key="quiz_renew", horizontal=True, vertical_alignment="center"):
+            st.html('<p class="ob-note">A newer, checked version of this quiz is available.</p>')
+            if st.button("Use the new quiz", type="tertiary", key="quiz_renew_go",
+                         help="Your answers so far on this one are cleared; earlier attempts still count."):
+                run_quiz(i)
     answer_sheet(i, q)
 
 if entry["completed"]:

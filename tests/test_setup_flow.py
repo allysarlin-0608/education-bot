@@ -100,7 +100,7 @@ def test_courses_and_path_pages_lead_to_each_course(monkeypatch, tmp_path):
     assert not at.exception and "Astronomy" in texts(at)
     loads(at, "views/subjects.py")
     at.button(key="sc_add_more_investing").click().run()
-    assert not at.exception and "Learning Plan" in texts(at)
+    assert not at.exception and "Goals & Settings" in texts(at)
     loads(at, "views/subjects.py")
     assert not any(b.key == "sc_enter_more_investing" for b in at.button), "no way into a subject that isn't hers"
     at.button(key="sc_map_more_investing").click().run()            # what it covers

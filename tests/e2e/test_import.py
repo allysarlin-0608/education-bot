@@ -79,7 +79,7 @@ def test_wrong_types_never_break_a_page(public_app, pages, tmp_path):
         "user_id": "someone-else"}
     text = upload(p, tmp_path, "evil.json", json.dumps(evil).encode())
     assert "Traceback" not in text
-    for page_name in ("Home", "Record", "Plan"):
+    for page_name in ("Home", "Record", "Goals"):
         flows.go(p, app, page_name)
         assert "Traceback" not in p.page.evaluate("document.body.innerText"), page_name
     p.page.goto(app.url + "/reading")

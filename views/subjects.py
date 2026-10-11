@@ -1,7 +1,7 @@
-"""Subjects & Courses: what there is to learn (the curriculum). Her subjects
+"""Courses: what there is to learn (the curriculum). Her subjects
 and goals first, each with how far she is and the way to its course map and
 its world; then the rest of our subjects, each with its course map, and the
-way to add it (in Learning Plan, where what she learns is chosen). Nothing
+way to add it (in Goals & Settings, where what she learns is chosen). Nothing
 here changes her settings. No AI call: course maps show titles only."""
 from html import escape
 
@@ -13,10 +13,10 @@ log = st.session_state.coach_log
 config = ui.config()
 mine = settings.shown_subjects(config)
 
-st.html('<div id="settings-page" hidden></div>')        # (quiet sections on hairlines, as Learning Plan)
-st.markdown("## Subjects & Courses")
+st.html('<div id="settings-page" hidden></div>')        # (quiet sections on hairlines, as Goals & Settings)
+st.markdown("## Courses")
 st.caption("Your courses: each is a series of short lessons in order. To learn something new, add a goal "
-           "in Learning Plan.")
+           "in Goals & Settings.")
 
 
 def describe(t: str) -> str:
@@ -50,7 +50,7 @@ def course_row(t: str, k: str, chosen: bool) -> None:
 with st.container(key="set_sec_mine"):
     st.markdown("#### Yours")
     if not mine:
-        st.html('<p class="ob-note">No subjects or goals chosen yet. Choose them in Learning Plan.</p>')
+        st.html('<p class="ob-note">No subjects or goals chosen yet. Choose them in Goals & Settings.</p>')
     for t in mine:
         course_row(t, "mine", True)
 

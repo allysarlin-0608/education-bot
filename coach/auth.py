@@ -20,6 +20,7 @@ asks it on every call."""
 import html
 import logging
 import json
+import os
 import re
 import time
 
@@ -69,6 +70,13 @@ def mode() -> str:
 
 def is_public() -> bool:
     return mode() == PUBLIC
+
+
+def test_tools() -> bool:
+    """Tools for testing the site on an account in use (Account → Test the
+    setup): on the public site, for admins, or for everyone with
+    GNOSIS_TEST_TOOLS=1 (a test deployment). Never in the personal app."""
+    return is_public() and (is_admin() or os.environ.get("GNOSIS_TEST_TOOLS") == "1")
 
 
 def identity():
@@ -516,5 +524,5 @@ def account_menu() -> None:
         st.html(f'<div class="acct-who">{pic}<div><p class="acct-name">{html.escape(who["name"])}</p>'
                 f'<p class="acct-email">{html.escape(who["email"])}</p></div></div>')
         st.page_link("views/account.py", label="Account", icon=":material/person:")
-        st.page_link("views/settings.py", label="Learning Plan", icon=":material/tune:")
+        st.page_link("views/settings.py", label="Goals & Settings", icon=":material/tune:")
         _raw(f'<a class="acct-out" href="{html.escape(signout_url())}">Sign out</a>')

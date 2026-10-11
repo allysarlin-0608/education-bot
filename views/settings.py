@@ -1,4 +1,4 @@
-"""Learning Plan (the settings of her learning): her subjects and goals,
+"""Goals & Settings (the settings of her learning): her subjects and goals,
 daily pace, where each subject starts, reminders and the reading plan. A
 change is saved as she makes it (by her user_id) and the other pages use it
 straight away. Levels aren't edited by hand: the placement check sets them.
@@ -10,13 +10,13 @@ from html import escape
 
 import streamlit as st
 
-from coach import catalog, choices, curriculum, paths, settings, stage, storage, ui, visuals
+from coach import catalog, choices, curriculum, paths, review, settings, stage, storage, ui, visuals
 from coach import prefs as prefs_
 
 config = ui.config()
 
 st.html('<div id="settings-page" hidden></div>')
-st.markdown("## Learning Plan")
+st.markdown("## Goals & Settings")
 st.caption("What you learn, how much each day, and in what order. Your profile and your data are in Account.")
 
 if settings.is_legacy(config):
@@ -133,11 +133,33 @@ def pause_goal(goal_id: str) -> None:
 
 
 def remove_goal(goal_id: str) -> None:
-    """A paused goal off her list (not in her turns already; its lessons stay in her record)."""
+    """A goal off her days and her list. Nothing is deleted: the lessons she
+    took stay in her record, its reviews and practice stop coming up, and it
+    can be brought back (Removed goals)."""
     st.session_state.pop("goal_removing", None)
+    ui.refresh_settings()
     p = catalog.path(goal_id)
-    if p and ui.save_path(st.session_state.coach_log, paths.remove(p)):
-        st.session_state.goal_set_problem = f"“{p['title']}” was removed. Its lessons stay in your Learning Record."
+    if not p:
+        return
+    turns = settings.chosen_subjects(ui.config())
+    if goal_id in turns:
+        rest = [t for t in turns if t != goal_id]
+        if not rest:
+            st.session_state.goal_set_problem = ("This is the only thing you're learning. Add another goal first, "
+                                                 "then remove this one.")
+            return
+        if not update(subjects=rest):
+            return
+    if ui.save_path(st.session_state.coach_log, paths.remove(p)):
+        st.session_state.goal_set_problem = (f"“{p['title']}” was removed. Its lessons stay in your Learning Record; "
+                                             "you can bring it back under Removed goals.")
+
+
+def bring_back(goal_id: str) -> None:
+    """A removed goal back on her list, paused (Resume gives it its turns again)."""
+    p = catalog.path(goal_id)
+    if p and ui.save_path(st.session_state.coach_log, paths.archive(p)):
+        st.session_state.goal_set_problem = f"“{p['title']}” is back on your list, paused. Resume it to learn it again."
 
 
 def resume_goal(goal_id: str) -> None:
@@ -171,24 +193,87 @@ with st.container(key="set_sec_goals"):
                 st.button("Pause", key=f"setgoal_pause_{g['id']}", type="tertiary", on_click=pause_goal, args=(g["id"],))
             else:
                 st.button("Resume", key=f"setgoal_resume_{g['id']}", type="tertiary", on_click=resume_goal, args=(g["id"],))
-                st.button("Remove", key=f"setgoal_remove_{g['id']}", type="tertiary",
-                          on_click=lambda gid=g["id"]: st.session_state.update(goal_removing=gid))
+            st.button("Remove", key=f"setgoal_remove_{g['id']}", type="tertiary",
+                      on_click=lambda gid=g["id"]: st.session_state.update(goal_removing=gid))
         if st.session_state.get("goal_removing") == g["id"]:
             # the same pattern as every confirmation: what happens, then the two choices
+            cards_ = sum(1 for e, _, c in review.cards(st.session_state.coach_log) if e["topic"] == g["id"])
             with st.container(key=f"setgoal_confirm_{g['id']}"):
-                st.html(f'<p class="del-warn" role="alert">Remove “{escape(g["title"])}” from your goals? The lessons '
-                        "you took for it stay in your Learning Record.</p>")
+                st.html(f'<p class="del-warn" role="alert">Remove “{escape(g["title"])}”? It leaves your days and '
+                        f'this list. The {p["done"]} {"lesson" if p["done"] == 1 else "lessons"} you passed stay in your '
+                        "Learning Record"
+                        + (f"; its {cards_} review {'card stops' if cards_ == 1 else 'cards stop'} coming up"
+                           if cards_ else "")
+                        + ". Nothing is deleted: you can bring it back later.</p>")
                 with st.container(key=f"setgoal_confirm_btns_{g['id']}", horizontal=True):
                     st.button("Remove goal", key=f"setgoal_remove_go_{g['id']}", type="primary",
                               on_click=remove_goal, args=(g["id"],))
                     st.button("Cancel", key=f"setgoal_remove_cancel_{g['id']}", type="tertiary",
                               on_click=lambda: st.session_state.pop("goal_removing", None))
+    gone = catalog.removed_goals()
+    if gone:
+        with st.expander(f"Removed goals ({len(gone)})", key="set_removed"):
+            for g in gone:
+                with st.container(key=f"setgone_{g['id']}", horizontal=True, vertical_alignment="center"):
+                    st.html(f'<p class="set-goal"><span>{escape(g["title"])}</span><b>removed</b></p>')
+                    st.button("Bring back", key=f"setgone_back_{g['id']}", type="tertiary",
+                              on_click=bring_back, args=(g["id"],))
     goal_problem = st.session_state.pop("goal_set_problem", "")
     if goal_problem:
         st.html(f'<p class="ob-note">{escape(goal_problem)}</p>')
     if st.button("Add a goal", key="set_goal_add"):
         ui.clear_goal_draft()                     # a new goal: never a draft left from before
         st.switch_page("views/goal.py")
+
+# ---------- Your days: the order her subjects and goals take turns in, from today ----------
+def day_label(day) -> str:
+    k = (day - ui.today()).days
+    return "Today" if k == 0 else "Tomorrow" if k == 1 else f"{day:%a} {day:%b} {day.day}"
+
+
+def move_day(i: int, k: int) -> None:
+    """Her turn on the i-th coming day moved k days (earlier: -1); the others
+    keep their order. A day already started keeps its subject."""
+    ui.refresh_settings()
+    cfg, day = ui.config(), ui.today()
+    order = [t for _, t in settings.days_ahead(cfg, day, ui.TIMEZONE, st.session_state.coach_log)]
+    j = i + k
+    first = 1 if today_started() else 0
+    if not (first <= i < len(order) and first <= j < len(order)):
+        return
+    order.insert(j, order.pop(i))
+    if ui.save_settings(dict(settings.order_from(cfg, order, day, ui.TIMEZONE), updated_at=settings.now_iso())):
+        st.session_state.days_moved = catalog.name(order[j])
+
+
+def today_started() -> bool:
+    from coach import core
+    e = core.find_entry(st.session_state.coach_log, ui.today(), ui.topic_for(ui.today()))
+    return bool(e and any(s_.get("lesson") or s_.get("completed") for s_ in e.get("lessons") or []))
+
+
+ahead = settings.days_ahead(config, ui.today(), ui.TIMEZONE, st.session_state.coach_log)
+if len(ahead) >= 2:
+    with st.container(key="set_sec_order"):
+        st.markdown("#### Your days")
+        st.html('<p class="ob-note">One subject or goal a day, taking turns in this order; after the last one it '
+                "starts again. Move one to change what comes when.</p>")
+        locked = today_started()
+        for i, (day, topic) in enumerate(ahead):
+            with st.container(key=f"setday_{i}", horizontal=True, vertical_alignment="center"):
+                st.html(f'<p class="set-day"><span>{escape(day_label(day))}</span>'
+                        f'<b>{escape(catalog.name(topic))}</b></p>')
+                if locked and i == 0:
+                    st.html('<span class="set-day-note">started</span>')
+                    continue
+                st.button("Earlier", key=f"setday_up_{i}", type="tertiary", on_click=move_day, args=(i, -1),
+                          disabled=i <= (1 if locked else 0), help=f"Move {catalog.name(topic)} a day earlier")
+                st.button("Later", key=f"setday_down_{i}", type="tertiary", on_click=move_day, args=(i, 1),
+                          disabled=i >= len(ahead) - 1, help=f"Move {catalog.name(topic)} a day later")
+        moved = st.session_state.pop("days_moved", "")
+        if moved:
+            st.html(f'<p class="ob-note" role="status">Moved {escape(moved)}. Home follows the new order.</p>')
+        st.html('<p class="ob-note">To learn only one for a while, pause the others in Your goals, above.</p>')
 
 # ---------- Daily pace ----------
 with st.container(key="set_sec_pace"):

@@ -513,10 +513,39 @@ def replace(questions: list, flagged: dict, fresh: list):
     return out
 
 
+# The rules quizzes are written and checked by. Raised when they improve: a
+# quiz written under older rules and not yet answered is written again when
+# she opens it (its attempts and best score carry over); one she answered is
+# her record and stays as it was. The version is part of the quiz's id
+# ("v2-1a2b3c4d"), so every store keeps it without a field of its own.
+VERSION = 2
+_VERSIONED = re.compile(r"^v(\d+)-")
+
+
+def version(q: dict) -> int:
+    m = _VERSIONED.match(str((q or {}).get("id") or ""))
+    return int(m.group(1)) if m else 1
+
+
+def outdated(q) -> bool:
+    """Written under older rules and not answered yet: due to be written again."""
+    return bool(q) and q.get("answers") is None and version(q) < VERSION
+
+
+def has_draft(q) -> bool:
+    """Answers she has started giving (not submitted)."""
+    return bool(q and any(a not in (None, "", [], {}) for a in q.get("draft") or []))
+
+
+def retire(q: dict) -> dict:
+    """The same quiz marked as written under older rules (its lesson was rewritten)."""
+    return dict(q, id="v0-" + _VERSIONED.sub("", str(q.get("id") or uuid.uuid4().hex[:8])))
+
+
 def new(questions: list, previous=None) -> dict:
     """A fresh quiz; attempts and the best score carry over from the last one."""
     previous = previous or {}
-    return {"id": uuid.uuid4().hex[:8], "questions": questions, "answers": None, "marks": None,
+    return {"id": f"v{VERSION}-{uuid.uuid4().hex[:8]}", "questions": questions, "answers": None, "marks": None,
             "feedback": None, "score": None, "attempts": previous.get("attempts", 0),
             "best": previous.get("best"), "draft": None}
 
