@@ -96,7 +96,7 @@ def _e(text) -> str:
     return html.escape(str(text or ""), quote=True)
 
 
-SEARCH_PLACEHOLDER = "Lessons, subjects, books, your notes…"
+SEARCH_PLACEHOLDER = "Lessons, goals, review cards, books, your notes…"
 
 
 def _enter_after_composition() -> None:
@@ -128,11 +128,12 @@ def _search(log: dict) -> None:
     query = st.text_input("Search", key="search_q", label_visibility="collapsed",
                           placeholder=SEARCH_PLACEHOLDER)
     _enter_after_composition()
-    found = search.find(log, query)
+    from coach import review
+    found = search.find(log, query, topics=settings.chosen_subjects(ui.config()), cards=review.cards(log))
     if not settings.reading_on(ui.config()):      # no Reading page to open a book on
         found = [r for r in found if r["open"][0] != "book"]
     if not query.strip():
-        st.caption("Type a word or two and press Enter. Every word has to appear.")
+        st.caption("Type a word or two and press Enter. Every word has to appear; the best matches come first.")
         return
     if not found:
         st.caption(f"No results for ‘{query.strip()}’.")
@@ -152,8 +153,14 @@ def _search(log: dict) -> None:
 
 
 def _open(result: dict) -> None:
-    """Take her to what she found: the day on Progress, or the book on Reading."""
+    """Take her to what she found: the day on Progress, the book on Reading,
+    a course map (a goal, a lesson still to come), or her review cards."""
     kind, target = result["open"]
+    if kind == "course":
+        ui.open_course(target)
+    if kind == "review":
+        st.session_state.rv_query = target           # (Review's own search, already filled in)
+        st.switch_page("views/review.py")
     if kind == "day":
         day = date.fromisoformat(target)
         st.session_state.prog_day = target

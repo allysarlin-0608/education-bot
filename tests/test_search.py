@@ -44,3 +44,50 @@ def test_newest_first_empty_query_and_drafts_left_out():
 
 def test_lesson_markup_is_not_shown():
     assert "【" not in search.find(LOG, "tides")[0]["snippet"] and "**" not in search.find(LOG, "gravity")[0]["snippet"]
+
+
+# ---------------------------------------------------------------- audit stage 2: accurate, ranked, wider
+from coach import catalog                                    # noqa: E402
+from test_goals import a_path                                 # noqa: E402
+
+
+def test_a_word_matches_whole_words_not_inside_others():
+    log = {"entries": [{"date": "2026-09-01", "topic": "philosophy", "title": "", "reflection": "",
+                        "lessons": [{"n": 1, "title": "How to start a habit", "unit": "Habits", "lesson": "Begin small."},
+                                    {"n": 2, "title": "Looking at art", "unit": "Art", "lesson": "Colour and line."}]}],
+           "books": []}
+    assert [r["title"] for r in search.find(log, "art")] == ["Lesson 2: Looking at art"], "never 'start'"
+    assert search.find(log, "hab")[0]["title"] == "Lesson 1: How to start a habit", "the start of a word is enough"
+
+
+def test_chinese_matches_inside_a_sentence():
+    log = {"entries": [{"date": "2026-09-01", "topic": "philosophy", "title": "", "reflection": "我覺得投資要長期",
+                        "lessons": []}], "books": []}
+    assert search.find(log, "投資")[0]["kind"] == "note"
+
+
+def test_a_title_counts_more_than_the_text():
+    log = {"entries": [
+        {"date": "2026-09-05", "topic": "cosmos", "title": "", "reflection": "",
+         "lessons": [{"n": 3, "title": "Stars", "unit": "Sky", "lesson": "The Moon is not a star but it shines."}]},
+        {"date": "2026-09-01", "topic": "cosmos", "title": "", "reflection": "",
+         "lessons": [{"n": 1, "title": "The Moon", "unit": "Sky", "lesson": "Craters."}]}], "books": []}
+    assert [r["title"] for r in search.find(log, "moon")] == ["Lesson 1: The Moon", "Lesson 3: Stars"], \
+        "the lesson about it first, though older"
+
+
+def test_goals_lessons_still_to_come_and_review_cards_are_found():
+    goal = a_path()
+    catalog.use([goal])
+    log = {"entries": [], "books": []}
+    r = search.find(log, "reading financial", topics=[goal["id"]])
+    assert r[0]["kind"] == "goal" and r[0]["open"] == ("course", goal["id"])
+    coming = search.find(log, "idea 2.1", topics=[goal["id"]])
+    assert coming and coming[0]["kind"] == "coming" and coming[0]["open"] == ("course", goal["id"])
+    entry = {"date": "2026-09-01", "topic": goal["id"]}
+    card = {"front": "What does a balance sheet show?", "back": "Assets, liabilities, equity", "paused": False,
+            "added": "2026-09-01"}
+    found = search.find(log, "balance", cards=[(entry, {}, card)])
+    assert found[0]["kind"] == "card" and found[0]["open"] == ("review", "balance")
+    assert not search.find(log, "balance", cards=[(entry, {}, dict(card, paused=True))]), "paused cards stay out"
+    catalog.use([])

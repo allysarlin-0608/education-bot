@@ -51,8 +51,8 @@ def _card(kind, front, back, today, **extra) -> dict:
 
 def _add(slot, card) -> bool:
     cards = slot.setdefault("cards", [])
-    if any(c["id"] == card["id"] for c in cards):
-        return False
+    if any(c["id"] == card["id"] for c in cards) or card["id"] in (slot.get("removed") or []):
+        return False                   # (one she deleted, or a question she reported, never comes back)
     cards.append(card)
     return True
 
@@ -81,6 +81,16 @@ def key_points(lesson: str) -> list:
         if m:
             points.append((m.group(1).strip(), m.group(2).strip()))
     return points
+
+
+def question_card_id(topic: str, n: int, question: str) -> str:
+    """The id a missed question's card has (or would have)."""
+    return _id("question", str(topic), str(n), question)
+
+
+def drop_question(slot: dict, topic: str, question: str) -> None:
+    """A question she reported: its card goes, and none is made from it again."""
+    remove(slot, question_card_id(topic, slot["n"], question))
 
 
 def add_missed(slot: dict, q: dict, today: date, topic: str) -> int:

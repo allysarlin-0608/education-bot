@@ -13,7 +13,7 @@ from html import escape
 
 import streamlit as st
 
-from coach import auth, directions, metrics, plans, settings, storage, ui
+from coach import auth, directions, metrics, plans, reports, settings, storage, ui
 
 st.html('<div id="settings-page" hidden></div>')        # (the same quiet sections as Goals & Settings)
 st.markdown("## Account")
@@ -169,6 +169,31 @@ if auth.is_admin():
                 f'<dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c, d in learning) + "</dl>")
             if "missed" not in m:
                 st.html('<p class="ob-note">The learning numbers need supabase/mastery.sql run first.</p>')
+        # audit stage 2: is the content right? what learners reported, since the same date (supabase/reports.sql)
+        st.markdown("##### Reported problems")
+        try:
+            r = st.session_state.coach_store.reports_summary(since)
+        except (storage.StorageError, AttributeError) as e:
+            st.html(f'<p class="ob-note">Couldn\'t load the reports ({escape(str(e))}). '
+                    "If they aren't set up yet, run supabase/reports.sql first.</p>")
+        else:
+            rate = reports.per_hundred(r)
+            rows = [("Reports", str(r["reports"]),
+                     f"{rate} per 100 lessons passed" if rate is not None else "no lesson passed yet")]
+            rows += [(reports.REASONS.get(k, k), str(v), "") for k, v in sorted(r["by_reason"].items(), key=lambda kv: -kv[1])]
+            st.html('<dl class="ins-list">' + "".join(
+                f'<div><dt>{escape(a)}</dt><dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c in rows)
+                + "</dl>")
+            if r["recent"]:
+                st.html('<ul class="ins-reports">' + "".join(
+                    f'<li><b>{escape(x.get("lesson_title") or "Lesson " + str(x.get("lesson_no")))}</b>'
+                    f'<span>{escape(reports.REASONS.get(x["reason"], x["reason"]))} · '
+                    f'{"a question" if x["kind"] == "question" else "the lesson"} · {escape(str(x.get("at", ""))[:10])}</span>'
+                    + (f'<q>{escape(x["excerpt"][:180])}</q>' if x.get("kind") == "question" and x.get("excerpt") else "")
+                    + (f'<small>“{escape(x["note"])}”</small>' if x.get("note") else "") + "</li>"
+                    for x in r["recent"]) + "</ul>")
+            st.html('<p class="ob-note">Who reported isn\'t shown. A reported question no longer becomes a review '
+                    "card for that learner.</p>")
 
 # ---------- Run the setup again (public site: admins, or GNOSIS_TEST_TOOLS=1) ----------
 # For testing the setup on an account already in use. Nothing is deleted: her

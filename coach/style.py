@@ -1743,6 +1743,12 @@ SETUP = """
 [class*="st-key-setgoal_"] { justify-content: space-between; gap: var(--space-3) !important; min-height: 44px; flex-wrap: wrap; }
 [class*="st-key-setgoal_"] > :first-child { flex: 1 1 14rem; min-width: 0; }
 .set-goal { margin: 0; display: grid; gap: 2px; font-size: 0.9375rem; line-height: 1.4; color: var(--label); }
+/* Insights: the latest reported problems */
+.ins-reports { list-style: none; margin: 8px 0; padding: 0; border-top: 1px solid var(--rule); }
+.ins-reports li { display: grid; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 0.875rem; }
+.ins-reports b { font-weight: 500; color: var(--label); overflow-wrap: anywhere; }
+.ins-reports span, .ins-reports small { color: var(--label-2); font-size: 0.8125rem; }
+.ins-reports q { color: var(--label); overflow-wrap: anywhere; }
 /* after adding a goal: the coming days, in turn */
 .goal-turns { list-style: none; margin: 8px 0 4px; padding: 0; border-top: 1px solid var(--rule); }
 .goal-turns li { display: grid; grid-template-columns: 7.5rem 1fr; gap: 12px; padding: 12px 0;

@@ -105,7 +105,7 @@ def test_search(public_app, pages):
     app = public_app
     p, _, entries = person(app, pages, history=True)
     flows.button(p, "Search", exact=False)
-    box = p.page.get_by_placeholder("Lessons, subjects, books, your notes…")
+    box = p.page.get_by_placeholder("Lessons, goals, review cards, books, your notes…")
     assert flows.wait_text(p.page, "Type a word or two", 5)
     box.fill("qwertyuiop")
     box.press("Enter")
@@ -185,7 +185,7 @@ def test_the_first_enter_always_searches(public_app, pages):
         if k % 5 == 2:
             flows.go(p, app, ["Record", "Goals", "Home"][k % 3])
         flows.button(p, "Search", exact=False, wait=False)
-        box = page.get_by_placeholder("Lessons, subjects, books, your notes…")
+        box = page.get_by_placeholder("Lessons, goals, review cards, books, your notes…")
         box.wait_for(timeout=10000)
         word = words[k % 4]
         if k % 2:                                  # still a keyboard suggestion when Enter comes

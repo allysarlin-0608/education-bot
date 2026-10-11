@@ -4,8 +4,8 @@ from html import escape
 import streamlit as st
 
 from coach import (auth, catalog, clock, core, curriculum, exercise, goalmaker, habit, lesson_view, llm, mastery,
-                   paths, place, practice, progress_bar, quiz, quizgen, review, settings, steps, streaks, tokens, ui,
-                   visuals)
+                   paths, place, practice, progress_bar, quiz, quizgen, report_ui, review, settings, steps, streaks,
+                   tokens, ui, visuals)
 from coach import prefs as prefs_
 
 log = st.session_state.coach_log
@@ -544,10 +544,27 @@ if points:
                     st.toast(f"Saved for review: {label}")
                 st.rerun()
 
+# something wrong or unclear in it: said in two taps (audit stage 2; what is sent: coach/report_ui.py)
+report_ui.lesson(f"rep_lesson_{topic}_{slot['n']}", topic, slot["n"], slot.get("title", ""), slot.get("lesson", ""))
+
 st.divider()
 entry = shown_entry()
 owner, slot = work(entry, i)
 passed_here = entry["lessons"][i]["completed"]     # (a carried-over lesson: passed on this day)
+
+
+def drop_reported(i, text):
+    """A question she reported: its review card goes, and none is made from it again."""
+    entry = day_entry()
+    owner, held = work(entry, i)
+    review.keep(log, held)
+    review.drop_question(held, topic, text)
+    save(entry, owner)
+
+
+def report_question(q):
+    report_ui.question(f"rep_q_{q['id']}", topic, slot["n"], slot.get("title", ""), q["questions"],
+                       on_reported=lambda text: drop_reported(i, text))
 
 
 def show_results(q, missed_only=False):
@@ -764,6 +781,7 @@ if passed_here:
                     + progress_bar.rolled(f"quiz_points_{q['id']}", f"{quiz.points(q)} points."), unsafe_allow_html=True)
         with st.expander("See the quiz"):     # this attempt's answers and explanations
             show_results(q)
+            report_question(q)
     else:
         st.caption("This lesson is done.")
     if goal and slot["n"] == 1:          # her goal's first lesson: a small win, said plainly
@@ -802,6 +820,7 @@ elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
                     unsafe_allow_html=True)
         with st.expander("See what you missed", expanded=True):
             show_results(q, missed_only=True)
+            report_question(q)
     elif renewed:
         st.caption("This quiz has been rewritten with our latest checks for clear, correct questions. "
                    "Your earlier attempts still count.")

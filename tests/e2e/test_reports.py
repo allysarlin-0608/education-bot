@@ -1,0 +1,36 @@
+"""Report a problem, in a real browser (audit stage 2): a learner reports a
+lesson from Home in two taps; an admin sees it under Insights → Reported
+problems, without who sent it."""
+import time
+
+import flows
+from conftest import covers
+
+
+def text(p):
+    return p.page.evaluate("document.body.innerText")
+
+
+def test_a_learner_reports_a_lesson_and_an_admin_sees_it(public_app, pages):
+    covers("W-report_ui-menu", "W-report_ui-why", "W-report_ui-send")
+    app = public_app
+    app.set_llm()
+    p = pages(width=390)
+    email = f"report-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=email)
+    flows.onboard(p, subjects=("Philosophy",))
+    flows.start_lesson(p)
+    flows.tap(p, p.page.locator('[class*="st-key-rep_lesson_"] button').first)
+    flows.idle(p.page)
+    flows.tap(p, p.page.get_by_text("It's unclear", exact=True).last)
+    flows.idle(p.page)
+    flows.button(p, "Send")
+    assert flows.wait_text(p.page, "Thanks. We'll check it.", 15)
+    q = pages(width=1440)
+    flows.admin_sign_in(q, app)
+    if flows.wait_text(q.page, "Get started", 3):
+        flows.onboard(q)
+    flows.open_app(q, app, "/account")
+    assert flows.wait_text(q.page, "Reported problems", 20)
+    t = text(q)
+    assert "It's unclear" in t and "the lesson" in t and email not in t.split("Reported problems")[1], "never who"

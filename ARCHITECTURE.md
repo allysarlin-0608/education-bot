@@ -201,6 +201,26 @@ calendar (above); the AI allowance holds when it can't be read
 AI call logs `ai_call outcome=ok|busy|failed wait_s=… retries=…`, so the AI's
 capacity can be measured from the logs before more people are invited.
 
+**Audit stage 2** (ISS-094…096):
+- *Search* (`coach/search.py`): every word must appear; an English word
+  matches the start of a word ("art" never finds "start"), Chinese, Japanese
+  and Korean anywhere; results best first (a title counts more than a unit,
+  more than the text), then newest. It also finds her goals, the lessons
+  still to come in her courses (from the syllabus or the goal's path) and her
+  review cards; each opens where it lives (a day, a book, a course map, Review).
+- *Report a problem* (`coach/report_ui.py`, `coach/reports.py`): under each
+  lesson on Home, and with a quiz's results ("Report a question"): a reason
+  and an optional note. Stored in `content_reports` (supabase/reports.sql:
+  added through `add_content_report`, read by admins through
+  `content_reports_summary`, deleted with the account); a reported question's
+  review card goes and is never made again (`review.drop_question`; `review._add`
+  skips removed ids). Admins see the count, the rate per 100 lessons passed,
+  the reasons and the latest reports under Account → Insights. Our own
+  backend (ApiStore) says it isn't available there yet.
+- *Nightly browser tests* (`.github/workflows/e2e-nightly.yml`): the main
+  journeys every night at 01:40 Taipei and on demand, with screenshots of
+  what failed; the full suite stays a manual run.
+
 **Fourth round** (ISS-084…091):
 - *Check it yourself* searches what the lesson teaches: its title without the
   question around it (`lesson_view.check_query`: "What is an investment and

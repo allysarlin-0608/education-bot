@@ -40,7 +40,7 @@ def test_two_accounts_never_see_each_other(public_app, pages):
         if SECRET in t or ea in t:
             seen.append(path)
     flows.button(b, "Search", exact=False)
-    box = b.page.get_by_placeholder("Lessons, subjects, books, your notes…")
+    box = b.page.get_by_placeholder("Lessons, goals, review cards, books, your notes…")
     box.fill("Zanzibar")
     box.press("Enter")
     assert flows.wait_text(b.page, "No results", 10), "Bob's search finds nothing of Alice's"

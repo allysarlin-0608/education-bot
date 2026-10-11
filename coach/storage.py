@@ -40,6 +40,7 @@ PATHS_TABLE = "learning_paths"
 EVENTS_TABLE = "usage_events"
 PREFS_TABLE = "learner_prefs"      # supabase/goals.sql (habits: reminders, light day, milestones seen)
 SIGNALS_TABLE = "learning_signals"  # supabase/mastery.sql (is she learning? counts only, coach/metrics.py)
+REPORTS_TABLE = "content_reports"   # supabase/reports.sql (a problem reported in a lesson or a question)
 PATHS_TABLE_MISSING = (
     "Supabase doesn't have the learning_paths table yet. Run supabase/goals.sql in "
     "Supabase's SQL Editor, then refresh this page."
@@ -423,6 +424,24 @@ class FileStore(_Scope):
         return metrics.summarize(self._rows(USERS_TABLE), self._rows(EVENTS_TABLE) + self._rows(SIGNALS_TABLE),
                                  since, today)
 
+    def add_report(self, report: dict) -> None:
+        """A problem she reported (coach/reports.py), at most reports.PER_DAY a day."""
+        from coach import clock, reports
+        uid = self._uid()
+        now = clock.now_iso()
+        with _FILE_LOCK:
+            rows = self._rows(REPORTS_TABLE)
+            if sum(1 for r in rows if r["user_id"] == uid and r["at"][:10] == now[:10]) >= reports.PER_DAY:
+                raise StorageError("too many reports today")
+            rows.append(dict(report, user_id=uid, at=now))
+            self._write_rows(REPORTS_TABLE, rows)
+
+    def reports_summary(self, since: date) -> dict:
+        from coach import reports
+        passed = sum(r["count"] for r in self._rows(EVENTS_TABLE)
+                     if r["event"] == "lesson_passed" and r["day"] >= since.isoformat())
+        return reports.summarize(self._rows(REPORTS_TABLE), since, passed)
+
     def delete_my_account(self) -> None:
         """Everything of the current user's, gone: the log file, their settings,
         their usage and their users row (the files each replaced whole)."""
@@ -434,6 +453,7 @@ class FileStore(_Scope):
             self._write_rows(EVENTS_TABLE, [r for r in self._rows(EVENTS_TABLE) if r["user_id"] != uid])
             self._write_rows(SIGNALS_TABLE, [r for r in self._rows(SIGNALS_TABLE) if r["user_id"] != uid])
             self._write_rows(PREFS_TABLE, [r for r in self._rows(PREFS_TABLE) if r["user_id"] != uid])
+            self._write_rows(REPORTS_TABLE, [r for r in self._rows(REPORTS_TABLE) if r["user_id"] != uid])
             self._write_rows(USERS_TABLE, [r for r in self._rows(USERS_TABLE) if r["user_id"] != uid])
         try:
             log_path.unlink(missing_ok=True)
@@ -588,6 +608,17 @@ class SupabaseStore(_Scope):
         """The key numbers (gnosis_metrics: totals, admins only)."""
         self._uid()
         return self._request("POST", json={"p_since": since.isoformat()}, table="rpc/gnosis_metrics").json()
+
+    def add_report(self, report: dict) -> None:
+        """A problem she reported (add_content_report: hers, on the server's clock)."""
+        self._uid()
+        self._request("POST", json={f"p_{k}": v for k, v in report.items()}, prefer="return=minimal",
+                      table="rpc/add_content_report")
+
+    def reports_summary(self, since: date) -> dict:
+        """The reports since a day (content_reports_summary: admins only, never who)."""
+        self._uid()
+        return self._request("POST", json={"p_since": since.isoformat()}, table="rpc/content_reports_summary").json()
 
     def load_entry(self, day: str, topic: str):
         """The stored entry for one day and subject (a small read), or None."""
@@ -956,6 +987,12 @@ class ApiStore(_Scope):
 
     def metrics(self, since: date, today: date) -> dict:
         return self._request("GET", "/v1/admin/metrics", params={"since": since.isoformat()}).json()
+
+    def add_report(self, report: dict) -> None:
+        raise StorageError("reporting a problem isn't available on this server yet")
+
+    def reports_summary(self, since: date) -> dict:
+        raise StorageError("reports aren't available on this server yet")
 
 
 def make_store(url: str = "", key: str = "", session=None, scoped=False, current_user=None, access_token=None,

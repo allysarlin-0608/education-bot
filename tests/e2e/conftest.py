@@ -273,7 +273,8 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.fixture(scope="session")
 def browser():
     with sync_playwright() as p:
-        b = p.chromium.launch(executable_path=EXE)
+        # this machine's Chromium; elsewhere (CI) the one Playwright installed
+        b = p.chromium.launch(executable_path=EXE) if os.path.exists(EXE) else p.chromium.launch()
         yield b
         b.close()
 

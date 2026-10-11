@@ -143,7 +143,7 @@ def test_every_screen(public_app, pages, width, scheme):
     flows.open_app(p, app, "/reading")
     shot(p, f"11_reading_{tag}", problems)
     flows.button(p, "Search", exact=False)
-    box = p.page.get_by_placeholder("Lessons, subjects, books, your notes…")
+    box = p.page.get_by_placeholder("Lessons, goals, review cards, books, your notes…")
     box.fill("philosophy")
     box.press("Enter")
     shot(p, f"12_search_{tag}", problems)

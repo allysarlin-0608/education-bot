@@ -72,6 +72,7 @@ class FakeDB:
         self.rls = rls
         self.tables = {t: {} for t in SCHEMA}
         self.auth_users = set()
+        self.reports = []                    # content_reports (reports.sql): reached only through its functions
         self.fail_delete_at = None           # to show delete_my_account is all-or-nothing
 
     @staticmethod
@@ -185,6 +186,26 @@ class FakeDB:
                                                list(self.tables[storage.EVENTS_TABLE].values())
                                                + list(self.tables[storage.SIGNALS_TABLE].values()),
                                                date.fromisoformat(args["p_since"]), today))
+        if fn == "add_content_report":
+            from coach import clock, reports
+            r = reports.make(args["p_topic"], args["p_lesson_no"], args["p_lesson_title"], args["p_kind"],
+                             args["p_reason"], args["p_excerpt"], args["p_note"])
+            if r is None:
+                return Resp(400, {"message": "violates check constraint"})
+            now = clock.now_iso()
+            if sum(1 for x in self.reports if x["user_id"] == uid and x["at"][:10] == now[:10]) >= reports.PER_DAY:
+                return Resp(400, {"message": "too many reports today"})
+            self.reports.append(dict(r, user_id=uid, at=now))
+            return Resp(204)
+        if fn == "content_reports_summary":
+            if not self._admin(email):
+                return Resp(400, {"message": "admins only"})
+            from datetime import date
+            from coach import reports
+            since = date.fromisoformat(args["p_since"])
+            passed = sum(r["count"] for r in self.tables[storage.EVENTS_TABLE].values()
+                         if r["event"] == "lesson_passed" and r["day"] >= since.isoformat())
+            return Resp(200, reports.summarize(self.reports, since, passed))
         if fn == "delete_my_account":
             assert args == {}
             snapshot = {t: dict(rows) for t, rows in self.tables.items()}
@@ -194,6 +215,7 @@ class FakeDB:
                     return Resp(500, {"message": "boom"})
                 for key in [k for k, r in self.tables[t].items() if r.get("user_id") == uid]:
                     del self.tables[t][key]
+            self.reports = [x for x in self.reports if x["user_id"] != uid]     # (on delete cascade)
             self.auth_users.discard(uid)
             return Resp(204)
         raise AssertionError(fn)
