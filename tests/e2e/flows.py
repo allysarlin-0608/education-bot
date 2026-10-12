@@ -1,6 +1,8 @@
 """What a person does in the app, as reusable steps for the tests."""
 import time
 
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
+
 from conftest import ADMIN, PASSWORD, record_timing
 
 TOUCH_W = 900
@@ -293,10 +295,18 @@ def choose(p, box, text):
         for attempt in range(4):        # (ISS-055: in the test browser's touch emulation a list can close
             box.locator("input").first.tap()       # again at once; another tap opens it. Open on a real iPhone.)
             page.wait_for_timeout(300 + 300 * attempt)
-            if opt.is_visible():
-                break
-        opt.wait_for(timeout=5000)
-        opt.tap()
+            try:
+                if opt.is_visible():
+                    opt.tap(timeout=3000)
+                    return
+            except PlaywrightTimeout:   # it closed between seen and tapped: open it again
+                pass
+        page.keyboard.press("Escape")             # still closing on its own: choose it as a keyboard user would
+        inp = box.locator("input").first
+        inp.focus()
+        page.keyboard.type(text)
+        page.get_by_role("option", name=text, exact=True).first.wait_for(timeout=5000)
+        page.keyboard.press("Enter")
     else:
         inp = box.locator("input").first
         inp.click()
