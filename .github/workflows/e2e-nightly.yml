@@ -31,6 +31,7 @@ jobs:
           tests/e2e/test_smoke.py tests/e2e/test_setup.py tests/e2e/test_setup_again.py
           tests/e2e/test_goals.py tests/e2e/test_journeys.py tests/e2e/test_today.py
           tests/e2e/test_review.py tests/e2e/test_header_menu.py tests/e2e/test_reports.py
+          tests/e2e/test_unitcheck.py
       - name: Screenshots of what failed
         if: failure()
         uses: actions/upload-artifact@v4

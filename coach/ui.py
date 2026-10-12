@@ -309,6 +309,12 @@ def open_course(topic: str):
     st.switch_page(COURSE_PAGE, query_params={"subject": topic})
 
 
+def open_unit(topic: str, key: str):
+    """A unit's check (views/unit.py), named in the address."""
+    st.session_state.pop("uc_marked", None)
+    st.switch_page("views/unit.py", query_params={"subject": topic, "unit": key})
+
+
 def next_study_day(topic: str):
     """The next day, from today, that the rotation gives to this subject."""
     from datetime import timedelta

@@ -5,7 +5,7 @@ import streamlit as st
 
 from coach import (auth, catalog, clock, core, curriculum, exercise, goalmaker, habit, lesson_view, llm, mastery,
                    paths, place, practice, progress_bar, quiz, quizgen, report_ui, review, settings, steps, streaks,
-                   tokens, ui, visuals)
+                   tokens, ui, unitcheck, visuals)
 from coach import prefs as prefs_
 
 log = st.session_state.coach_log
@@ -281,8 +281,14 @@ with st.container(key="today_links", horizontal=True):
 due_now = ui.review_due(log)
 shaky = mastery.needs_practice(log, today)
 practised = (ui.prefs().get("practice") or {}).get("date") == today.isoformat()
-if due_now or (shaky and not practised):
+# a unit just finished, its check never taken: pointed to once, here (the course map keeps it)
+fresh_unit = unitcheck.just_finished(log, topic, today)
+if due_now or (shaky and not practised) or fresh_unit:
     with st.container(key="today_extras", gap=None):
+        if fresh_unit:
+            if st.button(f"Unit check · {fresh_unit['name']} · {unitcheck.size(log, topic, fresh_unit)} questions",
+                         type="tertiary", key="today_unit"):
+                ui.open_unit(topic, fresh_unit["key"])
         if due_now:
             minutes = max(1, round(len(due_now) * 0.4))
             if st.button(f"Review · {len(due_now)} {'card' if len(due_now) == 1 else 'cards'} due · about {minutes} min",

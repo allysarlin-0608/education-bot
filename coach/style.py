@@ -645,6 +645,14 @@ LIQUID = """
 .st-key-cm_path h4 { margin: 0 !important; padding: 0 0 var(--space-1) !important; line-height: 1.3; }
 .st-key-cm_path .cm-eyebrow { margin: var(--space-6) 0 0; }
 .cm-eyebrow.cm-top { margin-top: 0; }
+/* a unit's check, under its lessons (views/course.py), and its page (views/unit.py) */
+[class*="st-key-cm_uc_"] { justify-content: space-between; gap: var(--space-3) !important; flex-wrap: wrap; padding: 6px 0 var(--space-2); }
+.cm-uc { margin: 0; font-size: 0.875rem; color: var(--label-2); }
+.st-key-uc_set { gap: var(--space-5) !important; max-width: 44rem; }
+.st-key-uc_answers { gap: var(--space-4) !important; max-width: 44rem; margin-top: var(--space-4); }
+[class*="st-key-uc_a_"] { gap: 2px !important; padding: var(--space-3) 0; border-bottom: 1px solid var(--hair); }
+[class*="st-key-uc_a_"] [data-testid="stMarkdownContainer"] p { margin-bottom: 4px; }
+.st-key-uc_send, .st-key-uc_after { gap: var(--space-3) !important; flex-wrap: wrap; margin-top: var(--space-4); }
 [class*="st-key-cm_row_"] { flex-wrap: nowrap !important; align-items: center !important; gap: var(--space-2) !important;
   min-height: 48px; border-bottom: 1px solid var(--hair); }
 [class*="st-key-cm_row_"] > :first-child { flex: 1 1 0 !important; min-width: 0; width: auto !important; }

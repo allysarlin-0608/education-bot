@@ -13,7 +13,7 @@ the model.
 | Pages (UI) | `views/*.py` | draw one page from the session's data; call domain functions; save through `coach.ui` | talk to Supabase or Groq directly; compute progress |
 | UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py`, `weekview.py`, `report_ui.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
 | Config | `clock.py`, `appconfig.py` | the one clock (the learner's timezone, today, now) and the one way to read a setting | depend on Streamlit's UI or on any other module |
-| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `directions.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
+| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `directions.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py`, `unitcheck.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
 | AI | `llm.py`, `quizgen.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
 | Data | `storage.py` (file store and Supabase store), `supa_auth.py`, `auth.py`, `session_cookie.py`, `routes.py` | read/write entries, books, settings, usage; sign-in, sessions, invites | trust anything the browser sends without the signed-in user's token |
 | Schema | `supabase/*.sql` | tables, row-level security, the usage function | be changed without the owner's approval |
@@ -168,6 +168,7 @@ Goals & Settings and the Record's week tab.
 | Reading Plan | `reading.py` (/reading) | when she has one (else the Menu points to Goals & Settings) |
 | Knowledge Map | `skills.py` (/skills) | what she knows, idea by idea |
 | Review, Practice | `review.py`, `practice.py` | review and practice (quizzes live in each lesson) |
+| Unit check | `unit.py` (/unit, not in the Menu) | a finished unit's check, from the course map and Home |
 | Learning Record | `records.py` (/records) | her history; its second tab is her week in review (`coach/weekview.py`) |
 | Account | `account.py` (/account) | who she is, her plan as it is, her data, admin and test tools |
 
@@ -229,6 +230,18 @@ outline's reply may be a little longer (`tokens.PATH_MAX_TOKENS` 3400).
   skips removed ids). Admins see the count, the rate per 100 lessons passed,
   the reasons and the latest reports under Account → Insights. Our own
   backend (ApiStore) says it isn't available there yet.
+- *Unit check* (`coach/unitcheck.py`, `views/unit.py` at /unit, ISS-099):
+  once every lesson of a unit is passed, ten questions from that unit's
+  lessons (each lesson's quiz, its practice bank, the questions she missed;
+  the kinds marked at once), taken from every lesson in turn; never one she
+  reported (the ids in a lesson's `removed`). No AI call. 80% passes; a new
+  set as often as she likes (a set is fixed by its attempt number, so a rerun
+  never changes it). The result is a small field on the unit's last lesson,
+  `slot["unit_check"]` = {attempts, best, passed_on, last_on}: kept in her
+  record (and backups), merged like the other per-lesson extras
+  (`curriculum._extras`), not in ApiStore (ADR 0008). Reached from the course
+  map (under each finished unit; the one just finished in sight) and from
+  Home's list for a week after a unit is finished, until first taken.
 - *Nightly browser tests* (`.github/workflows/e2e-nightly.yml`): the main
   journeys every night at 01:40 Taipei and on demand, with screenshots of
   what failed; the full suite stays a manual run.

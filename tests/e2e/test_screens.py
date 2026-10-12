@@ -351,3 +351,33 @@ def test_mastery_screens(public_app, pages, width, scheme):
     shot(p, f"61_progress_ideas_{tag}", problems)
     (SHOTS / f"problems_mastery_{tag}.json").write_text(json.dumps(problems, indent=1))
     assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+@pytest.mark.parametrize("width", list(SIZES))
+def test_unit_check_screens(public_app, pages, width, scheme):
+    """A unit check: Home's pointer, the set, its result, the course map after."""
+    from datetime import date
+    app = public_app
+    problems = {}
+    tag = f"{width}_{scheme}"
+    d = date(2026, 11, 12)
+    app.set_clock(d, "02:00:00")
+    p = pages(width=width, height=SIZES[width], scheme=scheme)
+    email = f"uscr{next(_n)}-{int(time.time() * 1000)}@example.com"
+    flows.sign_in(p, app, email=email)
+    flows.onboard(p, subjects=("Philosophy",), pace="Light")
+    app.seed_entries(email, seed_history.build(d, days=6, topics=("philosophy",), gaps=(), partial=()))
+    flows.open_app(p, app)
+    shot(p, f"70_today_unit_{tag}", problems)
+    flows.button(p, "Unit check", exact=False)
+    shot(p, f"71_unit_set_{tag}", problems)
+    for group in p.page.get_by_role("radiogroup").all():
+        group.get_by_text("Right", exact=True).first.click()
+    flows.button(p, "Check my answers")
+    shot(p, f"72_unit_passed_{tag}", problems)
+    flows.button(p, "Back to the course map")
+    shot(p, f"73_course_unit_{tag}", problems)
+    app.set_clock(None)
+    (SHOTS / f"problems_unit_{tag}.json").write_text(json.dumps(problems, indent=1))
+    assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems

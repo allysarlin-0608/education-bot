@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1] / "coach"
 # what learning is: the day, the syllabus, quizzes, review, goals, settings, the numbers
 PURE = ("books", "catalog", "clock", "core", "course", "curriculum", "habit", "history", "mastery", "metrics", "paths",
         "placement", "plans", "directions", "practice", "prefs", "quiz", "reports", "review", "search", "settings", "steps",
-        "streaks", "tokens")
+        "streaks", "tokens", "unitcheck")
 # what talks to the outside: the database, sign-in, the model
 NO_UI = ("appconfig", "llm", "quizgen", "quota", "routes", "session_cookie", "storage", "supa_auth")
 

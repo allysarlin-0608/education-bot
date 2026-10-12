@@ -282,8 +282,9 @@ def merge_day(mine: dict, stored: dict, ns, since, keep=(), recount=False) -> No
 
 def _extras(mine: dict, stored: dict) -> dict:
     """What both copies of a lesson add to, whichever is further on: every
-    piece of mastery evidence, every practice exercise kept for it, and the
-    later of their explain-it-back answers (coach/mastery.py, coach/practice.py)."""
+    piece of mastery evidence, every practice exercise kept for it, the
+    later of their explain-it-back answers (coach/mastery.py, coach/practice.py),
+    and the unit check's result (coach/unitcheck.py)."""
     from coach import mastery
     out = {}
     if "ev" in mine or "ev" in stored:
@@ -295,6 +296,10 @@ def _extras(mine: dict, stored: dict) -> dict:
                 seen.add(quiz.same_as(q))
                 bank.append(q)
         out["bank"] = bank[-BANK_MAX:]
+    from coach import unitcheck
+    checked = unitcheck.merge(mine.get("unit_check"), stored.get("unit_check"))
+    if checked:
+        out["unit_check"] = checked
     explained = [x for x in (mine.get("explain"), stored.get("explain")) if x]
     if explained:
         out["explain"] = max(explained, key=lambda x: (x.get("at", ""), bool(x.get("reply_feedback"))))
@@ -373,9 +378,13 @@ def parse_slots(data) -> list:
         explained = practice.parse_explain(s.get("explain"))
         if explained:                                # her last explanation of it, and the coach's reply
             slots[-1]["explain"] = explained
+        from coach import unitcheck
+        checked = unitcheck.parse(s.get("unit_check"))
+        if checked:                                  # the unit check, on a unit's last lesson
+            slots[-1]["unit_check"] = checked
         if slots[-1].get("from"):                   # a link holds no content of its own
             slots[-1].update(kickoff="", lesson="", followups=[], quiz=None)
-            for field in ("cards", "removed", "ev", "bank", "explain"):
+            for field in ("cards", "removed", "ev", "bank", "explain", "unit_check"):
                 slots[-1].pop(field, None)
     return slots
 

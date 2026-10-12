@@ -62,7 +62,10 @@ week_page = st.Page("views/week.py", title="Your week", url_path="week")
 # what she knows, idea by idea, and practice on what she knows least (Phase 3)
 skills_page = st.Page("views/skills.py", title="Knowledge Map", url_path="skills")
 practice_page = st.Page("views/practice.py", title="Practice", url_path="practice")
-others = [subjects_page, path_page, account_page, world, course_map, new_goal, week_page, skills_page, practice_page]
+# a unit's check, once its lessons are passed (the course map, and Home when a unit is just finished)
+unit_page = st.Page("views/unit.py", title="Unit check", url_path="unit")
+others = [subjects_page, path_page, account_page, world, course_map, new_goal, week_page, skills_page, practice_page,
+          unit_page]
 # Streamlit does the routing; the pages are shown by the connected control
 # at the top of every page (coach/topnav.py), not as a list in the sidebar
 page = st.navigation(pages + others, position="hidden")

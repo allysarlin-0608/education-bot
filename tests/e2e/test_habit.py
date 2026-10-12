@@ -47,7 +47,7 @@ def study(p, app):
 
 
 def test_seven_days_a_rest_day_then_a_missed_day_keeps_the_streak(public_app, pages, clock):
-    covers("W-records-prog_week", "W-records-milestones")
+    covers("W-records-rec_tab", "W-records-milestones")
     app = public_app
     day(clock, MON)
     p, email = person(app, pages)

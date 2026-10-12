@@ -11,7 +11,8 @@ from html import escape
 
 import streamlit as st
 
-from coach import catalog, core, course, curriculum, habit, lesson_view, mastery, practice, quiz, review, settings, ui, visuals
+from coach import (catalog, core, course, curriculum, habit, lesson_view, mastery, practice, quiz, review, settings, ui,
+                   unitcheck, visuals)
 
 log = st.session_state.coach_log
 config = ui.config()
@@ -176,6 +177,25 @@ def rows(unit):
                     open_lesson(x["n"])
 
 
+def unit_check(u, named=False):
+    """Under a unit whose lessons are all passed: its check, and how it went
+    (`named`: shown away from its lessons, so it says which unit)."""
+    u = dict(u, key=f"u{u['first']}")
+    if not unitcheck.offered(log, topic, u):
+        return
+    r = unitcheck.result(log, topic, u)
+    said = (f"Unit check passed · best {r['best']}%" if r.get("passed_on") else
+            f"Unit check · best so far {r['best']}%" if r.get("attempts") else
+            "Unit check · ready: show you've learned this unit as a whole")
+    if named:
+        said = f"{u['name']}: {said[0].lower()}{said[1:]}"
+    with st.container(key=f"cm_uc_{u['key']}", horizontal=True, vertical_alignment="center"):
+        st.html(f'<p class="cm-uc">{escape(said)}</p>')
+        if st.button("Take it again" if r.get("passed_on") else "Take the check", type="tertiary",
+                     key=f"cm_uc_go_{u['key']}"):
+            ui.open_unit(topic, u["key"])
+
+
 units, cur = m["units"], m["current"]
 with st.container(key="cm_path"):
     if cur is None:
@@ -189,6 +209,9 @@ with st.container(key="cm_path"):
                 for u in behind:
                     st.markdown(f"#### {'✓ ' if u['state'] == 'done' else ''}{escape(u['name'])}")
                     rows(u)
+                    if u is not behind[-1]:
+                        unit_check(u)
+            unit_check(behind[-1], named=True)        # the unit just finished: its check in sight
         for k in (cur, cur + 1):
             if k < len(units):
                 u = units[k]
@@ -199,6 +222,7 @@ with st.container(key="cm_path"):
                 st.caption(f"Lessons {u['first']}–{u['last']} · {u['done_count']} of {len(u['lessons'])} passed"
                            + (f" · {strong} solid or mastered" if strong else ""))
                 rows(u)
+                unit_check(u)
         later = units[cur + 2:]
         if later:
             with st.expander(f"Later in the course · {len(later)} more topics, "
