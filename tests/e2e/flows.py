@@ -290,9 +290,9 @@ def choose(p, box, text):
     page = p.page
     if p.width < TOUCH_W:
         opt = page.get_by_role("option", name=text, exact=True).first
-        for attempt in range(2):        # (ISS-055: in the test browser's touch emulation a list can close
-            box.locator("input").first.tap()       # again at once; a second tap opens it. Open on a real iPhone.)
-            page.wait_for_timeout(300)
+        for attempt in range(4):        # (ISS-055: in the test browser's touch emulation a list can close
+            box.locator("input").first.tap()       # again at once; another tap opens it. Open on a real iPhone.)
+            page.wait_for_timeout(300 + 300 * attempt)
             if opt.is_visible():
                 break
         opt.wait_for(timeout=5000)
