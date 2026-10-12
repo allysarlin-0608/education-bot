@@ -355,7 +355,7 @@ def test_practice_writing_failing_is_said_kindly(public_app, pages, clock):
 
 
 def test_the_numbers_an_admin_sees_include_learning(public_app, pages):
-    covers("W-records-prog_skills_open", "W-week-wk_skills")
+    covers("W-records-prog_skills_open", "W-weekview-wk_skills")
     app = public_app
     p = pages(width=1440)
     flows.admin_sign_in(p, app)

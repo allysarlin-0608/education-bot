@@ -958,7 +958,7 @@ PROGRESS = """
 .st-key-light_day, .st-key-milestone { gap: var(--space-3) !important; flex-wrap: wrap; }
 .st-key-milestone { padding: var(--space-3) var(--space-4); border-radius: var(--radius-large); background: var(--surface); justify-content: space-between; }
 
-/* ---------- her week (views/week.py) ---------- */
+/* ---------- her week (coach/weekview.py, in the Learning Record) ---------- */
 .wk-span { margin: 0 0 var(--space-4); font-size: 0.875rem; color: var(--label-2); }
 .wk-figures .figure small { display: block; margin-top: 2px; font-size: 0.75rem; color: var(--label-3); }
 .st-key-wk_body { gap: var(--space-3) !important; margin-top: var(--space-5); max-width: 44rem; }
@@ -1553,6 +1553,7 @@ SETUP = """
 [class*="st-key-ob_step_"] [data-testid="stElementContainer"]:has(h2) + [data-testid="stElementContainer"] { margin-top: calc(-1 * var(--space-2)); }
 .ob-lede { margin: 0; max-width: 32rem; font-size: 1.0625rem; line-height: 1.5; color: var(--label-2); }
 .ob-note { margin: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--label-3); }
+.ob-note.sc-next { color: var(--label-2); }
 
 /* Back (quiet words) and Continue */
 .st-key-ob_nav { margin-top: var(--space-2); gap: var(--space-3) !important; }
@@ -1671,16 +1672,6 @@ SETUP = """
 [class*="st-key-ob_turn_"] { border-bottom: 1px solid var(--line-1); padding: 4px 0; gap: var(--space-2) !important; }
 .ob-turn { margin: 0; font-size: 0.9375rem; color: var(--label); }
 .ob-turn span { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); margin-right: 8px; }
-/* ---------- A learning path: the order of her days, and where each course goes first ---------- */
-.pv-turns ol { list-style: none; margin: 0 0 var(--space-2); padding: 0; border-top: 1px solid var(--line-1); }
-.pv-turns li { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--space-3); padding: 10px 0; border-bottom: 1px solid var(--line-1); font-size: 0.9375rem; color: var(--label); }
-.pv-day { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); padding-top: 2px; }
-.pv-course { margin: var(--space-4) 0 0; }
-.pv-name { margin: 0 0 var(--space-2); font-family: "Newsreader", "Noto Serif TC", serif; font-weight: 300; font-size: 1.25rem; color: var(--label); }
-.pv-name small { font-family: inherit; font-size: 0.875rem; color: var(--label-2); }
-.pv-units { margin: 0 0 var(--space-2); padding-left: 1.75rem; display: grid; gap: 6px; font-size: 0.9375rem; color: var(--label); }
-.pv-units li small { display: block; font-size: 0.8125rem; color: var(--label-3); }
-.pv-units li::marker { color: var(--label-3); font-variant-numeric: tabular-nums; }
 /* ---------- The menu: every part of GNOSIS, grouped ---------- */
 /* the Menu: never taller than the screen below the bar; what doesn't fit scrolls inside it,
    so its last group (You: Goals & Settings, Account) is always reachable */
@@ -2205,7 +2196,6 @@ WORLDS = """
 .st-key-today_extras .stButton button p { text-align: left; font-size: 0.9375rem; }
 .st-key-today_extras .stButton button::after { content: "›"; color: var(--label-3); font-size: 1.125rem; margin-left: var(--space-3); }
 @media (hover: hover) { .st-key-today_extras .stButton button[kind="tertiary"]:hover { color: var(--label); background: var(--fill-1, transparent) !important; } }
-.pv-turns li { grid-template-columns: 6.5rem minmax(0, 1fr) !important; }
 .ob-summary dd { overflow-wrap: anywhere; }
 /* Settings' subjects: the same stage, held at the top while the list scrolls under it */
 .st-key-set_grid_subjects { display: flex !important; flex-direction: column; align-items: stretch !important; row-gap: var(--space-4); }
@@ -2527,8 +2517,6 @@ EDITORIAL = """
 [data-testid="stElementContainer"]:has(> [data-testid="stRadio"]), [data-testid="stRadio"], [data-testid="stRadio"] [role="radiogroup"], [data-testid="stRadio"] [role="radiogroup"] > div, [data-testid="stRadioOption"] { width: 100% !important; max-width: none !important; }
 [data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] > div, [role="radiogroup"][aria-orientation="horizontal"] [data-testid="stRadioOption"] { width: auto; }
 /* ---------- the next days: a ruled list, the day's name in a column wide enough for "Tomorrow" ---------- */
-.pv-turns ol { border-top: 1px solid var(--rule); }
-.pv-turns li { grid-template-columns: 6.5rem minmax(0, 1fr); border-bottom: 1px solid var(--rule); }
 /* ---------- a toast: the page's colour on a hairline, not a grey slab ---------- */
 :root[data-scheme="dark"] [data-testid="stToast"] { color-scheme: dark; }
 :root:not([data-scheme="dark"]) [data-testid="stToast"] { color-scheme: light; }

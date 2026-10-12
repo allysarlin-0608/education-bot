@@ -11,7 +11,7 @@ the model.
 |---|---|---|---|
 | Entry | `streamlit_app.py`, `gnosis.py` | `st.App` with the sign-in routes; every run: `coach.freshen()`, style, the gate (password or account), the page list | hold logic of its own |
 | Pages (UI) | `views/*.py` | draw one page from the session's data; call domain functions; save through `coach.ui` | talk to Supabase or Groq directly; compute progress |
-| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py`, `pathview.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
+| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py`, `weekview.py`, `report_ui.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
 | Config | `clock.py`, `appconfig.py` | the one clock (the learner's timezone, today, now) and the one way to read a setting | depend on Streamlit's UI or on any other module |
 | Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `directions.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
 | AI | `llm.py`, `quizgen.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
@@ -153,20 +153,22 @@ value), so a step left and come back to shows her answers as kept.
 **The navigation** (`gnosis.py`, `coach/topnav.py`): the bar holds the pages
 of every day (Home, Review, Reading, Record, Goals); **Menu** holds every part,
 grouped (`topnav.SECTIONS`: Learn, Practice, Progress, You), each a link to
-the one page that does it. Each name says one thing (ISS-088): Courses is
-what she learns, Schedule is what comes on which day, Goals & Settings is
-where she changes either.
+the one page that does it. Each name says one thing (ISS-088), and each
+thing is in one place (ISS-098): Courses is what she learns and what comes
+next in each, Goals & Settings is what she learns and which day it comes on
+(Your days), and the Learning Record is her history and her week. The old
+addresses /path (Schedule) and /week (Your week) still work: they open
+Goals & Settings and the Record's week tab.
 
 | Section | Page | Concept |
 |---|---|---|
 | Home | `daily.py` (/) | today's lessons; with more than one turn, today's and tomorrow's and a way to change the order |
-| Courses | `subjects.py` (/courses) | every course of hers, its progress and course map |
-| Schedule | `path.py` (/path) | the coming days and where each course goes next |
+| Courses | `subjects.py` (/courses) | every course of hers, its progress, the lesson that comes next, its course map |
 | Goals & Settings | `settings.py` (/settings) | her goals (pause, resume, remove, bring back), the order of her days, pace, levels, reminders, reading on/off |
 | Reading Plan | `reading.py` (/reading) | when she has one (else the Menu points to Goals & Settings) |
 | Knowledge Map | `skills.py` (/skills) | what she knows, idea by idea |
 | Review, Practice | `review.py`, `practice.py` | review and practice (quizzes live in each lesson) |
-| Learning Record, Your week | `records.py` (/records), `week.py` | her history |
+| Learning Record | `records.py` (/records) | her history; its second tab is her week in review (`coach/weekview.py`) |
 | Account | `account.py` (/account) | who she is, her plan as it is, her data, admin and test tools |
 
 The Menu never runs off the screen: its list is capped at the screen's
@@ -377,8 +379,11 @@ Step M1 is done:
   exactly;
 - the checked importer out of Supabase.
 
-Until step M2 switches this app onto it, this app still runs on Supabase as
-described above.
+**Paused (ADR 0008, audit P2-5).** The app stays on Supabase for now.
+`backend/` and ApiStore keep passing their tests but get no new features:
+new stored data goes to the file store and Supabase only (ApiStore says it
+isn't available there yet). Revisit when Supabase no longer fits, our own
+sign-in is needed, or many more learners are invited.
 
 **Rule from now on (ADR 0003, 0006):**
 - no new code uses Supabase-specific features (PostgREST queries,

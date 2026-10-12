@@ -47,7 +47,8 @@ pages += [
 # every other part, reached from the Menu (coach/topnav.SECTIONS) and from the pages themselves
 # the curriculum: every course, hers first (the Menu)
 subjects_page = st.Page("views/subjects.py", title="Courses", url_path="courses")
-# her sequence: the order of her days and where each course goes next (the Menu)
+# (Schedule and Your week were merged into Goals & Settings, Courses and the
+# Learning Record: their old addresses still open where they went)
 path_page = st.Page("views/path.py", title="Schedule", url_path="path")
 # her profile, plan and data (the Menu, and the account menu)
 account_page = st.Page("views/account.py", title="Account", url_path="account")
@@ -57,7 +58,6 @@ world = st.Page("views/world.py", title="Subject", url_path="subject")
 course_map = st.Page("views/course.py", title="Course", url_path="course")
 # a new goal of her own (Goals & Settings → Your goals)
 new_goal = st.Page("views/goal.py", title="New goal", url_path="goal")
-# her week in review (Record, and Home when a week has just ended)
 week_page = st.Page("views/week.py", title="Your week", url_path="week")
 # what she knows, idea by idea, and practice on what she knows least (Phase 3)
 skills_page = st.Page("views/skills.py", title="Knowledge Map", url_path="skills")

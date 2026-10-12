@@ -113,7 +113,7 @@ def test_a_whole_practice_set_then_the_next_one(monkeypatch, tmp_path):
 
 
 def test_the_ways_in_from_progress_and_the_week(monkeypatch, tmp_path):
-    # covers: W-records-prog_skills_open, W-week-wk_skills, W-daily-today_skills
+    # covers: W-records-prog_skills_open, W-weekview-wk_skills, W-daily-today_skills
     at = app(monkeypatch, tmp_path, entries=history_until(ui.today() - timedelta(days=1)))
     loads(at, "views/records.py")
     t = texts(at)

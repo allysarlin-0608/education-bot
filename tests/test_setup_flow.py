@@ -86,13 +86,14 @@ def test_a_different_goal_and_writing_it_herself(monkeypatch, tmp_path):
     assert d["path"] is None and d["scope"] is None and has(at, "obg_design") and len(calls) == 1
 
 
-def test_courses_and_path_pages_lead_to_each_course(monkeypatch, tmp_path):
-    # covers: W-subjects-sc_map, W-subjects-sc_map-2, W-subjects-sc_enter, W-subjects-sc_add, W-path-lp_map
+def test_courses_lead_to_each_course(monkeypatch, tmp_path):
+    # covers: W-subjects-sc_map, W-subjects-sc_map-2, W-subjects-sc_enter, W-subjects-sc_add
     from test_pages_smoke import loads
     at = app(monkeypatch, tmp_path, subjects=("philosophy", "cosmos"))
     loads(at, "views/subjects.py")
     t = texts(at)
     assert "Yours" in t and "More subjects" in t and "lessons passed" in t
+    assert "Next: lesson " in t, "each of hers says what comes next (once on Schedule)"
     at.button(key="sc_map_mine_philosophy").click().run()
     assert not at.exception and "course-page" in texts(at)
     loads(at, "views/subjects.py")
@@ -105,8 +106,5 @@ def test_courses_and_path_pages_lead_to_each_course(monkeypatch, tmp_path):
     assert not any(b.key == "sc_enter_more_investing" for b in at.button), "no way into a subject that isn't hers"
     at.button(key="sc_map_more_investing").click().run()            # what it covers
     assert not at.exception and "course-page" in texts(at)
-    loads(at, "views/path.py")
-    t = texts(at)
-    assert "Your next days" in t and "Today" in t and "Tomorrow" in t and "Next: lesson" in t
-    at.button(key="lp_map_cosmos").click().run()
-    assert not at.exception and "course-page" in texts(at)
+    loads(at, "views/path.py")                    # an old link to /path: Goals & Settings
+    assert not at.exception and "Your days" in texts(at)

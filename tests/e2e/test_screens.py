@@ -135,7 +135,7 @@ def test_every_screen(public_app, pages, width, scheme):
     shot(p, f"09_progress_{tag}", problems)
     flows.open_app(p, app, "/settings")
     shot(p, f"10_settings_{tag}", problems)
-    for path, name in (("/courses", "14_courses"), ("/path", "15_path"), ("/account", "16_account")):
+    for path, name in (("/courses", "14_courses"), ("/account", "16_account")):
         flows.open_app(p, app, path)
         shot(p, f"{name}_{tag}", problems)
     flows.open_menu(p)

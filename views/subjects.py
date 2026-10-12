@@ -1,6 +1,6 @@
 """Courses: what there is to learn (the curriculum). Her subjects
-and goals first, each with how far she is and the way to its course map and
-its world; then the rest of our subjects, each with its course map, and the
+and goals first, each with how far she is, the lesson that comes next, and
+the way to its course map and its world; then the rest of our subjects, each with its course map, and the
 way to add it (in Goals & Settings, where what she learns is chosen). Nothing
 here changes her settings. No AI call: course maps show titles only."""
 from html import escape
@@ -31,9 +31,11 @@ def course_row(t: str, k: str, chosen: bool) -> None:
     unit = m["units"][m["current"]]["name"] if m["units"] and m["current"] is not None else ""
     where = (f"{m['done']} {'lesson' if m['done'] == 1 else 'lessons'} passed" + (f" · now in {unit}" if unit else "")
              if chosen else f"{len(m['units'])} parts to start with")
+    nxt = next((x for u in m["units"] for x in u["lessons"] if x["n"] == m["next"]), None) if chosen else None
     with st.container(key=f"sc_{k}_{t}"):
         st.html(f'<p class="set-goal"><span>{escape(catalog.name(t))}</span><b>{escape(where)}</b></p>'
-                f'<p class="ob-note">{escape(describe(t))}</p>')
+                f'<p class="ob-note">{escape(describe(t))}</p>'
+                + (f'<p class="ob-note sc-next">Next: lesson {nxt["n"]}, {escape(nxt["title"])}</p>' if nxt else ""))
         with st.container(key=f"sc_acts_{k}_{t}", horizontal=True):
             if chosen:                     # hers: its map and its world
                 if st.button("Course map", key=f"sc_map_{k}_{t}", type="tertiary"):

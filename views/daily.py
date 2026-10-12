@@ -357,7 +357,8 @@ last_monday = habit.week_of(today) - timedelta(days=7)
 if habits.get("week_seen") != habit.week_key(last_monday) and habit.week(log, last_monday, today)["lessons"]:
     if st.button("Last week in review", type="tertiary", key="today_week"):
         st.session_state.wk_which = "Last week"
-        st.switch_page("views/week.py")
+        st.session_state.rec_tab_next = "Your week"         # the Learning Record's week tab
+        st.switch_page("views/records.py")
 
 # her own goal, before its first lesson: the path made for her, and what today holds
 goal = catalog.path(topic)

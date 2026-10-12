@@ -230,3 +230,6 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 
 ### ISS-097 — audit stage 3: each lesson of a goal has an objective (with tests: tests/test_objectives.py)
 - **(P2) A quiz could only check what a lesson happened to say, not what it was for.** Each lesson of a new goal now has an objective, designed in the same AI call as the outline; the lesson is written to it, at least three quiz questions check it, and it shows at the top of the lesson. Measured by the share of reports "The lesson didn't teach this" (Insights → Reported problems).
+
+### ISS-098 — audit stage 3: each thing in one place (with tests: tests/test_habit_pages.py, tests/test_setup_flow.py, tests/e2e/test_nav.py, tests/e2e/test_header_menu.py)
+- **(P2) The coming days were on two pages, and the week on a page of its own.** Schedule showed the same coming days as Goals & Settings → Your days, and "where each course goes next" beside what Courses shows; Your week was a separate page from the Learning Record. Fix: the Menu no longer has Schedule or Your week. Courses says each course's next lesson; Your days (Goals & Settings) is where the order is seen and changed; the Learning Record has two tabs, History and Your week (Home's "Last week in review" opens the second). The old addresses still open where each went. No data or AI change.

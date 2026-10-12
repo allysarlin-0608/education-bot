@@ -1,5 +1,6 @@
-"""Progress: how she's doing overall, her history day by day, and where she
-is now in each subject.
+"""Learning Record: how she's doing overall, her history day by day, and
+where she is now in each subject; and, in its second tab, her week in review
+(coach/weekview.py).
 
 Two sides: the month on the left, and on the right one view at a time,
 switched at its top: the day picked, every session, or the subjects. On a
@@ -14,7 +15,7 @@ from html import escape
 import streamlit as st
 
 from coach import (catalog, core, curriculum, habit, history, lesson_view, mastery, progress_bar, review, rolling, settings,
-                   streaks, ui, visuals)
+                   streaks, ui, visuals, weekview)
 
 log = st.session_state.coach_log          # (re-read on arriving here, before the bar: gnosis.py)
 today = ui.today()
@@ -23,6 +24,16 @@ subjects = settings.shown_subjects(config)       # only the subjects she has cho
 
 st.html('<div id="progress-page" hidden></div>')      # lets the page use the width (style.py)
 st.markdown("## Learning Record")
+
+# two tabs: her whole history, or her week in review (Home's "Last week in
+# review" and an old /week link open the second)
+st.session_state.rec_tab = st.session_state.pop("rec_tab_next", None) or st.session_state.get("rec_tab", "History")
+if log["entries"]:
+    tab = st.segmented_control("Record", ["History", "Your week"], key="rec_tab", required=True,
+                               label_visibility="collapsed")
+    if tab == "Your week":
+        weekview.render(log)
+        st.stop()
 
 if not log["entries"]:
     # nothing yet: say what will be here, and the one way to start it
@@ -144,11 +155,9 @@ if sum(known.values()):
         if st.button("Knowledge map", type="tertiary", key="prog_skills_open"):
             st.switch_page("views/skills.py")
 
-# how her streak is kept: rest days, in one calm line, and her week
+# how her streak is kept: rest days, in one calm line
 with st.container(key="prog_habit", horizontal=True, vertical_alignment="center"):
     st.html(f'<p class="prog-rest">{escape(streaks.explain(streak))}</p>')
-    if st.button("Your week", type="tertiary", key="prog_week"):
-        st.switch_page("views/week.py")
 
 # the milestones she has reached (coach/habit.py), newest kinds last
 reached = habit.milestones(log, today)

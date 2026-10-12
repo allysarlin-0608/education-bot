@@ -24,13 +24,14 @@ ICONS = {"Review": ":material/replay:", "Reading Plan": ":material/menu_book:", 
 # The site's sections, in order: (group, [(label, page title, or None: not built yet)]).
 # Pages are found by their title among the ones gnosis.py registered; a part
 # GNOSIS doesn't have yet is listed as such, never as a link to an empty page.
-# Each name says one thing: Courses (what she is learning), Schedule (what comes
-# on which day), Goals & Settings (where she changes either).
+# Each name says one thing, and each thing is in one place: Courses (what she
+# is learning, and what comes next in each), Goals & Settings (what she learns
+# and which day it comes on), Learning Record (her history, and her week).
 SECTIONS = (
-    ("Learn", (("Home", "Home"), ("Courses", "Courses"), ("Schedule", "Schedule"),
+    ("Learn", (("Home", "Home"), ("Courses", "Courses"),
                ("Reading Plan", "Reading Plan"), ("Knowledge Map", "Knowledge Map"), ("Knowledge Exploration", None))),
     ("Practice", (("Review", "Review"), ("Practice", "Practice"), ("Examinations", None))),
-    ("Progress", (("Learning Record", "Learning Record"), ("Your week", "Your week"), ("Certificates", None))),
+    ("Progress", (("Learning Record", "Learning Record"), ("Certificates", None))),
     ("Research", (("Research", None), ("Research Portfolio", None))),
     ("You", (("Goals & Settings", "Goals & Settings"), ("Account", "Account"))),
 )

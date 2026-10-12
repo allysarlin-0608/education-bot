@@ -119,14 +119,18 @@ def test_milestones_already_earned_are_not_news_but_a_new_one_is(monkeypatch, tm
 
 
 def test_the_week_in_review_this_week_and_last(monkeypatch, tmp_path):
-    # covers: W-week-wk_which
+    # covers: W-weekview-wk_which, W-records-rec_tab
     at = app(monkeypatch, tmp_path, entries=history_until(ui.today() - timedelta(days=1), days=14))
     loads(at, "views/daily.py")
     if habit.week(at.session_state["coach_log"], habit.week_of(ui.today()) - timedelta(days=7), ui.today())["lessons"]:
         assert has(at, "today_week"), "a new week points to the last one"
-    loads(at, "views/week.py")
+    loads(at, "views/records.py")
+    assert "Lessons passed" in texts(at) and "What you learned" not in texts(at), "the Record opens on its history"
+    at.segmented_control(key="rec_tab").set_value("Your week").run()
     t = texts(at)
-    assert "Your week" in t and "What you learned" in t and "For the week ahead" in t
+    assert "What you learned" in t and "For the week ahead" in t and "Backup and restore" not in t
+    loads(at, "views/week.py")                    # an old link to /week: the Record's week tab
+    assert not at.exception and "What you learned" in texts(at)
     at.segmented_control(key="wk_which").set_value("Last week").run()
     assert not at.exception and "Days you studied" in texts(at)
     assert stored_prefs(tmp_path)["week_seen"] == habit.week_key(habit.week_of(ui.today()) - timedelta(days=7))

@@ -64,7 +64,8 @@ def test_seven_days_a_rest_day_then_a_missed_day_keeps_the_streak(public_app, pa
     flows.open_app(p, app, "/records")
     t = text(p)
     assert "8" in t.split("Current streak")[1][:20], "the streak went on through the rest day"
-    flows.button(p, "Your week")
+    flows.tap(p, p.page.get_by_role("radio", name="Your week").or_(           # the Record's week tab
+        p.page.get_by_role("button", name="Your week", exact=True)).first)
     assert flows.wait_text(p.page, "What you learned")
 
 
@@ -118,7 +119,7 @@ def test_the_reminder_at_her_time_and_not_after_midnight(public_app, pages, cloc
 
 
 def test_the_week_in_review_across_a_week_boundary(public_app, pages, clock):
-    covers("W-daily-today_week", "W-week-wk_review")
+    covers("W-daily-today_week", "W-weekview-wk_review")
     app = public_app
     day(clock, MON)
     p, email = person(app, pages, width=1440)
@@ -133,7 +134,8 @@ def test_the_week_in_review_across_a_week_boundary(public_app, pages, clock):
     assert "Days you studied" in t and "3" in t.split("Days you studied")[1][:10]
     flows.open_app(p, app)
     assert "Last week in review" not in text(p), "seen: no longer pointed to"
-    flows.open_app(p, app, "/week")
+    flows.open_app(p, app, "/week")                     # an old link: the Record's week tab
+    assert flows.wait_text(p.page, "What you learned") and "/records" in p.page.url
     flows.button(p, "Open Review")
     flows.idle(p.page)
     assert "Traceback" not in text(p)

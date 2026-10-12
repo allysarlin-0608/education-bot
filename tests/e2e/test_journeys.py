@@ -84,8 +84,8 @@ def test_a_new_learner_from_sign_in_to_her_second_day(public_app, pages, width):
                 if g["user_id"] == app.user_id(p.email))
     for path, marker in (("/review", "Review"), (f"/course?subject={goal}", "COURSE MAP"),
                          ("/skills", "Knowledge Map"), ("/records", "Learning Record"), ("/settings", "Goals & Settings"),
-                         ("/courses", "Courses"), ("/path", "Your next days"), ("/account", "Profile"),
-                         ("/practice", "Practice"), ("/week", "Your week")):
+                         ("/courses", "Courses"), ("/path", "Daily pace"), ("/account", "Profile"),
+                         ("/practice", "Practice"), ("/week", "What you learned")):
         flows.open_app(p, app, path)
         assert marker.lower() in sound(p, path).lower(), path
     app.set_clock(None)

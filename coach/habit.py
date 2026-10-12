@@ -3,7 +3,7 @@ week in review, milestones, and how far she has come. Everything here is
 worked out from her record and settings (no AI call, nothing stored but
 her preferences, coach/prefs.py), so every page and device agrees.
 
-Pure functions; the pages (views/daily.py, views/week.py, views/records.py)
+Pure functions; the pages (views/daily.py, coach/weekview.py, views/records.py)
 draw them."""
 from datetime import date, datetime, timedelta
 

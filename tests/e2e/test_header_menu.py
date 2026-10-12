@@ -26,8 +26,9 @@ def test_the_whole_menu_is_reachable(public_app, pages, width, height):
     p = person(public_app, pages, width, height)
     flows.open_menu(p)
     t = p.page.locator(".st-key-site_menu_list").inner_text()
-    for name in ("Courses", "Schedule", "Goals & Settings", "Account"):
+    for name in ("Courses", "Goals & Settings", "Learning Record", "Account"):
         assert name in t, name
+    assert "Schedule" not in t and "Your week" not in t, "merged: each thing in one place"
     assert "Learning Path" not in t and "Subjects & Courses" not in t
     last = p.page.locator(".st-key-site_menu_list").get_by_role("link", name="Account").last
     last.scroll_into_view_if_needed()
