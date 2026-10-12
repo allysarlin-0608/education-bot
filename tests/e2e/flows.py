@@ -305,7 +305,9 @@ def choose(p, box, text):
             try:
                 if opt.is_visible():
                     opt.tap(timeout=3000)
-                    return
+                    idle(page)
+                    if box.locator("input").first.input_value() == text:      # it took: the box shows it
+                        return
             except PlaywrightTimeout:   # it closed between seen and tapped: open it again
                 pass
         page.keyboard.press("Escape")             # still closing on its own: choose it as a keyboard user would
