@@ -46,6 +46,9 @@ def open_lesson(n):
         return
     entry, slot, passed = found
     st.markdown(f"### Lesson {n}: {slot['title']}")
+    aim = catalog.goal_objective(topic, n)
+    if aim:
+        st.html(f'<p class="lesson-aim"><span>You\'ll be able to</span>{escape(aim)}</p>')
     q = slot.get("quiz") or {}
     meta = [slot.get("unit") or ""]
     meta.append(f"passed {course.short_date(passed)}" if passed else f"started {course.short_date(entry['date'])}")

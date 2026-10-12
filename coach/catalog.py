@@ -120,6 +120,13 @@ def goal_lessons(topic) -> tuple:
     return tuple((u["name"], title) for u in p["units"] for title in u["lessons"])
 
 
+def goal_objective(topic, n: int) -> str:
+    """What lesson n of her goal lets her do ("" for one of our subjects, or a
+    path designed before objectives)."""
+    from coach import paths
+    return paths.objective(path(topic), n)
+
+
 def level(topic):
     """The level a goal is taught at (its path's), or None for a subject."""
     p = path(topic)

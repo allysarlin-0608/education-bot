@@ -29,7 +29,7 @@ import random
 import re
 from datetime import date
 
-from coach import core, mastery, quiz
+from coach import catalog, core, mastery, quiz
 
 SET_SIZE = 6
 PER_IDEA = 2
@@ -287,6 +287,9 @@ def quiz_context(log: dict, topic: str, slot: dict, today: date, goal: dict = No
     out = {}
     if goal:
         out["goal"] = (goal.get("goal") or goal.get("title") or "") + (f" (why: {goal['why']})" if goal.get("why") else "")
+        aim = catalog.goal_objective(topic, slot["n"])
+        if aim:
+            out["objective"] = aim
     weak = [w for w in mastery.weakest(log, today, limit=1, topic=topic, before=slot["n"])
             if w[2]["level"] == "learning" or w[2]["fading"]]
     if weak:

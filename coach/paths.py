@@ -29,6 +29,7 @@ MIN_LESSONS, MAX_LESSONS = 2, 8          # in a unit
 MAX_TOTAL = 48
 MIN_DESIGNED = 4                          # lessons the AI must give; she may then take it down to one
 TITLE_LIMIT, NAME_LIMIT, LESSON_LIMIT, TEXT_LIMIT = 60, 80, 110, 400
+OBJECTIVE_LIMIT = 140         # a lesson's objective: one checkable action
 GOAL_MIN_CHARS, GOAL_MAX_CHARS = 3, 300
 DESIGN_ATTEMPTS = 2                       # AI calls one new goal may use (a vague goal gets one more after its answer)
 
@@ -168,7 +169,10 @@ First decide the status:
 For "ok", design the path:
 - "title": a short name for the path (max 6 words, no quotes).
 - "outcome": one sentence starting "By the end you will be able to" - concrete and checkable.
-- "units": {units_min}-{units_max} units in a sensible order; each has "name" (max 6 words) and "lessons": {lessons_min}-{lessons_max} lesson titles.
+- "units": {units_min}-{units_max} units in a sensible order; each has "name" (max 6 words) and "lessons": {lessons_min}-{lessons_max} lessons.
+- Each lesson is {{"title": "...", "objective": "..."}}. The objective is what the learner can do after that one
+  lesson, as one checkable action starting with a verb (max 14 words): "Explain why an index fund's costs are low",
+  not "Understand index funds".
 - Total lessons: {total_min}-{total_max}. Each lesson title names ONE idea or skill a 10-minute lesson can teach, in plain words (max 10 words), building on the ones before. No duplicates, no "Introduction"/"Conclusion"/"Review" lessons, no exam or quiz lessons.
 - Only well-established knowledge; nothing that depends on recent news.
 - Fit where they are now. For someone new, start with the way beginners really start: the simplest
@@ -182,7 +186,7 @@ JSON shape:
 {{"status": "ok|clarify|narrow|decline", "message": "one kind sentence (for clarify/narrow/decline)",
   "questions": ["..."], "suggestions": ["..."],
   "title": "...", "outcome": "...",
-  "units": [{{"name": "...", "lessons": ["...", "..."]}}]}}"""
+  "units": [{{"name": "...", "lessons": [{{"title": "...", "objective": "..."}}]}}]}}"""
 
 
 def design_messages(goal: dict, pace: int) -> tuple:
@@ -244,16 +248,22 @@ def parse_path(data):
         if not isinstance(u, dict) or len(units) >= MAX_UNITS:
             continue
         name = _text(u.get("name"), NAME_LIMIT)
-        lessons = []
-        for t in u.get("lessons") or []:
-            title_t = _text(t, LESSON_LIMIT)
+        lessons, objectives = [], []
+        stored = u.get("objectives") if isinstance(u.get("objectives"), list) else []
+        for k, t in enumerate(u.get("lessons") or []):
+            # a lesson: its title (paths saved before objectives), or {"title", "objective"} (the AI's reply)
+            title_t = _text(t.get("title") if isinstance(t, dict) else t, LESSON_LIMIT)
+            goal_t = _text(t.get("objective") if isinstance(t, dict) else (stored[k] if k < len(stored) else ""),
+                           OBJECTIVE_LIMIT)
             key = title_t.lower()
             if title_t and key not in seen and len(lessons) < MAX_LESSONS and total < MAX_TOTAL:
                 seen.add(key)
                 lessons.append(title_t)
+                objectives.append(goal_t)
                 total += 1
         if name and lessons:
-            units.append({"name": name, "lessons": lessons})
+            # objectives sit beside the titles, one each ("" where there is none), only when there are any
+            units.append({"name": name, "lessons": lessons, **({"objectives": objectives} if any(objectives) else {})})
     if not units:            # (one lesson is a path: she may have skipped the rest, paths.remove_*)
         return None
     return {
@@ -267,6 +277,18 @@ def parse_path(data):
     }
 
 
+def objective(path: dict, n: int) -> str:
+    """What lesson n (from 1, in the path's order) lets her do; "" when the
+    path was designed before objectives."""
+    k = 0
+    for u in (path or {}).get("units") or []:
+        for i, _ in enumerate(u["lessons"]):
+            k += 1
+            if k == n:
+                return (u.get("objectives") or [""] * len(u["lessons"]))[i] if i < len(u.get("objectives") or []) else ""
+    return ""
+
+
 def lesson_count(path: dict) -> int:
     return sum(len(u["lessons"]) for u in path["units"])
 
@@ -275,7 +297,10 @@ def lesson_count(path: dict) -> int:
 def lighter(path: dict) -> dict:
     """A lighter path: each unit keeps its first lessons (about two thirds,
     never fewer than two)."""
-    units = [dict(u, lessons=u["lessons"][:max(MIN_LESSONS, -(-len(u["lessons"]) * 2 // 3))]) for u in path["units"]]
+    units = []
+    for u in path["units"]:
+        keep = max(MIN_LESSONS, -(-len(u["lessons"]) * 2 // 3))
+        units.append(dict(u, lessons=u["lessons"][:keep], **({"objectives": u["objectives"][:keep]} if "objectives" in u else {})))
     return dict(path, units=units, updated_at=now_iso())
 
 
@@ -308,7 +333,10 @@ def remove_lesson(path: dict, i: int, k: int) -> dict:
     for n, u in enumerate(path["units"]):
         lessons = [t for m, t in enumerate(u["lessons"]) if not (n == i and m == k)]
         if lessons:
-            units.append(dict(u, lessons=lessons))
+            unit = dict(u, lessons=lessons)
+            if "objectives" in u:
+                unit["objectives"] = [o for m, o in enumerate(u["objectives"]) if not (n == i and m == k)]
+            units.append(unit)
     return dict(path, units=units, updated_at=now_iso())
 
 

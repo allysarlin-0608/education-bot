@@ -201,6 +201,16 @@ calendar (above); the AI allowance holds when it can't be read
 AI call logs `ai_call outcome=ok|busy|failed wait_s=… retries=…`, so the AI's
 capacity can be measured from the logs before more people are invited.
 
+**Lesson objectives** (ISS-097): the outline's one AI call also gives each
+lesson an objective (what she can do after it, one checkable action), kept
+beside its title (`units[i]["objectives"]`, read by `paths.objective`,
+`catalog.goal_objective`; kept in line when parts are ticked or the path is
+trimmed). It goes into the lesson's instructions (`core._syllabus_lines`) and
+the quiz's (`practice.quiz_context` → `quiz._context`: at least three
+questions check it), and shows at the top of the lesson (Home, course map).
+Paths designed before objectives work as before. No extra AI call; the
+outline's reply may be a little longer (`tokens.PATH_MAX_TOKENS` 3400).
+
 **Audit stage 2** (ISS-094…096):
 - *Search* (`coach/search.py`): every word must appear; an English word
   matches the start of a word ("art" never finds "start"), Chinese, Japanese

@@ -486,6 +486,9 @@ if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names 
     st.markdown(f"#### {slot['unit']}")
 st.html('<div class="jump-anchor" id="current-lesson"></div>')
 st.markdown(f"### Lesson {slot['n']}: {slot['title']}")
+aim = catalog.goal_objective(topic, slot["n"]) if goal else ""
+if aim:                 # what she'll be able to do by the end (her goal's outline: coach/paths.py)
+    st.html(f'<p class="lesson-aim"><span>You\'ll be able to</span>{escape(aim)}</p>')
 
 chat = get_chat(slot)
 if not chat:

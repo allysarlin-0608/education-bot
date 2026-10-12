@@ -455,6 +455,10 @@ def _syllabus_lines(topic: str, slot: dict, start_level: str = None) -> list:
         f"- 今天要上的課（依固定課綱，照這個標題講，不要換題目）：第 {n} 課「{slot['title']}」",
         f"- 所屬單元：{slot['unit'] or '（無）'}；難度（{source}）：{level}",
     ]
+    goal_of = catalog.goal_objective(topic, n) if catalog.is_goal(topic) else ""
+    if goal_of:
+        lines.append(f"- 這一課的學習目標（學完她要能做到）：{goal_of}。整課都為這件事服務；"
+                     "【Today's Task】就讓她實際做一次。")
     if catalog.is_goal(topic) and n == 1:
         lines.append("- 這是她這個目標的第一課：寫短一點（約350到500字），今天的任務5分鐘內就做得完，"
                      "讓她今天就有一個看得見的小成功；【Note】用一句話把這課連到她寫的原因。")

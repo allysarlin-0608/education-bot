@@ -131,6 +131,9 @@ def _context(context: dict) -> str:
     """Her goal (for the "apply" question) and an earlier idea to recall."""
     context = context or {}
     parts = []
+    if context.get("objective"):
+        parts.append(f"This lesson's objective: {context['objective']}. At least three questions check that she "
+                     "can do it (a scenario or an apply question where it fits).")
     if context.get("goal"):
         parts.append(f"Her goal: {context['goal']}")
     r = context.get("recall")

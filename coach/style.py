@@ -1743,6 +1743,9 @@ SETUP = """
 [class*="st-key-setgoal_"] { justify-content: space-between; gap: var(--space-3) !important; min-height: 44px; flex-wrap: wrap; }
 [class*="st-key-setgoal_"] > :first-child { flex: 1 1 14rem; min-width: 0; }
 .set-goal { margin: 0; display: grid; gap: 2px; font-size: 0.9375rem; line-height: 1.4; color: var(--label); }
+/* a lesson of her goal: what she'll be able to do by its end */
+.lesson-aim { margin: -4px 0 var(--space-3); display: grid; gap: 2px; font-size: 0.9375rem; line-height: 1.5; color: var(--label); }
+.lesson-aim span { font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--label-3); }
 /* Insights: the latest reported problems */
 .ins-reports { list-style: none; margin: 8px 0; padding: 0; border-top: 1px solid var(--rule); }
 .ins-reports li { display: grid; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 0.875rem; }

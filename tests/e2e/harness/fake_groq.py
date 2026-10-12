@@ -150,8 +150,9 @@ def _design(last: str, inject: bool) -> dict:
                 "questions": ["Are you starting something of your own, or working in a company?"],
                 "suggestions": ["Plan and price a small side business", "Read a company's financial statements",
                                 "Run better meetings"]}
-    units = [{"name": name, "lessons": [f"{name}: idea {k + 1}" + (f" {extra}" if extra and k == 0 else "")
-                                                    for k in range(4)]}
+    units = [{"name": name, "lessons": [{"title": f"{name}: idea {k + 1}" + (f" {extra}" if extra and k == 0 else ""),
+                                         "objective": f"Use {name.lower()} idea {k + 1} on a real example"}
+                                        for k in range(4)]}
              for name in ("Foundations", "Core skills", "Putting it together", "Next steps")]
     return {"status": "ok", "title": ("Reading financial statements" if "financ" in goal else "Your path") + extra,
             "outcome": "By the end you will be able to read the three main statements and explain what they say.",
