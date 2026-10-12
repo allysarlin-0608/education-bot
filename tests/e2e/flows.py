@@ -292,8 +292,15 @@ def choose(p, box, text):
     page = p.page
     if p.width < TOUCH_W:
         opt = page.get_by_role("option", name=text, exact=True).first
+        listbox = page.get_by_role("listbox")
         for attempt in range(4):        # (ISS-055: in the test browser's touch emulation a list can close
-            box.locator("input").first.tap()       # again at once; another tap opens it. Open on a real iPhone.)
+            # again at once; another tap opens it. Open on a real iPhone.) Never tapped while a list
+            # is open: near the bottom of a phone screen the list opens over the box, and the tap
+            # would pick whatever option lies there (then taken, and not offered where it belongs).
+            if listbox.count() and listbox.first.is_visible():
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(200)
+            box.locator("input").first.tap()
             page.wait_for_timeout(300 + 300 * attempt)
             try:
                 if opt.is_visible():
