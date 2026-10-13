@@ -165,8 +165,14 @@ def _create(client, **kwargs):
 def _outcome(how: str, started: float, attempt: int) -> None:
     """One line per call, the same shape every time, so the AI's capacity can
     be measured from the logs: how long she waited (pacing to the minute's
-    tokens and retries included) and how it ended (ok / busy / failed)."""
-    logger.info("ai_call outcome=%s wait_s=%.1f retries=%d", how, _now() - started, attempt)
+    tokens and retries included) and how it ended (ok / busy / failed); and
+    a busy, failed or slow call counted for Insights (quota.note_wait)."""
+    waited = _now() - started
+    logger.info("ai_call outcome=%s wait_s=%.1f retries=%d", how, waited, attempt)
+    from coach import metrics, quota
+    kind = metrics.wait_kind(how, waited)
+    if kind:                              # busy, failed or slow: counted for the admins' numbers
+        quota.note_wait(kind)
 
 
 def _prepare(system, messages, max_tokens):

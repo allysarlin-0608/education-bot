@@ -41,6 +41,7 @@ EVENTS_TABLE = "usage_events"
 PREFS_TABLE = "learner_prefs"      # supabase/goals.sql (habits: reminders, light day, milestones seen)
 SIGNALS_TABLE = "learning_signals"  # supabase/mastery.sql (is she learning? counts only, coach/metrics.py)
 REPORTS_TABLE = "content_reports"   # supabase/reports.sql (a problem reported in a lesson or a question)
+WAITS_TABLE = "ai_waits"            # supabase/ai_health.sql (AI calls that were busy, failed or slow: counts only)
 PATHS_TABLE_MISSING = (
     "Supabase doesn't have the learning_paths table yet. Run supabase/goals.sql in "
     "Supabase's SQL Editor, then refresh this page."
@@ -390,6 +391,7 @@ class FileStore(_Scope):
                 "learning_paths": log.get("paths", []),
                 "ai_usage": [r for r in self._rows(USAGE_TABLE) if r["user_id"] == uid],
                 "usage_events": [r for r in self._rows(EVENTS_TABLE) if r["user_id"] == uid],
+                "ai_waits": [r for r in self._rows(WAITS_TABLE) if r["user_id"] == uid],
                 "learning_signals": [r for r in self._rows(SIGNALS_TABLE) if r["user_id"] == uid],
                 "learner_prefs": self.load_prefs()}
 
@@ -442,6 +444,25 @@ class FileStore(_Scope):
                      if r["event"] == "lesson_passed" and r["day"] >= since.isoformat())
         return reports.summarize(self._rows(REPORTS_TABLE), since, passed)
 
+    def add_ai_wait(self, kind: str) -> None:
+        """One AI call of hers that was busy, failed or slow (coach/metrics.wait_kind), today."""
+        from coach import clock, metrics
+        if kind not in metrics.WAIT_KINDS:
+            raise StorageError("not a kind of wait")
+        uid, day = self._uid(), clock.today().isoformat()
+        with _FILE_LOCK:
+            rows = self._rows(WAITS_TABLE)
+            row = next((r for r in rows if r["user_id"] == uid and r["day"] == day and r["kind"] == kind), None)
+            if row is None:
+                rows.append({"user_id": uid, "day": day, "kind": kind, "count": 1})
+            else:
+                row["count"] = min(row["count"] + 1, metrics.WAITS_PER_DAY)
+            self._write_rows(WAITS_TABLE, rows)
+
+    def ai_health(self, since: date) -> dict:
+        from coach import metrics
+        return metrics.ai_health(self._rows(WAITS_TABLE), self._rows(USAGE_TABLE), since)
+
     def delete_my_account(self) -> None:
         """Everything of the current user's, gone: the log file, their settings,
         their usage and their users row (the files each replaced whole)."""
@@ -454,6 +475,7 @@ class FileStore(_Scope):
             self._write_rows(SIGNALS_TABLE, [r for r in self._rows(SIGNALS_TABLE) if r["user_id"] != uid])
             self._write_rows(PREFS_TABLE, [r for r in self._rows(PREFS_TABLE) if r["user_id"] != uid])
             self._write_rows(REPORTS_TABLE, [r for r in self._rows(REPORTS_TABLE) if r["user_id"] != uid])
+            self._write_rows(WAITS_TABLE, [r for r in self._rows(WAITS_TABLE) if r["user_id"] != uid])
             self._write_rows(USERS_TABLE, [r for r in self._rows(USERS_TABLE) if r["user_id"] != uid])
         try:
             log_path.unlink(missing_ok=True)
@@ -619,6 +641,16 @@ class SupabaseStore(_Scope):
         """The reports since a day (content_reports_summary: admins only, never who)."""
         self._uid()
         return self._request("POST", json={"p_since": since.isoformat()}, table="rpc/content_reports_summary").json()
+
+    def add_ai_wait(self, kind: str) -> None:
+        """One AI call of hers that was busy, failed or slow (add_ai_wait: hers, on the server's day)."""
+        self._uid()
+        self._request("POST", json={"p_kind": kind}, prefer="return=minimal", table="rpc/add_ai_wait")
+
+    def ai_health(self, since: date) -> dict:
+        """How often the AI made people wait (ai_health_summary: admins only, never who)."""
+        self._uid()
+        return self._request("POST", json={"p_since": since.isoformat()}, table="rpc/ai_health_summary").json()
 
     def load_entry(self, day: str, topic: str):
         """The stored entry for one day and subject (a small read), or None."""
@@ -993,6 +1025,12 @@ class ApiStore(_Scope):
 
     def reports_summary(self, since: date) -> dict:
         raise StorageError("reports aren't available on this server yet")
+
+    def add_ai_wait(self, kind: str) -> None:
+        raise StorageError("AI waits aren't counted on this server yet")
+
+    def ai_health(self, since: date) -> dict:
+        raise StorageError("AI waits aren't counted on this server yet")
 
 
 def make_store(url: str = "", key: str = "", session=None, scoped=False, current_user=None, access_token=None,

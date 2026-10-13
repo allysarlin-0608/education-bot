@@ -73,6 +73,7 @@ class FakeDB:
         self.tables = {t: {} for t in SCHEMA}
         self.auth_users = set()
         self.reports = []                    # content_reports (reports.sql): reached only through its functions
+        self.waits = []                      # ai_waits (ai_health.sql): the same
         self.fail_delete_at = None           # to show delete_my_account is all-or-nothing
 
     @staticmethod
@@ -206,6 +207,24 @@ class FakeDB:
             passed = sum(r["count"] for r in self.tables[storage.EVENTS_TABLE].values()
                          if r["event"] == "lesson_passed" and r["day"] >= since.isoformat())
             return Resp(200, reports.summarize(self.reports, since, passed))
+        if fn == "add_ai_wait":
+            from coach import clock, metrics
+            if args["p_kind"] not in metrics.WAIT_KINDS:
+                return Resp(400, {"message": "violates check constraint"})
+            day = clock.today().isoformat()
+            row = next((w for w in self.waits if w["user_id"] == uid and w["day"] == day and w["kind"] == args["p_kind"]), None)
+            if row is None:
+                self.waits.append({"user_id": uid, "day": day, "kind": args["p_kind"], "count": 1})
+            else:
+                row["count"] = min(row["count"] + 1, metrics.WAITS_PER_DAY)
+            return Resp(204)
+        if fn == "ai_health_summary":
+            if not self._admin(email):
+                return Resp(400, {"message": "admins only"})
+            from datetime import date
+            from coach import metrics
+            return Resp(200, metrics.ai_health(self.waits, list(self.tables[storage.USAGE_TABLE].values()),
+                                               date.fromisoformat(args["p_since"])))
         if fn == "delete_my_account":
             assert args == {}
             snapshot = {t: dict(rows) for t, rows in self.tables.items()}
@@ -216,6 +235,7 @@ class FakeDB:
                 for key in [k for k, r in self.tables[t].items() if r.get("user_id") == uid]:
                     del self.tables[t][key]
             self.reports = [x for x in self.reports if x["user_id"] != uid]     # (on delete cascade)
+            self.waits = [x for x in self.waits if x["user_id"] != uid]         # (on delete cascade)
             self.auth_users.discard(uid)
             return Resp(204)
         raise AssertionError(fn)

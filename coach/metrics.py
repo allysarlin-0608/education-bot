@@ -101,3 +101,31 @@ def _round1(x: Decimal) -> float:
 
 def share(part: int, whole: int) -> str:
     return f"{round(100 * part / whole)}%" if whole else "—"
+
+
+# How often the AI made her wait or failed her (table ai_waits, supabase/ai_health.sql;
+# counts only), to check the AI plan before more people are invited.
+WAIT_KINDS = ("busy", "failed", "slow")
+SLOW_S = 15                    # an answer after this many seconds counts as slow
+WAITS_PER_DAY = 500            # one person's count of each kind a day, at most
+
+
+def wait_kind(outcome: str, waited_s: float):
+    """What an AI call's ending counts as (None: nothing worth counting)."""
+    if outcome in ("busy", "failed"):
+        return outcome
+    return "slow" if outcome == "ok" and waited_s > SLOW_S else None
+
+
+def ai_health(waits: list, usage: list, since: date) -> dict:
+    """What ai_health_summary gives: calls answered (ai_usage), and how many
+    were busy, failed or slow, how many people met each, and day by day."""
+    mine = [w for w in waits if str(w["day"]) >= since.isoformat()]
+    by_kind, people, days = defaultdict(int), defaultdict(set), defaultdict(dict)
+    for w in mine:
+        by_kind[w["kind"]] += int(w["count"])
+        people[w["kind"]].add(w["user_id"])
+        days[str(w["day"])][w["kind"]] = days[str(w["day"])].get(w["kind"], 0) + int(w["count"])
+    return {"answered": sum(int(u.get("request_count") or 0) for u in usage if str(u["date"]) >= since.isoformat()),
+            "by_kind": dict(by_kind), "people": {k: len(v) for k, v in people.items()},
+            "days": [dict({"day": d, "busy": None, "failed": None, "slow": None}, **v) for d, v in sorted(days.items())]}

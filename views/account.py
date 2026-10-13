@@ -194,6 +194,34 @@ if auth.is_admin():
                     for x in r["recent"]) + "</ul>")
             st.html('<p class="ob-note">Who reported isn\'t shown. A reported question no longer becomes a review '
                     "card for that learner.</p>")
+        # before inviting more people: did the AI keep up? (supabase/ai_health.sql; counts only)
+        st.markdown("##### AI waits")
+        try:
+            h = st.session_state.coach_store.ai_health(since)
+        except (storage.StorageError, AttributeError) as e:
+            st.html(f'<p class="ob-note">Couldn\'t load the AI numbers ({escape(str(e))}). '
+                    "If they aren't set up yet, run supabase/ai_health.sql first.</p>")
+        else:
+            answered, kinds, people = int(h.get("answered") or 0), h.get("by_kind") or {}, h.get("people") or {}
+            asked = answered + int(kinds.get("busy") or 0) + int(kinds.get("failed") or 0)
+
+            def met(kind, what):
+                n = int(people.get(kind) or 0)
+                return f"{n} {'person' if n == 1 else 'people'} {what}"
+            waits = [("AI calls answered", str(answered), "", ""),
+                     ("Too busy: told to try again", str(kinds.get("busy", 0)), metrics.share(int(kinds.get("busy") or 0), asked),
+                      met("busy", "met it.") + " Many of these mean the AI plan is too small."),
+                     ("Failed", str(kinds.get("failed", 0)), metrics.share(int(kinds.get("failed") or 0), asked),
+                      met("failed", "met it.")),
+                     (f"Answered, but after more than {metrics.SLOW_S} s", str(kinds.get("slow", 0)),
+                      metrics.share(int(kinds.get("slow") or 0), answered), met("slow", "waited that long."))]
+            st.html('<dl class="ins-list">' + "".join(
+                f'<div><dt>{escape(a)}{f"<small>{escape(d)}</small>" if d else ""}</dt>'
+                f'<dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c, d in waits) + "</dl>")
+            worst = sorted(h.get("days") or [], key=lambda x: -int(x.get("busy") or 0))[:3]
+            if worst and int(worst[0].get("busy") or 0):
+                st.html('<p class="ob-note">Busiest days: ' + ", ".join(
+                    f"{escape(str(x['day']))} ({int(x.get('busy') or 0)} busy)" for x in worst if x.get("busy")) + ".</p>")
 
 # ---------- Run the setup again (public site: admins, or GNOSIS_TEST_TOOLS=1) ----------
 # For testing the setup on an account already in use. Nothing is deleted: her

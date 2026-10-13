@@ -72,3 +72,16 @@ def record(tokens_used: int) -> None:
         _store().add_usage(clock.today().isoformat(), 1, max(int(tokens_used), 0))
     except storage.StorageError as e:
         logger.error("couldn't record AI usage: %s", e)
+
+
+def note_wait(kind: str) -> None:
+    """Count one AI call that was busy, failed or slow (coach/metrics.wait_kind)
+    for this person today, so admins see how often the AI made people wait
+    (supabase/ai_health.sql). Counting never gets in her way: a failure (the
+    table not there yet, the database not answering) is logged, not shown."""
+    if not counted():
+        return
+    try:
+        _store().add_ai_wait(kind)
+    except (storage.StorageError, AttributeError) as e:
+        logger.warning("couldn't count an AI %s (%s)", kind, e)

@@ -230,6 +230,16 @@ outline's reply may be a little longer (`tokens.PATH_MAX_TOKENS` 3400).
   skips removed ids). Admins see the count, the rate per 100 lessons passed,
   the reasons and the latest reports under Account → Insights. Our own
   backend (ApiStore) says it isn't available there yet.
+- *AI waits* (`supabase/ai_health.sql`, ISS-100): every AI call that ended
+  busy (she was told to try again), failed, or answered after more than
+  `metrics.SLOW_S` (15 s) is counted for her, per day (`llm._outcome` →
+  `metrics.wait_kind` → `quota.note_wait` → `add_ai_wait`; counts only, at
+  most 500 a day, deleted with her account; a failure to count is logged,
+  never shown). Admins see under Account → Insights → AI waits how many
+  calls were answered (from `ai_usage`), how many were busy, failed or slow,
+  how many people met each, and the busiest days (`ai_health_summary`, never
+  who). Read it before inviting more people: many "busy" means the AI plan
+  is too small. Not in ApiStore (ADR 0008).
 - *Unit check* (`coach/unitcheck.py`, `views/unit.py` at /unit, ISS-099):
   once every lesson of a unit is passed, ten questions from that unit's
   lessons (each lesson's quiz, its practice bank, the questions she missed;

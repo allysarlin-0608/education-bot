@@ -236,3 +236,6 @@ Each one reproduced (the regression test fails before the fix, passes after) and
 
 ### ISS-099 — audit stage 4, first step: the unit check (with tests: tests/test_unitcheck.py, tests/e2e/test_unitcheck.py)
 - **(P2) Nothing showed a unit was learned as a whole.** Each lesson's quiz checks that lesson the day it is taught. Now, once every lesson of a unit is passed, a unit check of ten questions from its lessons (never one she reported; no AI call; 80% passes; retake as often as she likes). The result is kept with her record on the unit's last lesson. No schema change. Measure later: unit check scores against how well the unit's ideas are remembered two weeks on (Knowledge Map).
+
+### ISS-100 — audit: did the AI keep up? (with tests: tests/test_ai_health.py, tests/e2e/test_reports.py)
+- **(P2) Nothing said how often people were told the AI was busy.** The logs had a line per call (ISS-093), but nobody reads logs before inviting people. Now every busy, failed or slow (over 15 s) AI call is counted per person per day in a new table (supabase/ai_health.sql: adds only, run on the test database), and admins see the totals under Insights → AI waits, never who. No AI cost; counting never gets in her way.
