@@ -10,7 +10,10 @@ call. A question she reported, or a card she deleted, is never used
 fresh set can be taken as often as she likes.
 
 What is kept is small and lives with the unit's last lesson, in her record:
-slot["unit_check"] = {"attempts", "best", "passed_on", "last_on"}.
+slot["unit_check"] = {"attempts", "best", "passed_on", "last_on"}. And each
+lesson asked about gets what the set showed (by_lesson): a piece of
+"recall" evidence for the Knowledge Map (coach/mastery.py), and a review
+card for each question she missed (review.add_missed).
 Pure functions, no Streamlit."""
 import random
 from datetime import date, timedelta
@@ -81,6 +84,18 @@ def score(items: list, answers: list) -> tuple:
     """(marks, percent) for her answers."""
     marks = [quiz.mark(it["q"], a) for it, a in zip(items, answers)]
     return marks, round(100 * sum(marks) / len(marks)) if marks else 0
+
+
+def by_lesson(items: list, marks: list) -> dict:
+    """What a marked set says about each lesson: {n: (its average mark,
+    {"questions": [...], "marks": [...]})}, the second in the shape
+    review.add_missed takes."""
+    out = {}
+    for it, m in zip(items, marks):
+        q = out.setdefault(it["n"], {"questions": [], "marks": []})
+        q["questions"].append(it["q"])
+        q["marks"].append(m)
+    return {n: (sum(q["marks"]) / len(q["marks"]), q) for n, q in out.items()}
 
 
 def holder(log: dict, topic: str, unit: dict):

@@ -249,7 +249,11 @@ outline's reply may be a little longer (`tokens.PATH_MAX_TOKENS` 3400).
   never changes it). The result is a small field on the unit's last lesson,
   `slot["unit_check"]` = {attempts, best, passed_on, last_on}: kept in her
   record (and backups), merged like the other per-lesson extras
-  (`curriculum._extras`), not in ApiStore (ADR 0008). Reached from the course
+  (`curriculum._extras`), not in ApiStore (ADR 0008). What a set showed
+  goes back to each lesson asked about (`unitcheck.by_lesson`): a piece of
+  "recall" evidence for the Knowledge Map (its average mark there) and a
+  review card for each question missed (`review.add_missed`); each day
+  touched is re-read and saved once. Reached from the course
   map (under each finished unit; the one just finished in sight) and from
   Home's list for a week after a unit is finished, until first taken.
 - *Nightly browser tests* (`.github/workflows/e2e-nightly.yml`): the main

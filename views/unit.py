@@ -5,7 +5,7 @@ from Home when a unit has just been finished. No AI call."""
 from datetime import date
 import streamlit as st
 
-from coach import catalog, course, curriculum, exercise, quiz, ui, unitcheck
+from coach import catalog, course, curriculum, exercise, quiz, review, ui, unitcheck
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -43,17 +43,35 @@ def back() -> None:
 
 
 def submit(items: list, answers: list) -> None:
-    """Mark the set, keep the result on the unit's last lesson, show how it went."""
+    """Mark the set; for each lesson asked about, the evidence for the
+    Knowledge Map and a review card for each question missed; the result on
+    the unit's last lesson; then show how it went."""
     marks, percent = unitcheck.score(items, answers)
-    held = unitcheck.holder(log, topic, unit)
-    if held is not None:
-        ui.refresh_entry(log, date.fromisoformat(held[0]["date"]), topic)     # the day as stored now
-        held = unitcheck.holder(log, topic, unit)
-    if held is not None:
-        unitcheck.record(held[1], percent, today)
-        ui.save_day(log, held[0], [unit["last"]])
+    attempt = unitcheck.result(log, topic, unit).get("attempts", 0)
+    shown = unitcheck.by_lesson(items, marks)
+    days, carded = {}, 0                             # each day touched, re-read once, saved once
+    for n in sorted(set(shown) | {unit["last"]}):
+        held = course.lesson_record(log, topic, n)
+        if held is not None:
+            days.setdefault(held[0]["date"], []).append(n)
+    for day, ns in days.items():
+        ui.refresh_entry(log, date.fromisoformat(day), topic)          # the day as stored now
+        entry = None
+        for n in ns:
+            held = course.lesson_record(log, topic, n)
+            if held is None:
+                continue
+            entry, slot = held[0], held[1]
+            if n in shown:
+                avg, asked = shown[n]
+                ui.learned(slot, entry["date"], "recall", avg, source=f"unit-{key}-{attempt}")
+                carded += review.add_missed(slot, asked, today, topic)
+            if n == unit["last"]:
+                unitcheck.record(slot, percent, today)
+        if entry is not None:
+            ui.save_day(log, entry, ns)
     st.session_state.uc_marked = {"unit": f"{topic}|{key}", "items": items, "answers": answers,
-                                  "marks": marks, "percent": percent}
+                                  "marks": marks, "percent": percent, "carded": carded}
 
 
 # ------------------------------------------------------------ a set just marked
@@ -68,6 +86,10 @@ if marked and marked["unit"] == f"{topic}|{key}":
                 + ("You know this unit as a whole. Review keeps it that way." if ok else
                    f"You need {unitcheck.PASS_MARK}%. Look again at the lessons of the questions you missed, "
                    "then try a new set.") + "</p>")
+        n = marked.get("carded", 0)
+        if n:
+            st.html(f'<p class="ob-note">{n} {"question" if n == 1 else "questions"} you missed '
+                    f'{"is" if n == 1 else "are"} now in Review, to come back to.</p>')
     with st.container(key="uc_answers"):
         for k, (it, a, m) in enumerate(zip(marked["items"], marked["answers"], marked["marks"]), start=1):
             with st.container(key=f"uc_a_{k}", gap=None):

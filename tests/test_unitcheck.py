@@ -155,3 +155,46 @@ def test_a_unit_not_finished_has_no_check(monkeypatch, tmp_path):
     assert "Nothing to check here yet" in texts(at)
     at.button(key="uc_back_none").click().run()
     assert not at.exception
+
+
+def test_a_set_says_what_it_showed_about_each_lesson():
+    items = [{"n": 3, "q": {"question": "a"}}, {"n": 4, "q": {"question": "b"}}, {"n": 3, "q": {"question": "c"}}]
+    out = unitcheck.by_lesson(items, [1, 0, 0.5])
+    assert out[3][0] == 0.75 and out[3][1] == {"questions": [{"question": "a"}, {"question": "c"}], "marks": [1, 0.5]}
+    assert out[4] == (0, {"questions": [{"question": "b"}], "marks": [0]})
+
+
+def lessons_of(tmp_path, ns):
+    log = json.loads((tmp_path / "log.json").read_text())
+    return {s["n"]: s for e in log["entries"] for s in e["lessons"] if s["n"] in ns and s.get("lesson")}
+
+
+def test_missed_questions_go_to_review_and_every_lesson_gets_evidence(monkeypatch, tmp_path):
+    at = app(monkeypatch, tmp_path, subjects=("philosophy",),
+             entries=history_until(ui.today() - timedelta(days=1), days=20, topics=("philosophy",)))
+    loads(at, "views/course.py", subject="philosophy")
+    go = [b for b in at.button if str(b.key).startswith("cm_uc_go_")][-1]
+    key = str(go.key).removeprefix("cm_uc_go_")
+    loads(at, "views/unit.py", subject="philosophy", unit=key)
+    for r in at.radio:
+        r.set_value(1)                             # every answer wrong
+    at.run()
+    at.button(key="uc_check").click().run()
+    assert "now in Review" in texts(at)
+    u = unitcheck.find(at.session_state["coach_log"], "philosophy", key)
+    ns = [x["n"] for x in u["lessons"]]
+    slots = lessons_of(tmp_path, ns)
+    assert all(any(e["k"] == "recall" and e["s"] == 0 for e in slots[n].get("ev") or []) for n in ns), \
+        "each lesson asked about: evidence it isn't known"
+    cards = [c for n in ns for c in slots[n].get("cards") or [] if c["kind"] == "question"]
+    assert len(cards) == 10, "a card for each question missed"
+    assert slots[u["last"]]["unit_check"]["best"] == 0, "and the result, on the unit's last lesson"
+    loads(at, "views/unit.py", subject="philosophy", unit=key)
+    at.button(key="uc_again").click().run()
+    for r in at.radio:
+        r.set_value(0)                             # a new set, all right
+    at.run()
+    at.button(key="uc_check").click().run()
+    assert "100% · Passed" in texts(at) and "now in Review" not in texts(at)
+    slots = lessons_of(tmp_path, ns)
+    assert all(any(e["k"] == "recall" and e["s"] == 1 for e in slots[n]["ev"]) for n in ns)
