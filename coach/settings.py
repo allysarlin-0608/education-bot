@@ -15,7 +15,7 @@ from coach import catalog, clock, core, paths
 DEFAULT_USER_ID = "owner"
 
 # The subjects she can choose, in the order they are offered.
-SUBJECTS = ("philosophy", "cosmos", "investing", "business", "fashion", "jewelry", "free")
+SUBJECTS = ("philosophy", "cosmos", "investing", "business", "fashion", "jewelry", "math", "free")
 DESCRIPTIONS = {
     "philosophy": "Arguments, the great thinkers East and West, and how to live.",
     "cosmos": "The sky, the solar system, stars and galaxies, and how we know.",
@@ -23,6 +23,7 @@ DESCRIPTIONS = {
     "business": "Customers, business models, money, and turning an idea into a plan.",
     "fashion": "Fibres and fabrics, fit and construction, colour and personal style.",
     "jewelry": "Metals and gemstones, how pieces are made, and how to judge them.",
+    "math": "From numbers and fractions to calculus, proof and open problems, one small step at a time.",
     "free": "A wide mix: history, psychology, economics, art, science and more.",
 }
 MIN_SUBJECTS, MAX_SUBJECTS = 1, 3

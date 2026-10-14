@@ -444,3 +444,52 @@ def test_math_curriculum_screens(public_app, pages, width, scheme):
     shot(p, f"93_math_sources_{tag}", problems)
     (SHOTS / f"problems_math_{tag}.json").write_text(json.dumps(problems, indent=1))
     assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+@pytest.mark.parametrize("width", list(SIZES))
+def test_math_subject_screens(public_app, pages, width, scheme):
+    """Mathematics as a subject: its first lesson (a learning outcome of
+    L0-01), its course map with the way to the whole curriculum, which opens
+    at the unit she is in, and its place on the subjects' stage."""
+    app = public_app
+    app.set_llm()
+    problems = {}
+    tag = f"{width}_{scheme}"
+    p = pages(width=width, height=SIZES[width], scheme=scheme)
+    flows.sign_in(p, app, email=f"ms{next(_n)}-{int(time.time() * 1000)}@example.com")
+    flows.onboard(p, subjects=("Mathematics",))
+    assert flows.wait_text(p.page, "Reading, writing and comparing numbers", 20), "lesson 1 is the first outcome"
+    flows.start_lesson(p)
+    p.page.locator(".st-key-current_lesson, [class*='st-key-lcard_']").first.scroll_into_view_if_needed()
+    shot(p, f"94_math_lesson_{tag}", problems)
+    flows.open_app(p, app, "/course?subject=math")
+    assert flows.wait_text(p.page, "L0-01 Numbers, place value and the number line", 20)
+    shot(p, f"95_math_course_map_{tag}", problems)
+    flows.tap(p, p.page.locator(".st-key-cm_math button:visible").first)
+    p.page.wait_for_timeout(900)
+    assert "unit=L0-01" in p.page.url and p.page.locator('[class*="st-key-mc_u_L0_01_here"]').is_visible()
+    assert flows.wait_text(p.page, "You're learning this", 10)
+    shot(p, f"96_math_from_course_map_{tag}", problems)
+    flows.open_app(p, app, "/settings?subject=math")
+    p.page.wait_for_timeout(1200)
+    shot(p, f"97_math_stage_{tag}", problems)
+    flows.open_app(p, app, "/subject?subject=math")
+    p.page.wait_for_timeout(1200)
+    shot(p, f"98_math_world_{tag}", problems)
+    (SHOTS / f"problems_math_subject_{tag}.json").write_text(json.dumps(problems, indent=1))
+    assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
+
+
+def test_a_new_learner_adds_mathematics_from_the_curriculum(public_app, pages):
+    """Someone learning only a goal of her own (no built-in subject offered
+    in Goals & Settings) adds Mathematics from its curriculum page."""
+    app = public_app
+    p = pages(width=1440, height=900)
+    flows.sign_in(p, app, email=f"ma{next(_n)}-{int(time.time() * 1000)}@example.com")
+    flows.onboard(p, subjects=("Philosophy",))
+    flows.open_app(p, app, "/math")
+    assert flows.wait_text(p.page, "Learn it day by day", 20)
+    flows.tap(p, p.page.locator(".st-key-mc_add button:visible").first)
+    assert flows.wait_text(p.page, "Added. Mathematics takes its turn", 15)
+    assert flows.wait_text(p.page, "Your course map", 10)

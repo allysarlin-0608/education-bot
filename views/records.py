@@ -271,7 +271,7 @@ def view_subjects():
             if curriculum.has_syllabus(key):
                 p = curriculum.progress(log, key)
                 unit = curriculum.unit_progress(log, key)
-                level = core.lesson_level(min(p["done"] + 1, curriculum.TOTAL), settings.start_level(config, key))
+                level = core.lesson_level(min(p["done"] + 1, curriculum.TOTAL), settings.start_level(config, key), key)
                 progress_bar.render(
                     f"course_{key}", label, unit["done"], unit["total"],
                     (f"{p['done']:,} of {p['written']:,} lessons · {level}" if catalog.is_goal(key)      # her goal's whole path

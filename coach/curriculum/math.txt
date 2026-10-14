@@ -1,0 +1,285 @@
+# L0-01 Numbers, place value and the number line
+Reading, writing and comparing numbers
+Place value: what each digit stands for
+Placing numbers on the number line
+# L0-02 The four operations and their order
+Mixed calculations with all four operations
+Using brackets to set the order of a calculation
+Checking an answer by estimating
+# L0-03 Multiples, factors and primes
+Divisibility and prime numbers
+Greatest common factor and least common multiple
+Breaking a number into prime factors
+# L0-04 Fractions
+Simplifying fractions and finding a common denominator
+Adding, subtracting, multiplying and dividing fractions
+Word problems with fractions
+# L0-05 Decimals, percentages and estimation
+Moving between fractions, decimals and percentages
+Estimating, and saying how precise an answer is
+Discounts, tax rates and other percentage problems
+# L0-06 Ratio, proportion and units
+Simplifying ratios and solving proportions
+Unit rates and scaling in proportion
+Converting between common units
+# L0-07 Negative numbers and absolute value
+Comparing positive and negative numbers
+Calculating with negative numbers and fractions
+Absolute value as distance
+# L0-08 Powers, square roots and scientific notation
+The rules of whole-number exponents
+Common square roots
+Writing very large and very small numbers in scientific notation
+# L0-09 Mental arithmetic, written methods and sense-checking
+Checking by estimating and by the inverse operation
+Spotting common calculation mistakes
+Choosing an exact or an approximate answer
+# L1-01 Algebraic symbols and expressions
+Variables, coefficients and constant terms
+Collecting like terms
+Turning words into algebraic expressions
+# L1-02 Linear equations and inequalities
+Solving linear equations in one unknown
+Solving simple inequalities and drawing them on a number line
+Writing everyday problems as equations
+# L1-03 Rates, proportion and word problems
+Speed, unit price and rate of work
+Choosing an unknown and building a model
+Checking an answer's units and that it makes sense
+# L1-04 The coordinate plane and straight lines
+Plotting and reading coordinates
+Recognising a linear relationship from a table or graph
+What slope means
+# L1-05 Polynomials and factorising
+Adding, subtracting and multiplying polynomials
+The common product formulas
+Factorising by taking out a common factor and by grouping
+# L1-06 Simultaneous linear equations
+Solving a pair of equations by substitution and by elimination
+Reading the solution as where two lines cross
+Word problems with two unknowns
+# L1-07 Surds and square roots
+Simplifying surds
+Calculating with surds
+Solving simple equations with squares
+# L1-08 Angles, lines and triangles
+Finding unknown angles from angle facts
+The angles of a triangle add up to 180°
+When two triangles are congruent
+# L1-09 Polygons, perimeter and area
+Perimeter and area of polygons
+Splitting a compound shape into simple ones
+Choosing the right unit of area
+# L1-10 Volume, surface area and similarity
+Prisms, cylinders, pyramids, cones and spheres
+Using a scale factor for lengths and areas
+Pythagoras' theorem for the sides of a right triangle
+# L2-01 Functions and their graphs
+What is and isn't a function
+Domain and range
+Moving between a formula, a table and a graph
+# L2-02 Linear functions and slope
+Finding the slope and the intercept
+Writing the equation of a line
+What the numbers in a linear model mean
+# L2-03 Quadratic functions and equations
+Solving quadratics by factorising, completing the square and the formula
+The vertex, the axis of symmetry and the intercepts of a parabola
+Building a simple quadratic model
+# L2-04 Polynomial and rational functions
+Finding zeros and factors of a polynomial
+Dividing polynomials
+Where a rational function isn't defined
+# L2-05 Exponential and logarithmic functions
+The laws of exponents and logarithms
+Solving simple exponential and logarithmic equations
+Comparing rates of growth on a graph
+# L2-06 Sequences and series
+Recursive and closed-form rules for a sequence
+The general term of arithmetic and geometric sequences
+Sums of finite arithmetic and geometric series
+# L2-07 Trigonometric ratios and the unit circle
+Sine, cosine and tangent in a right triangle
+Radians and the unit circle
+Graphs of the basic trigonometric functions
+# L2-08 Vectors and analytic geometry
+Adding and scaling vectors, and the dot product
+Equations of lines and circles
+Parabolas, ellipses and hyperbolas
+# L2-09 Counting, permutations, combinations and probability
+The addition and multiplication principles of counting
+Permutations and combinations
+Simple and conditional probability
+# L2-10 First steps in statistics
+Mean, median, quartiles and the idea of standard deviation
+Reading charts and distributions
+Correlation is not causation
+# L2-11 First steps with complex numbers
+The imaginary unit i
+Calculating with complex numbers
+Complex numbers on the complex plane
+# L2-12 Logic, sets and a first look at induction
+Set notation and set operations
+Statements and conditional statements
+The base case and the inductive step
+# L3-01 Sets, maps and relations
+Set operations and the Cartesian product
+Injective, surjective and bijective maps
+Equivalence relations and equivalence classes
+# L3-02 Propositional logic and quantifiers
+And, or, if-then, and if and only if
+Negating "for all" and "there exists"
+Turning everyday sentences into logical form
+# L3-03 Methods of proof
+Choosing a proof strategy: direct, contradiction, contrapositive
+Writing a clear step-by-step argument
+Disproving a general claim with a counterexample
+# L3-04 Induction and recursion
+Proof by induction
+Strong induction
+Defining and analysing recursive sequences
+# L3-05 Vectors, matrices and linear systems
+Solving systems of linear equations
+Multiplying and inverting matrices
+Linear transformations and the geometry of vectors
+# L3-06 Limits and the intuition of calculus
+What limits, derivatives and integrals mean
+Continuity and instantaneous change
+Accumulated area and antiderivatives
+# L3-07 Discrete structures and algorithmic thinking
+Reading simple recursive definitions
+Vertices and edges of a graph
+Describing an algorithm's steps and its basic efficiency
+# L4-01 Single-variable calculus
+Defining continuity with limits
+Computing derivatives and analysing change
+Definite integrals and the fundamental theorem of calculus
+Testing basic series for convergence
+# L4-03 Linear algebra
+Bases and dimension
+Eigenvalues, eigenvectors and diagonalisation
+Orthogonal projection and least squares
+# L4-02 Multivariable and vector calculus
+Partial derivatives and multiple integrals
+The gradient and directional derivatives
+Line integrals, surface integrals and the fundamental theorems
+# L4-04 Ordinary differential equations
+Separable and first-order linear equations
+Linear equations with constant coefficients
+Initial value problems and the basics of stability
+# L4-05 Discrete mathematics and graph theory
+Graphs, trees and networks
+Recursion and a first look at generating functions
+Proving basic counting and graph results
+# L4-06 Combinatorics
+Bijections, inclusion-exclusion and the pigeonhole principle
+Deriving recurrence relations
+Basic combinatorial identities
+# L4-07 Probability and statistics
+Random variables and common distributions
+Expectation and variance
+Sampling, estimation and the basics of hypothesis testing
+# L4-08 Numerical analysis and computational mathematics
+Floating-point and truncation error
+Solving equations and integrating numerically
+Comparing how algorithms converge and how stable they are
+# L4-09 First steps in optimisation
+Setting up an objective and its constraints
+Solving basic linear programming problems
+Using the gradient in unconstrained optimisation
+# L5-01 Real analysis
+Completeness and convergent sequences
+Proving the basic properties of continuous functions
+Uniform convergence and sequences of functions
+# L5-02 Abstract algebra
+Groups, subgroups and quotient groups
+The homomorphism theorems
+Rings, ideals and a first look at field extensions
+# L5-03 Topology
+Topological spaces, bases and continuity
+Compactness and connectedness
+The idea of the fundamental group
+# L5-04 Complex analysis
+Cauchy's integral theorem and formula
+Residues and contour integrals
+Why analytic functions are so rigid
+# L5-05 Number theory, elementary and algebraic
+Congruences and the Chinese remainder theorem
+The statement of quadratic reciprocity
+Algebraic integers, and why ideals were invented
+# L5-06 Measure theory and the Lebesgue integral
+Measures and measurable functions
+When the convergence theorems apply
+Riemann and Lebesgue integrals compared
+# L5-07 Functional analysis
+Banach and Hilbert spaces
+Bounded linear operators
+The basic ideas of spectral theory
+# L5-08 Differential geometry
+Tangent spaces and a first look at differential forms
+Curvature and geodesics in examples
+What Stokes' theorem means geometrically
+# L5-09 First steps in algebraic geometry
+Varieties and ideals
+Affine and projective space in basic examples
+Reading the language of algebraic geometry
+# L5-10 Mathematical logic and set theory
+Syntax and semantics
+Provability and completeness
+Cardinals and ordinals
+# L6-01 Partial differential equations and harmonic analysis
+Classifying the basic linear PDEs
+Weak solutions and regularity
+Fourier analysis for the classic equations
+# L6-02 Dynamical systems and ergodic theory
+Fixed points and periodic orbits
+Stability, and examples of chaos
+Invariant measures and ergodicity
+# L6-03 Representation theory and Lie theory
+Representations of groups and Lie algebras
+Decomposing finite-dimensional representations in basic examples
+Symmetry in geometric and physical models
+# L6-04 Algebraic number theory and arithmetic geometry
+Number fields and their rings of integers
+Ideal class groups and localisation
+The basic arithmetic of elliptic curves
+# L6-05 Algebraic topology
+Fundamental groups and covering spaces in examples
+Homology groups and chain complexes
+Algebraic invariants for geometric problems
+# L6-06 Probability, stochastic processes and stochastic analysis
+Markov chains and stochastic processes
+Martingales and Brownian motion
+What Itô integrals and stochastic differential equations are for
+# L6-07 Extremal combinatorics and advanced graph theory
+The probabilistic method and double counting
+Extremal problems in graph theory
+Algebraic methods in combinatorics, by example
+# L6-08 Optimisation, information theory and computational complexity
+Convexity and duality
+Entropy and the basic coding theorems
+What complexity classes such as P and NP mean
+# L6-09 Mathematical physics and geometric analysis
+Variational and field-equation models
+How curvature and analysis interact
+Following a mathematical argument across fields
+# L7-01 Reading papers and mapping a field
+Tracing a theorem's citations and context
+A paper's assumptions, conclusions and methods
+Concept maps and reading notes for a field
+# L7-02 Rebuilding proofs and reproducibility
+Filling in skipped steps and checking assumptions
+Redoing a paper's examples and calculations
+Writing down derivations others can check
+# L7-03 Finding a small question worth researching
+Stating a problem and what is already known
+Comparing possible approaches
+Making a conjecture that can be tested or refuted
+# L7-04 Open problems as case studies
+Where a problem sits and the background it needs
+Proven results, conjectures and what is still open
+Never treating an unchecked claim as a proof
+# L7-05 Writing research and peer review
+Writing a complete proof others can follow
+Giving counterexamples and edge cases
+Revising an argument after expert feedback

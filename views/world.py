@@ -88,7 +88,7 @@ with st.container(key=f"world_{w['layout']}"):
 # ---------- where she is, what comes next, what she has done ----------
 unit = curriculum.unit_progress(log, topic)
 p = curriculum.progress(log, topic)
-level = core.lesson_level(min(p["done"] + 1, curriculum.TOTAL), settings.start_level(config, topic))
+level = core.lesson_level(min(p["done"] + 1, curriculum.TOTAL), settings.start_level(config, topic), topic)
 upcoming = curriculum.next_numbers(log, topic, 3)
 names = [n for n, _, _ in visuals.units(topic)]
 after = names[names.index(unit["unit"]) + 1:][:3] if unit and unit["unit"] in names else []

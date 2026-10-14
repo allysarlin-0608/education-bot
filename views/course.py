@@ -32,7 +32,7 @@ if asked != topic:
 is_today = ui.topic_for(today) == topic
 plan = curriculum.day_plan(log, topic, core.find_entry(log, today, topic), ui.units_today()) if is_today else []
 m = course.build(log, topic, plan)
-level = core.lesson_level(min(m["done"] + 1, curriculum.TOTAL), settings.start_level(config, topic))
+level = core.lesson_level(min(m["done"] + 1, curriculum.TOTAL), settings.start_level(config, topic), topic)
 st.html('<div id="course-page"></div>')
 
 
@@ -110,7 +110,7 @@ if goal:                    # her goal: what the path is for
     st.html(f'<p class="cm-outcome">{escape(goal["outcome"])}</p>')
 st.html(f'<div class="cm-head"><div class="rv-line"><span style="width:{share * 100:.1f}%"></span></div>'
         f'<p>{m["done"]} of {m["written"]} lessons passed · {level}'
-        + (" · more are added as you go" if m["written"] < m["total"] else "") + "</p></div>")
+        + (" · more are added as you go" if m["written"] < m["total"] and topic != "math" else "") + "</p></div>")
 
 # how far she has come on it: where she started, where she is now (coach/habit.py)
 j = habit.journey(log, topic, settings.start_level(config, topic))
@@ -143,6 +143,9 @@ with st.container(key="cm_next"):
             st.switch_page("views/skills.py")
         if visuals.known(topic) and st.button(f"Enter {course.subject_name(topic)}", type="tertiary", key="cm_world"):
             ui.enter_world(topic)       # (a goal has no world)
+        if topic == "math" and st.button("The whole curriculum", type="tertiary", key="cm_math"):
+            here = m["units"][m["current"]]["name"].split(" ")[0] if m["current"] is not None else None
+            st.switch_page("views/math.py", query_params={"unit": here} if here else None)
         others = [t for t in mine if t != topic and curriculum.has_syllabus(t)]
         for t in others:                     # her other courses' maps, named as such
             if st.button(f"{course.subject_name(t)}: course map", type="tertiary", key=f"cm_other_{t}"):

@@ -204,8 +204,8 @@ def journey(log: dict, topic: str, start_level: str = None) -> dict:
         [x["best"] for x in passed[-5:] if x["best"] is not None]
     cur = m["units"][m["current"]]["name"] if m["current"] is not None else ""
     return {
-        "started": started, "start_level": core.lesson_level(1, start_level),
-        "level": core.lesson_level(min(m["done"] + 1, curriculum.TOTAL), start_level),
+        "started": started, "start_level": core.lesson_level(1, start_level, topic),
+        "level": core.lesson_level(min(m["done"] + 1, curriculum.TOTAL), start_level, topic),
         "done": m["done"], "written": m["written"], "unit": cur,
         "first_avg": _avg(first) if len(passed) >= 6 else None,
         "recent_avg": _avg(last) if len(passed) >= 6 else None,

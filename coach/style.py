@@ -2021,6 +2021,7 @@ LENS = """
 .sg-stage[data-focus="business"] .sg-layer[data-t="business"],
 .sg-stage[data-focus="fashion"] .sg-layer[data-t="fashion"],
 .sg-stage[data-focus="jewelry"] .sg-layer[data-t="jewelry"],
+.sg-stage[data-focus="math"] .sg-layer[data-t="math"],
 .sg-stage[data-focus="free"] .sg-layer[data-t="free"] {
   opacity: 1; visibility: visible; transition: opacity var(--t-layout) var(--ease), visibility 0s;
 }
@@ -2030,6 +2031,7 @@ LENS = """
 .sg-stage[data-focus="business"] .sg-layer[data-t="business"] .sg-art,
 .sg-stage[data-focus="fashion"] .sg-layer[data-t="fashion"] .sg-art,
 .sg-stage[data-focus="jewelry"] .sg-layer[data-t="jewelry"] .sg-art,
+.sg-stage[data-focus="math"] .sg-layer[data-t="math"] .sg-art,
 .sg-stage[data-focus="free"] .sg-layer[data-t="free"] .sg-art { transform: none; }
 /* before the page has marked a focus, the first subject shows */
 .sg-stage:not([data-focus]) .sg-layer:first-child { opacity: 1; visibility: visible; }

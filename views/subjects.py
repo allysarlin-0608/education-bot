@@ -69,8 +69,8 @@ with st.container(key="set_sec_reference"):        # a curriculum to browse, not
     c = mathcourse.counts()
     with st.container(key="sc_ref_math"):
         st.html(f'<p class="set-goal"><span>Math, from zero to research</span><b>{c["phases"]} phases · '
-                f'{c["units"]} units</b></p><p class="ob-note">A curriculum in Traditional Chinese: each unit with '
-                "what it covers, what you'll be able to do, what to practise, what to learn first and where "
-                "the material comes from.</p>")
+                f'{c["units"]} units</b></p><p class="ob-note">The mathematics curriculum in Traditional Chinese: each '
+                "unit with what it covers, what you'll be able to do, what to practise, what to learn first and "
+                "where the material comes from.</p>")
         if st.button("Open the curriculum", key="sc_math", type="tertiary"):
             st.switch_page("views/math.py")

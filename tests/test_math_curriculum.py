@@ -82,3 +82,62 @@ def test_courses_and_the_menu_lead_there(monkeypatch, tmp_path):
     assert "Math, from zero to research" in html(at)
     assert any(b.key == "sc_math" for b in at.button)
     assert ("Math Curriculum", "Math Curriculum") in dict(topnav.SECTIONS)["Learn"]
+
+
+# ---------------------------------------------------------------- math as a subject: its syllabus
+def test_the_syllabus_is_the_curriculum_one_lesson_per_outcome():
+    """coach/curriculum/math.txt: a unit per curriculum unit ("<id> <title>"),
+    a lesson per learning outcome, every unit after the ones it needs."""
+    from coach import curriculum, visuals
+    every = mathcourse.units()
+    units = [name.split(" ")[0] for name, _, _ in visuals.units("math")]
+    assert sorted(units) == sorted(every), "every unit, once"
+    for name, first, last in visuals.units("math"):
+        uid = name.split(" ")[0]
+        assert last - first + 1 == len(every[uid]["learning_outcomes"]), uid
+    for k, uid in enumerate(units):
+        assert all(units.index(p) < k for p in every[uid]["prerequisites"]), f"{uid} comes before what it needs"
+    assert curriculum.written("math") == sum(len(u["learning_outcomes"]) for u in every.values())
+
+
+def test_each_lesson_is_taught_with_its_unit_and_at_its_phase_level():
+    from coach import core, curriculum
+    first, last = curriculum.lesson("math", 1), curriculum.lesson("math", curriculum.written("math"))
+    assert first["unit"].startswith("L0-01 ") and last["unit"].startswith("L7-05 ")
+    assert curriculum.level_for(1, "math") == "Beginner" and curriculum.level_for(curriculum.written("math"), "math") == "Advanced"
+    lines = "\n".join(core._syllabus_lines("math", curriculum.new_slot("math", 7)))
+    assert "L0-03「倍數、因數與質數」" in lines and "用整除、倍數、因數及質數描述整數結構" in lines
+    assert "建議練習方向" in lines
+    assert "數學" in core.load_system_prompt("math", public=True)
+
+
+def test_math_is_a_subject_with_its_own_placement_and_picture():
+    from coach import placement, settings, visuals
+    assert "math" in settings.SUBJECTS and settings.DESCRIPTIONS["math"]
+    assert len(placement.QUESTIONS["math"]) == placement.COUNT
+    assert visuals.has_object("math") and visuals.credit("math")
+
+
+def test_the_course_map_and_the_curriculum_lead_to_each_other(monkeypatch, tmp_path):
+    # covers: W-course-cm_math, W-math-mc_map
+    at = loads(app(monkeypatch, tmp_path, subjects=("math",)), "views/course.py", subject="math")
+    assert any(b.key == "cm_math" for b in at.button)
+    at = loads(app(monkeypatch, tmp_path, subjects=("math",)), "views/math.py")
+    assert any(b.key == "mc_map" for b in at.button) and "You're learning this" in html(at)
+
+
+def test_the_curriculum_offers_to_add_mathematics(monkeypatch, tmp_path):
+    # covers: W-math-mc_add, D-math-save_settings
+    at = loads(app(monkeypatch, tmp_path, subjects=("philosophy",)), "views/math.py")
+    assert not any(b.key == "mc_map" for b in at.button)
+    next(b for b in at.button if b.key == "mc_add").click().run()
+    assert not at.exception and "Added." in html(at)
+    assert at.session_state["coach_settings"]["subjects"] == ["philosophy", "math"]
+    assert any(b.key == "mc_map" for b in at.button), "now hers: its course map"
+
+
+def test_with_three_subjects_it_says_where_to_make_room(monkeypatch, tmp_path):
+    at = loads(app(monkeypatch, tmp_path, subjects=("philosophy", "cosmos", "fashion")), "views/math.py")
+    next(b for b in at.button if b.key == "mc_add").click().run()
+    assert "remove one in Goals &amp; Settings" in html(at)
+    assert "math" not in at.session_state["coach_settings"]["subjects"]

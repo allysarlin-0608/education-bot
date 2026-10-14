@@ -16,7 +16,7 @@ THU = date(2026, 9, 24)
 def test_every_lesson_topic_has_a_clean_syllabus(topic):
     lessons = curriculum._load(topic)
     titles = [title for _, title in lessons]
-    assert 260 <= len(titles) <= curriculum.TOTAL
+    assert 200 <= len(titles) <= curriculum.TOTAL            # (mathematics: its curriculum's 214 outcomes)
     assert len(set(titles)) == len(titles)                  # no lesson twice
     assert all(unit for unit, _ in lessons)                 # every lesson is in a unit
     assert not any(t.startswith("#") for t in titles)

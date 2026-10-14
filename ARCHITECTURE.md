@@ -258,6 +258,23 @@ outline's reply may be a little longer (`tokens.PATH_MAX_TOKENS` 3400).
   words are the file's (Traditional Chinese); the page's own labels are
   the site's English. No AI call, nothing stored. To change the
   curriculum, edit the file: the tests say if a link is broken.
+- *Mathematics, the subject* (ISS-107): the same curriculum taught day by
+  day like every other subject. `coach/curriculum/math.txt` is its
+  syllabus: a unit per curriculum unit, headed "<id> <English title>", and
+  a lesson per learning outcome (214), every unit after the units it needs
+  (so L4-03 comes before L4-02); the tests hold it to the JSON. A lesson's
+  level is its phase's (`mathcourse.level_of`: L0–L1 Beginner, L2–L3
+  Intermediate, L4 on Advanced; `curriculum.level_for(n, topic)`), and the
+  lesson's model is also told its unit's summary and practice focus from
+  the JSON (`mathcourse.lesson_lines`, in `core._syllabus_lines`); its
+  topic section is `prompts/topics/math.md` (worked examples, LaTeX, open
+  problems never presented as proved). Its object is drawn for the app
+  (`art/pythagoras.py`). Like the other subjects it is offered in Goals &
+  Settings to someone already learning one of them; anyone can add it
+  from the curriculum page ("Add Mathematics to my days"), and its course
+  map leads back to the curriculum at the unit she is in. Same AI calls
+  per lesson as any subject: one subject a day, so no extra cost per
+  learner.
 - *Unit check* (`coach/unitcheck.py`, `views/unit.py` at /unit, ISS-099):
   once every lesson of a unit is passed, ten questions from that unit's
   lessons (each lesson's quiz, its practice bank, the questions she missed;

@@ -207,7 +207,8 @@ def test_personal_mode_has_no_account_sections(personal_app, pages):
     app = personal_app
     p = pages(width=1440)
     flows.open_app(p, app, "/account")
-    if flows.wait_text(p.page, "Get started", 3):
+    if flows.wait_text(p.page, "Get started", 3):         # (a fresh personal store: set up first)
+        p.app, p.email = app, ""
         flows.onboard(p)
         flows.open_app(p, app, "/account")
     t = text(p)

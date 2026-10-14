@@ -53,7 +53,7 @@ with checks as (
   union all
   select 'entries with an unknown topic', count(*), min(topic)
   from public.learning_entries
-  where topic not in ('philosophy', 'cosmos', 'investing', 'business', 'fashion', 'jewelry', 'free', 'reading')
+  where topic not in ('philosophy', 'cosmos', 'investing', 'business', 'fashion', 'jewelry', 'math', 'free', 'reading')
   union all
   select 'entries with an unknown level', count(*), min(level)
   from public.learning_entries where level not in ('Beginner', 'Intermediate', 'Advanced')
@@ -121,7 +121,7 @@ with checks as (
   union all
   select 'settings with an unknown subject', count(*), min(user_id)
   from public.user_settings s, jsonb_array_elements_text(s.subjects) t
-  where t not in ('philosophy', 'cosmos', 'investing', 'business', 'fashion', 'jewelry', 'free')
+  where t not in ('philosophy', 'cosmos', 'investing', 'business', 'fashion', 'jewelry', 'math', 'free')
   union all
   select 'people with lessons but no finished setup', count(*), min(e.user_id)
   from (select distinct user_id from public.learning_entries) e

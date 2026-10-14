@@ -22,7 +22,7 @@ levels as (
 -- 1. a subject the app doesn't know (the app ignores it: chosen_subjects filters it out)
 select '1 unknown subject in subjects' as check, user_id, subject as detail
 from chosen
-where subject not in ('philosophy', 'cosmos', 'investing', 'business', 'fashion', 'jewelry', 'free')
+where subject not in ('philosophy', 'cosmos', 'investing', 'business', 'fashion', 'jewelry', 'math', 'free')
 union all
 -- 2. the same subject listed twice
 select '2 subject listed twice', user_id, subject || ' ×' || count(*)

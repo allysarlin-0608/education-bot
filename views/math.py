@@ -5,12 +5,14 @@ units: the summary, what she will be able to do, what to practise, the
 units to learn first (each opens that unit, wherever it is), and the
 sources it draws on (linked, in a new tab). All the sources and how they
 may be used close the page. ?unit=L4-02 opens that unit's phase and brings
-it into view. Nothing here changes her settings or calls the model."""
+it into view. Mathematics is also a subject (coach/curriculum/math.txt): a
+lesson per learning outcome; the page leads to her course map, or to
+where it is added. Nothing here changes her settings or calls the model."""
 from html import escape
 
 import streamlit as st
 
-from coach import mathcourse
+from coach import mathcourse, settings, ui
 
 data = mathcourse.load()
 every = mathcourse.units(data)
@@ -31,6 +33,21 @@ if asked and st.session_state.get("mc_seen") != asked:      # arriving from an a
     st.session_state[f"mc_phase_{every[asked]['phase']}"] = True
     st.session_state.mc_scroll = asked
 st.session_state.mc_seen = asked
+
+
+def add_math() -> None:
+    """Mathematics into her days, after what she has (it comes in its turn);
+    with three subjects already, she is told where to make room."""
+    ui.refresh_settings()
+    now = settings.chosen_subjects(ui.config())
+    new = settings.toggle_subject(now, "math")
+    if new == now:
+        st.session_state.mc_added = (f"You already have {settings.MAX_SUBJECTS} subjects: remove one in "
+                                     "Goals & Settings to make room for Mathematics.")
+        return
+    if ui.save_settings(settings.change(ui.config(), settings.now_iso(), subjects=new)):
+        st.session_state.mc_added = ("Added. Mathematics takes its turn with your other subjects, "
+                                     "starting with lesson 1.")
 
 
 def link(s: dict) -> str:
@@ -66,8 +83,20 @@ st.html('<p class="cm-eyebrow cm-top">Curriculum</p>')
 st.markdown(f"## {escape(data['title'])}")
 st.html(f'<p class="cm-outcome">{escape(data["description"])}</p>')
 c = mathcourse.counts(data)
-st.html(f'<div class="cm-head"><p>{c["phases"]} phases · {c["units"]} units · {c["sources"]} sources · '
-        "a reference to browse: it isn't one of your courses</p></div>")
+st.html(f'<div class="cm-head"><p>{c["phases"]} phases · {c["units"]} units · {c["sources"]} sources</p></div>')
+# learning it day by day: Mathematics is a subject, a lesson for each learning outcome
+mine = "math" in settings.shown_subjects(ui.config())
+with st.container(key="mc_learn", horizontal=True, vertical_alignment="center"):
+    st.html('<p class="ob-note">' + ("You're learning this: a short lesson for each learning outcome, in this order."
+                                     if mine else "Learn it day by day: Mathematics is a subject, with a short lesson "
+                                     "for each learning outcome, in this order.") + "</p>")
+    if mine:
+        if st.button("Your course map", key="mc_map", type="tertiary"):
+            ui.open_course("math")
+    else:
+        st.button("Add Mathematics to my days", key="mc_add", type="tertiary", on_click=add_math)
+if (said := st.session_state.pop("mc_added", None)):
+    st.html(f'<p class="ob-note sc-next">{escape(said)}</p>')
 st.html(f'<p class="ob-note">{escape(data["progression_policy"])}</p>')
 
 with st.container(key="mc_phases"):

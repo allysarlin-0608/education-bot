@@ -150,6 +150,7 @@ def admin_sign_in(p, app):
 # aren't offered them): their names on the pages → their ids
 SUBJECT_IDS = {"Philosophy": "philosophy", "Astronomy": "cosmos", "Stocks, Investing & Crypto": "investing",
                "Business Planning": "business", "Fashion & Clothing": "fashion", "Jewelry & Craft": "jewelry",
+               "Mathematics": "math",
                "General Knowledge": "free"}
 PACES = {"Light": 1, "Steady": 3, "Focused": 5}
 

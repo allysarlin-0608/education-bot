@@ -58,6 +58,12 @@ WORLD = {
                           "a pear-shaped diamond hanging from it",
                     object="subjects/jewelry.webp", light="subjects/jewelry-light.webp", cut=True, focus="50% 0%", layout="pendant", title="tracked",
                     credit="Diamond and platinum necklace with a pear-shaped drop · modelled and rendered for this app"),
+    "math": dict(kicker="Number, shape and proof",
+                 shows="Euclid's theorem on the right triangle in Byrne's colours: a red, a yellow and a blue "
+                       "square on its three sides",
+                 object="subjects/math.webp", light="subjects/math-light.webp", cut=True, focus="50% 50%",
+                 layout="instrument", title="serif",
+                 credit="Euclid I.47 after Oliver Byrne's coloured Euclid (1847) · drawn for this app"),
     "free": dict(kicker="Across the disciplines",
                  shows="The frontispiece of the Encyclopédie: all the arts and sciences gathered",
                  object="subjects/free.jpg", focus="50% 22%", layout="figure", title="serif",

@@ -78,7 +78,15 @@ def lesson(topic: str, n: int) -> dict:
     return {"n": n, "unit": unit, "title": title}
 
 
-def level_for(n: int) -> str:
+def level_for(n: int, topic: str = None) -> str:
+    """Lesson n's level by its place in the syllabus; for mathematics, by
+    the phase of the curriculum its unit is in (coach/mathcourse.py)."""
+    if topic == "math":
+        from coach import mathcourse
+        unit = (lesson(topic, n) or {}).get("unit", "")
+        found = mathcourse.level_of(unit.split(" ")[0]) if unit else None
+        if found:
+            return found
     return LEVELS[min((n - 1) // LEVEL_SIZE, 2)]
 
 

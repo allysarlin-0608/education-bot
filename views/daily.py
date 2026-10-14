@@ -110,7 +110,7 @@ def run_kickoff(i):
     slot["kickoff"], slot["lesson"] = kickoff, lesson
     first, last = entry["lessons"][0]["n"], entry["lessons"][-1]["n"]
     entry["title"] = f"Lessons {first}–{last}"
-    entry["level"] = core.lesson_level(first, start_level)
+    entry["level"] = core.lesson_level(first, start_level, topic)
     entry["followup_question"] = core.extract_section(lesson, "Question to Explore")
     # into the day as stored now (the stream took a while: another tab may have saved since)
     ui.save_day(log, entry, [slot["n"]], keep=("title", "level", "followup_question"), recount=True, page_day=today)

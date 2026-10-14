@@ -8,7 +8,7 @@ import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 
-from coach import books, catalog, curriculum, streaks
+from coach import books, catalog, curriculum, mathcourse, streaks
 
 # What is sent to the model: a shared core plus the one topic module for
 # the day (see coach/prompts/). system_prompt.md is the full original
@@ -31,6 +31,7 @@ TOPICS = {
     "cosmos": "Astronomy",
     "business": "Business Planning",
     "investing": "Stocks, Investing & Crypto",
+    "math": "Mathematics",
     "free": "General Knowledge",
 }
 
@@ -436,10 +437,11 @@ def _clip(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit] + "…"
 
 
-def lesson_level(n: int, start_level: str = None) -> str:
-    """A lesson's level: its place in the syllabus, or the level her
-    settings start the subject at, whichever is higher."""
-    level = curriculum.level_for(n)
+def lesson_level(n: int, start_level: str = None, topic: str = None) -> str:
+    """A lesson's level: its place in the syllabus (`topic`: its subject's
+    own, as mathematics has), or the level her settings start the subject
+    at, whichever is higher."""
+    level = curriculum.level_for(n, topic)
     if start_level in LEVELS and LEVELS.index(start_level) > LEVELS.index(level):
         return start_level
     return level
@@ -449,8 +451,8 @@ def _syllabus_lines(topic: str, slot: dict, start_level: str = None) -> list:
     """Where this lesson sits in the fixed syllabus, so the model teaches
     exactly this title at this level and doesn't run ahead."""
     n = slot["n"]
-    level = lesson_level(n, start_level)
-    source = "依課綱位置" if level == curriculum.level_for(n) else "她的起始程度（程度測驗）"
+    level = lesson_level(n, start_level, topic)
+    source = "依課綱位置" if level == curriculum.level_for(n, topic) else "她的起始程度（程度測驗）"
     lines = [
         f"- 今天要上的課（依固定課綱，照這個標題講，不要換題目）：第 {n} 課「{slot['title']}」",
         f"- 所屬單元：{slot['unit'] or '（無）'}；難度（{source}）：{level}",
@@ -459,6 +461,8 @@ def _syllabus_lines(topic: str, slot: dict, start_level: str = None) -> list:
     if goal_of:
         lines.append(f"- 這一課的學習目標（學完她要能做到）：{goal_of}。整課都為這件事服務；"
                      "【Today's Task】就讓她實際做一次。")
+    if topic == "math":
+        lines += mathcourse.lesson_lines(slot.get("unit") or "")
     if catalog.is_goal(topic) and n == 1:
         lines.append("- 這是她這個目標的第一課：寫短一點（約350到500字），今天的任務5分鐘內就做得完，"
                      "讓她今天就有一個看得見的小成功；【Note】用一句話把這課連到她寫的原因。")

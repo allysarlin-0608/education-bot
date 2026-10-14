@@ -60,6 +60,30 @@ def phase_of(uid: str, data: dict = None):
     return units(data).get(uid, {}).get("phase")
 
 
+# the site's three levels, by phase: L0–L1, L2–L3, L4 and on
+PHASE_LEVEL = {"L0": "Beginner", "L1": "Beginner", "L2": "Intermediate", "L3": "Intermediate"}
+
+
+def level_of(uid: str, data: dict = None):
+    """The level a unit is taught at (None: no such unit)."""
+    phase = phase_of(uid, data)
+    return None if phase is None else PHASE_LEVEL.get(phase, "Advanced")
+
+
+def lesson_lines(unit_name: str, data: dict = None) -> list:
+    """What the lesson's model is told of its unit (its syllabus heading is
+    "<id> <English title>", coach/curriculum/math.txt): the unit and phase,
+    its summary and its practice focus, from the curriculum file itself
+    (the lesson's own title is the one outcome it teaches)."""
+    u = units(data).get(unit_name.split(" ")[0])
+    if u is None:
+        return []
+    phase = next(p for p in phases(data) if p["id"] == u["phase"])
+    return [f"- 數學課綱單元 {u['id']}「{u['title']}」（{phase['id']} {phase['title']}，{phase['level']}）："
+            f"{u['summary']}",
+            f"- 建議練習方向（【Today's Task】照這個出題）：{u['practice_focus']}"]
+
+
 def counts(data: dict = None) -> dict:
     return {"phases": len(phases(data)), "units": len(units(data)), "sources": len(sources(data))}
 
