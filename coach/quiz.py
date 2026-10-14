@@ -76,6 +76,13 @@ Correctness comes first:
 - If a question asks for the most common, main, best or usual thing, the true answer must be
   among the options.
 - Matching pairs, the order of steps, blanks and model answers must be correct too.
+- Never contradict the lesson: a keyed answer must agree with every rule, number and definition
+  the lesson gives (if the lesson says money needed in 5+ years can be invested, a goal 15 years
+  away is a time to invest, not to save).
+- Each question tests a different point: no two questions ask the same thing in other words.
+- Learners live in many countries: no fact that holds in only one country (a law, an agency, an
+  insurance or tax scheme, a currency) unless the lesson is about that country, and then the
+  question names it. Prefer the general idea ("government deposit insurance").
 
 Reply with JSON only, in this shape (questions in any order):
 {{"questions": [
@@ -121,7 +128,11 @@ CHECKER = """You check a quiz before a learner sees it. For each question, decid
 - "apply": the question can be answered from her own life, and the criteria are fair and correct.
 Judge by real-world facts, not only by what a lesson might have said.
 When the lesson is given: a question (other than one marked "earlier lesson") is a problem if the
-lesson doesn't teach what it needs, so a learner who read the lesson carefully couldn't answer it.
+lesson doesn't teach what it needs, so a learner who read the lesson carefully couldn't answer it,
+or if its keyed answer goes against a rule, number or definition the lesson gives.
+Also a problem: a question that tests the same point as an earlier one (list the later one), and
+a fact that holds in only one country (a law, agency, insurance or tax scheme) when the question
+doesn't name that country.
 
 Reply with JSON only: {"problems": [{"id": 0, "issue": "one sentence"}]} listing only the questions
 with a problem; {"problems": []} if every question is sound."""
@@ -136,6 +147,9 @@ def _context(context: dict) -> str:
                      "can do it (a scenario or an apply question where it fits).")
     if context.get("goal"):
         parts.append(f"Her goal: {context['goal']}")
+    if context.get("reported"):
+        parts.append("A learner reported these questions on this lesson as wrong or unclear. Don't ask them "
+                     "again, and avoid what made them so:\n" + "\n".join(f"- {x[:200]}" for x in context["reported"]))
     r = context.get("recall")
     if r:
         parts.append(f"{RECALL}\nEarlier lesson {r['n']}: {r['title']}\nIts key idea: {r['key']}")
@@ -314,16 +328,49 @@ def same_as(q: dict) -> str:
     return (q.get("scenario", "") + "|" + q["question"]).casefold()
 
 
+_STOP = frozenset("a an the of to in on for and or is are was be it its this that which what why how who "
+                  "when where does do did can could would should will your you her she they their with as at "
+                  "by from than then most best main one".split())
+ALIKE = 0.8             # share of their words two questions of one kind have in common that makes them one
+
+
+def _words(text: str) -> set:
+    return {w for w in re.findall(r"[a-z0-9']+", text.casefold()) if w not in _STOP and len(w) > 2}
+
+
+def _keyed(q: dict) -> str:
+    """A choice question's right answer, in words ("" for other kinds: two
+    scenarios may rightly lead to the same answer in different situations)."""
+    if q["type"] == "choice":
+        return q["options"][q["answer"]].casefold().strip()
+    return ""
+
+
+def alike(a: dict, b: dict, common: frozenset = frozenset()) -> bool:
+    """Two questions of one kind that are plainly the same one: the same
+    words (as same_as), nearly all the same words in another order, or the
+    same right answer to much the same question. Only the plain repeats: a
+    choice and an explain-it question on one idea test it two ways, and
+    what only reads alike to a person is the checker's to catch (it is told
+    to), so a good quiz is never thrown away here."""
+    if same_as(a) == same_as(b):
+        return True
+    if a["type"] != b["type"]:
+        return False
+    wa, wb = (_words(q.get("scenario", "") + " " + q["question"]) - common for q in (a, b))
+    if len(wa) < 3 or len(wb) < 3:
+        return False
+    overlap = len(wa & wb) / len(wa | wb)
+    ka, kb = _keyed(a), _keyed(b)
+    return overlap >= ALIKE or (bool(ka) and ka == kb and len(ka) > 12 and overlap >= 0.5)
+
+
 def assemble(questions: list):
     """QUESTIONS of the usable questions, in the MIX where they allow it
     (then any kind she can answer: never more than two written answers to
-    mark), repeats left out; None if there aren't enough. A question about
+    mark), repeats left out (each point once: alike()); None if there aren't enough. A question about
     an earlier lesson ("recall") is never one of them (recall_of())."""
-    seen, unique = set(), []
-    for q in questions:
-        if same_as(q) not in seen and not q.get("recall"):
-            seen.add(same_as(q))
-            unique.append(q)
+    unique = distinct(questions)
     picked = []
     for kind, n in MIX.items():
         picked += [q for q in unique if q["type"] == kind][:n]
@@ -341,6 +388,22 @@ def assemble(questions: list):
     return sorted(picked[:QUESTIONS], key=lambda q: order.index(q["type"]))
 
 
+def distinct(questions: list) -> list:
+    """The questions, each point once (alike()): the first of two alike is
+    kept; a question about an earlier lesson is left out."""
+    mine = [q for q in questions if not q.get("recall")]
+    sets = [_words(q.get("scenario", "") + " " + q["question"]) for q in mine]
+    seen = {}
+    for w in (w for ws in sets for w in ws):
+        seen[w] = seen.get(w, 0) + 1
+    common = frozenset(w for w, n in seen.items() if n * 2 >= len(sets)) if len(sets) >= 4 else frozenset()
+    out = []
+    for q in mine:                       # (words in half the questions or more say nothing about two of them)
+        if not any(alike(q, x, common) for x in out):
+            out.append(q)
+    return out
+
+
 def recall_of(questions: list):
     """The question about an earlier lesson, if the model wrote one."""
     return next((q for q in questions if q.get("recall")), None)
@@ -350,7 +413,7 @@ def missing(questions: list) -> list:
     """The kinds still needed to make a full quiz of these questions (the
     MIX's gaps: written answers, matching, a blank and a scenario first; an
     ordering question is never asked for on its own), e.g. ["short", "choice"]."""
-    have = {same_as(q): q["type"] for q in questions if not q.get("recall")}
+    have = {same_as(q): q["type"] for q in distinct(questions)}
     need = QUESTIONS - len(have)
     gaps = []
     for kind in ("apply", "short", "match", "blank", "scenario", "choice"):

@@ -1,4 +1,5 @@
-/data/
+/data/*
+!/data/math_curriculum_zh-Hant.json
 __pycache__/
 .streamlit/secrets.toml
 tests/e2e/results/

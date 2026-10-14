@@ -176,8 +176,11 @@ def test_a_lesson_not_passed_continues_the_next_day_on_the_same_record(public_ap
     assert f"from {D:%b} {D.day}" in text and f"passed on {nxt:%b} {nxt.day}" in text
     # search: the lesson is found once, on the day it was written
     flows.button(p, "Search", exact=False)
-    box = page.get_by_placeholder("Lessons, subjects, books, your notes…")
+    box = page.get_by_placeholder("Lessons, goals, review cards, books, your notes…")
     box.fill("rotation")
     box.press("Enter")
     flows.idle(page)
-    assert flows.wait_text(page, "1 result", 5)
+    assert flows.wait_text(page, "result", 5)
+    titles = page.evaluate("() => [...document.querySelectorAll('.sr .sr-t')].map(e => e.innerText.trim())")
+    lessons = [t for t in titles if t.startswith("Lesson 1:")]
+    assert len(lessons) == 1, f"the lesson once (search also finds cards and lessons to come): {titles}"

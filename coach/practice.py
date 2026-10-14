@@ -282,14 +282,17 @@ def based_label(where: str) -> str:
 # --------------------------------------------------------------- the quiz
 def quiz_context(log: dict, topic: str, slot: dict, today: date, goal: dict = None) -> dict:
     """What a lesson's quiz is told besides the lesson: her goal (for the
-    question applying it to her life) and the earlier idea of this subject
-    she knows least, if any (one question on it, from an earlier lesson)."""
+    question applying it to her life), the earlier idea of this subject
+    she knows least, if any (one question on it, from an earlier lesson),
+    and the questions on this lesson she reported as wrong or unclear."""
     out = {}
     if goal:
         out["goal"] = (goal.get("goal") or goal.get("title") or "") + (f" (why: {goal['why']})" if goal.get("why") else "")
         aim = catalog.goal_objective(topic, slot["n"])
         if aim:
             out["objective"] = aim
+    if slot.get("reported"):          # questions on this lesson she reported (wrong, unclear...)
+        out["reported"] = list(slot["reported"])[-5:]
     weak = [w for w in mastery.weakest(log, today, limit=1, topic=topic, before=slot["n"])
             if w[2]["level"] == "learning" or w[2]["fading"]]
     if weak:

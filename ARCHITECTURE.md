@@ -13,8 +13,8 @@ the model.
 | Pages (UI) | `views/*.py` | draw one page from the session's data; call domain functions; save through `coach.ui` | talk to Supabase or Groq directly; compute progress |
 | UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py`, `weekview.py`, `report_ui.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
 | Config | `clock.py`, `appconfig.py` | the one clock (the learner's timezone, today, now) and the one way to read a setting | depend on Streamlit's UI or on any other module |
-| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `directions.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py`, `unitcheck.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
-| AI | `llm.py`, `quizgen.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
+| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `directions.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py`, `unitcheck.py`, `mathcourse.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
+| AI | `llm.py`, `quizgen.py`, `quizprep.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
 | Data | `storage.py` (file store and Supabase store), `supa_auth.py`, `auth.py`, `session_cookie.py`, `routes.py` | read/write entries, books, settings, usage; sign-in, sessions, invites | trust anything the browser sends without the signed-in user's token |
 | Schema | `supabase/*.sql` | tables, row-level security, the usage function | be changed without the owner's approval |
 
@@ -169,6 +169,7 @@ Goals & Settings and the Record's week tab.
 | Knowledge Map | `skills.py` (/skills) | what she knows, idea by idea |
 | Review, Practice | `review.py`, `practice.py` | review and practice (quizzes live in each lesson) |
 | Unit check | `unit.py` (/unit, not in the Menu) | a finished unit's check, from the course map and Home |
+| Math Curriculum | `math.py` (/math; Menu → Learn, and Courses → To browse) | the math curriculum from zero to research, to browse: phases, units, prerequisites, sources |
 | Learning Record | `records.py` (/records) | her history; its second tab is her week in review (`coach/weekview.py`) |
 | Account | `account.py` (/account) | who she is, her plan as it is, her data, admin and test tools |
 
@@ -240,6 +241,23 @@ outline's reply may be a little longer (`tokens.PATH_MAX_TOKENS` 3400).
   how many people met each, and the busiest days (`ai_health_summary`, never
   who). Read it before inviting more people: many "busy" means the AI plan
   is too small. Not in ApiStore (ADR 0008).
+- *Math curriculum* (`data/math_curriculum_zh-Hant.json`, `coach/mathcourse.py`,
+  `views/math.py` at /math, ISS-106): a curriculum to browse, not one of
+  her courses (it isn't scheduled, quizzed or counted). The file is the one
+  source: 8 phases (L0–L7), each unit with its summary, learning outcomes,
+  practice focus, prerequisite ids and source ids; the sources list (title,
+  organization, link, coverage) and how they may be used. `mathcourse`
+  reads it once and answers the page (units by id, a unit's prerequisites,
+  the units that need it, its sources); `mathcourse.check()` holds the file
+  together (every prerequisite and source named exists, ids unique, no
+  loop) and runs with the unit tests. The page: each phase an expander
+  (its id, title, level, how many units); opened, its goal and its units;
+  a prerequisite is a link that opens its phase and brings that unit into
+  view (`?unit=L4-03`, so it can be shared); sources open in a new tab; all
+  the sources, the scope note and the terms of use close the page. Its
+  words are the file's (Traditional Chinese); the page's own labels are
+  the site's English. No AI call, nothing stored. To change the
+  curriculum, edit the file: the tests say if a link is broken.
 - *Unit check* (`coach/unitcheck.py`, `views/unit.py` at /unit, ISS-099):
   once every lesson of a unit is passed, ten questions from that unit's
   lessons (each lesson's quiz, its practice bank, the questions she missed;
@@ -304,6 +322,44 @@ three widths.
 searches for what it teaches (`lesson_view.check_links`, `check_query`). Diagram nodes get
 readable labels (`lesson_view.humane`); one box or a tangle is left out.
 The quiz checker reads the lesson (`quiz.check_request(questions, lesson)`).
+
+**What a lesson shows** (`lesson_view.sections`, ISS-102): a section with
+nothing in it is never a card (a "Disclaimer" heading once its line became
+the footnote), a section that is only a disclaimer or notice is a footnote
+(one disclaimer, never two), and the Topic section (the title again) is
+shown only as the lesson's level, small above it. The stored text is
+unchanged: the quiz, search and history read it as before.
+
+**A quiz ready when she wants it** (`coach/quizprep.py`, ISS-101): writing
+and checking a quiz is several calls in a row (`quizgen.make`), and the
+per-minute token allowance often makes the first wait for the lesson's own
+call to age out: over a minute after "Take the quiz". So the same work starts
+in a background thread as soon as the lesson is on Home (and again after a
+quiz she didn't pass), with her session's Streamlit context (her allowance,
+her store). "Take the quiz" takes the prepared, checked questions at once,
+waits only for what is left ("Finishing your quiz…"), or writes one as before
+if nothing was prepared or it failed. One job per session, lesson and
+attempt, handed out once, kept for 3 hours. Nothing about what is asked or
+checked changes; the only extra cost is a quiz prepared for a lesson opened
+and left. Measured with a slow model (8 s a call, one question rewritten):
+pressed at once 31.6 s, after 45 s of reading 0.4 s
+(`tests/e2e/test_quiz_wait.py`). Off with `GNOSIS_QUIZ_PREP=0` (the unit
+tests; the browser tests run with it on).
+
+**Quiz quality** (ISS-103): the writer and the checker are both told a
+keyed answer may never go against a rule, number or definition the lesson
+gives, no two questions may test the same point, and no fact that holds in
+one country only (a law, an agency, an insurance or tax scheme) unless the
+question names the country (the checker sends back any that breaks one).
+Plain repeats are also caught in code at no cost (`quiz.alike`: two
+questions of one kind with nearly all the same words, or the same right
+answer to much the same question; words in half the quiz or more don't
+count; `quiz.distinct` keeps the first) and the missing one is asked for.
+Only plain repeats: a choice and an explain-it question on one idea are two
+ways to test it. A question she reports is remembered with its lesson
+(`slot["reported"]`, at most 10, via `review.drop_question`), and that
+lesson's next quiz is told not to ask it again and to avoid what made it
+wrong (`practice.quiz_context` → `quiz._context`).
 
 ## Coming back (Phase 2)
 

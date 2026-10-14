@@ -978,6 +978,31 @@ PROGRESS = """
 .wk-subject ul, .wk-review { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; font-size: 0.9375rem; line-height: 1.45; color: var(--label); }
 .wk-review li span { display: block; }
 .wk-review li small { font-size: 0.8125rem; color: var(--label-2); }
+/* the math curriculum (views/math.py): units as quiet blocks on hairlines inside each phase */
+.st-key-mc_phases { gap: var(--space-2) !important; margin-top: var(--space-5); }
+[class*="st-key-mc_u_"] { padding: var(--space-4) 0 var(--space-3); border-top: 1px solid var(--rule); }
+[class*="st-key-mc_u_"][class*="_here"] { border-top-color: var(--label); }
+.mc-t { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.4; color: var(--label); display: flex; gap: var(--space-3); align-items: baseline; }
+.mc-t span { flex: 0 0 auto; font-size: 0.8125rem; font-weight: 400; color: var(--label-3); font-variant-numeric: tabular-nums; }
+.mc-sum { margin: var(--space-1) 0 0; font-size: 0.9375rem; line-height: 1.55; color: var(--label-2); max-width: 44rem; }
+.mc-k { margin: var(--space-3) 0 2px; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label-3); }
+.mc-v { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--label-2); max-width: 44rem; }
+.mc-list { margin: 0 !important; padding-left: 1.1rem !important; display: grid; gap: 2px; font-size: 0.875rem; line-height: 1.5; color: var(--label); }
+.mc-list li { margin: 0 !important; }
+[class*="st-key-mc_pre_"] { margin-top: var(--space-3); flex-wrap: wrap; row-gap: 0 !important; column-gap: var(--space-3) !important; }
+[class*="st-key-mc_pre_"] .mc-k { margin: 0; }
+[class*="st-key-mc_pre_"] .mc-v { margin: 0; }
+[class*="st-key-mc_pre_"] [data-testid="stElementContainer"]:has(.mc-k, .mc-v) { flex: 0 1 auto; width: auto !important; }
+[class*="st-key-mc_pre_"] .stButton button { min-height: 32px; padding: 0 !important; text-align: left; }
+[class*="st-key-mc_pre_"] .stButton button p { font-size: 0.875rem; text-decoration: underline; text-underline-offset: 0.2em; text-decoration-color: var(--label-3); }
+.mc-src a { color: var(--label) !important; }
+@media (pointer: coarse) {        /* a link big enough to tap */
+  .mc-src a, .st-key-mc_sources .set-goal a { display: inline-flex; align-items: center; min-height: 44px; }
+}
+.st-key-mc_sources { margin-top: var(--space-6); }
+.st-key-mc_sources .set-goal a { color: var(--label); }
+.mc-use { margin-top: var(--space-2); }
+.stMainBlockContainer:has(#math-page) { max-width: 880px; }
 .cm-journey { margin: 0 0 var(--space-4); font-size: 0.875rem; line-height: 1.55; color: var(--label-2); max-width: 44rem; }
 .ms-list { margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 0.9375rem; line-height: 1.45; color: var(--label); }
 .prog-rest { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--label-2); }
@@ -1743,6 +1768,7 @@ SETUP = """
 [class*="st-key-setgoal_"] > :first-child { flex: 1 1 14rem; min-width: 0; }
 .set-goal { margin: 0; display: grid; gap: 2px; font-size: 0.9375rem; line-height: 1.4; color: var(--label); }
 /* a lesson of her goal: what she'll be able to do by its end */
+.l-level { margin: 0 0 var(--space-2); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label-3); }
 .lesson-aim { margin: -4px 0 var(--space-3); display: grid; gap: 2px; font-size: 0.9375rem; line-height: 1.5; color: var(--label); }
 .lesson-aim span { font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--label-3); }
 /* Insights: the latest reported problems */
@@ -2349,7 +2375,12 @@ EDITORIAL = """
 @media (hover: hover) {
   .stButton button[kind="primary"]:not(:disabled):hover, .stFormSubmitButton button[kind="primaryFormSubmit"]:not(:disabled):hover { background: var(--label) !important; }
 }
-.stButton button[kind="primary"]:disabled { background: transparent !important; border: 1px solid var(--rule) !important; color: var(--label-3) !important; }
+/* a main button not ready yet (Send before a reason, Check before every answer): a clear grey
+   button with its words, never an empty outline (its words kept the ink's white before: ISS-104) */
+.stButton button[kind="primary"]:disabled, .stFormSubmitButton button:disabled {
+  background: var(--surface) !important; border: 1px solid var(--rule) !important; color: var(--label-3) !important; }
+.stButton button[kind="primary"]:disabled :is(p, span, div), .stFormSubmitButton button:disabled :is(p, span, div) {
+  color: var(--label-3) !important; }
 
 /* ---------- links that are buttons (tertiary): words on the text's edge,
    a hairline under them that inks in under the hand (not the words drawn

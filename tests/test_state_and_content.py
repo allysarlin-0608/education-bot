@@ -169,7 +169,8 @@ def test_a_paused_goal_can_be_removed_and_its_lessons_stay(monkeypatch, tmp_path
     at = app(monkeypatch, tmp_path, subjects=("philosophy",), paths=[goal], history=False)
     loads(at, "views/settings.py")
     at.button(key=f"setgoal_remove_{goal['id']}").click().run()
-    assert "stay in your Learning Record" in texts(at)
+    t = texts(at)
+    assert "Nothing is deleted" in t and "The 0 lessons" not in t, "no lesson passed yet: nothing said about none"
     at.button(key=f"setgoal_remove_cancel_{goal['id']}").click().run()
     assert not has(at, f"setgoal_remove_go_{goal['id']}"), "cancelled: nothing changed"
     at.button(key=f"setgoal_remove_{goal['id']}").click().run()

@@ -83,7 +83,7 @@ def test_the_menu_reaches_every_part_and_shows_nothing_unbuilt(public_app, pages
     assert "Subscription" not in t, "no plan while plans aren't shown"
     for soon in ("Knowledge Exploration", "Examinations", "Research", "Certificates", "not available yet"):
         assert soon not in t, f"{soon}: nothing unbuilt is shown"
-    assert "Reading Plan · off" in t, "no reading plan: the menu says where to turn it on"
+    assert "Reading Plan · off, set it up" in t, "no reading plan: the menu leads to where it is set up"
 
 
 @pytest.mark.parametrize("path,marker", [("/records", "Backup and restore"), ("/settings", "Daily pace"),

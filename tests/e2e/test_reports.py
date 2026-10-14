@@ -41,6 +41,13 @@ def test_an_ai_too_busy_is_counted_and_an_admin_sees_it(public_app, pages):
     try again, and an admin sees under Insights → AI waits how often (never who)."""
     app = public_app
     app.set_llm()
+    q = pages(width=1440)
+    flows.admin_sign_in(q, app)
+    if flows.wait_text(q.page, "Get started", 3):
+        flows.onboard(q)
+    flows.open_app(q, app, "/account")
+    assert flows.wait_text(q.page, "AI waits", 20)
+    before = busy_count(q)                    # (other tests on this server may have met a busy AI too)
     p = pages(width=1440)
     email = f"busy-{int(time.time() * 1000)}@example.com"
     flows.sign_in(p, app, email=email)
@@ -50,12 +57,15 @@ def test_an_ai_too_busy_is_counted_and_an_admin_sees_it(public_app, pages):
     flows.button(p, "Start this lesson", wait=False)
     assert flows.wait_text(p.page, "busy", 60)
     app.set_llm()
-    q = pages(width=1440)
-    flows.admin_sign_in(q, app)
-    if flows.wait_text(q.page, "Get started", 3):
-        flows.onboard(q)
     flows.open_app(q, app, "/account")
     assert flows.wait_text(q.page, "AI waits", 20)
     part = text(q).split("AI waits")[1]
-    assert "Too busy: told to try again" in part and "1 person met it" in part, part[:400]
+    assert "Too busy: told to try again" in part and busy_count(q) >= before + 1, part[:400]
     assert email not in part, "never who"
+
+
+def busy_count(q):
+    """How many people met a busy AI, as Insights says."""
+    import re
+    m = re.search(r"(\d+) (?:person|people) met it\. Many", text(q))     # ("Nobody met it": 0)
+    return int(m.group(1)) if m else 0

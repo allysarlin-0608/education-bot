@@ -296,6 +296,9 @@ def _extras(mine: dict, stored: dict) -> dict:
                 seen.add(quiz.same_as(q))
                 bank.append(q)
         out["bank"] = bank[-BANK_MAX:]
+    said = list(dict.fromkeys((stored.get("reported") or []) + (mine.get("reported") or [])))
+    if said:
+        out["reported"] = said[-10:]
     from coach import unitcheck
     checked = unitcheck.merge(mine.get("unit_check"), stored.get("unit_check"))
     if checked:
@@ -378,13 +381,17 @@ def parse_slots(data) -> list:
         explained = practice.parse_explain(s.get("explain"))
         if explained:                                # her last explanation of it, and the coach's reply
             slots[-1]["explain"] = explained
+        if isinstance(s.get("reported"), list):     # questions she reported (review.drop_question)
+            said = [str(x)[:300] for x in s["reported"] if isinstance(x, str) and x.strip()]
+            if said:
+                slots[-1]["reported"] = said[-10:]
         from coach import unitcheck
         checked = unitcheck.parse(s.get("unit_check"))
         if checked:                                  # the unit check, on a unit's last lesson
             slots[-1]["unit_check"] = checked
         if slots[-1].get("from"):                   # a link holds no content of its own
             slots[-1].update(kickoff="", lesson="", followups=[], quiz=None)
-            for field in ("cards", "removed", "ev", "bank", "explain", "unit_check"):
+            for field in ("cards", "removed", "ev", "bank", "explain", "unit_check", "reported"):
                 slots[-1].pop(field, None)
     return slots
 

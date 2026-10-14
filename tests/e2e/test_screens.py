@@ -381,3 +381,66 @@ def test_unit_check_screens(public_app, pages, width, scheme):
     app.set_clock(None)
     (SHOTS / f"problems_unit_{tag}.json").write_text(json.dumps(problems, indent=1))
     assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+@pytest.mark.parametrize("width", list(SIZES))
+def test_round_five_screens(public_app, pages, width, scheme):
+    """The fifth round's fixes: a lesson's top (its level, no Topic card) and
+    end (no empty section; the disclaimer a footnote), the report menu with
+    Send not ready yet, and the reading switch the Menu leads to."""
+    app = public_app
+    app.set_llm()
+    problems = {}
+    tag = f"{width}_{scheme}"
+    p = pages(width=width, height=SIZES[width], scheme=scheme)
+    flows.sign_in(p, app, email=f"r5{next(_n)}-{int(time.time() * 1000)}@example.com")
+    flows.onboard(p, subjects=("Philosophy",))
+    flows.start_lesson(p)
+    p.page.locator(".st-key-current_lesson, [class*='st-key-lcard_']").first.scroll_into_view_if_needed()
+    shot(p, f"80_lesson_top_{tag}", problems)
+    flows.tap(p, p.page.locator('[class*="st-key-rep_lesson_"] button').first)
+    flows.idle(p.page)
+    shot(p, f"81_report_menu_{tag}", problems)
+    send = p.page.get_by_test_id("stPopoverBody").get_by_role("button", name="Send", exact=True)
+    assert send.is_disabled() and send.inner_text().strip() == "Send", "Send reads as a button before a reason"
+    p.page.keyboard.press("Escape")
+    flows.open_app(p, app, "/settings?open=reading")
+    p.page.wait_for_timeout(1200)
+    shot(p, f"82_reading_switch_{tag}", problems)
+    (SHOTS / f"problems_r5_{tag}.json").write_text(json.dumps(problems, indent=1))
+    assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+@pytest.mark.parametrize("width", list(SIZES))
+def test_math_curriculum_screens(public_app, pages, width, scheme):
+    """The math curriculum (views/math.py): the phases folded, one opened with
+    its units, a prerequisite pressed opens its unit in another phase, and
+    the sources at the end; reached from the Menu."""
+    app = public_app
+    problems = {}
+    tag = f"{width}_{scheme}"
+    p = pages(width=width, height=SIZES[width], scheme=scheme)
+    flows.sign_in(p, app, email=f"mc{next(_n)}-{int(time.time() * 1000)}@example.com")
+    flows.onboard(p, subjects=("Philosophy",))
+    flows.tap(p, p.page.locator(".st-key-site_menu button").first)
+    flows.tap(p, p.page.get_by_role("link", name="Math Curriculum"))
+    assert flows.wait_text(p.page, "從零到數學研究前沿", 20)
+    flows.idle(p.page)
+    shot(p, f"90_math_phases_{tag}", problems)
+    flows.tap(p, p.page.get_by_text("L4 · 大學基礎數學", exact=False).first)
+    flows.idle(p.page)
+    p.page.locator(".st-key-mc_u_L4_02").scroll_into_view_if_needed()
+    shot(p, f"91_math_unit_{tag}", problems)
+    assert p.page.locator(".st-key-mc_u_L4_02 a[target=_blank]").count() >= 1, "its sources open in a new tab"
+    flows.tap(p, p.page.locator(".st-key-mc_go_L4-02_L4-03 button:visible").first)
+    flows.idle(p.page)
+    p.page.wait_for_timeout(900)
+    assert "unit=L4-03" in p.page.url
+    assert p.page.locator('[class*="st-key-mc_u_L4_03_here"]').is_visible(), "the prerequisite is open and in view"
+    shot(p, f"92_math_prerequisite_{tag}", problems)
+    p.page.locator(".st-key-mc_sources").scroll_into_view_if_needed()
+    shot(p, f"93_math_sources_{tag}", problems)
+    (SHOTS / f"problems_math_{tag}.json").write_text(json.dumps(problems, indent=1))
+    assert not {k: v for k, v in problems.items() if "sideways" in v or "under" in v or "overlap" in v}, problems

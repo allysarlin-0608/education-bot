@@ -7,6 +7,7 @@ import pytest
 
 os.environ.setdefault("GNOSIS_RAISE_ERRORS", "1")      # a page's error reaches the test, not the calm page (ui.calm_failure)
 os.environ.setdefault("STREAMLIT_CLIENT_SHOW_ERROR_DETAILS", "full")    # (visitors see none: .streamlit/config.toml)
+os.environ.setdefault("GNOSIS_QUIZ_PREP", "0")         # no quiz written in the background (tests/test_quizprep.py turns it on)
 
 
 def pytest_ignore_collect(collection_path, config):

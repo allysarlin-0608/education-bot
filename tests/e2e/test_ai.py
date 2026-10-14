@@ -7,6 +7,15 @@ import pytest
 import flows
 from conftest import covers
 
+
+@pytest.fixture(autouse=True)
+def _quiz_written_on_the_press(public_app):
+    """These tests are about what "Take the quiz" itself does (its calls, its
+    failures, its button), so the quiz isn't also written in the background
+    while the lesson is read (that is tests/e2e/test_quiz_wait.py's)."""
+    public_app.quiz_prep(False)
+    yield
+
 _n = itertools.count()
 
 

@@ -40,7 +40,7 @@ def test_odd_input_everywhere(public_app, pages, width):
     flows.button(p, "Save my thoughts")
     assert flows.wait_text(page, "Saved.", 10)
     flows.button(p, "Search", exact=False)
-    q = page.get_by_placeholder("Lessons, subjects, books, your notes…")
+    q = page.get_by_placeholder("Lessons, goals, review cards, books, your notes…")
     for query in ("🌍", "<script>alert(1)</script>", "轉", LONG[:500]):
         q.fill(query)
         q.press("Enter")

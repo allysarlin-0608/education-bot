@@ -97,10 +97,18 @@ PAIRS = [["Axis", "The line Earth spins around"], ["Rotation", "One spin a day"]
 STEPS = ["Taipei turns toward the Sun", "The Sun rises in Taipei", "Taipei turns away: night falls"]
 
 
+# different questions, as a real quiz has (the app leaves out plain repeats: quiz.alike)
+CHOICES = ("Why does Earth have day and night?", "What makes the Sun seem to rise each morning?",
+           "Why is one side of the planet dark while the other is light?", "What would stop sunsets from happening?",
+           "Which motion gives a place its daytime hours?", "What turns your city away from sunlight at dusk?",
+           "Why do sunrise times move around the world from east to west?")
+SCENARIOS = ("Mia in Taipei watches the sky darken in the evening.", "Leo in London sees the Sun come up over the river.")
+
+
 def _quiz(inject: bool, old: bool = False, recall: bool = False) -> dict:
     extra = f" {INJECT}" if inject else ""
     if old:
-        qs = [{"type": "choice", "question": f"Why does Earth have day and night? ({k + 1}){extra}",
+        qs = [{"type": "choice", "question": f"{CHOICES[k]}{extra}",
                "options": OPTIONS, "answer": 0, "why": "Earth's spin turns each place toward and away from the Sun."}
               for k in range(7)]
         qs.append({"type": "match", "question": "Match each term to its meaning.", "pairs": PAIRS,
@@ -109,12 +117,12 @@ def _quiz(inject: bool, old: bool = False, recall: bool = False) -> dict:
                for q in ("Explain in your own words why we have day and night.",
                          "Why does the Sun seem to rise in the east?")]
         return {"questions": qs}
-    qs = [{"type": "choice", "question": f"Why does Earth have day and night? ({k + 1}){extra}", "options": OPTIONS,
+    qs = [{"type": "choice", "question": f"{CHOICES[k]}{extra}", "options": OPTIONS,
            "answer": 0, "notes": NOTES, "why": "Earth's spin turns each place toward and away from the Sun."}
           for k in range(3)]
-    qs += [{"type": "scenario", "scenario": f"Mia in Taipei watches the sky darken in the evening ({k + 1}).{extra}",
-            "question": "What causes what she sees?", "options": OPTIONS, "answer": 0, "notes": NOTES,
-            "why": "Her side of Earth is turning away from the Sun."} for k in range(2)]
+    qs += [{"type": "scenario", "scenario": f"{SCENARIOS[k]}{extra}",
+            "question": "What causes what they see?", "options": OPTIONS, "answer": 0, "notes": NOTES,
+            "why": "Their side of Earth is turning toward or away from the Sun."} for k in range(2)]
     qs.append({"type": "blank", "question": f"Earth spins on its ____ once a day.{extra}", "answer": "axis",
                "accept": ["own axis"], "why": "The axis is the line it spins around."})
     qs.append({"type": "order", "question": f"Put a day in Taipei in order.{extra}", "steps": STEPS,
@@ -175,6 +183,9 @@ def _reply(kind: str, messages: list, ctl: dict) -> str:
             same = [q for q in full if q["type"] == kind_] or [q for q in full if q["type"] == "choice"]
             made = [dict(same[j % len(same)], question=f"Again ({j + 1}): {same[j % len(same)]['question']}")
                     for j in range(n)]
+            if kind_ == "scenario":           # a new situation, as a real model writes (not a copy: quiz.alike)
+                made = [dict(q, scenario=f"Sam in Sydney waits before dawn for first light, morning {j + 1}.")
+                        for j, q in enumerate(made)]
             if kind_ == "choice" and made:
                 made[0] = {"type": "choice", "question": "Which way does Earth spin?",
                            "options": ["West to east", "East to west", "North to south", "It doesn't"],

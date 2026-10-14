@@ -63,3 +63,18 @@ def test_no_stray_mark_for_a_page_the_phone_bar_leaves_out(public_app, pages, pa
     shown = p.page.evaluate("""() => { const m = document.querySelector('.st-key-topnav_items > .cx-pill');
       return m ? getComputedStyle(m).opacity : '0'; }""")
     assert float(shown) == 0, "the travelling mark bows out (its page isn't in the phone's bar)"
+
+
+def test_reading_plan_off_opens_its_switch(public_app, pages):
+    """No reading plan yet: the Menu's Reading Plan item lands on the switch
+    that turns it on (it once went to the top of Goals & Settings)."""
+    p = person(public_app, pages, 390, 844)
+    flows.open_menu(p)
+    p.page.locator(".st-key-site_menu_list").get_by_role("link", name="Reading Plan · off, set it up").click()
+    flows.idle(p.page)
+    assert "/settings" in p.page.url and "open=" not in p.page.url
+    p.page.wait_for_timeout(1200)
+    switch = p.page.get_by_text("Add a 14-day reading plan")
+    box = switch.bounding_box()
+    assert box and 0 <= box["y"] <= 844, f"the switch is on screen: {box}"
+    assert flows.wait_text(p.page, "split over 14 days")

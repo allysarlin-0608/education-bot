@@ -103,7 +103,8 @@ def test_review_the_next_day(public_app, pages, clock, width):
         flows.button(p, nxt)
         flows.idle(page)
     assert flows.wait_text(page, "All reviewed for today", 10)
-    assert app.calls() == [], "reviews make no model calls"
+    assert [c for c in app.calls() if not c["kind"].startswith("quiz")] == [], \
+        "reviews make no model calls (a lesson's quiz being prepared in the background aside)"
     reviewed = cards_of(app, email)
     assert all(c["last"] == (D + timedelta(days=1)).isoformat() for c in reviewed)
     assert sum(c["box"] == 0 for c in reviewed) >= 1 and sum(c["box"] == 1 for c in reviewed) >= 1

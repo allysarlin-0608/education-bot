@@ -199,12 +199,8 @@ with st.container(key="set_sec_goals"):
             # the same pattern as every confirmation: what happens, then the two choices
             cards_ = sum(1 for e, _, c in review.cards(st.session_state.coach_log) if e["topic"] == g["id"])
             with st.container(key=f"setgoal_confirm_{g['id']}"):
-                st.html(f'<p class="del-warn" role="alert">Remove “{escape(g["title"])}”? It leaves your days and '
-                        f'this list. The {p["done"]} {"lesson" if p["done"] == 1 else "lessons"} you passed stay in your '
-                        "Learning Record"
-                        + (f"; its {cards_} review {'card stops' if cards_ == 1 else 'cards stop'} coming up"
-                           if cards_ else "")
-                        + ". Nothing is deleted: you can bring it back later.</p>")
+                st.html(f'<p class="del-warn" role="alert">Remove “{escape(g["title"])}”? '
+                        f'{escape(paths.removal_note(p["done"], cards_))}</p>')
                 with st.container(key=f"setgoal_confirm_btns_{g['id']}", horizontal=True):
                     st.button("Remove goal", key=f"setgoal_remove_go_{g['id']}", type="primary",
                               on_click=remove_goal, args=(g["id"],))
@@ -337,9 +333,18 @@ with st.container(key="set_sec_reminders"):
     if st.session_state.get("coach_prefs_error"):
         st.html(f'<p class="ob-note">{escape(st.session_state.coach_prefs_error)}</p>')
 
-# ---------- Reading ----------
-with st.container(key="set_sec_reading"):
+# ---------- Reading (the Menu's "Reading Plan · off" opens here: ?open=reading) ----------
+asked_reading = st.query_params.get("open") == "reading"
+with st.container(key="set_sec_reading" + ("_asked" if asked_reading else "")):
+    st.html('<div id="set-reading" class="jump-anchor"></div>')
     st.markdown("#### Reading")
+    st.html('<p class="ob-note">A book of your choice, split over 14 days: read each day\'s chapters, then tell '
+            "the coach about them and it checks they sank in. Its page, Reading, appears in the bar once it's on.</p>")
     with st.container(key="ob_toggle"):
         st.toggle("Add a 14-day reading plan", value=config["reading_enabled"], key="set_reading",
                   on_change=set_reading)
+if asked_reading:
+    del st.query_params["open"]
+    st.html('<script>setTimeout(() => { const e = window.parent.document.getElementById("set-reading");'
+            ' if (e) e.scrollIntoView({behavior: "smooth", block: "start"}); }, 250);</script>',
+            unsafe_allow_javascript=True)

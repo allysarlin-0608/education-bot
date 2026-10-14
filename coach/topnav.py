@@ -28,7 +28,7 @@ ICONS = {"Review": ":material/replay:", "Reading Plan": ":material/menu_book:", 
 # is learning, and what comes next in each), Goals & Settings (what she learns
 # and which day it comes on), Learning Record (her history, and her week).
 SECTIONS = (
-    ("Learn", (("Home", "Home"), ("Courses", "Courses"),
+    ("Learn", (("Home", "Home"), ("Courses", "Courses"), ("Math Curriculum", "Math Curriculum"),
                ("Reading Plan", "Reading Plan"), ("Knowledge Map", "Knowledge Map"), ("Knowledge Exploration", None))),
     ("Practice", (("Review", "Review"), ("Practice", "Practice"), ("Examinations", None))),
     ("Progress", (("Learning Record", "Learning Record"), ("Certificates", None))),
@@ -88,7 +88,9 @@ def menu(pages: list, here: str = None) -> None:
                     elif page is not None:
                         st.page_link(page, label=label)
                     elif title == "Reading Plan" and "Goals & Settings" in by_title:
-                        st.page_link(by_title["Goals & Settings"], label="Reading Plan · off: turn it on in Goals & Settings")
+                        # straight to its switch (Goals & Settings → Reading), not the top of that page
+                        st.page_link(by_title["Goals & Settings"], label="Reading Plan · off, set it up",
+                                     query_params={"open": "reading"})
                     else:
                         st.html(f'<p class="mn-soon">{_e(label)}<small>{NOT_YET}</small></p>')
 

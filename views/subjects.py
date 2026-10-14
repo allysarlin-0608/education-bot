@@ -2,12 +2,13 @@
 and goals first, each with how far she is, the lesson that comes next, and
 the way to its course map and its world; then the rest of our subjects, each with its course map, and the
 way to add it (in Goals & Settings, where what she learns is chosen). Nothing
-here changes her settings. No AI call: course maps show titles only."""
+here changes her settings. No AI call: course maps show titles only. Last, what
+there is to browse: the math curriculum (views/math.py)."""
 from html import escape
 
 import streamlit as st
 
-from coach import catalog, course, settings, ui, visuals
+from coach import catalog, course, mathcourse, settings, ui, visuals
 
 log = st.session_state.coach_log
 config = ui.config()
@@ -62,3 +63,14 @@ if rest and settings.builtin_offered(config, log):         # (new learners: thei
         st.markdown("#### More subjects")
         for t in rest:
             course_row(t, "more", False)
+
+with st.container(key="set_sec_reference"):        # a curriculum to browse, not one of her courses
+    st.markdown("#### To browse")
+    c = mathcourse.counts()
+    with st.container(key="sc_ref_math"):
+        st.html(f'<p class="set-goal"><span>Math, from zero to research</span><b>{c["phases"]} phases · '
+                f'{c["units"]} units</b></p><p class="ob-note">A curriculum in Traditional Chinese: each unit with '
+                "what it covers, what you'll be able to do, what to practise, what to learn first and where "
+                "the material comes from.</p>")
+        if st.button("Open the curriculum", key="sc_math", type="tertiary"):
+            st.switch_page("views/math.py")

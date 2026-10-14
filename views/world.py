@@ -106,8 +106,8 @@ pct = round(100 * unit["done"] / unit["total"]) if unit and unit["total"] else 0
 section("where", "Where you are",
         f'<p class="w-big">{escape(unit["unit"]) if unit else ""}</p>'
         f'<div class="w-line" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{pct}"><i style="width:{pct}%"></i></div>'
-        f'<p class="w-small">{unit["done"] if unit else 0} of {unit["total"] if unit else 0} lessons in this topic · '
-        f'{p["done"]:,} of {p["written"]:,} written so far · {escape(level)}</p>')
+        f'<p class="w-small">' + (f'{unit["done"]} of {unit["total"]} lessons in this topic · ' if unit else "")
+        + f'{p["done"]:,} of {p["written"]:,} written so far · {escape(level)}</p>')
 if upcoming:
     section("next", "Next lessons", "<ol class=\"w-list\">" + "".join(
         f'<li><span class="n">{n}</span><span>{escape(curriculum.lesson(topic, n)["title"])}</span></li>'

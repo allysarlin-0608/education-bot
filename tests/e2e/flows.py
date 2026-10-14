@@ -293,29 +293,26 @@ def choose(p, box, text):
     if p.width < TOUCH_W:
         opt = page.get_by_role("option", name=text, exact=True).first
         listbox = page.get_by_role("listbox")
-        for attempt in range(4):        # (ISS-055: in the test browser's touch emulation a list can close
-            # again at once; another tap opens it. Open on a real iPhone.) Never tapped while a list
-            # is open: near the bottom of a phone screen the list opens over the box, and the tap
-            # would pick whatever option lies there (then taken, and not offered where it belongs).
-            if listbox.count() and listbox.first.is_visible():
-                page.keyboard.press("Escape")
-                page.wait_for_timeout(200)
-            box.locator("input").first.tap()
-            page.wait_for_timeout(300 + 300 * attempt)
+        inp = box.locator("input").first
+        # (ISS-055: in the test browser's touch emulation a list can close again at once, or open
+        # slowly; another tap opens it. Open on a real iPhone.) The box is never tapped while a
+        # list is open: near the bottom of a phone screen a list opens over the box, and the tap
+        # would pick whatever option lies there (then taken, and not offered where it belongs).
+        for attempt in range(6):
+            if inp.input_value() == text:              # it took (perhaps a moment after the tap)
+                return
             try:
                 if opt.is_visible():
                     opt.tap(timeout=3000)
                     idle(page)
-                    if box.locator("input").first.input_value() == text:      # it took: the box shows it
-                        return
+                    continue
             except PlaywrightTimeout:   # it closed between seen and tapped: open it again
                 pass
-        page.keyboard.press("Escape")             # still closing on its own: choose it as a keyboard user would
-        inp = box.locator("input").first
-        inp.focus()
-        page.keyboard.type(text)
-        page.get_by_role("option", name=text, exact=True).first.wait_for(timeout=5000)
-        page.keyboard.press("Enter")
+            if listbox.count() and listbox.first.is_visible():
+                page.keyboard.press("Escape")          # another list, or ours without the option: closed first
+                page.wait_for_timeout(200)
+            inp.tap()
+            page.wait_for_timeout(300 + 200 * attempt)
     else:
         inp = box.locator("input").first
         inp.click()

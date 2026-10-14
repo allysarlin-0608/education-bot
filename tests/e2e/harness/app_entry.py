@@ -3,7 +3,8 @@ with only two things replaced, both read from the test's state directory:
 
 - the Groq client (fake_groq.py): no real model, no cost; failures on demand;
 - the clock: today's date and "now" come from clock.json when it exists, so
-  tests can move through days and across midnight.
+  tests can move through days and across midnight;
+- (and the quiz written while she reads can be turned off: prep_off.)
 
 Run by conftest.py as `streamlit run tests/e2e/harness/app_entry.py`.
 Secrets come from the environment (E2E_SECRETS as JSON), never from a file.
@@ -66,6 +67,11 @@ def install() -> None:
         return real_now()
     clock.today, clock.now_iso, clock.now = fake_today, fake_now_iso, fake_now
     llm.get_client = lambda: fake_groq.FakeGroq() if st.session_state.get("api_key") else None
+    # a test of what happens the moment "Take the quiz" is pressed turns the
+    # quiz written while she reads off (App.quiz_prep(False): a prep_off file)
+    from coach import quizprep
+    real_enabled = quizprep.enabled
+    quizprep.enabled = lambda: real_enabled() and not (STATE / "prep_off").exists()
     llm._sleep = lambda s: time.sleep(min(float(s), 0.05))       # backoff runs, just fast
 
 

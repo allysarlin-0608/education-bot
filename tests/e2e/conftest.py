@@ -78,7 +78,8 @@ class App:
                    STREAMLIT_CLIENT_SHOW_ERROR_DETAILS="full", GNOSIS_RAISE_ERRORS="1",
                    # one server here serves many people's lessons a minute; the
                    # per-minute pacing itself is tested in tests/test_llm.py
-                   GROQ_TPM_LIMIT="10000000")
+                   GROQ_TPM_LIMIT="10000000",
+                   GNOSIS_QUIZ_PREP="1")      # the quiz written while she reads, as on the real site
         secrets = {"GROQ_API_KEY": "fake-key-for-tests"}
         if mode == "api":                  # the public site on our own backend (step M2), sign-in still as public
             self._start_api(env)
@@ -147,6 +148,15 @@ class App:
         return rows
 
     # ---- control
+    def quiz_prep(self, on: bool):
+        """The quiz written while she reads (coach/quizprep.py): on, as on the
+        real site, or off for a test of what pressing "Take the quiz" does
+        itself (back on before every test: _quiz_prep_on)."""
+        if on:
+            (self.state / "prep_off").unlink(missing_ok=True)
+        else:
+            (self.state / "prep_off").write_text("1")
+
     def set_llm(self, **ctl):
         (self.state / "llm.json").write_text(json.dumps(ctl))
         (self.state / "flagged_once").unlink(missing_ok=True)
@@ -342,6 +352,14 @@ def pages(browser, request):
             _record("console_errors", {"test": request.node.nodeid, "errors": errors})
         p.close()
     assert not problems, problems
+
+
+@pytest.fixture(autouse=True)
+def _quiz_prep_on():
+    """Every test starts with the quiz written while she reads (as on the real site)."""
+    for d in (RESULTS / "state").glob("*"):
+        (d / "prep_off").unlink(missing_ok=True)
+    yield
 
 
 @pytest.fixture(autouse=True)

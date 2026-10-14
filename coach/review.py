@@ -88,9 +88,16 @@ def question_card_id(topic: str, n: int, question: str) -> str:
     return _id("question", str(topic), str(n), question)
 
 
+REPORTED_KEPT = 10          # reported questions remembered per lesson (for its next quiz)
+
+
 def drop_question(slot: dict, topic: str, question: str) -> None:
-    """A question she reported: its card goes, and none is made from it again."""
+    """A question she reported: its card goes, and none is made from it again;
+    and it is remembered with the lesson, so the lesson's next quiz is told
+    not to ask it that way again (practice.quiz_context)."""
     remove(slot, question_card_id(topic, slot["n"], question))
+    said = [x for x in slot.get("reported") or [] if x != question]
+    slot["reported"] = (said + [str(question)[:300]])[-REPORTED_KEPT:]
 
 
 def add_missed(slot: dict, q: dict, today: date, topic: str) -> int:

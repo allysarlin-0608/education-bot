@@ -182,7 +182,7 @@ def test_search(public_app, learner):
     xs = []
     for k in range(N):
         page.get_by_role("button", name="Search").first.click()
-        box = page.get_by_placeholder("Lessons, subjects, books, your notes…")
+        box = page.get_by_placeholder("Lessons, goals, review cards, books, your notes…")
         box.wait_for()
         box.fill(["seed", "key idea", "philosophy", "grows"][k % 4])
         t0 = time.time()

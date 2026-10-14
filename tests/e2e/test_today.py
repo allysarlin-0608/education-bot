@@ -85,6 +85,7 @@ def test_a_whole_day(mode, pages, request):
 def test_a_failed_quiz_shows_what_was_missed_and_a_new_set(public_app, pages):
     covers("W-daily-see_what_you_missed", "W-daily-take_the_quiz_if_q_is_none_else_try_a_ne")
     app = public_app
+    app.quiz_prep(False)                    # the new set written on the press, counted below
     p, email = fresh(app, pages)
     flows.start_lesson(p)
     flows.take_quiz(p, correct=False)

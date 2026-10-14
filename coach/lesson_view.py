@@ -97,6 +97,40 @@ def blocks(text: str) -> list:
     return out
 
 
+# A section that is the lesson's title again (its level is kept, shown small),
+# and one that is only a disclaimer (shown as the footnote it is, never as a card).
+TOPIC_BLOCK = re.compile(r"^(?:topic|今日主題)$", re.IGNORECASE)
+NOTICE_BLOCK = re.compile(r"disclaimer|免責|notice", re.IGNORECASE)
+LEVEL = re.compile(r"\b(Beginner|Intermediate|Advanced)\b|(入門|中階|進階)")
+
+
+def sections(text: str) -> tuple:
+    """What a lesson shows: ([(heading, body)] with a body worth a card,
+    its level from the Topic block, [footnote lines]). The disclaimer and the
+    closing line are footnotes; a section left with nothing in it (a
+    "Disclaimer" heading once its line is a footnote) isn't shown at all."""
+    footer = []
+    for line in (core.DISCLAIMER, core.CLOSING_LINE):
+        if line in text:
+            text = text.replace(line, "")
+            footer.append(line)
+    level, out = "", []
+    for heading, body in blocks(text.strip()):
+        clean = body.strip().strip("*_- \n")
+        if TOPIC_BLOCK.match(heading):
+            m = LEVEL.search(body)
+            level = (m.group(1) or core.LEGACY_LEVELS.get(m.group(2), "")) if m else ""
+            continue
+        if heading and NOTICE_BLOCK.search(heading):
+            said = core.has_disclaimer(clean) and any(core.has_disclaimer(f) for f in footer)
+            if clean and not said:                     # (one disclaimer, never two)
+                footer.insert(0, " ".join(clean.split()))
+            continue
+        if clean:
+            out.append((heading, body))
+    return out, level, footer
+
+
 def _body(text: str, dark: bool) -> None:
     for kind, content in split(text):
         if kind == "md":
@@ -151,17 +185,13 @@ def render(text: str, topic: str = None, key: str = "", title: str = "") -> None
     text = unsourced(text)
     if topic and topic != "investing" and core.has_disclaimer(text):
         text = core.DISCLAIMER_LINE.sub("", text)      # saved before the disclaimer was investing-only
-    # the closing line and a disclaimer read as a footnote, not part of the last card
-    footer = []
-    for line in (core.DISCLAIMER, core.CLOSING_LINE):
-        if line in text:
-            text = text.replace(line, "")
-            footer.append(line)
+    parts, level, footer = sections(text)
+    if level:
+        st.html(f'<p class="l-level">{escape(level)}</p>')
     tag = hashlib.md5(f"{key}|{text}".encode()).hexdigest()[:10]
-    for k, (heading, body) in enumerate(blocks(text.strip())):
+    for k, (heading, body) in enumerate(parts):
         if not heading:
-            if body.strip():
-                _body(body, dark)
+            _body(body, dark)
             continue
         with st.container(key=f"lcard_{tag}_{k}"):
             st.html(f'<div class="lcard-title">{escape(heading)}</div>')
@@ -172,17 +202,15 @@ def render(text: str, topic: str = None, key: str = "", title: str = "") -> None
 
 
 def render_tabs(text: str, topic: str = None, key: str = "", title: str = "") -> None:
-    """The same lesson, one section at a time: a tab per block (Topic, Key
-    Idea, ...), so reading an old lesson takes the height of one card, not
+    """The same lesson, one section at a time: a tab per block (Key Idea,
+    Deep Dive, ...), so reading an old lesson takes the height of one card, not
     the whole lesson. Switching tabs doesn't rerun the page."""
     dark = getattr(getattr(st.context, "theme", None), "type", "dark") != "light"
     text = unsourced(text)
     if topic and topic != "investing" and core.has_disclaimer(text):
         text = core.DISCLAIMER_LINE.sub("", text)
-    footer = [line for line in (core.DISCLAIMER, core.CLOSING_LINE) if line in text]
-    for line in footer:
-        text = text.replace(line, "")
-    parts = [(heading or "Intro", body) for heading, body in blocks(text.strip()) if heading or body.strip()]
+    found, _, footer = sections(text)
+    parts = [(heading or "Intro", body) for heading, body in found]
     if not parts:
         return
     for (heading, body), tab in zip(parts, st.tabs([heading for heading, _ in parts])):

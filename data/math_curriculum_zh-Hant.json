@@ -1,0 +1,1394 @@
+{
+  "schema_version": "1.0.0",
+  "id": "math-zero-to-research-zh-hant",
+  "title": "從零到數學研究前沿：循序漸進課綱",
+  "language": "zh-Hant",
+  "description": "無固定期限的數學學習路線，從算術與中學數學延伸至大學核心、研究所專業方向及研究訓練。各進階分支可依先備條件選修或交叉學習。",
+  "scope_note": "本資料是可供網站呈現與課程規劃的課綱資料，含單元摘要、可觀察學習目標、先修關係、練習方向及來源索引；不是外部教材全文，也不宣稱任何單一數學分支是客觀的最終難度排名。逐課教案、完整講義與題庫可依此結構另行擴充。",
+  "progression_policy": "採精熟進階：完成單元概念、計算／應用練習及必要證明檢核後，再進入依賴該單元的內容。研究所及研究方向非線性，請依各單元 prerequisites 組成個人路徑。",
+  "fields": {
+    "learning_outcomes": "完成後可觀察或檢核的能力。",
+    "prerequisites": "先修單元 ID；空陣列表示無列明先修。",
+    "sources": "引用 sources 登錄表的來源 ID。",
+    "practice_focus": "建議練習類型，網站可用來生成題型標籤。"
+  },
+  "phases": [
+    {
+      "id": "L0",
+      "title": "數字與基本運算",
+      "level": "入門",
+      "goal": "熟練基本數量、運算與估算，建立後續學習所需的數感。",
+      "units": [
+        {
+          "id": "L0-01",
+          "title": "數字、位值與數線",
+          "summary": "認識自然數、整數、小數與數線位置。",
+          "learning_outcomes": [
+            "讀寫常見數字並比較大小",
+            "用位值解釋數字表示法",
+            "在數線標示數值"
+          ],
+          "prerequisites": [],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L0-02",
+          "title": "四則運算與運算順序",
+          "summary": "理解加減乘除及括號、乘除先於加減的慣例。",
+          "learning_outcomes": [
+            "正確計算四則混合式",
+            "用括號表達計算順序",
+            "以估算檢查答案"
+          ],
+          "prerequisites": [],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L0-03",
+          "title": "倍數、因數與質數",
+          "summary": "用整除、倍數、因數及質數描述整數結構。",
+          "learning_outcomes": [
+            "判定整除與質數",
+            "求最大公因數及最小公倍數",
+            "分解質因數"
+          ],
+          "prerequisites": [],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L0-04",
+          "title": "分數",
+          "summary": "理解分數作為部分、比值及除法結果。",
+          "learning_outcomes": [
+            "約分與通分",
+            "進行分數四則運算",
+            "解讀分數應用題"
+          ],
+          "prerequisites": [
+            "L0-01",
+            "L0-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L0-05",
+          "title": "小數、百分比與估算",
+          "summary": "連結分數、小數、百分比及近似值。",
+          "learning_outcomes": [
+            "轉換分數、小數與百分比",
+            "估算數值並說明精確度",
+            "解決折扣、稅率等問題"
+          ],
+          "prerequisites": [
+            "L0-04"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L0-06",
+          "title": "比、比例與單位換算",
+          "summary": "以比例描述兩個量之間的關係。",
+          "learning_outcomes": [
+            "化簡比與解比例",
+            "處理單位率及比例縮放",
+            "進行常見單位換算"
+          ],
+          "prerequisites": [
+            "L0-05"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L0-07",
+          "title": "負數與絕對值",
+          "summary": "將有方向的量表示在數線上。",
+          "learning_outcomes": [
+            "比較正負數",
+            "計算有理數四則運算",
+            "用絕對值描述距離"
+          ],
+          "prerequisites": [
+            "L0-01",
+            "L0-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L0-08",
+          "title": "次方、平方根與科學記號",
+          "summary": "表示重複乘法及數量級。",
+          "learning_outcomes": [
+            "使用整數指數規則",
+            "求常見平方根",
+            "將極大或極小數寫成科學記號"
+          ],
+          "prerequisites": [
+            "L0-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L0-09",
+          "title": "心算、筆算與合理性檢查",
+          "summary": "選擇適合的計算策略並檢查結果。",
+          "learning_outcomes": [
+            "使用估算和逆運算驗算",
+            "辨識常見計算錯誤",
+            "選擇精確或近似答案"
+          ],
+          "prerequisites": [],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L1",
+      "title": "初等代數與幾何",
+      "level": "基礎",
+      "goal": "將數量關係寫成代數式和方程，並建立平面與立體幾何觀念。",
+      "units": [
+        {
+          "id": "L1-01",
+          "title": "代數符號與代數式",
+          "summary": "以變數表示未知量或可變數量。",
+          "learning_outcomes": [
+            "辨認變數、係數與常數項",
+            "化簡同類項",
+            "將文字敘述翻成代數式"
+          ],
+          "prerequisites": [
+            "L0-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L1-02",
+          "title": "一次方程式與不等式",
+          "summary": "利用等量及大小關係求未知數範圍。",
+          "learning_outcomes": [
+            "解一元一次方程式",
+            "解簡單不等式並畫數線",
+            "用方程表示生活問題"
+          ],
+          "prerequisites": [
+            "L1-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L1-03",
+          "title": "比例、速率與應用題",
+          "summary": "使用單位率與比例模型處理情境問題。",
+          "learning_outcomes": [
+            "計算速度、單價及工作率",
+            "設定未知數並建立模型",
+            "檢查答案單位與情境合理性"
+          ],
+          "prerequisites": [
+            "L0-06",
+            "L1-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L1-04",
+          "title": "座標平面與直線",
+          "summary": "用有序數對和直線描述位置與關係。",
+          "learning_outcomes": [
+            "標示及讀取座標",
+            "由表格或圖形辨認線性關係",
+            "理解斜率的直觀意義"
+          ],
+          "prerequisites": [
+            "L1-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L1-05",
+          "title": "多項式與因式分解",
+          "summary": "運算多項式並將其拆解為因式。",
+          "learning_outcomes": [
+            "加減乘多項式",
+            "使用常見乘法公式",
+            "提公因式及分組因式分解"
+          ],
+          "prerequisites": [
+            "L1-01",
+            "L0-08"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L1-06",
+          "title": "二元一次方程組",
+          "summary": "以代入或消去法找出共同解。",
+          "learning_outcomes": [
+            "用代入法和消去法解方程組",
+            "用圖形解讀交點",
+            "建立並解決雙未知數應用題"
+          ],
+          "prerequisites": [
+            "L1-02",
+            "L1-04"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L1-07",
+          "title": "根式與平方根",
+          "summary": "運算含根號的數並理解平方根。",
+          "learning_outcomes": [
+            "化簡常見根式",
+            "進行根式基本運算",
+            "解簡單含平方的方程式"
+          ],
+          "prerequisites": [
+            "L0-08",
+            "L1-05"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L1-08",
+          "title": "角、線與三角形",
+          "summary": "研究角度、平行垂直關係及三角形性質。",
+          "learning_outcomes": [
+            "使用角度關係求未知角",
+            "套用三角形內角和",
+            "辨認全等條件"
+          ],
+          "prerequisites": [
+            "L0-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L1-09",
+          "title": "多邊形、周長與面積",
+          "summary": "計算常見平面圖形的邊界與面積。",
+          "learning_outcomes": [
+            "計算多邊形周長與面積",
+            "拆分複合圖形",
+            "使用適當面積單位"
+          ],
+          "prerequisites": [
+            "L1-08"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L1-10",
+          "title": "體積、表面積與相似",
+          "summary": "量化立體物件並使用比例縮放。",
+          "learning_outcomes": [
+            "計算柱體、錐體與球體的基本量",
+            "使用相似比推算長度與面積",
+            "使用勾股定理求直角三角形邊長"
+          ],
+          "prerequisites": [
+            "L0-06",
+            "L1-09"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L2",
+      "title": "中學核心數學",
+      "level": "中階",
+      "goal": "掌握函數、三角、機率與證明的中學核心工具。",
+      "units": [
+        {
+          "id": "L2-01",
+          "title": "函數與圖形",
+          "summary": "以輸入輸出規則描述變數關係。",
+          "learning_outcomes": [
+            "辨認函數與非函數",
+            "求定義域和值域",
+            "由式、表、圖互相轉換"
+          ],
+          "prerequisites": [
+            "L1-04"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L2-02",
+          "title": "線性函數與斜率",
+          "summary": "研究一次函數的變化率與圖形。",
+          "learning_outcomes": [
+            "計算斜率及截距",
+            "建立直線方程",
+            "解讀線性模型的參數"
+          ],
+          "prerequisites": [
+            "L2-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L2-03",
+          "title": "二次函數與方程式",
+          "summary": "理解拋物線及二次方程根。",
+          "learning_outcomes": [
+            "以因式分解、配方法或公式解方程",
+            "辨認頂點、對稱軸與截距",
+            "建構簡單二次模型"
+          ],
+          "prerequisites": [
+            "L1-05",
+            "L2-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L2-04",
+          "title": "多項式與有理函數",
+          "summary": "分析高次多項式及分式函數。",
+          "learning_outcomes": [
+            "求零點並分析因式",
+            "進行多項式除法",
+            "辨認有理函數的定義限制"
+          ],
+          "prerequisites": [
+            "L1-05",
+            "L2-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L2-05",
+          "title": "指數與對數函數",
+          "summary": "描述倍增、衰減及反向求指數的關係。",
+          "learning_outcomes": [
+            "套用指數律與對數律",
+            "解簡單指數與對數方程",
+            "以圖形比較增長速度"
+          ],
+          "prerequisites": [
+            "L0-08",
+            "L2-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_algebra"
+          ]
+        },
+        {
+          "id": "L2-06",
+          "title": "數列與級數",
+          "summary": "研究依規則排列的數及有限和。",
+          "learning_outcomes": [
+            "辨認遞迴與通項表示",
+            "求等差及等比數列通項",
+            "計算有限等差與等比級數"
+          ],
+          "prerequisites": [
+            "L1-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L2-07",
+          "title": "三角比與單位圓",
+          "summary": "連結角度、三角形邊長及週期函數。",
+          "learning_outcomes": [
+            "使用正弦、餘弦、正切解直角三角形",
+            "理解弧度與單位圓",
+            "繪製基本三角函數圖形"
+          ],
+          "prerequisites": [
+            "L1-10",
+            "L2-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_algebra"
+          ]
+        },
+        {
+          "id": "L2-08",
+          "title": "向量與解析幾何",
+          "summary": "以座標和向量描述幾何位置及圓錐曲線。",
+          "learning_outcomes": [
+            "進行向量加法、縮放及內積",
+            "求直線與圓的方程",
+            "辨識拋物線、橢圓與雙曲線"
+          ],
+          "prerequisites": [
+            "L1-04",
+            "L1-07"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L2-09",
+          "title": "計數、排列組合與機率",
+          "summary": "計算有限事件的可能結果與機率。",
+          "learning_outcomes": [
+            "使用加法與乘法計數原理",
+            "計算排列與組合",
+            "求簡單事件及條件機率"
+          ],
+          "prerequisites": [
+            "L0-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L2-10",
+          "title": "統計入門",
+          "summary": "用摘要量與圖表描述資料。",
+          "learning_outcomes": [
+            "計算平均數、中位數、四分位數及標準差的直觀量",
+            "辨讀圖表及分布",
+            "區分相關與因果的初步概念"
+          ],
+          "prerequisites": [
+            "L0-05"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L2-11",
+          "title": "複數入門",
+          "summary": "擴充實數以表示負數的平方根。",
+          "learning_outcomes": [
+            "使用虛數單位i",
+            "進行複數四則運算",
+            "在複平面表示複數"
+          ],
+          "prerequisites": [
+            "L0-08",
+            "L1-05"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        },
+        {
+          "id": "L2-12",
+          "title": "邏輯、集合與數學歸納法入門",
+          "summary": "以集合和邏輯語句整理數學敘述。",
+          "learning_outcomes": [
+            "使用集合符號及運算",
+            "辨認命題與條件句",
+            "理解歸納法的起始步驟與遞推步驟"
+          ],
+          "prerequisites": [
+            "L1-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_k12"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L3",
+      "title": "大學預備：證明與數學語言",
+      "level": "進階預備",
+      "goal": "從計算導向過渡到定義、推理與嚴謹論證。",
+      "units": [
+        {
+          "id": "L3-01",
+          "title": "集合、映射與關係",
+          "summary": "以集合、函數、關係和等價類描述結構。",
+          "learning_outcomes": [
+            "使用集合運算與笛卡兒積",
+            "判斷映射的單射滿射雙射",
+            "建立等價關係及等價類"
+          ],
+          "prerequisites": [
+            "L2-12"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L3-02",
+          "title": "命題邏輯與量詞",
+          "summary": "分析數學語句的真值、否定與量化。",
+          "learning_outcomes": [
+            "運用且、或、若則及當且僅當",
+            "正確否定全稱與存在命題",
+            "將自然語句轉成邏輯形式"
+          ],
+          "prerequisites": [
+            "L2-12"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L3-03",
+          "title": "證明方法",
+          "summary": "學習直接證明、反證、逆否及反例。",
+          "learning_outcomes": [
+            "選擇適當證明策略",
+            "建構清楚的分步論證",
+            "用反例否定全稱主張"
+          ],
+          "prerequisites": [
+            "L3-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L3-04",
+          "title": "歸納法與遞迴",
+          "summary": "以基礎情形和歸納步驟證明整數命題。",
+          "learning_outcomes": [
+            "完成弱歸納法證明",
+            "理解強歸納法",
+            "定義遞迴數列並分析"
+          ],
+          "prerequisites": [
+            "L3-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L3-05",
+          "title": "向量、矩陣與線性系統",
+          "summary": "建立線性代數的計算及幾何直觀。",
+          "learning_outcomes": [
+            "解線性方程組",
+            "計算矩陣乘法與反矩陣",
+            "解讀線性變換及向量幾何"
+          ],
+          "prerequisites": [
+            "L2-08"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_math_major"
+          ]
+        },
+        {
+          "id": "L3-06",
+          "title": "極限與微積分直觀",
+          "summary": "以變化率與累積量理解微積分。",
+          "learning_outcomes": [
+            "解釋極限、導數與積分的直觀意義",
+            "辨認連續與瞬時變化",
+            "連結面積累積及反導函數"
+          ],
+          "prerequisites": [
+            "L2-01",
+            "L2-07"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_calculus"
+          ]
+        },
+        {
+          "id": "L3-07",
+          "title": "離散結構與演算法思維",
+          "summary": "用遞迴、圖及有限結構表示問題。",
+          "learning_outcomes": [
+            "閱讀簡單遞迴定義",
+            "辨認圖的頂點與邊",
+            "描述演算法步驟及基本效率"
+          ],
+          "prerequisites": [
+            "L2-09"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L4",
+      "title": "大學基礎數學",
+      "level": "大學基礎",
+      "goal": "建立純數學、應用數學和研究進階課程共同需要的基礎。",
+      "units": [
+        {
+          "id": "L4-01",
+          "title": "單變數微積分",
+          "summary": "研究極限、微分、積分、級數及應用。",
+          "learning_outcomes": [
+            "使用極限定義連續性",
+            "計算導數並分析變化",
+            "運用定積分與微積分基本定理",
+            "判斷基本級數收斂性"
+          ],
+          "prerequisites": [
+            "L3-06"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_calculus"
+          ]
+        },
+        {
+          "id": "L4-02",
+          "title": "多變數與向量微積分",
+          "summary": "將微積分推廣到多維空間。",
+          "learning_outcomes": [
+            "計算偏導數與多重積分",
+            "使用梯度及方向導數",
+            "理解線積分、曲面積分與基本定理"
+          ],
+          "prerequisites": [
+            "L4-01",
+            "L4-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "openstax_calculus"
+          ]
+        },
+        {
+          "id": "L4-03",
+          "title": "線性代數",
+          "summary": "研究向量空間、線性映射及矩陣結構。",
+          "learning_outcomes": [
+            "找基底與維度",
+            "分析特徵值、特徵向量及對角化",
+            "理解正交投影與最小平方"
+          ],
+          "prerequisites": [
+            "L3-05"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_math_major"
+          ]
+        },
+        {
+          "id": "L4-04",
+          "title": "常微分方程",
+          "summary": "用微分方程描述變化中的系統。",
+          "learning_outcomes": [
+            "求可分離及一階線性方程解",
+            "解常係數線性方程",
+            "解讀初值問題與穩定性基本概念"
+          ],
+          "prerequisites": [
+            "L4-01",
+            "L4-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_math_major"
+          ]
+        },
+        {
+          "id": "L4-05",
+          "title": "離散數學與圖論",
+          "summary": "研究有限、可數結構及其證明方法。",
+          "learning_outcomes": [
+            "分析圖、樹與網路",
+            "使用遞迴及生成函數入門",
+            "證明基本計數與圖論結果"
+          ],
+          "prerequisites": [
+            "L3-03",
+            "L3-04"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L4-06",
+          "title": "組合數學",
+          "summary": "計數、排列結構與極值問題的入門。",
+          "learning_outcomes": [
+            "運用雙射、容斥與鴿籠原理",
+            "推導遞迴關係",
+            "處理基本組合恆等式"
+          ],
+          "prerequisites": [
+            "L4-05"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L4-07",
+          "title": "機率論與統計",
+          "summary": "以機率模型描述不確定性並從資料推論。",
+          "learning_outcomes": [
+            "使用隨機變數與常見分布",
+            "計算期望與變異數",
+            "理解抽樣、估計與檢定基本概念"
+          ],
+          "prerequisites": [
+            "L2-09",
+            "L2-10",
+            "L3-05"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_math_major"
+          ]
+        },
+        {
+          "id": "L4-08",
+          "title": "數值分析與計算數學",
+          "summary": "研究近似解、誤差及數值穩定性。",
+          "learning_outcomes": [
+            "估計浮點與截斷誤差",
+            "使用數值方法解方程及積分",
+            "比較演算法收斂與穩定性"
+          ],
+          "prerequisites": [
+            "L4-01",
+            "L4-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L4-09",
+          "title": "最佳化入門",
+          "summary": "在限制條件下尋找最佳解。",
+          "learning_outcomes": [
+            "建立目標函數及限制式",
+            "求解基本線性規劃問題",
+            "使用梯度理解無限制最佳化"
+          ],
+          "prerequisites": [
+            "L4-01",
+            "L4-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L5",
+      "title": "純數學核心",
+      "level": "大學高年級",
+      "goal": "掌握抽象數學主要基礎，能閱讀證明型教材。",
+      "units": [
+        {
+          "id": "L5-01",
+          "title": "實分析",
+          "summary": "以嚴謹方式建立實數、極限、連續、微分與積分理論。",
+          "learning_outcomes": [
+            "運用完備性與序列收斂",
+            "證明連續函數基本性質",
+            "理解一致收斂及函數列入門"
+          ],
+          "prerequisites": [
+            "L3-03",
+            "L4-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L5-02",
+          "title": "抽象代數",
+          "summary": "研究群、環、域及其同態。",
+          "learning_outcomes": [
+            "辨認群、子群及商群",
+            "運用同態定理",
+            "理解環、理想與域擴張入門"
+          ],
+          "prerequisites": [
+            "L3-03",
+            "L4-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L5-03",
+          "title": "拓樸學",
+          "summary": "以開集及連續映射研究空間性質。",
+          "learning_outcomes": [
+            "使用拓樸空間、基底與連續定義",
+            "判斷緊緻與連通性",
+            "理解基本群概念"
+          ],
+          "prerequisites": [
+            "L5-01",
+            "L4-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L5-04",
+          "title": "複分析",
+          "summary": "研究複變解析函數及其積分理論。",
+          "learning_outcomes": [
+            "使用柯西積分定理及公式",
+            "計算留數與圍道積分",
+            "理解解析函數的剛性"
+          ],
+          "prerequisites": [
+            "L5-01",
+            "L2-11"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L5-05",
+          "title": "初等數論與代數數論入門",
+          "summary": "研究整數、同餘、素數及代數數系統。",
+          "learning_outcomes": [
+            "使用同餘與中國剩餘定理",
+            "理解二次互反律陳述",
+            "認識代數整數及理想的動機"
+          ],
+          "prerequisites": [
+            "L3-03",
+            "L5-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L5-06",
+          "title": "測度論與勒貝格積分",
+          "summary": "將長度、測度和積分推廣到廣泛函數類。",
+          "learning_outcomes": [
+            "理解測度與可測函數",
+            "掌握收斂定理的適用條件",
+            "比較黎曼與勒貝格積分"
+          ],
+          "prerequisites": [
+            "L5-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L5-07",
+          "title": "泛函分析",
+          "summary": "研究賦範空間、希爾伯特空間及線性算子。",
+          "learning_outcomes": [
+            "分析巴拿赫及希爾伯特空間基本性質",
+            "研究有界線性算子",
+            "理解譜理論基本概念"
+          ],
+          "prerequisites": [
+            "L5-01",
+            "L4-03",
+            "L5-06"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L5-08",
+          "title": "微分幾何",
+          "summary": "使用微積分與線性代數研究曲線、曲面和流形。",
+          "learning_outcomes": [
+            "描述切空間與微分形式入門",
+            "計算曲率及測地線例子",
+            "理解斯托克斯定理的幾何意義"
+          ],
+          "prerequisites": [
+            "L4-02",
+            "L4-03",
+            "L5-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L5-09",
+          "title": "代數幾何入門",
+          "summary": "以多項式方程研究幾何空間。",
+          "learning_outcomes": [
+            "連結代數簇與理想",
+            "理解仿射空間及射影空間基本例子",
+            "閱讀基本代數幾何語言"
+          ],
+          "prerequisites": [
+            "L5-02",
+            "L5-03",
+            "L5-05"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L5-10",
+          "title": "數理邏輯與集合論",
+          "summary": "研究形式語言、公理系統、模型及無窮集合。",
+          "learning_outcomes": [
+            "區分語法與語意",
+            "理解可證性與完備性問題",
+            "使用基數及序數基本概念"
+          ],
+          "prerequisites": [
+            "L3-02",
+            "L3-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L6",
+      "title": "高階專業方向",
+      "level": "研究所核心／專業選修",
+      "goal": "沿選定方向取得深入工具；各路線可交叉，並非單一路徑。",
+      "units": [
+        {
+          "id": "L6-01",
+          "title": "偏微分方程與調和分析",
+          "summary": "研究多變數微分方程及頻率分解工具。",
+          "learning_outcomes": [
+            "分類基本線性偏微分方程",
+            "理解弱解與正則性問題",
+            "使用傅立葉分析處理典型方程"
+          ],
+          "prerequisites": [
+            "L5-01",
+            "L5-06",
+            "L5-07",
+            "L4-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L6-02",
+          "title": "動力系統與遍歷理論",
+          "summary": "研究反覆演化系統的長期行為。",
+          "learning_outcomes": [
+            "分析固定點及週期軌道",
+            "理解穩定性與混沌範例",
+            "接觸不變測度及遍歷概念"
+          ],
+          "prerequisites": [
+            "L5-01",
+            "L4-04",
+            "L4-07"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_roadmaps"
+          ]
+        },
+        {
+          "id": "L6-03",
+          "title": "表示論與李理論",
+          "summary": "以線性變換研究群及其對稱性。",
+          "learning_outcomes": [
+            "表示群及李代數基本概念",
+            "分解有限維表示的基本例子",
+            "連結對稱性與幾何／物理模型"
+          ],
+          "prerequisites": [
+            "L5-02",
+            "L4-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L6-04",
+          "title": "代數數論與算術幾何",
+          "summary": "使用代數、幾何方法研究整數解及數域。",
+          "learning_outcomes": [
+            "分析數域與整數環",
+            "理解理想類群及局部化概念",
+            "閱讀橢圓曲線基本算術"
+          ],
+          "prerequisites": [
+            "L5-02",
+            "L5-05",
+            "L5-09"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_roadmaps"
+          ]
+        },
+        {
+          "id": "L6-05",
+          "title": "代數拓樸",
+          "summary": "以代數不變量辨識拓樸空間。",
+          "learning_outcomes": [
+            "計算基本群及覆蓋空間例子",
+            "理解同調群與鏈複形",
+            "連結代數不變量與幾何問題"
+          ],
+          "prerequisites": [
+            "L5-02",
+            "L5-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L6-06",
+          "title": "機率、隨機過程與隨機分析",
+          "summary": "研究隨機演化及其連續時間模型。",
+          "learning_outcomes": [
+            "建構馬可夫鏈及隨機過程",
+            "理解鞅與布朗運動基礎",
+            "認識伊藤積分與隨機微分方程的用途"
+          ],
+          "prerequisites": [
+            "L4-07",
+            "L5-06",
+            "L5-07"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L6-07",
+          "title": "極值組合與圖論進階",
+          "summary": "研究有限結構的最大最小及分類問題。",
+          "learning_outcomes": [
+            "使用概率法及雙計數",
+            "分析極值圖論問題",
+            "理解代數組合方法的例子"
+          ],
+          "prerequisites": [
+            "L4-05",
+            "L4-06",
+            "L5-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L6-08",
+          "title": "最佳化、資訊理論與計算複雜度",
+          "summary": "研究可計算問題、資訊量及高效演算法。",
+          "learning_outcomes": [
+            "分析凸性與對偶性",
+            "理解熵及編碼基本定理",
+            "區分P、NP等複雜度類的意義"
+          ],
+          "prerequisites": [
+            "L4-03",
+            "L4-07",
+            "L4-09"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L6-09",
+          "title": "數學物理與幾何分析",
+          "summary": "運用幾何和分析研究物理模型。",
+          "learning_outcomes": [
+            "建立典型變分及場方程模型",
+            "理解曲率與分析的互動",
+            "讀懂跨領域數學論證"
+          ],
+          "prerequisites": [
+            "L5-07",
+            "L5-08",
+            "L6-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_roadmaps"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L7",
+      "title": "研究前沿與未解問題",
+      "level": "研究訓練",
+      "goal": "從熟悉一個專門領域走向能理解並參與原創研究。",
+      "units": [
+        {
+          "id": "L7-01",
+          "title": "論文閱讀與研究地圖",
+          "summary": "定位定理、先備結果及現行研究問題。",
+          "learning_outcomes": [
+            "追蹤定理引用與研究脈絡",
+            "辨識論文的假設、結論及方法",
+            "整理領域概念圖與閱讀筆記"
+          ],
+          "prerequisites": [
+            "L6-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_roadmaps"
+          ]
+        },
+        {
+          "id": "L7-02",
+          "title": "證明重建與可重現性",
+          "summary": "獨立重現論證、計算或例子並檢查細節。",
+          "learning_outcomes": [
+            "補足省略步驟並檢查假設",
+            "重做論文中的例子或計算",
+            "明確記錄可驗證的推導"
+          ],
+          "prerequisites": [
+            "L7-01"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        },
+        {
+          "id": "L7-03",
+          "title": "形成可研究的小問題",
+          "summary": "由已知結果辨認可處理的子問題。",
+          "learning_outcomes": [
+            "界定問題與已知邊界",
+            "比較多種可能方法",
+            "提出能被驗證或反駁的猜想"
+          ],
+          "prerequisites": [
+            "L7-01",
+            "L7-02"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_roadmaps"
+          ]
+        },
+        {
+          "id": "L7-04",
+          "title": "未解問題案例研究",
+          "summary": "以公開研究問題認識前沿數學的尺度與方法。",
+          "learning_outcomes": [
+            "說明問題所在分支及必要背景",
+            "區分已證結果、猜想與未解部分",
+            "避免把未經同行檢查的主張當成證明"
+          ],
+          "prerequisites": [
+            "L6-01",
+            "L6-04",
+            "L6-08"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "clay_millennium"
+          ]
+        },
+        {
+          "id": "L7-05",
+          "title": "研究寫作與同行檢查",
+          "summary": "清楚撰寫定義、證明、例子與限制。",
+          "learning_outcomes": [
+            "撰寫可追蹤的完整證明",
+            "提供反例或邊界情況",
+            "根據專業回饋修訂論證"
+          ],
+          "prerequisites": [
+            "L7-02",
+            "L7-03"
+          ],
+          "practice_focus": "概念題、計算題、應用題與錯誤檢查。",
+          "sources": [
+            "mit_subjects"
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "openstax_k12",
+      "title": "OpenStax K–12 Math",
+      "organization": "OpenStax, Rice University",
+      "url": "https://openstax.org/k12/math",
+      "coverage": "校級數學與 Algebra 1；供基礎代數及中學銜接參考。",
+      "type": "free textbook/curriculum"
+    },
+    {
+      "id": "openstax_algebra",
+      "title": "College Algebra 2e",
+      "organization": "OpenStax, Rice University",
+      "url": "https://openstax.org/books/college-algebra-2e/pages/1-introduction-to-prerequisites",
+      "coverage": "代數、函數、多項式、指數對數、三角等大學預備內容。",
+      "type": "free textbook"
+    },
+    {
+      "id": "openstax_calculus",
+      "title": "Calculus Volumes 1–3",
+      "organization": "OpenStax, Rice University",
+      "url": "https://openstax.org/details/books/calculus-volume-1",
+      "coverage": "單變數微積分、多變數微積分、向量微積分及相關內容。",
+      "type": "free textbook"
+    },
+    {
+      "id": "mit_math_major",
+      "title": "MIT Mathematics Major Curriculum",
+      "organization": "MIT Department of Mathematics",
+      "url": "https://math.mit.edu/academics/undergrad/major/course18/index.html",
+      "coverage": "大學數學核心：微分方程、線性代數、分析、機率統計與進階選修。",
+      "type": "curriculum reference"
+    },
+    {
+      "id": "mit_subjects",
+      "title": "MIT Mathematics Subjects Overview",
+      "organization": "MIT Department of Mathematics",
+      "url": "https://math.mit.edu/academics/undergrad/subjects/",
+      "coverage": "分析、離散數學、應用數學、理論計算機科學、邏輯、機率統計、代數數論、拓樸幾何等領域。",
+      "type": "course catalog"
+    },
+    {
+      "id": "mit_roadmaps",
+      "title": "MIT Math Major Roadmaps",
+      "organization": "MIT Department of Mathematics",
+      "url": "https://math.mit.edu/academics/undergrad/roadmaps.html",
+      "coverage": "依分析、代數、幾何等專業方向呈現先修與進階課程路線。",
+      "type": "curriculum reference"
+    },
+    {
+      "id": "clay_millennium",
+      "title": "Millennium Prize Problems",
+      "organization": "Clay Mathematics Institute",
+      "url": "https://www.claymath.org/millennium-problems/",
+      "coverage": "研究前沿與著名未解問題範例；不是入門課程教材。",
+      "type": "research frontier reference"
+    }
+  ],
+  "attribution_and_use": "來源登錄表用於說明課綱編排參考及提供延伸教材入口。連結外部教材時請遵循各來源網站的授權條款；不得因本課綱列出來源而將其教材全文視為可自由複製。"
+}

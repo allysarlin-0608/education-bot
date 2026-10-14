@@ -64,8 +64,10 @@ skills_page = st.Page("views/skills.py", title="Knowledge Map", url_path="skills
 practice_page = st.Page("views/practice.py", title="Practice", url_path="practice")
 # a unit's check, once its lessons are passed (the course map, and Home when a unit is just finished)
 unit_page = st.Page("views/unit.py", title="Unit check", url_path="unit")
+# the math curriculum, from zero to research, to browse (the Menu, and Courses)
+math_page = st.Page("views/math.py", title="Math Curriculum", url_path="math")
 others = [subjects_page, path_page, account_page, world, course_map, new_goal, week_page, skills_page, practice_page,
-          unit_page]
+          unit_page, math_page]
 # Streamlit does the routing; the pages are shown by the connected control
 # at the top of every page (coach/topnav.py), not as a list in the sidebar
 page = st.navigation(pages + others, position="hidden")

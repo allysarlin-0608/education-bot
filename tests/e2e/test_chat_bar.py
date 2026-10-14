@@ -80,6 +80,7 @@ def test_the_end_of_today_is_never_under_the_chat_box(public_app, pages, width, 
 def test_a_retry_that_appears_under_the_chat_box_is_brought_into_view(public_app, pages, width, height):
     covers("W-daily-coach_retry")
     app = public_app
+    app.quiz_prep(False)        # (the quiz's failure comes on the press, not while she reads)
     p = pages(width=width, height=height)
     flows.sign_in(p, app, email=f"bar{next(_n)}-{int(time.time() * 1000)}@example.com")
     flows.onboard(p)

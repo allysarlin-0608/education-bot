@@ -207,10 +207,10 @@ if auth.is_admin():
 
             def met(kind, what):
                 n = int(people.get(kind) or 0)
-                return f"{n} {'person' if n == 1 else 'people'} {what}"
+                return f"Nobody {what}" if not n else f"{n} {'person' if n == 1 else 'people'} {what}"
             waits = [("AI calls answered", str(answered), "", ""),
                      ("Too busy: told to try again", str(kinds.get("busy", 0)), metrics.share(int(kinds.get("busy") or 0), asked),
-                      met("busy", "met it.") + " Many of these mean the AI plan is too small."),
+                      met("busy", "met it.") + " Many here mean the AI plan is too small."),
                      ("Failed", str(kinds.get("failed", 0)), metrics.share(int(kinds.get("failed") or 0), asked),
                       met("failed", "met it.")),
                      (f"Answered, but after more than {metrics.SLOW_S} s", str(kinds.get("slow", 0)),

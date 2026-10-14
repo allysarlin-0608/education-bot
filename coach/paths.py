@@ -365,3 +365,15 @@ def remove(path: dict) -> dict:
 
 def restore(path: dict) -> dict:
     return dict(path, status="active", updated_at=now_iso())
+
+
+def removal_note(passed: int, cards: int) -> str:
+    """What removing a goal does, said for what she has (nothing about lessons
+    or cards she doesn't have: never "the 0 lessons you passed")."""
+    kept = ("" if not passed else "The lesson you passed stays in your Learning Record" if passed == 1 else
+            f"The {passed} lessons you passed stay in your Learning Record")
+    if cards:
+        its = "its review card stops coming up" if cards == 1 else f"its {cards} review cards stop coming up"
+        kept = f"{kept}; {its}" if kept else its[0].upper() + its[1:]
+    return "It leaves your days and this list. " + (f"{kept}. " if kept else "") + \
+        "Nothing is deleted: you can bring it back later."

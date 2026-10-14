@@ -4,8 +4,8 @@ from html import escape
 import streamlit as st
 
 from coach import (auth, catalog, clock, core, curriculum, exercise, goalmaker, habit, lesson_view, llm, mastery,
-                   paths, place, practice, progress_bar, quiz, quizgen, report_ui, review, settings, steps, streaks,
-                   tokens, ui, unitcheck, visuals)
+                   paths, place, practice, progress_bar, quiz, quizgen, quizprep, quota, report_ui, review, settings,
+                   steps, streaks, tokens, ui, unitcheck, visuals)
 from coach import prefs as prefs_
 
 log = st.session_state.coach_log
@@ -184,8 +184,19 @@ def run_quiz(i):
     owner, slot = work(entry, i)
     if curriculum.blocking(entry["lessons"], i):     # strictly in order
         st.rerun()
-    context = practice.quiz_context(log, topic, slot, today, goal=catalog.path(topic))
-    questions, error = quizgen.make(slot, f"{topic} lesson {slot['n']}", step=st.spinner, context=context)
+    where = f"{topic} lesson {slot['n']}"
+    k = quizprep.key(quizprep.session_id(), topic, slot)
+    ready = None
+    if quizprep.state(k) == "running":               # prepared while she read (coach/quizprep.py): what's left
+        with st.spinner("Finishing your quiz…"):
+            ready = quizprep.take(k)
+    elif quizprep.state(k) == "ready":
+        ready = quizprep.take(k)
+    if ready and ready[0]:
+        questions, error = ready
+    else:                                            # nothing prepared, or it didn't work out: written now
+        context = practice.quiz_context(log, topic, slot, today, goal=catalog.path(topic))
+        questions, error = quizgen.make(slot, where, step=st.spinner, context=context)
     if questions is None:
         failed("quiz", error, slot, i=i)
     slot["quiz"] = quiz.new(questions, slot.get("quiz"))
@@ -194,6 +205,18 @@ def run_quiz(i):
 
 
 PREPARING = "Preparing your quiz…"
+
+
+def prepare_quiz(slot) -> None:
+    """Start writing this lesson's quiz in the background (coach/quizprep.py),
+    unless the AI can't be used just now (no key, the daily allowance)."""
+    if not quizprep.enabled() or slot.get("completed") or not slot.get("lesson") or llm.get_client() is None:
+        return
+    k = quizprep.key(quizprep.session_id(), topic, slot)
+    if quizprep.state(k) != "none" or quota.blocked():
+        return
+    context = practice.quiz_context(log, topic, slot, today, goal=catalog.path(topic))
+    quizprep.start(k, slot, f"{topic} lesson {slot['n']}", context)
 
 
 def show_retry(slot, kinds):
@@ -839,6 +862,8 @@ elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
                    f"fill, matching, putting steps in order, and two answers in your own words. "
                    f"Score {quiz.PASS_MARK}% or more to finish it.")
     retrying = show_retry(slot, ("quiz",))
+    if not retrying:
+        prepare_quiz(slot)          # written and checked while she reads, ready when she asks
     take = st.empty()               # can't be pressed again while the quiz is being written
     if not retrying and take.button("Take the quiz" if q is None else "Try a new quiz", type="primary", use_container_width=True):
         take.button(PREPARING, disabled=True, type="primary", use_container_width=True, key="quiz_preparing")
