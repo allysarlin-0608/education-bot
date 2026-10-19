@@ -17,6 +17,7 @@ from html import escape
 from pathlib import Path
 
 from coach import core, curriculum, settings
+from coach.i18n import tr
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 
@@ -123,8 +124,8 @@ def subject(topic: str) -> dict:
     another subject."""
     w = WORLD[topic]
     return {"key": topic, "number": list(settings.SUBJECTS).index(topic) + 1 if topic in settings.SUBJECTS else 0,
-            "title": core.TOPICS[topic], "description": settings.DESCRIPTIONS.get(topic, ""),
-            "kicker": w["kicker"], "shows": w["shows"], "layout": w["layout"], "title_style": w["title"],
+            "title": tr(core.TOPICS[topic]), "description": tr(settings.DESCRIPTIONS.get(topic, "")),
+            "kicker": tr(w["kicker"]), "shows": tr(w["shows"]), "layout": w["layout"], "title_style": w["title"],
             "credit": credit(topic), "facts": facts(topic)}
 
 

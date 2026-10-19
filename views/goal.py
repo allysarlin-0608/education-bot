@@ -10,6 +10,7 @@ from html import escape
 import streamlit as st
 
 from coach import catalog, core, curriculum, directions, goalmaker, paths, plans, settings, ui
+from coach import i18n
 from coach.i18n import tr
 
 config = ui.config()
@@ -115,8 +116,10 @@ def add() -> None:
         return
     twin = same_goal(d["path"])
     if twin:                    # never two of the same goal
-        st.session_state.goal_problem = (f"“{twin['title']}” is already one of your goals"
-                                         + ("." if twin["status"] == "active" else ": resume it in Goals & Settings."))
+        st.session_state.goal_problem = (tr("“{title}” is already one of your goals.", title=twin['title'])
+                                         if twin["status"] == "active" else
+                                         tr("“{title}” is already one of your goals: resume it in Goals & Settings.",
+                                            title=twin['title']))
         return
     first = today if not started_today() else today + timedelta(days=1)
     try:
@@ -153,15 +156,15 @@ if added and catalog.path(added):
     now = ui.topic_for(today) == added
     st.markdown(f"## {catalog.name(added)}")
     if len(ahead) <= 1:
-        lede = "It's what you learn every day now."
+        lede = tr("It's what you learn every day now.")
     else:
         when = ui.next_study_day(added)
-        first = ("today" if now else f"on {when:%A}, {when:%B} {when.day}" if when else "soon")
-        lede = (f"{'Back in your days' if continued else 'Added'}. Your subjects and goals take turns, one a day; "
-                f"this one's first turn is {first}.")
+        first = (tr("today") if now else tr("on {day}", day=i18n.day_long(when)) if when else tr("soon"))
+        lede = ((tr("Back in your days.") if continued else tr("Added.")) + " "
+                + tr("Your subjects and goals take turns, one a day; this one's first turn is {first}.", first=first))
     st.html(f'<p class="ob-lede">{escape(lede)}</p>')
     if len(ahead) > 1:
-        rows = "".join(f'<li><span>{"Today" if (d_ - today).days == 0 else "Tomorrow" if (d_ - today).days == 1 else f"{d_:%a} {d_:%b} {d_.day}"}</span>'
+        rows = "".join(f'<li><span>{i18n.relative_day(d_, today)}</span>'
                        f'<b>{escape(catalog.name(t))}</b></li>' for d_, t in ahead)
         st.html(tr('<ol class="goal-turns" aria-label="Your coming days">{rows}</ol><p class="ob-note">Then the same order again. You can change it, or pause a goal, in Goals & Settings.</p>', rows=rows))
     with st.container(key="goal_done_btns", horizontal=True, vertical_alignment="center"):

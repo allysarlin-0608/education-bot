@@ -11,7 +11,7 @@ import streamlit as st
 
 from coach import catalog, exercise, quiz, review, ui
 from coach import i18n
-from coach.i18n import N_, tr
+from coach.i18n import N_, tr, trn
 
 log = st.session_state.coach_log
 today = ui.today()
@@ -75,7 +75,7 @@ def show_question(card, q):
     """A stored question (or a word asked as one), checked on the spot."""
     key = f"rv_{card['id']}_{card['reviews']}"
     if q["type"] in quiz.WRITTEN:
-        recall(card, q["question"], f"A good answer: {q['answer']}")
+        recall(card, q["question"], tr("A good answer: {answer}", answer=q['answer']))
         return
     answer = exercise.field(q, key, tag=q["type"] not in ("choice", "match"))
     if st.button(tr("Check"), type="primary", key=f"{key}_check", disabled=not quiz.answered(q, answer), width="stretch"):
@@ -136,7 +136,7 @@ def today_view():
         st.caption(source(card))
         st.markdown(f"### {card['front'] if card['kind'] != 'question' else card['question']['question']}")
         feedback(card, current["right"])
-        label = "Next card" if due else "Finish"
+        label = tr("Next card") if due else tr("Finish")
         if st.button(label, type="primary", key="rv_next", width="stretch"):
             st.session_state.rv_current = None
             st.rerun()
@@ -150,12 +150,12 @@ def today_view():
         else:
             st.markdown(tr("### All reviewed for today") if done else tr("### Nothing due today"))
             nxt = review.next_due(log, today)
-            parts = ([f"You reviewed {done} {'card' if done == 1 else 'cards'} today."] if done else []) + \
-                ([f"The next ones come back {when(nxt.isoformat())}."] if nxt else [])
+            parts = ([trn("You reviewed {n} card today.", "You reviewed {n} cards today.", done)] if done else []) + \
+                ([tr("The next ones come back {when}.", when=when(nxt.isoformat()))] if nxt else [])
             waiting = [c for _, _, c in review.cards(log)
                        if not c["paused"] and c["due"] <= today.isoformat() and c.get("last") != today.isoformat()]
             if waiting:
-                parts = [f"That's today's {review.DAILY_LIMIT}. The other {len(waiting)} wait for tomorrow."]
+                parts = [tr("That's today's {limit}. The other {n} wait for tomorrow.", limit=review.DAILY_LIMIT, n=len(waiting))]
             st.caption(" ".join(parts))
         if st.button(tr("Back to Home"), key="rv_back", type="tertiary"):
             st.switch_page("views/daily.py")
@@ -168,7 +168,7 @@ def today_view():
     elif card["kind"] == "word":
         q = review.word_question(log, card)
         if q is None:
-            recall(card, f"What does “{card['front']}” mean?", card["back"] + (f" — {card['example']}" if card.get("example") else ""))
+            recall(card, tr("What does “{word}” mean?", word=card['front']), card["back"] + (f" — {card['example']}" if card.get("example") else ""))
         else:
             show_question(card, q)
     else:
@@ -205,8 +205,8 @@ def collection_view():
         with st.container(key=f"rv_row_{c['id']}"):
             # one block of text, spaced by its own type (separate blocks stacked
             # tight and, on iPad Safari, ran into each other and the buttons)
-            meta = f"{source(c)} · " + ("paused" if c["paused"] else f"next review {when(c['due'])}")
-            back = c["back"] if c["kind"] != "question" else f"Answer: {c['back']}"
+            meta = f"{source(c)} · " + (tr("paused") if c["paused"] else tr("next review {when}", when=when(c['due'])))
+            back = c["back"] if c["kind"] != "question" else tr("Answer: {answer}", answer=c['back'])
             st.html(f'<div class="rv-card"><p class="rv-front">{escape(c["front"])}</p>'
                     f'<p class="rv-meta">{escape(meta)}</p><p class="rv-back">{escape(back)}</p></div>')
             confirm = st.session_state.get("rv_confirm") == c["id"]

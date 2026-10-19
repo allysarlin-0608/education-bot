@@ -7,6 +7,8 @@ from html import escape
 import streamlit as st
 
 from coach import books, catalog, core, curriculum, progress_bar, settings, shelf, steps, ui
+from coach import i18n
+from coach.i18n import tr
 
 
 def _reading(log: dict) -> str:
@@ -32,7 +34,7 @@ def render(log: dict) -> None:
     done = sum(1 for s in plan if s.get("completed"))
     unit = curriculum.unit_progress(log, topic)["unit"] if curriculum.has_syllabus(topic) else None
     progress_bar.render_vertical(
-        "sidebar_today", f"{core.weekday_name(today)}, {today:%B} {today.day}",
+        "sidebar_today", i18n.day_long(today),
         catalog.name(topic), done, len(plan), where=st.sidebar,
         topic=unit, count=steps.label(plan) if plan else None,
         after=_reading(log) if settings.reading_on(config) else "")

@@ -145,7 +145,11 @@ def texts() -> list:
         out += [group] + list(topics) + [x for subs in topics.values() for x in subs]
     out += [x for ps in directions.PURPOSES.values() for x in ps] + [directions.ALL_OF_IT]
     out += [x for pace in settings.PACES.values() for x in pace]
-    from coach import plans
+    from coach import plans, reports
+    out += list(reports.REASONS.values())
+    out += ["Topic", "Key Idea", "Deep Dive", "Example", "Today's Task", "Vocabulary", "Question to Explore", "Note",
+            "Check it yourself", "Disclaimer"]
+    out += [core.CLOSING_LINE, core.DISCLAIMER]
     out += list(plans.NAMES.values()) + list(plans.BLURBS.values()) + list(plans.EVERY_PLAN)
     out += [w["kicker"] for w in visuals.WORLD.values()] + [w["shows"] for w in visuals.WORLD.values()]
     out += list(WEEKDAYS) + list(MONTHS) + [d[:3] for d in WEEKDAYS] + [m[:3] for m in MONTHS]
@@ -189,3 +193,13 @@ def date_long(d, year: bool = True) -> str:
 
 def month_year(d) -> str:
     return tr("{month} {year}", month=month(d), year=d.year)
+
+
+def relative_day(d, today) -> str:
+    """"Today", "Tomorrow", else "Wed Oct 14", in her language."""
+    k = (d - today).days
+    if k == 0:
+        return tr("Today")
+    if k == 1:
+        return tr("Tomorrow")
+    return tr("{weekday} {month} {day}", weekday=tr(WEEKDAYS[d.weekday()][:3]), month=month(d, short=True), day=d.day)

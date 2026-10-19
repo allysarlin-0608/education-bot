@@ -396,7 +396,7 @@ if catalog.is_goal(topic) and goal is None:       # her goal couldn't be read ju
     st.stop()
 if goal and not paths.started(log, topic):
     with st.container(key="goal_intro"):
-        st.html(goalmaker.summary_html(goal, settings.units(config), eyebrow="Made for you · day one",
+        st.html(goalmaker.summary_html(goal, settings.units(config), eyebrow=N_("Made for you · day one"),
                                        title=False))       # (the card below names it)
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
@@ -446,7 +446,7 @@ def open_lesson(k, anchor="current-lesson", restore=False):
 with st.container(key="course_card"):
     # title and one percentage; the five segments below are the bar itself
     progress_bar.render(f"card_{topic}", catalog.name(topic), done_count, len(plan),
-                        bar=False, label="Your goal" if goal else "Subject", topic=unit["unit"])
+                        bar=False, label=N_("Your goal") if goal else N_("Subject"), topic=unit["unit"])
     # the segment of a lesson just passed fills from left to right, once
     shown = st.session_state.setdefault("steps_shown", {})
     fresh = steps.just_completed(shown.get(sel_key), plan)

@@ -21,11 +21,11 @@ from html import escape
 import streamlit as st
 
 from coach import llm, paths, settings, tokens
-from coach.i18n import tr
+from coach.i18n import N_, tr, trn
 
-RETRY = "We couldn't design a path just now. Your goal is kept: try again in a moment."
-ENOUGH = ("We couldn't turn this into a path yet. Pick one of the goals below, "
-          "or write your goal differently: what would you like to be able to do?")
+RETRY = N_("We couldn't design a path just now. Your goal is kept: try again in a moment.")
+ENOUGH = N_("We couldn't turn this into a path yet. Pick one of the goals below, "
+            "or write your goal differently: what would you like to be able to do?")
 
 
 def _k(key: str, name: str) -> str:
@@ -93,14 +93,14 @@ def design(key: str, d: dict, put, pace: int) -> bool:
         return bool(d["path"])          # (a path she has since let go of is designed again)
     calls = prev.get("calls", 0) if prev.get("text") == goal["text"].strip() else 0
     if calls >= paths.DESIGN_ATTEMPTS:
-        st.session_state[_k(key, "note")] = ENOUGH
+        st.session_state[_k(key, "note")] = tr(ENOUGH)
         return False
     with st.spinner(tr("Designing your path…")):
         system, messages = paths.design_messages(goal, pace)
         data, error = llm.ask_json(system, messages, max_tokens=tokens.PATH_MAX_TOKENS)
         result = {"status": "error", "message": error} if error else paths.read_design(data, goal)
         if result["status"] == "error":
-            result["message"] = result.get("message") or RETRY
+            result["message"] = result.get("message") or tr(RETRY)
         d["design"] = {"status": result["status"], "message": result.get("message", ""),
                        "questions": result.get("questions", []), "suggestions": result.get("suggestions", []),
                        "for": sig, "text": goal["text"].strip(),
@@ -187,15 +187,19 @@ def again(get, put) -> None:
     put(d)
 
 
-def summary_html(p: dict, pace: int, eyebrow: str = "Made for you", title: bool = True) -> str:
+def summary_html(p: dict, pace: int, eyebrow: str = N_("Made for you"), title: bool = True) -> str:
     n = paths.lesson_count(p)
     days = math.ceil(n / pace)
-    why = f'<p class="gm-why">Because: “{escape(p["why"])}”</p>' if p.get("why") else ""
-    return (f'<div class="gm-path"><p class="gm-eyebrow">{escape(eyebrow)}</p>'
+    why = ('<p class="gm-why">' + tr("Because: “{why}”", why=escape(p["why"])) + "</p>") if p.get("why") else ""
+    return (f'<div class="gm-path"><p class="gm-eyebrow">{escape(tr(eyebrow))}</p>'
             + (f'<h3>{escape(p["title"])}</h3>' if title else "") +
             f'<p class="gm-outcome">{escape(p["outcome"])}</p>{why}'
-            f'<p class="gm-meta">{n} lessons in {len(p["units"])} parts · {p["level"]} · '
-            f'about {days} study {"day" if days == 1 else "days"} at {pace} a day</p></div>')
+            + '<p class="gm-meta">' + tr("{n} lessons in {parts} parts", n=n, parts=len(p["units"]))
+            + f' · {tr(p["level"])} · ' + _about(days, pace) + "</p></div>")
+
+
+def _about(days: int, pace: int) -> str:
+    return trn("about {n} study day at {pace} a day", "about {n} study days at {pace} a day", days, pace=pace)
 
 
 # ------------------------------------------------- all of it, or some parts
@@ -223,11 +227,12 @@ def scope_line(orig: dict, p: dict, some: bool, pace: int) -> str:
     """How much she has chosen, and how long it takes at her pace."""
     n, n_all = paths.lesson_count(p), paths.lesson_count(orig)
     days = math.ceil(n / max(pace, 1))
-    when = f"about {days} study {'day' if days == 1 else 'days'} at {pace} a day"
+    when = _about(days, max(pace, 1))
     if not some or n == n_all:
-        return f"{n_all} lessons in {len(orig['units'])} parts · {orig['level']} · {when}"
-    return (f"You chose {n} of {n_all} lessons ({len(p['units'])} of {len(orig['units'])} parts) · "
-            f"{orig['level']} · {when}")
+        return (tr("{n} lessons in {parts} parts", n=n_all, parts=len(orig['units']))
+                + f" · {tr(orig['level'])} · {when}")
+    return (tr("You chose {n} of {all} lessons ({parts} of {all_parts} parts)", n=n, all=n_all,
+               parts=len(p['units']), all_parts=len(orig['units'])) + f" · {tr(orig['level'])} · {when}")
 
 
 def scope(key: str, get, put, pace: int = settings.DEFAULT_PACE) -> None:

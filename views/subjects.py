@@ -9,7 +9,7 @@ from html import escape
 import streamlit as st
 
 from coach import catalog, course, mathcourse, settings, ui, visuals
-from coach.i18n import tr
+from coach.i18n import tr, trn
 
 log = st.session_state.coach_log
 config = ui.config()
@@ -24,20 +24,21 @@ st.caption(tr("Your courses: each is a series of short lessons in order. To lear
 def describe(t: str) -> str:
     if catalog.is_goal(t):
         p = catalog.path(t) or {}
-        return p.get("outcome") or "Your goal"
-    return settings.DESCRIPTIONS.get(t, "")
+        return p.get("outcome") or tr("Your goal")
+    return tr(settings.DESCRIPTIONS.get(t, ""))
 
 
 def course_row(t: str, k: str, chosen: bool) -> None:
     m = course.build(log, t)
     unit = m["units"][m["current"]]["name"] if m["units"] and m["current"] is not None else ""
-    where = (f"{m['done']} {'lesson' if m['done'] == 1 else 'lessons'} passed" + (f" · now in {unit}" if unit else "")
-             if chosen else f"{len(m['units'])} parts to start with")
+    where = (trn("{n} lesson passed", "{n} lessons passed", m['done']) + (" · " + tr("now in {unit}", unit=unit) if unit else "")
+             if chosen else tr("{n} parts to start with", n=len(m['units'])))
     nxt = next((x for u in m["units"] for x in u["lessons"] if x["n"] == m["next"]), None) if chosen else None
     with st.container(key=f"sc_{k}_{t}"):
         st.html(f'<p class="set-goal"><span>{escape(catalog.name(t))}</span><b>{escape(where)}</b></p>'
                 f'<p class="ob-note">{escape(describe(t))}</p>'
-                + (f'<p class="ob-note sc-next">Next: lesson {nxt["n"]}, {escape(nxt["title"])}</p>' if nxt else ""))
+                + ('<p class="ob-note sc-next">' + tr("Next: lesson {n}, {title}", n=nxt["n"], title=escape(nxt["title"]))
+                   + "</p>" if nxt else ""))
         with st.container(key=f"sc_acts_{k}_{t}", horizontal=True):
             if chosen:                     # hers: its map and its world
                 if st.button(tr("Course map"), key=f"sc_map_{k}_{t}", type="tertiary"):

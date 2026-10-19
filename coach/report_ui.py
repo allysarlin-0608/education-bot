@@ -8,20 +8,20 @@ from html import escape
 import streamlit as st
 
 from coach import reports, storage
-from coach.i18n import tr
+from coach.i18n import N_, tr
 
-THANKS = "Thanks. We'll check it."
+THANKS = N_("Thanks. We'll check it.")
 
 
 def _send(report: dict) -> str:
     """Store it; '' when sent, else why not (said beside the button)."""
     store = st.session_state.get("coach_store")
     if report is None or not hasattr(store, "add_report"):
-        return "This couldn't be sent."
+        return tr("This couldn't be sent.")
     try:
         store.add_report(report)
     except storage.StorageError as e:
-        return f"It couldn't be sent ({e}). Try again later."
+        return tr("It couldn't be sent ({e}). Try again later.", e=e)
     return ""
 
 
@@ -29,12 +29,12 @@ def _form(key: str, reasons: tuple, on_send, choices: list = None) -> None:
     """The menu's inside: (which question,) the reason, a note, Send."""
     done = st.session_state.pop(f"{key}_said", None)
     if done is not None:
-        st.html(f'<p class="ob-note" role="status">{escape(done or THANKS)}</p>')
+        st.html(f'<p class="ob-note" role="status">{escape(done or tr(THANKS))}</p>')
     pick = None
     if choices:
         pick = st.selectbox(tr("Which question?"), range(len(choices)), key=f"{key}_which",
                             format_func=lambda i: f"{i + 1}. {choices[i][:70]}")
-    reason = st.radio(tr("What's the problem?"), reasons, key=f"{key}_why", format_func=reports.REASONS.get, index=None)
+    reason = st.radio(tr("What's the problem?"), reasons, key=f"{key}_why", format_func=lambda r: tr(reports.REASONS[r]), index=None)
     note = st.text_input(tr("Anything to add? (optional)"), key=f"{key}_note", max_chars=300)
     if st.button(tr("Send"), key=f"{key}_send", type="primary", disabled=reason is None):
         said = on_send(reason, note, pick)

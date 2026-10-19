@@ -11,6 +11,7 @@ leave together."""
 from html import escape
 
 from coach import settings, visuals
+from coach.i18n import tr
 
 
 def html(focus: str, group: str) -> str:
@@ -26,13 +27,14 @@ def html(focus: str, group: str) -> str:
             f'<p class="sg-kicker">{s["number"]:02d} · {escape(s["kicker"])}</p>'
             f'<p class="sg-title">{escape(s["title"])}</p></div>'
             f'<div class="sg-copy"><p class="sg-desc">{escape(s["description"])}</p>'
-            f'<p class="sg-meta">{f["units"]} topics · {f["lessons"]} lessons · begins with {escape(f["first"])}</p>'
-            f'<div class="sg-status" data-on="0"><p class="sg-state">Not chosen</p>'
-            f'<p class="sg-how">Tap {escape(s["title"])} in the list to add it to your days.</p></div>'
+            + '<p class="sg-meta">' + tr("{units} topics · {lessons} lessons · begins with {first}", units=f["units"],
+                                         lessons=f["lessons"], first=escape(f["first"])) + "</p>"
+            + '<div class="sg-status" data-on="0"><p class="sg-state">' + tr("Not chosen") + "</p>"
+            + '<p class="sg-how">' + tr("Tap {name} in the list to add it to your days.", name=escape(s["title"])) + "</p></div>"
             + (f'<p class="sg-credit">{escape(s["credit"])}</p>' if s["credit"] else "")
             + "</div></div>")
     return (f'<div class="sg-stage" data-focus="{escape(focus)}" data-group="{escape(group)}" role="region" '
-            f'aria-label="The subject in focus" aria-live="polite">{"".join(layers)}</div>')
+            f'aria-label="{tr("The subject in focus")}" aria-live="polite">{"".join(layers)}</div>')
 
 
 def focus_of(looked_at, chosen) -> str:

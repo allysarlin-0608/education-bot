@@ -72,8 +72,8 @@ def lesson_rows(e):
     for s in e["lessons"]:
         q = curriculum.content(log, e["topic"], s).get("quiz") or {}
         score = f'{q["best"]}%' if q.get("best") is not None else ""
-        note = (f" · from {_day(s['from'])}" if s.get("from") else
-                f" · passed on {_day(s['passed_on'])}" if s.get("passed_on") else "")
+        note = (" · " + tr("from {date}", date=_day(s['from'])) if s.get("from") else
+                " · " + tr("passed on {date}", date=_day(s['passed_on'])) if s.get("passed_on") else "")
         rows.append(f'<li class="{"done" if s["completed"] else "open"}"><span class="n">{s["n"]}</span>'
                     f'<span class="t">{escape(s["title"])}{escape(note)}</span><span class="q">{score}</span></li>')
     st.html(f'<ol class="lesson-rows">{"".join(rows)}</ol>')
@@ -131,16 +131,16 @@ def show_entry(e, where):
 lessons_passed = core.lessons_passed(log)
 streak = streaks.walk(core.streak_dates(log), today)       # (the same walk core.current_streak takes)
 figures = {
-    "Ideas mastered": f"{mastery.overview(log, today)['total']['mastered']:,}",
-    "Current streak": days(core.current_streak(log, today)),
-    "Longest streak": days(core.longest_streak(log, today)),
-    "Days completed": days(len(core.completed_dates(log))),
-    "Days studied": days(len({e['date'] for e in log['entries']})),
-    "Lessons passed": f"{lessons_passed:,}",
+    N_("Ideas mastered"): f"{mastery.overview(log, today)['total']['mastered']:,}",
+    N_("Current streak"): days(core.current_streak(log, today)),
+    N_("Longest streak"): days(core.longest_streak(log, today)),
+    N_("Days completed"): days(len(core.completed_dates(log))),
+    N_("Days studied"): days(len({e['date'] for e in log['entries']})),
+    N_("Lessons passed"): f"{lessons_passed:,}",
 }
 before = progress_bar.seen("progress_figures", **{k.replace(" ", "_"): v for k, v in figures.items()})
 st.html('<div class="figures">' + "".join(          # numbers roll when they change
-    f'<div class="figure"><div class="figure-label">{label}</div>'
+    f'<div class="figure"><div class="figure-label">{tr(label)}</div>'
     f'<div class="figure-value">{rolling.html(value, before.get(label.replace(" ", "_")))}</div></div>'
     for label, value in figures.items()) + "</div>")
 
@@ -271,8 +271,10 @@ def view_subjects():
                 level = core.lesson_level(min(p["done"] + 1, curriculum.TOTAL), settings.start_level(config, key), key)
                 progress_bar.render(
                     f"course_{key}", label, unit["done"], unit["total"],
-                    (f"{p['done']:,} of {p['written']:,} lessons · {level}" if catalog.is_goal(key)      # her goal's whole path
-                     else f"{p['done']:,} of {p['written']:,} written so far · {level}"),     # as on its world page and course map
+                    (tr("{done} of {written} lessons", done=f"{p['done']:,}", written=f"{p['written']:,}")
+                     if catalog.is_goal(key) else      # her goal's whole path; else as on its world page and course map
+                     tr("{done} of {written} written so far", done=f"{p['done']:,}", written=f"{p['written']:,}"))
+                    + f" · {tr(level)}",
                     label="", compact=True, topic=unit["unit"],
                 )
                 with st.container(key=f"prog_links_{key}", horizontal=True):

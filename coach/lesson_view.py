@@ -188,18 +188,18 @@ def render(text: str, topic: str = None, key: str = "", title: str = "") -> None
         text = core.DISCLAIMER_LINE.sub("", text)      # saved before the disclaimer was investing-only
     parts, level, footer = sections(text)
     if level:
-        st.html(f'<p class="l-level">{escape(level)}</p>')
+        st.html(f'<p class="l-level">{escape(tr(level))}</p>')
     tag = hashlib.md5(f"{key}|{text}".encode()).hexdigest()[:10]
     for k, (heading, body) in enumerate(parts):
         if not heading:
             _body(body, dark)
             continue
         with st.container(key=f"lcard_{tag}_{k}"):
-            st.html(f'<div class="lcard-title">{escape(heading)}</div>')
+            st.html(f'<div class="lcard-title">{escape(tr(heading))}</div>')       # (headings stay English in the text)
             _body(body, dark)
     check_links(title)      # (the lesson's title: not a section heading)
     for line in footer:
-        st.caption(line)
+        st.caption(tr(line))
 
 
 def render_tabs(text: str, topic: str = None, key: str = "", title: str = "") -> None:
@@ -211,12 +211,12 @@ def render_tabs(text: str, topic: str = None, key: str = "", title: str = "") ->
     if topic and topic != "investing" and core.has_disclaimer(text):
         text = core.DISCLAIMER_LINE.sub("", text)
     found, _, footer = sections(text)
-    parts = [(heading or "Intro", body) for heading, body in found]
+    parts = [(tr(heading) if heading else tr("Intro"), body) for heading, body in found]
     if not parts:
         return
     for (heading, body), tab in zip(parts, st.tabs([heading for heading, _ in parts])):
         with tab:
             _body(body, dark)
     for line in footer:
-        st.caption(line)
+        st.caption(tr(line))
     check_links(title)

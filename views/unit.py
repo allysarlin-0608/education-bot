@@ -29,10 +29,10 @@ done = unitcheck.result(log, topic, unit)
 n_items = unitcheck.size(log, topic, unit)
 status = ""
 if done.get("passed_on"):
-    status = f" · passed on {course.short_date(done['passed_on'])}, best {done['best']}%"
+    status = " · " + tr("passed on {date}, best {score}%", date=course.short_date(done['passed_on']), score=done['best'])
 elif done.get("attempts"):
-    status = f" · best so far {done['best']}%"
-st.caption(tr('{p0} · lessons {p1}–{p2}{status}', p0=catalog.name(topic), p1=unit['first'], p2=unit['last'], status=status))
+    status = " · " + tr("best so far {score}%", score=done['best'])
+st.caption(catalog.name(topic) + " · " + tr('lessons {first}–{last}', first=unit['first'], last=unit['last']) + status)
 st.html(tr('<p class="ob-note">{n_items} questions from this unit\'s lessons, to show you\'ve learned it as a whole. {p0}% passes it. No time limit.</p>', n_items=n_items, p0=unitcheck.PASS_MARK))
 
 
@@ -81,11 +81,11 @@ if marked and marked["unit"] == f"{topic}|{key}":
     ok = quiz.passed(marked["percent"])
     right = sum(1 for m in marked["marks"] if m == 1)
     with st.container(key="uc_result"):
-        st.markdown(f"### {marked['percent']}% · {'Passed' if ok else 'Not yet'}")
-        st.html(f'<p class="ob-note">{right} of {len(marked["marks"])} fully right. '
-                + ("You know this unit as a whole. Review keeps it that way." if ok else
-                   f"You need {unitcheck.PASS_MARK}%. Look again at the lessons of the questions you missed, "
-                   "then try a new set.") + "</p>")
+        st.markdown(f"### {marked['percent']}% · {tr('Passed') if ok else tr('Not yet')}")
+        st.html('<p class="ob-note">' + tr("{right} of {n} fully right.", right=right, n=len(marked["marks"])) + " "
+                + (tr("You know this unit as a whole. Review keeps it that way.") if ok else
+                   tr("You need {mark}%. Look again at the lessons of the questions you missed, then try a new set.",
+                      mark=unitcheck.PASS_MARK)) + "</p>")
         n = marked.get("carded", 0)
         if n:
             st.html(trn('<p class="ob-note">The question you missed is now in Review, to come back to.</p>', '<p class="ob-note">{n} questions you missed are now in Review, to come back to.</p>', n))

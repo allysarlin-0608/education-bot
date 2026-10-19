@@ -18,6 +18,7 @@ page, sees them too. Without a session (tests, tools) use() gives them for
 the thread."""
 import re
 import threading
+from coach.i18n import tr
 
 GOAL_ID = re.compile(r"^g-[0-9a-f]{8}$")
 _local = threading.local()
@@ -105,11 +106,11 @@ def name(topic, default: str = None) -> str:
     """The name to show: a subject's, or her goal's title."""
     from coach import core
     if topic in core.TOPICS:
-        return core.TOPICS[topic]
+        return tr(core.TOPICS[topic])          # (in her language: coach/i18n.py)
     p = path(topic)
     if p:
         return p["title"]
-    return default if default is not None else ("Your goal" if is_goal(topic) else str(topic))
+    return default if default is not None else (tr("Your goal") if is_goal(topic) else str(topic))
 
 
 def goal_lessons(topic) -> tuple:

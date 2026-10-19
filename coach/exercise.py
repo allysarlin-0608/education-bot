@@ -50,8 +50,8 @@ def field(item: dict, key: str, value=None, k: int = None, tag: bool = True):
         return out
     if kind == "blank":
         return st.text_input(label(k, item), value=value or "", key=key, placeholder=tr("The missing word or phrase"))
-    placeholder = ("One real example from your own life, work or goal"
-                   if kind == "apply" else "Answer in a sentence or two, in your own words")
+    placeholder = (tr("One real example from your own life, work or goal")
+                   if kind == "apply" else tr("Answer in a sentence or two, in your own words"))
     return st.text_area(label(k, item), value=value or "", key=key, height=90, placeholder=placeholder)
 
 
@@ -60,7 +60,7 @@ def sign(mark) -> str:
 
 
 def verdict(mark) -> str:
-    return "Right." if mark == 1 else ("Partly right." if mark else "Not quite.")
+    return tr("Right.") if mark == 1 else (tr("Partly right.") if mark else tr("Not quite."))
 
 
 def result(item: dict, answer, mark, feedback: str = "", k: int = None, show_question: bool = True) -> None:

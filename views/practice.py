@@ -55,14 +55,14 @@ def write_more(short: list) -> None:
     made = practice.made(data, len(ideas)) if data else {}
     flat = [(k, q) for k, qs in made.items() for q in qs]
     if error or not flat:
-        st.session_state.pr_problem = error or "New exercises couldn't be written just now. These are from your lessons."
+        st.session_state.pr_problem = error or tr("New exercises couldn't be written just now. These are from your lessons.")
         return
     system, messages = quiz.check_request([q for _, q in flat])
     with st.spinner(tr("Checking every answer…")):
         verdict, error = llm.ask_json(system, messages)
     flagged = quiz.problems(verdict, len(flat)) if verdict else None
     if error or flagged is None:
-        st.session_state.pr_problem = error or "New exercises couldn't be checked just now. These are from your lessons."
+        st.session_state.pr_problem = error or tr("New exercises couldn't be checked just now. These are from your lessons.")
         return
     for j, (k, q) in enumerate(flat):
         if j in flagged:
@@ -85,7 +85,7 @@ def start(avoid=()) -> None:
         write_more(s["short"])
         s = practice.build(log, today, avoid=avoid)
     if not s["items"]:
-        st.session_state.pr_problem = st.session_state.get("pr_problem") or "No exercises are ready for these ideas yet."
+        st.session_state.pr_problem = st.session_state.get("pr_problem") or tr("No exercises are ready for these ideas yet.")
         return
     before = levels_now()
     st.session_state.pr_again = False

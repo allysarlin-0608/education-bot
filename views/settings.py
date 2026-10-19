@@ -12,6 +12,7 @@ import streamlit as st
 
 from coach import catalog, choices, curriculum, paths, review, settings, stage, storage, ui, visuals
 from coach import prefs as prefs_
+from coach import i18n
 from coach.i18n import tr
 
 config = ui.config()
@@ -33,7 +34,7 @@ def update(**fields) -> bool:
     try:
         new = settings.change(ui.config(), settings.now_iso(), **fields)
     except ValueError:
-        st.session_state.set_problem = "Keep at least one subject or goal."
+        st.session_state.set_problem = tr("Keep at least one subject or goal.")
         return False
     return ui.save_settings(new)
 
@@ -117,9 +118,10 @@ if offered:
                 choices.rows("setsubj", stage.rows(), chosen, pick_subject, multi=True,
                              full=len(builtin) >= settings.MAX_SUBJECTS, focus=focus, style="index")
                 order = " → ".join(catalog.name(t) for t in chosen)
-                st.html(f'<p class="ob-note">{len(builtin)} of {settings.MAX_SUBJECTS} · one a day, in this order: {escape(order)}</p>'
+                st.html('<p class="ob-note">' + tr("{n} of {max} · one a day, in this order: {order}", n=len(builtin),
+                                                    max=settings.MAX_SUBJECTS, order=escape(order)) + "</p>"
                         + (f'<p class="ob-note">{escape(problem)}</p>' if problem else "")
-                        + ('<p class="ob-note set-kept">Your existing learning history will be preserved.</p>'
+                        + ('<p class="ob-note set-kept">' + tr("Your existing learning history will be preserved.") + "</p>"
                            if st.session_state.get("set_subjects_changed") else ""))
 
 # ---------- Your goals: her own, each with the path designed for it ----------
@@ -127,7 +129,7 @@ def pause_goal(goal_id: str) -> None:
     ui.refresh_settings()
     rest = [t for t in settings.chosen_subjects(ui.config()) if t != goal_id]
     if not rest:
-        st.session_state.goal_set_problem = "Keep at least one subject or goal."
+        st.session_state.goal_set_problem = tr("Keep at least one subject or goal.")
         return
     if update(subjects=rest):
         ui.save_path(st.session_state.coach_log, paths.archive(catalog.path(goal_id)))
@@ -146,21 +148,21 @@ def remove_goal(goal_id: str) -> None:
     if goal_id in turns:
         rest = [t for t in turns if t != goal_id]
         if not rest:
-            st.session_state.goal_set_problem = ("This is the only thing you're learning. Add another goal first, "
-                                                 "then remove this one.")
+            st.session_state.goal_set_problem = tr("This is the only thing you're learning. Add another goal first, "
+                                                   "then remove this one.")
             return
         if not update(subjects=rest):
             return
     if ui.save_path(st.session_state.coach_log, paths.remove(p)):
-        st.session_state.goal_set_problem = (f"“{p['title']}” was removed. Its lessons stay in your Learning Record; "
-                                             "you can bring it back under Removed goals.")
+        st.session_state.goal_set_problem = tr("“{title}” was removed. Its lessons stay in your Learning Record; "
+                                               "you can bring it back under Removed goals.", title=p['title'])
 
 
 def bring_back(goal_id: str) -> None:
     """A removed goal back on her list, paused (Resume gives it its turns again)."""
     p = catalog.path(goal_id)
     if p and ui.save_path(st.session_state.coach_log, paths.archive(p)):
-        st.session_state.goal_set_problem = f"“{p['title']}” is back on your list, paused. Resume it to learn it again."
+        st.session_state.goal_set_problem = tr("“{title}” is back on your list, paused. Resume it to learn it again.", title=p['title'])
 
 
 def resume_goal(goal_id: str) -> None:
@@ -222,8 +224,7 @@ with st.container(key="set_sec_goals"):
 
 # ---------- Your days: the order her subjects and goals take turns in, from today ----------
 def day_label(day) -> str:
-    k = (day - ui.today()).days
-    return "Today" if k == 0 else "Tomorrow" if k == 1 else f"{day:%a} {day:%b} {day.day}"
+    return i18n.relative_day(day, ui.today())
 
 
 def movable() -> tuple:
@@ -269,7 +270,7 @@ if len(ahead) >= 2:
                 st.html(f'<p class="set-day"><span>{escape(day_label(day))}</span>'
                         f'<b>{escape(catalog.name(topic))}</b></p>')
                 if not lo <= i <= hi:
-                    st.html(f'<span class="set-day-note">{"started" if started and i == 0 else "studied last"}</span>')
+                    st.html(f'<span class="set-day-note">{tr("started") if started and i == 0 else tr("studied last")}</span>')
                     continue
                 st.button(tr("Earlier"), key=f"setday_up_{i}", type="tertiary", on_click=move_day, args=(i, -1),
                           disabled=i <= lo, help=tr('Move {p0} a day earlier', p0=catalog.name(topic)))
@@ -324,9 +325,9 @@ with st.container(key="set_sec_reminders"):
         st.time_input(tr("At"), value=dtime(hh, mm), step=timedelta(minutes=30), key="set_rem_time",
                       on_change=set_reminder)
     st.html('<p class="ob-note">'
-            + (f"If you haven't studied by {escape(habits['reminder_time'])}, Home shows a short, friendly note. "
-               "Never more than once a day." if habits["reminder_on"]
-               else "Off. Turn it on for a short, friendly note at a time you choose, once a day at most.")
+            + (tr("If you haven't studied by {time}, Home shows a short, friendly note. Never more than once a day.",
+                  time=escape(habits['reminder_time'])) if habits["reminder_on"]
+               else tr("Off. Turn it on for a short, friendly note at a time you choose, once a day at most."))
             + "</p>")
     if st.session_state.get("coach_prefs_error"):
         st.html(f'<p class="ob-note">{escape(tr(st.session_state.coach_prefs_error))}</p>')

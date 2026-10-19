@@ -43,12 +43,12 @@ def add_math() -> None:
     now = settings.chosen_subjects(ui.config())
     new = settings.toggle_subject(now, "math")
     if new == now:
-        st.session_state.mc_added = (f"You already have {settings.MAX_SUBJECTS} subjects: remove one in "
-                                     "Goals & Settings to make room for Mathematics.")
+        st.session_state.mc_added = tr("You already have {n} subjects: remove one in Goals & Settings to make "
+                                       "room for Mathematics.", n=settings.MAX_SUBJECTS)
         return
     if ui.save_settings(settings.change(ui.config(), settings.now_iso(), subjects=new)):
-        st.session_state.mc_added = ("Added. Mathematics takes its turn with your other subjects, "
-                                     "starting with lesson 1.")
+        st.session_state.mc_added = tr("Added. Mathematics takes its turn with your other subjects, "
+                                       "starting with lesson 1.")
 
 
 def link(s: dict) -> str:

@@ -11,6 +11,7 @@ from html import escape
 import streamlit as st
 
 from coach import core, curriculum, settings, ui, visuals
+from coach import i18n
 from coach.i18n import tr
 
 log = st.session_state.coach_log
@@ -76,7 +77,7 @@ with st.container(key=f"world_{w['layout']}"):
                              key="w_today"):
                     st.switch_page("views/daily.py")
             else:
-                st.html(f'<p class="w-next">{"Next on " + f"{when:%A}, {when:%B} {when.day}" if when else "Not in your rotation"}</p>')
+                st.html(f'<p class="w-next">{tr("Next on {day}", day=i18n.day_long(when)) if when else tr("Not in your rotation")}</p>')
             if st.button(tr("Course map"), type="tertiary", key="w_course"):
                 ui.open_course(topic)
             if st.button(tr("See its lessons so far"), type="tertiary", key="w_history"):
@@ -102,22 +103,24 @@ def section(key: str, title: str, body: str) -> None:
 
 
 pct = round(100 * unit["done"] / unit["total"]) if unit and unit["total"] else 0
-section("where", "Where you are",
+section("where", tr("Where you are"),
         f'<p class="w-big">{escape(unit["unit"]) if unit else ""}</p>'
         f'<div class="w-line" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{pct}"><i style="width:{pct}%"></i></div>'
-        f'<p class="w-small">' + (f'{unit["done"]} of {unit["total"]} lessons in this topic · ' if unit else "")
-        + f'{p["done"]:,} of {p["written"]:,} written so far · {escape(level)}</p>')
+        f'<p class="w-small">' + (tr("{done} of {n} lessons in this topic", done=unit["done"], n=unit["total"]) + " · "
+                                  if unit else "")
+        + tr("{done} of {written} written so far", done=f'{p["done"]:,}', written=f'{p["written"]:,}')
+        + f' · {escape(tr(level))}</p>')
 if upcoming:
-    section("next", "Next lessons", "<ol class=\"w-list\">" + "".join(
+    section("next", tr("Next lessons"), "<ol class=\"w-list\">" + "".join(
         f'<li><span class="n">{n}</span><span>{escape(curriculum.lesson(topic, n)["title"])}</span></li>'
         for n in upcoming) + "</ol>")
 if after:
-    section("ahead", "Topics ahead", '<ol class="w-list">' + "".join(
+    section("ahead", tr("Topics ahead"), '<ol class="w-list">' + "".join(
         f'<li><span class="n">{names.index(u) + 1}</span><span>{escape(u)}</span></li>' for u in after) + "</ol>")
 if lately:
-    section("lately", "Lately", '<ol class="w-list">' + "".join(
+    section("lately", tr("Lately"), '<ol class="w-list">' + "".join(
         f'<li><span class="n">{s["n"]}</span><span>{escape(s["title"])}</span>'
-        f'<span class="d">{date.fromisoformat(d):%b} {date.fromisoformat(d).day}</span></li>'
+        f'<span class="d">{i18n.day_short(date.fromisoformat(d))}</span></li>'
         for d, s in lately) + "</ol>")
 
 # ---------- her other subjects: each a world of its own ----------

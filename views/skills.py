@@ -37,7 +37,7 @@ def bar(c: dict) -> str:
 
 
 def legend(c: dict) -> str:
-    return "".join(f'<span class="sk-key"><i class="sk-dot sk-{lv}"></i>{c[lv]} {mastery.LEVEL_NAMES[lv].lower()}</span>'
+    return "".join(f'<span class="sk-key"><i class="sk-dot sk-{lv}"></i>{c[lv]} {tr(mastery.LEVEL_NAMES[lv]).lower()}</span>'
                    for lv in ("mastered", "solid", "learning"))
 
 
@@ -45,7 +45,7 @@ ov = mastery.overview(log, today)
 total = ov["total"]
 fading = [w for w in mastery.needs_practice(log, today) if w[2]["fading"]]
 st.html(f'<div class="sk-summary">{bar(total)}<p class="sk-legend">{legend(total)}'
-        + (f'<span class="sk-key">· {len(fading)} fading</span>' if fading else "") + "</p></div>")
+        + ('<span class="sk-key">· ' + tr("{n} fading", n=len(fading)) + "</span>" if fading else "") + "</p></div>")
 
 weak = mastery.needs_practice(log, today)
 with st.container(key="sk_actions", horizontal=True, vertical_alignment="center"):
@@ -79,9 +79,9 @@ for u in mastery.units(items):
         for x in u["ideas"]:
             if not x["reached"]:
                 rows.append(f'<li class="sk-ahead"><span class="sk-t">{escape(x["title"])}</span>'
-                            '<span class="sk-chip sk-new">Not yet</span></li>')
+                            f'<span class="sk-chip sk-new">{tr("Not yet")}</span></li>')
                 continue
-            tag = mastery.LEVEL_NAMES[x["level"]] + (" · fading" if x["fading"] else "")
+            tag = tr(mastery.LEVEL_NAMES[x["level"]]) + (" · " + tr("fading") if x["fading"] else "")
             rows.append(f'<li><span class="sk-t">{escape(x["title"])}<small>{escape(mastery.describe(x))}</small></span>'
                         f'<span class="sk-chip sk-{x["level"]}{" sk-fading" if x["fading"] else ""}">{escape(tag)}</span></li>')
         st.html('<ul class="sk-ideas">' + "".join(rows) + "</ul>")

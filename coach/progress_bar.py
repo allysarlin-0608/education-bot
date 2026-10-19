@@ -7,6 +7,7 @@ from html import escape
 import streamlit as st
 
 from coach import rolling
+from coach.i18n import N_, tr, trn
 
 
 def percent(done: int, total: int) -> int:
@@ -14,6 +15,8 @@ def percent(done: int, total: int) -> int:
 
 
 def count(done: int, total: int, noun: str = "lesson") -> str:
+    if noun == "lesson":
+        return trn("{done} / {n} lesson", "{done} / {n} lessons", total, done=done)
     return f"{done} / {total} {noun if total == 1 else noun + 's'}"
 
 
@@ -23,7 +26,7 @@ def entering() -> bool:
 
 
 def build(title: str, done: int, total: int, meta: str = "", *, previous=None,
-          label: str = "Course progress", compact: bool = False, noun: str = "lesson",
+          label: str = N_("Course progress"), compact: bool = False, noun: str = "lesson",
           bar: bool = True, left: str = None, old: dict = None, topic: str = None) -> str:
     """The block: label, title and percentage, then (with bar=True) the
     liquid line and a count. For a subject, the title is the subject and
@@ -39,14 +42,14 @@ def build(title: str, done: int, total: int, meta: str = "", *, previous=None,
     parts = [
         f'<section class="{" ".join(classes)}" style="--to:{pct};--from:{previous or 0}" '
         f'role="group" aria-label="{escape(label or title)}">',
-        f'<div class="lq-label">{escape(label)}</div>',
+        f'<div class="lq-label">{escape(tr(label))}</div>',
         f'<div class="lq-head"><div class="lq-title">{escape(title)}</div>'
         f'<div class="lq-pct" aria-hidden="true">{rolling.html(pct, (old or {}).get("pct"))}<span class="unit">%</span></div></div>',
     ]
     if not label:
         parts.pop(1)
     if topic:
-        parts.append(f'<div class="lq-topic"><span class="lq-topic-label">Topic</span>'
+        parts.append(f'<div class="lq-topic"><span class="lq-topic-label">{tr("Topic")}</span>'
                      f'<span class="lq-topic-name">{escape(topic)}</span></div>')
     if bar:
         parts += [
@@ -95,7 +98,8 @@ def render(key: str, title: str, done: int, total: int, meta: str = "", **kwargs
 
 
 def today_count(done: int, total: int) -> str:
-    return f"{done} of {total} {'lesson' if total == 1 else 'lessons'} today" if total else "No lessons left to do"
+    return (trn("{done} of {n} lesson today", "{done} of {n} lessons today", total, done=done) if total
+            else tr("No lessons left to do"))
 
 
 def build_vertical(heading: str, subject: str, done: int, total: int, *, previous=None, old: dict = None,

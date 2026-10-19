@@ -16,10 +16,10 @@ import html
 import streamlit as st
 
 from coach import placement as pq
-from coach.i18n import tr
+from coach.i18n import N_, tr
 
 BASICS, PLACEMENT = "basics", "placement"
-WAYS = {BASICS: "Start from the basics", PLACEMENT: "I know some already"}
+WAYS = {BASICS: N_("Start from the basics"), PLACEMENT: N_("I know some already")}
 
 
 def _e(text) -> str:
@@ -70,7 +70,7 @@ def rows(group: str, items: list, chosen, on_pick, *, multi: bool = False, full:
 def way_switch(key: str, way: str, on_change, args: tuple = ()) -> None:
     """Start from the basics | I know some already, for one subject."""
     with st.container(key=f"sw_{key}"):
-        st.segmented_control(tr("Where to start"), list(WAYS), default=way, format_func=WAYS.get,
+        st.segmented_control(tr("Where to start"), list(WAYS), default=way, format_func=lambda w: tr(WAYS[w]),
                              key=key, required=True, label_visibility="collapsed", width="stretch",
                              on_change=on_change, args=args)
 
