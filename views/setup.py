@@ -259,6 +259,8 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
                 lead(N_("Welcome to GNOSIS. Who are you?"),
                      N_("Learn anything you want, a little every day. Tell us who you are once, "
                         "and we'll ask fewer questions from here on."))
+                with st.container(key="ob_lang"):
+                    ui.language_picker("ob_language")
             with st.container(key="ob_body"):
                 own = d["identity"] if d["identity"] and d["identity"] not in directions.IDENTITIES else ""
                 choices.rows("ident", [(x, x, "") for x in directions.IDENTITIES],

@@ -344,7 +344,8 @@ def set_light(on: bool) -> None:
 
 if habit.returning(log, today) and not studied_today:
     r = habit.recap(log, today)
-    where = (f"Last time you were in {r['name']}: Lesson {r['n']}, “{r['title']}”. " if r else "")
+    where = (tr("Last time you were in {name}: Lesson {n}, “{title}”.", name=r['name'], n=r['n'], title=r['title']) + " "
+             if r else "")
     with st.container(key="welcome_back"):
         st.html(tr('<p class="hb-eyebrow">Welcome back</p><p class="hb-text">{p0}Today can be gentle: one lesson and a few review cards, then see how you feel.</p>', p0=escape(where)))
         if not light and pace > habit.LIGHT_LESSONS:
@@ -376,7 +377,7 @@ if not habits.get("seen_init"):
     ui.update_prefs(seen=[m["key"] for m in habit.milestones(log, today)], seen_init=True)
 elif (fresh := habit.new_milestones(log, today, habits["seen"])):
     with st.container(key="milestone", horizontal=True, vertical_alignment="center"):
-        more = f" (and {len(fresh) - 1} more in your Learning Record)" if len(fresh) > 1 else ""
+        more = " " + tr("(and {n} more in your Learning Record)", n=len(fresh) - 1) if len(fresh) > 1 else ""
         st.html(tr('<p class="hb-text"><span class="hb-eyebrow">Milestone</span>{p0}{p1}</p>', p0=escape(fresh[-1]["text"]), p1=escape(more)))
         st.button(tr("Thanks"), key="ms_seen", type="tertiary", on_click=seen_now, args=([m["key"] for m in fresh],))
 
@@ -630,7 +631,7 @@ def conclude(i):
         if owner is not entry:          # the original day stays as it was; the lesson notes when
             slot["passed_on"] = today.isoformat()
         entry["completed"] = curriculum.day_complete(entry["lessons"])
-        st.session_state.coach_toast = f"Passed with {score}%."
+        st.session_state.coach_toast = tr("Passed with {score}%.", score=score)
         # the page goes to the result, so Next lesson is in view (not under the chat box)
         st.session_state.coach_scroll = ("current-quiz", False)
         st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
@@ -703,7 +704,7 @@ def run_follow(i, text):
     st.rerun()
 
 
-VERDICT = {1.0: "✓ Clear and correct.", 0.5: "◐ On the right track.", 0.0: "✗ Not there yet."}
+VERDICT = {1.0: N_("✓ Clear and correct."), 0.5: N_("◐ On the right track."), 0.0: N_("✗ Not there yet.")}
 
 
 def explain_back(i, slot):
@@ -733,7 +734,7 @@ def explain_back(i, slot):
             return
         fb = done["feedback"]
         st.caption(tr('You wrote: {p0}', p0=done['text']))
-        st.markdown(f"**{VERDICT.get(fb['score'], '')}** {fb['right']}")
+        st.markdown(f"**{tr(VERDICT.get(fb['score'], ''))}** {fb['right']}")
         if fb.get("missing"):
             st.markdown(tr('**What to add:** {p0}', p0=fb['missing']))
         if fb.get("question") and not done.get("reply_feedback"):
@@ -755,7 +756,7 @@ def explain_back(i, slot):
             st.markdown(tr('**One question:** {p0}', p0=fb['question']))
             st.caption(tr('You answered: {p0}', p0=done['reply']))
             rf = done["reply_feedback"]
-            st.markdown(f"**{VERDICT.get(rf['score'], '')}** {rf['feedback']}")
+            st.markdown(f"**{tr(VERDICT.get(rf['score'], ''))}** {rf['feedback']}")
 
 
 @st.fragment

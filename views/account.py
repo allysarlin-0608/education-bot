@@ -78,12 +78,12 @@ def _email_ok(e: str) -> bool:
 def add_invite() -> None:
     email = st.session_state.inv_email.strip().lower()
     if not _email_ok(email):
-        st.session_state.inv_problem = "That doesn't look like an email address."
+        st.session_state.inv_problem = tr("That doesn't look like an email address.")
         return
     try:
         st.session_state.coach_store.add_invite(email, st.session_state.inv_note.strip())
     except storage.StorageError as e:
-        st.session_state.inv_problem = f"Couldn't add it ({e})."
+        st.session_state.inv_problem = tr("Couldn't add it ({e}).", e=e)
         return
     st.session_state.inv_email = st.session_state.inv_note = ""
 
@@ -92,7 +92,7 @@ def remove_invite(email: str) -> None:
     try:
         st.session_state.coach_store.remove_invite(email)
     except storage.StorageError as e:
-        st.session_state.inv_problem = f"Couldn't remove it ({e})."
+        st.session_state.inv_problem = tr("Couldn't remove it ({e}).", e=e)
 
 
 if auth.is_admin():
@@ -249,7 +249,7 @@ if auth.test_tools():
                       on_click=lambda: st.session_state.update(acct_rerun_ask=True))
 
 # ---------- Your data (public): a copy of it all, or all of it gone ----------
-DELETE_WARNING = "This permanently deletes your account and all your learning history. This can't be undone."
+DELETE_WARNING = N_("This permanently deletes your account and all your learning history. This can't be undone.")
 
 
 def ask_delete() -> None:
@@ -284,7 +284,7 @@ if auth.is_public():
             st.button(tr("Delete my account"), key="data_delete", type="tertiary", on_click=ask_delete)
         if st.session_state.get("del_open"):
             with st.container(key="del_confirm_box"):
-                st.html(f'<p class="del-warn" role="alert">{escape(DELETE_WARNING)}</p>')
+                st.html(f'<p class="del-warn" role="alert">{escape(tr(DELETE_WARNING))}</p>')
                 st.text_input(tr("Type DELETE to confirm"), key="del_confirm")
                 with st.container(key="del_buttons", horizontal=True):
                     if st.button(tr("Delete everything"), key="del_go", type="primary",

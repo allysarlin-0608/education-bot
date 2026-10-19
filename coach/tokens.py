@@ -32,9 +32,16 @@ PATH_MAX_TOKENS = 3400      # a goal's path: up to 40 short lesson titles in uni
 CJK = re.compile(r"[⺀-鿿豈-﫿＀-￯　-〿]")
 
 
+# Cyrillic, Arabic, Hebrew and the Indic and other scripts of South and South-East
+# Asia, Japanese kana and Korean (coach/i18n.LANGS): a few characters a token
+# at best, so counted much nearer CJK than Latin
+OTHER_SCRIPT = re.compile("[\u0400-\u04ff\u0590-\u08ff\u0900-\u0dff\u0e00-\u0eff\u3040-\u30ff\uac00-\ud7af]")
+
+
 def estimate(text: str) -> int:
     cjk = len(CJK.findall(text))
-    return math.ceil(cjk * 1.0 + (len(text) - cjk) * 0.3)
+    other = len(OTHER_SCRIPT.findall(text))
+    return math.ceil(cjk * 1.0 + other * 0.8 + (len(text) - cjk - other) * 0.3)
 
 
 def calibrated(estimated: int) -> int:

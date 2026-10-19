@@ -28,6 +28,7 @@ import streamlit as st
 from streamlit.errors import StreamlitAPIException
 
 from coach import appconfig, ui
+from coach import i18n
 from coach.i18n import N_, tr
 
 logger = logging.getLogger("coach.auth")
@@ -366,9 +367,12 @@ def login_page() -> None:
         _view("invite")
     view = st.session_state.get("auth_view", "signin")
     pending = st.session_state.get("auth_pending")
+    st.html(i18n.page_html(), unsafe_allow_javascript=True)
     busy = bool(pending)
     with st.container(key="signin"):
         st.html(tr('<p class="si-title">GNOSIS</p><p class="si-lede">Learn a little every day.</p>'))
+        with st.container(key="si_lang"):
+            ui.language_picker("si_language", save=False)      # (kept with her preferences once she's in)
         if view == "sent":
             st.html(f'<p class="si-note" role="status">{html.escape(tr(NEUTRAL))}</p>')
             _switch(tr("Back to sign in"), "signin", "si_back", busy)

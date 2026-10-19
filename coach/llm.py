@@ -16,6 +16,7 @@ import time
 import streamlit as st
 
 from coach import tokens
+from coach import i18n
 
 try:
     import groq
@@ -176,6 +177,7 @@ def _outcome(how: str, started: float, attempt: int) -> None:
 
 
 def _prepare(system, messages, max_tokens):
+    system = i18n.for_model(system)            # in the language she reads in (coach/i18n.py)
     fitted, dropped = tokens.fit_messages(system, messages, max_tokens)
     estimate = tokens.estimate_request(system, fitted, max_tokens)
     if dropped:

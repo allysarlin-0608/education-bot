@@ -85,6 +85,15 @@ def check_move(k: int) -> None:
 
 problem = st.session_state.pop("set_problem", "")
 
+# ---------- Language: the site and her lessons (coach/i18n.py) ----------
+if len(i18n.offered()) > 1:
+    with st.container(key="set_sec_language"):
+        st.markdown(tr("#### Language"))
+        with st.container(key="set_lang"):
+            ui.language_picker("set_language")
+        st.html('<p class="ob-note">' + tr("The site, your lessons, quizzes and the coach's answers. Lessons "
+                                            "you've already taken stay as they were written.") + "</p>")
+
 # ---------- Subjects ----------
 # the same stage as the setup's: the subject in focus, and the way into its world
 offered = settings.builtin_offered(config, st.session_state.coach_log)     # (new learners: their own goals only)

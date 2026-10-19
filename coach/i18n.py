@@ -17,6 +17,7 @@ too (ai_name: what the model is told).
 tools/i18n.py lists every tr() sentence in the code and says which are
 missing from each file; tests/test_i18n.py holds every file to it."""
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 
@@ -203,3 +204,53 @@ def relative_day(d, today) -> str:
     if k == 1:
         return tr("Tomorrow")
     return tr("{weekday} {month} {day}", weekday=tr(WEEKDAYS[d.weekday()][:3]), month=month(d, short=True), day=d.day)
+
+
+# ------------------------------------------------------------ the model writes in her language
+# The prompts were written for English lessons (some in Chinese, all asking for
+# English). For another language, each rule that asks for English asks for hers
+# instead, and one line at the end says what stays as it is: the 【Section】
+# markers, JSON keys and the level words the app reads back.
+_ENGLISH_RULES = (
+    (re.compile(r"^語言：.*$", re.MULTILINE), "語言：課程全部用{name}寫，清楚自然、句子不要太長；專有名詞第一次出現時用簡單的話順便解釋。"
+                                           "即使App給的課程標題或她的訊息是別的語言，也用{name}回答。"),
+    (re.compile(r"^- 跟課程一樣只用英文.*$", re.MULTILINE), "- 跟課程一樣用{name}；看起來卡住時換更簡單的說法。"),
+    (re.compile(r"這一課5到8個值得記的英文單字或片語，用Markdown表格：Word｜Meaning（簡單的英文解釋）｜Example（一個例句）。"),
+     "這一課5到8個值得記的關鍵詞（用{name}），用Markdown表格，表頭保持英文：Word｜Meaning｜Example；內容用{name}。"),
+    (re.compile(r"可以包含用英文寫或說"), "可以包含寫下來或說出來"),
+    (re.compile(r"課程標題（英文）"), "課程標題"),
+    (re.compile(r"\bin English\b"), "in {name}"),
+    (re.compile(r"\b[Ss]imple,? clear English\b"), "simple, clear {name}"),
+    (re.compile(r"\bSimple English\b"), "Simple {name}"),
+    (re.compile(r"write everything you reply in English \(the app's language\)"), "write everything you reply in {name} "
+                                                                                  "(the language she reads in)"),
+    (re.compile(r"用英文"), "用{name}"),
+    (re.compile(r"不要出現中文；?"), ""),
+    (re.compile(r"English or Chinese is fine\."), "Any language is fine."),
+)
+_KEEP = ("\n\nLANGUAGE: everything the learner reads must be in {name}. Keep exactly as written, in English: "
+         "the section markers such as 【Topic】 and 【Key Idea】, JSON keys and values the app reads (types, "
+         "verdicts), the table headers Word | Meaning | Example, and the level words Beginner, Intermediate, "
+         "Advanced.")
+
+
+def for_model(system: str, lang: str = None) -> str:
+    """A system prompt with the learner's language in place of English (as it
+    is for English)."""
+    lang = lang or current()
+    if lang == DEFAULT or lang not in LANGS:
+        return system
+    name = ai_name(lang)
+    for pattern, repl in _ENGLISH_RULES:
+        system = pattern.sub(repl.replace("{name}", name).replace("\\", "\\\\"), system)
+    return system + _KEEP.replace("{name}", name)
+
+
+def page_html(lang: str = None) -> str:
+    """Sets the page's lang (and dir="rtl" for a language written right to
+    left) on the document, so the browser, screen readers and the layout
+    follow it."""
+    lang = lang or current()
+    return ('<div id="lang-hook" hidden></div><script>(function(){const d=window.parent.document.documentElement;'
+            f'd.setAttribute("lang",{json.dumps(lang)});d.setAttribute("dir",{json.dumps("rtl" if rtl(lang) else "ltr")});'
+            '})();</script>')

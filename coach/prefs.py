@@ -15,7 +15,7 @@ SEEN_LIMIT = 200          # milestones remembered (the oldest go first)
 def blank() -> dict:
     return {"reminder_on": False, "reminder_time": DEFAULT_TIME, "reminder_email": False,
             "light_day": "", "seen": [], "seen_init": False, "week_seen": "", "reminded_on": "", "reminder_hit": "",
-            "practice": None, "practice_made": "", "plan_choice": "", "identity": ""}
+            "practice": None, "practice_made": "", "plan_choice": "", "identity": "", "language": ""}
 
 
 def normalize(row) -> dict:
@@ -38,6 +38,10 @@ def normalize(row) -> dict:
     if isinstance(row.get("seen"), list):
         p["seen"] = [s for s in row["seen"] if isinstance(s, str) and len(s) <= 120][-SEEN_LIMIT:]
     p["practice"] = practice_set(row.get("practice"))
+    # the language she chose to read in (coach/i18n.py; "" = her browser's)
+    from coach import i18n
+    if row.get("language") in i18n.LANGS:
+        p["language"] = row["language"]
     return p
 
 

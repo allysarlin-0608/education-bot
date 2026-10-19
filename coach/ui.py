@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import streamlit as st
 
 from coach import appconfig, catalog, clock, core, curriculum, habit, prefs as prefs_, settings, storage
+from coach import i18n
 from coach.i18n import N_, tr, trn
 
 logger = logging.getLogger("coach.ui")
@@ -234,6 +235,36 @@ def prefs() -> dict:
     if "coach_prefs" not in st.session_state:
         load_prefs()
     return st.session_state.coach_prefs
+
+
+def apply_language() -> None:
+    """The language she chose (her preferences: the same on every device),
+    once a session; before she has chosen one, her browser's (coach/i18n.py)."""
+    if st.session_state.get("lang_loaded"):
+        return
+    st.session_state.lang_loaded = True
+    chosen = prefs().get("language")
+    if chosen in i18n.offered():
+        st.session_state.lang = chosen
+    elif st.session_state.get("lang") in i18n.offered():      # chosen before signing in: kept for her
+        update_prefs(language=st.session_state.lang)
+
+
+def language_picker(key: str, save: bool = True) -> None:
+    """The language the site and her lessons are in: shown at once, and kept
+    with her preferences when she is signed in (`save`)."""
+    offered = i18n.offered()
+    if len(offered) < 2:
+        return
+    now = i18n.current()
+
+    def pick():
+        lang = st.session_state[key]
+        st.session_state.lang = lang
+        if save:
+            update_prefs(language=lang)
+    st.selectbox(tr("Language"), offered, index=offered.index(now), format_func=i18n.name, key=key,
+                 on_change=pick)
 
 
 def update_prefs(**fields) -> bool:
