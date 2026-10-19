@@ -14,25 +14,26 @@ from html import escape
 import streamlit as st
 
 from coach import auth, directions, metrics, plans, reports, settings, storage, ui
+from coach.i18n import N_, tr
 
 st.html('<div id="settings-page" hidden></div>')        # (the same quiet sections as Goals & Settings)
-st.markdown("## Account")
+st.markdown(tr("## Account"))
 
 # ---------- Profile ----------
 with st.container(key="set_sec_profile"):
-    st.markdown("#### Profile")
+    st.markdown(tr("#### Profile"))
     who = auth.identity() if auth.is_public() else None
     if who:
         st.html('<dl class="ob-summary acct-profile">'
-                + (f'<div><dt>Name</dt><dd>{escape(who["name"])}</dd></div>' if who["name"] else "")
-                + f'<div><dt>Email</dt><dd>{escape(who["email"])}<small>You sign in with it</small></dd></div></dl>'
-                '<p class="ob-note">Your name and picture come from the way you signed in.</p>')
+                + (f'<div><dt>{tr("Name")}</dt><dd>{escape(who["name"])}</dd></div>' if who["name"] else "")
+                + f'<div><dt>{tr("Email")}</dt><dd>{escape(who["email"])}<small>{tr("You sign in with it")}</small></dd></div></dl>'
+                + '<p class="ob-note">' + tr("Your name and picture come from the way you signed in.") + "</p>")
     else:
-        st.html('<p class="ob-note">This is your personal GNOSIS: there is no account to sign in to, '
-                "and your learning is kept with this app.</p>")
+        st.html(tr('<p class="ob-note">This is your personal GNOSIS: there is no account to sign in to, '
+                "and your learning is kept with this app.</p>"))
 
 # ---------- About you: who she said she is in the setup (fewer questions later) ----------
-OTHER = "Something else"
+OTHER = N_("Something else")
 
 
 def set_identity() -> None:
@@ -42,31 +43,31 @@ def set_identity() -> None:
 
 
 with st.container(key="set_sec_about"):
-    st.markdown("#### About you")
+    st.markdown(tr("#### About you"))
     now = ui.prefs().get("identity", "")
-    options = ["Not set", *directions.IDENTITIES, OTHER]
+    options = [N_("Not set"), *directions.IDENTITIES, OTHER]
     st.session_state.setdefault("acct_identity", now if now in directions.IDENTITIES else (OTHER if now else "Not set"))
-    st.selectbox("Who you are", options, key="acct_identity", on_change=set_identity)
+    st.selectbox(tr("Who you are"), options, key="acct_identity", on_change=set_identity, format_func=tr)
     if st.session_state.get("acct_identity") == OTHER:
         st.session_state.setdefault("acct_identity_own", "" if now in directions.IDENTITIES else now)
-        st.text_input("In a few words", key="acct_identity_own", max_chars=60, on_change=set_identity)
-    st.html('<p class="ob-note">It shapes the ideas and goals suggested when you add something to learn.</p>')
+        st.text_input(tr("In a few words"), key="acct_identity_own", max_chars=60, on_change=set_identity)
+    st.html(tr('<p class="ob-note">It shapes the ideas and goals suggested when you add something to learn.</p>'))
 
 # ---------- Subscription (only once plans are shown: coach/plans.SHOWN) ----------
 if plans.SHOWN:
     with st.container(key="set_sec_plan"):
-        st.markdown("#### Subscription")
+        st.markdown(tr("#### Subscription"))
         current = plans.plan_of(ui.config())
         chosen = ui.prefs().get("plan_choice")
-        rows = [("Your plan", plans.NAMES[current], plans.price_line(current))]
+        rows = [(tr("Your plan"), tr(plans.NAMES[current]), tr(plans.price_line(current)))]
         if plans.known(chosen) and chosen != current:
-            rows.append(("You chose", plans.NAMES[chosen], plans.price_line(chosen)))
-        rows.append(("Payments", "None", "Nothing has been charged"))
+            rows.append((tr("You chose"), tr(plans.NAMES[chosen]), tr(plans.price_line(chosen))))
+        rows.append((tr("Payments"), tr("None"), tr("Nothing has been charged")))
         st.html('<dl class="ins-list">' + "".join(
             f'<div><dt>{escape(a)}</dt><dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c in rows) + "</dl>"
-            '<p class="ob-note">Paid plans aren\'t open yet. While they are being prepared, everyone can use every '
-            "feature that exists, at no cost. Upgrading, changing and cancelling a plan will be here once payments "
-            "open.</p>")
+            + '<p class="ob-note">' + tr("Paid plans aren't open yet. While they are being prepared, everyone can use every "
+                                         "feature that exists, at no cost. Upgrading, changing and cancelling a plan will "
+                                         "be here once payments open.") + "</p>")
 
 
 # ---------- Invites (public, admins only): who may sign in while in beta ----------
@@ -96,12 +97,12 @@ def remove_invite(email: str) -> None:
 
 if auth.is_admin():
     with st.container(key="set_sec_invites"):
-        st.markdown("#### Invites")
-        st.html('<p class="ob-note">Only these emails can sign in. A change takes effect at once.</p>')
+        st.markdown(tr("#### Invites"))
+        st.html(tr('<p class="ob-note">Only these emails can sign in. A change takes effect at once.</p>'))
         with st.container(key="inv_add", horizontal=True, vertical_alignment="bottom"):
-            st.text_input("Email", key="inv_email", placeholder="name@example.com")
-            st.text_input("Note", key="inv_note", placeholder="Optional")
-            st.button("Invite", key="inv_add_btn", on_click=add_invite)
+            st.text_input(tr("Email"), key="inv_email", placeholder=tr("name@example.com"))
+            st.text_input(tr("Note"), key="inv_note", placeholder=tr("Optional"))
+            st.button(tr("Invite"), key="inv_add_btn", on_click=add_invite)
         problem_i = st.session_state.pop("inv_problem", "")
         if problem_i:
             st.html(f'<p class="ob-note">{escape(problem_i)}</p>')
@@ -109,27 +110,26 @@ if auth.is_admin():
             invites = st.session_state.coach_store.list_invites()
         except storage.StorageError as e:
             invites = []
-            st.html(f'<p class="ob-note">Couldn\'t load the list ({escape(str(e))}).</p>')
+            st.html(tr('<p class="ob-note">Couldn\'t load the list ({p0}).</p>', p0=escape(str(e))))
         for inv in invites:
             slug = "".join(c if c.isalnum() else "_" for c in inv["email"])
             with st.container(key=f"inv_row_{slug}", horizontal=True, vertical_alignment="center"):
                 st.html(f'<p class="set-level"><span>{escape(inv["email"])}</span>'
                         f'<b>{escape(inv.get("note") or "")}</b></p>')
-                st.button("Remove", key=f"inv_rm_{slug}", type="tertiary",
+                st.button(tr("Remove"), key=f"inv_rm_{slug}", type="tertiary",
                           on_click=remove_invite, args=(inv["email"],))
 
 
 # ---------- Insights (public, admins only): whether GNOSIS works (coach/metrics.py) ----------
 if auth.is_admin():
     with st.container(key="set_sec_insights"):
-        st.markdown("#### Insights")
-        since = st.date_input("People who signed up since", value=ui.today() - timedelta(days=30),
+        st.markdown(tr("#### Insights"))
+        since = st.date_input(tr("People who signed up since"), value=ui.today() - timedelta(days=30),
                               max_value=ui.today(), key="ins_since")
         try:
             m = st.session_state.coach_store.metrics(since, ui.today())
         except storage.StorageError as e:
-            st.html(f'<p class="ob-note">Couldn\'t load the numbers ({escape(str(e))}). '
-                    "If the goals tables aren't set up yet, run supabase/goals.sql first.</p>")
+            st.html(tr('<p class="ob-note">Couldn\'t load the numbers ({p0}). If the goals tables aren\'t set up yet, run supabase/goals.sql first.</p>', p0=escape(str(e))))
         else:
             rows = [("Signed up", str(m["signed_up"]), ""),
                     ("Set a goal or subjects", str(m["set_up"]), metrics.share(m["set_up"], m["signed_up"])),
@@ -145,8 +145,8 @@ if auth.is_admin():
             st.html('<dl class="ins-list">' + "".join(
                 f'<div><dt>{escape(a)}</dt><dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c in rows)
                 + "</dl>")
-            st.html('<p class="ob-note">Counts only: no lesson, answer or goal text is kept for these. '
-                    "Next day and a week are out of the people who signed up at least that long ago.</p>")
+            st.html(tr('<p class="ob-note">Counts only: no lesson, answer or goal text is kept for these. '
+                    "Next day and a week are out of the people who signed up at least that long ago.</p>"))
             # Phase 3: is learning happening? (learning_signals, supabase/mastery.sql; all learners, since the date)
             g = lambda k: int(m.get(k) or 0)          # noqa: E731
             learning = [
@@ -163,19 +163,18 @@ if auth.is_admin():
                 ("…that showed a misunderstanding", str(g("tutor_confused")),
                  metrics.share(g("tutor_confused"), g("tutor_question")), "These ideas come back in Review the next day."),
             ]
-            st.markdown("##### Learning")
+            st.markdown(tr("##### Learning"))
             st.html('<dl class="ins-list">' + "".join(
                 f'<div><dt>{escape(a)}{f"<small>{escape(d)}</small>" if d else ""}</dt>'
                 f'<dd>{escape(b)}<small>{escape(c)}</small></dd></div>' for a, b, c, d in learning) + "</dl>")
             if "missed" not in m:
-                st.html('<p class="ob-note">The learning numbers need supabase/mastery.sql run first.</p>')
+                st.html(tr('<p class="ob-note">The learning numbers need supabase/mastery.sql run first.</p>'))
         # audit stage 2: is the content right? what learners reported, since the same date (supabase/reports.sql)
-        st.markdown("##### Reported problems")
+        st.markdown(tr("##### Reported problems"))
         try:
             r = st.session_state.coach_store.reports_summary(since)
         except (storage.StorageError, AttributeError) as e:
-            st.html(f'<p class="ob-note">Couldn\'t load the reports ({escape(str(e))}). '
-                    "If they aren't set up yet, run supabase/reports.sql first.</p>")
+            st.html(tr('<p class="ob-note">Couldn\'t load the reports ({p0}). If they aren\'t set up yet, run supabase/reports.sql first.</p>', p0=escape(str(e))))
         else:
             rate = reports.per_hundred(r)
             rows = [("Reports", str(r["reports"]),
@@ -192,15 +191,14 @@ if auth.is_admin():
                     + (f'<q>{escape(x["excerpt"][:180])}</q>' if x.get("kind") == "question" and x.get("excerpt") else "")
                     + (f'<small>“{escape(x["note"])}”</small>' if x.get("note") else "") + "</li>"
                     for x in r["recent"]) + "</ul>")
-            st.html('<p class="ob-note">Who reported isn\'t shown. A reported question no longer becomes a review '
-                    "card for that learner.</p>")
+            st.html(tr('<p class="ob-note">Who reported isn\'t shown. A reported question no longer becomes a review '
+                    "card for that learner.</p>"))
         # before inviting more people: did the AI keep up? (supabase/ai_health.sql; counts only)
-        st.markdown("##### AI waits")
+        st.markdown(tr("##### AI waits"))
         try:
             h = st.session_state.coach_store.ai_health(since)
         except (storage.StorageError, AttributeError) as e:
-            st.html(f'<p class="ob-note">Couldn\'t load the AI numbers ({escape(str(e))}). '
-                    "If they aren't set up yet, run supabase/ai_health.sql first.</p>")
+            st.html(tr('<p class="ob-note">Couldn\'t load the AI numbers ({p0}). If they aren\'t set up yet, run supabase/ai_health.sql first.</p>', p0=escape(str(e))))
         else:
             answered, kinds, people = int(h.get("answered") or 0), h.get("by_kind") or {}, h.get("people") or {}
             asked = answered + int(kinds.get("busy") or 0) + int(kinds.get("failed") or 0)
@@ -237,17 +235,17 @@ def rerun_setup() -> None:
 
 if auth.test_tools():
     with st.container(key="set_sec_rerun"):
-        st.markdown("#### Test the setup")
-        st.html('<p class="ob-note">Opens the setup as a new learner sees it, on this account. Nothing is '
+        st.markdown(tr("#### Test the setup"))
+        st.html(tr('<p class="ob-note">Opens the setup as a new learner sees it, on this account. Nothing is '
                 "deleted: your goals, lessons and records stay, and what you choose in the setup comes first "
-                "in your days.</p>")
+                "in your days.</p>"))
         if st.session_state.get("acct_rerun_ask"):
             with st.container(key="acct_rerun_confirm", horizontal=True):
-                st.button("Run the setup now", key="acct_rerun_go", type="primary", on_click=rerun_setup)
-                st.button("Cancel", key="acct_rerun_cancel", type="tertiary",
+                st.button(tr("Run the setup now"), key="acct_rerun_go", type="primary", on_click=rerun_setup)
+                st.button(tr("Cancel"), key="acct_rerun_cancel", type="tertiary",
                           on_click=lambda: st.session_state.pop("acct_rerun_ask", None))
         else:
-            st.button("Run the setup again", key="acct_rerun", type="secondary",
+            st.button(tr("Run the setup again"), key="acct_rerun", type="secondary",
                       on_click=lambda: st.session_state.update(acct_rerun_ask=True))
 
 # ---------- Your data (public): a copy of it all, or all of it gone ----------
@@ -265,7 +263,7 @@ def cancel_delete() -> None:
 
 if auth.is_public():
     with st.container(key="set_sec_data"):
-        st.markdown("#### Your data")
+        st.markdown(tr("#### Your data"))
         # Her data is gathered when she asks for it, in this run (where who
         # she is is known: a deferred download runs on another thread, signed
         # in as no one, ISS-019), not on every click on this page (ISS-015).
@@ -274,29 +272,29 @@ if auth.is_public():
                 st.session_state.data_export = json.dumps(
                     st.session_state.coach_store.export_my_data(), ensure_ascii=False, indent=2, default=str)
             except storage.StorageError as e:
-                st.html(f'<p class="ob-note">Couldn\'t gather your data ({escape(str(e))}). Try again in a moment.</p>')
+                st.html(tr('<p class="ob-note">Couldn\'t gather your data ({p0}). Try again in a moment.</p>', p0=escape(str(e))))
         with st.container(key="data_actions", horizontal=True, vertical_alignment="center"):
             if st.session_state.get("data_export") is None:
-                st.button("Download my data", key="data_prepare",
+                st.button(tr("Download my data"), key="data_prepare",
                           on_click=lambda: st.session_state.update(data_wanted=True))
             else:
-                st.download_button("Save my data as a file", st.session_state.data_export,
+                st.download_button(tr("Save my data as a file"), st.session_state.data_export,
                                    file_name="gnosis-data.json", mime="application/json", key="data_download",
                                    on_click=lambda: st.session_state.pop("data_export", None))
-            st.button("Delete my account", key="data_delete", type="tertiary", on_click=ask_delete)
+            st.button(tr("Delete my account"), key="data_delete", type="tertiary", on_click=ask_delete)
         if st.session_state.get("del_open"):
             with st.container(key="del_confirm_box"):
                 st.html(f'<p class="del-warn" role="alert">{escape(DELETE_WARNING)}</p>')
-                st.text_input("Type DELETE to confirm", key="del_confirm")
+                st.text_input(tr("Type DELETE to confirm"), key="del_confirm")
                 with st.container(key="del_buttons", horizontal=True):
-                    if st.button("Delete everything", key="del_go", type="primary",
+                    if st.button(tr("Delete everything"), key="del_go", type="primary",
                                  disabled=st.session_state.get("del_confirm", "").strip() != "DELETE"):
                         try:
                             st.session_state.coach_store.delete_my_account()
                         except storage.StorageError as e:
-                            st.error(f"Nothing was deleted ({e}). Try again in a moment.")
+                            st.error(tr('Nothing was deleted ({e}). Try again in a moment.', e=e))
                         else:
                             for key in list(st.session_state.keys()):
                                 del st.session_state[key]
                             auth._go(auth.signout_url(deleted=True))    # revoke the session, clear the cookie
-                    st.button("Cancel", key="del_cancel", type="tertiary", on_click=cancel_delete)
+                    st.button(tr("Cancel"), key="del_cancel", type="tertiary", on_click=cancel_delete)

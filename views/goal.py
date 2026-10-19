@@ -10,6 +10,7 @@ from html import escape
 import streamlit as st
 
 from coach import catalog, core, curriculum, directions, goalmaker, paths, plans, settings, ui
+from coach.i18n import tr
 
 config = ui.config()
 log = st.session_state.coach_log
@@ -92,11 +93,10 @@ def dup_notice(g: dict) -> None:
     pr = curriculum.progress(log, g["id"])
     state = {"active": "", "archived": " · paused", "removed": " · removed"}.get(g["status"], "")
     with st.container(key="goal_dup"):
-        st.html(f'<p class="gm-reply" role="status">You already have a goal like this: <b>{escape(g["title"])}</b> '
-                f'({pr["done"]} of {pr["written"]} lessons{state}). Continue it, and keep what you\'ve done?</p>')
+        st.html(tr('<p class="gm-reply" role="status">You already have a goal like this: <b>{p0}</b> ({p1} of {p2} lessons{state}). Continue it, and keep what you\'ve done?</p>', p0=escape(g["title"]), p1=pr["done"], p2=pr["written"], state=state))
         with st.container(key="goal_dup_btns", horizontal=True):
-            st.button("Continue it", key="goal_dup_go", type="primary", on_click=continue_goal, args=(g["id"],))
-            st.button("No, this one is different", key="goal_dup_new", type="tertiary", on_click=different)
+            st.button(tr("Continue it"), key="goal_dup_go", type="primary", on_click=continue_goal, args=(g["id"],))
+            st.button(tr("No, this one is different"), key="goal_dup_new", type="tertiary", on_click=different)
 
 
 def started_today() -> bool:
@@ -132,8 +132,8 @@ def add() -> None:
 
 
 if settings.is_legacy(config):
-    st.markdown("## A goal of your own")
-    st.caption("Goals need the settings table in the database first (see Settings).")
+    st.markdown(tr("## A goal of your own"))
+    st.caption(tr("Goals need the settings table in the database first (see Settings)."))
     st.stop()
 
 # where she goes from the page that says it was added (a button's press reruns the page, so
@@ -163,13 +163,12 @@ if added and catalog.path(added):
     if len(ahead) > 1:
         rows = "".join(f'<li><span>{"Today" if (d_ - today).days == 0 else "Tomorrow" if (d_ - today).days == 1 else f"{d_:%a} {d_:%b} {d_.day}"}</span>'
                        f'<b>{escape(catalog.name(t))}</b></li>' for d_, t in ahead)
-        st.html(f'<ol class="goal-turns" aria-label="Your coming days">{rows}</ol>'
-                '<p class="ob-note">Then the same order again. You can change it, or pause a goal, in Goals & Settings.</p>')
+        st.html(tr('<ol class="goal-turns" aria-label="Your coming days">{rows}</ol><p class="ob-note">Then the same order again. You can change it, or pause a goal, in Goals & Settings.</p>', rows=rows))
     with st.container(key="goal_done_btns", horizontal=True, vertical_alignment="center"):
-        st.button("Start its first lesson" if now and not continued else "Go to Home" if not now else "Continue it",
+        st.button(tr("Start its first lesson") if now and not continued else tr("Go to Home") if not now else tr("Continue it"),
                   type="primary", key="goal_today", on_click=lambda: st.session_state.update(goal_leave="views/daily.py"))
         if len(ahead) > 1:
-            st.button("Change the order", type="tertiary", key="goal_order",
+            st.button(tr("Change the order"), type="tertiary", key="goal_order",
                       on_click=lambda: st.session_state.update(goal_leave="views/settings.py"))
     st.stop()
 
@@ -183,14 +182,14 @@ identity = ui.prefs().get("identity", "")
 ready = bool(d["path"] and d.get("scope") and d.get("purpose"))
 with st.container(key="ob_grid"):
     with st.container(key="ob_lead"):
-        st.markdown("## What do you want to learn?" if not d["path"] else "## All of it, or some parts?")
+        st.markdown(tr("## What do you want to learn?") if not d["path"] else tr("## All of it, or some parts?"))
         st.html('<p class="ob-lede">'
-                + ("Anything at all: a subject, a skill, a question you're curious about. A word is enough."
-                   if not d["path"] else "Here's what it covers. Keep all of it or tick the parts you want, "
-                                         "then say what it's for.") + "</p>")
+                + (tr("Anything at all: a subject, a skill, a question you're curious about. A word is enough.")
+                   if not d["path"] else tr("Here's what it covers. Keep all of it or tick the parts you want, "
+                                            "then say what it's for.")) + "</p>")
     with st.container(key="ob_body"):
         if room <= 0:
-            st.html(f'<p class="ob-note">You have {active} goals going. Pause one in Goals & Settings to add another.</p>')
+            st.html(tr('<p class="ob-note">You have {active} goals going. Pause one in Goals & Settings to add another.</p>', active=active))
         elif not d["path"]:
             # a goal she already has, in other words: asked before any AI call (continue it, or it's different)
             if st.session_state.get("goal_go") and near_goal(d):
@@ -207,20 +206,20 @@ with st.container(key="ob_grid"):
             ready = ready and not twin
             # the same steps as the setup, on one page: all of it or some parts, then what it's for
             goalmaker.scope("gs", draft, put, pace=settings.units(config))
-            st.markdown("#### What's it for?")
+            st.markdown(tr("#### What's it for?"))
             goalmaker.purpose("gp", draft, put, identity)
             problem = st.session_state.pop("goal_problem", "")
             if problem:
                 st.html(f'<p class="ob-note">{escape(problem)}</p>')
             elif twin:
-                st.html('<p class="ob-note" role="status">Continue the goal you have, or say this one is different '
-                        "(above), to add it.</p>")
+                st.html(tr('<p class="ob-note" role="status">Continue the goal you have, or say this one is different '
+                        "(above), to add it.</p>"))
             elif not ready:
-                st.html('<p class="ob-note" role="status">Choose all of it or some parts, and what it\'s for, '
-                        "to add this goal.</p>")
+                st.html(tr('<p class="ob-note" role="status">Choose all of it or some parts, and what it\'s for, '
+                        "to add this goal.</p>"))
             with st.container(key="ob_nav", horizontal=True, vertical_alignment="center"):
-                st.button("Add this goal", key="goal_add", type="primary", on_click=add, disabled=not ready)
-                st.button("Something else", key="goal_again", type="tertiary", on_click=other)
-        if st.button("Cancel", key="goal_cancel", type="tertiary"):
+                st.button(tr("Add this goal"), key="goal_add", type="primary", on_click=add, disabled=not ready)
+                st.button(tr("Something else"), key="goal_again", type="tertiary", on_click=other)
+        if st.button(tr("Cancel"), key="goal_cancel", type="tertiary"):
             ui.clear_goal_draft()
             st.switch_page("views/settings.py")

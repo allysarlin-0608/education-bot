@@ -11,6 +11,7 @@ The rule, as a learner reads it (Progress shows it in these words):
 Everything is worked out from her record, never stored: every page and
 every device shows the same numbers, and nothing can drift. Pure functions."""
 from datetime import date, timedelta
+from coach.i18n import tr
 
 EARN_EVERY = 7          # study days for one rest day
 MAX_REST = 2            # rest days kept at most
@@ -70,9 +71,12 @@ def explain(s: dict) -> str:
     """One calm line about where she is, for Progress and the week."""
     if s["covering"]:
         n = s["covering"]
-        return (f"{'A rest day is' if n == 1 else f'{n} rest days are'} covering your break. "
-                "A lesson today keeps your streak going.")
+        return (tr("A rest day is covering your break. A lesson today keeps your streak going.") if n == 1 else
+                tr("{n} rest days are covering your break. A lesson today keeps your streak going.", n=n))
     if s["rest"] == MAX_REST:
-        return f"You have {MAX_REST} rest days saved: miss a day and your streak keeps going."
-    have = f"You have {s['rest']} rest day{'s' if s['rest'] != 1 else ''} saved. " if s["rest"] else ""
-    return f"{have}{s['earned_in']} more study day{'s' if s['earned_in'] != 1 else ''} earn{'s' if s['earned_in'] == 1 else ''} a rest day."
+        return tr("You have {n} rest days saved: miss a day and your streak keeps going.", n=MAX_REST)
+    have = ((tr("You have 1 rest day saved.") if s["rest"] == 1 else tr("You have {n} rest days saved.", n=s["rest"]))
+            + " ") if s["rest"] else ""
+    k = s["earned_in"]
+    return have + (tr("1 more study day earns a rest day.") if k == 1 else
+                   tr("{n} more study days earn a rest day.", n=k))

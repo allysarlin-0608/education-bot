@@ -16,6 +16,8 @@ import streamlit as st
 
 from coach import (catalog, core, curriculum, habit, history, lesson_view, mastery, progress_bar, review, rolling, settings,
                    streaks, ui, visuals, weekview)
+from coach import i18n
+from coach.i18n import N_, tr, trn
 
 log = st.session_state.coach_log          # (re-read on arriving here, before the bar: gnosis.py)
 today = ui.today()
@@ -23,28 +25,28 @@ config = ui.config()
 subjects = settings.shown_subjects(config)       # only the subjects she has chosen
 
 st.html('<div id="progress-page" hidden></div>')      # lets the page use the width (style.py)
-st.markdown("## Learning Record")
+st.markdown(tr("## Learning Record"))
 
 # two tabs: her whole history, or her week in review (Home's "Last week in
 # review" and an old /week link open the second)
 st.session_state.rec_tab = st.session_state.pop("rec_tab_next", None) or st.session_state.get("rec_tab", "History")
 if log["entries"]:
-    tab = st.segmented_control("Record", ["History", "Your week"], key="rec_tab", required=True,
-                               label_visibility="collapsed")
+    tab = st.segmented_control(tr("Record"), [N_("History"), N_("Your week")], key="rec_tab", required=True,
+                               label_visibility="collapsed", format_func=tr)
     if tab == "Your week":
         weekview.render(log)
         st.stop()
 
 if not log["entries"]:
     # nothing yet: say what will be here, and the one way to start it
-    st.markdown("### Your record starts with your first lesson")
-    st.caption("Each day you learn shows up here: lessons passed, streaks, and what you know.")
-    if st.button("Go to today's lesson", key="prog_start", type="primary"):
+    st.markdown(tr("### Your record starts with your first lesson"))
+    st.caption(tr("Each day you learn shows up here: lessons passed, streaks, and what you know."))
+    if st.button(tr("Go to today's lesson"), key="prog_start", type="primary"):
         st.switch_page("views/daily.py")
 
 
 def days(n):
-    return f"{n} {'day' if n == 1 else 'days'}"
+    return trn("{n} day", "{n} days", n)
 
 
 def go(ym, day=None, way="none"):
@@ -59,8 +61,7 @@ def go(ym, day=None, way="none"):
 
 
 def _day(iso):
-    d = date.fromisoformat(iso)
-    return f"{d:%b} {d.day}"
+    return i18n.day_short(date.fromisoformat(iso))
 
 
 def lesson_rows(e):
@@ -88,39 +89,38 @@ def show_entry(e, where):
         curriculum.refresh_titles(e["topic"], e["lessons"])
         ns = [s["n"] for s in e["lessons"]]
         done_count = sum(1 for s in e["lessons"] if s["completed"])
-        st.caption(f"{catalog.name(e['topic'])} · Lessons {min(ns)}–{max(ns)} · {e['level']} · "
-                   f"{done_count} of {len(ns)} passed")
+        st.caption(tr('{p0} · Lessons {p1}–{p2} · {p3} · {done_count} of {p4} passed', p0=catalog.name(e['topic']), p1=min(ns), p2=max(ns), p3=e['level'], done_count=done_count, p4=len(ns)))
         lesson_rows(e)
         readable = {s["n"]: curriculum.content(log, e["topic"], s) for s in e["lessons"]}
         readable = {n: s for n, s in readable.items() if s.get("lesson")}
         if readable:
-            pick = st.pills("Read a lesson", list(readable), format_func=lambda n: f"Lesson {n}",
+            pick = st.pills(tr("Read a lesson"), list(readable), format_func=lambda n: f"Lesson {n}",
                             key=f"read_{key}", label_visibility="collapsed")
             if pick in readable:
                 s = readable[pick]
                 with st.container(key=f"reader_{key}_{pick}"):
-                    st.markdown(f"**Lesson {s['n']}: {s['title']}**")
+                    st.markdown(tr('**Lesson {p0}: {p1}**', p0=s['n'], p1=s['title']))
                     lesson_view.render_tabs(s["lesson"], e["topic"], key=f"rec_{key}_{s['n']}", title=s.get("title", ""))
         if e.get("followup_question"):
-            st.markdown(f"**Question to explore:** {e['followup_question']}")
+            st.markdown(tr('**Question to explore:** {p0}', p0=e['followup_question']))
         return
-    st.caption(f"{catalog.name(e['topic'])} · session {e['session_number']} · {e['level']} · "
-               + ("finished" if e.get("completed") else "not finished"))
+    st.caption(f"{catalog.name(e['topic'])} · " + tr("session {n}", n=e['session_number']) + f" · {tr(e['level'])} · "
+               + (tr("finished") if e.get("completed") else tr("not finished")))
     if e.get("followup_question"):
-        st.markdown(f"**Question to explore:** {e['followup_question']}")
+        st.markdown(tr('**Question to explore:** {p0}', p0=e['followup_question']))
     reflection = st.text_area(
-        "My thoughts",
+        tr("My thoughts"),
         value=e.get("reflection", ""),
         key=f"rec_reflection_{key}",
-        placeholder="Your thoughts on the question; the coach picks it up next time",
+        placeholder=tr("Your thoughts on the question; the coach picks it up next time"),
     )
-    if st.button("Save my thoughts", key=f"rec_save_{key}"):
+    if st.button(tr("Save my thoughts"), key=f"rec_save_{key}"):
         e["reflection"] = reflection.strip()
         if ui.save_day(log, e, [], keep=("reflection",)):    # her thoughts, into the day as stored now
-            st.toast("Saved.")
+            st.toast(tr("Saved."))
         else:
             ui.show_pending_error()
-    if e.get("lesson") and st.toggle("Read the lesson", key=f"rec_lesson_{key}"):
+    if e.get("lesson") and st.toggle(tr("Read the lesson"), key=f"rec_lesson_{key}"):
         with st.container(key=f"reader_{key}"):
             lesson_view.render_tabs(e["lesson"], e["topic"], key=f"rec_{key}", title=e.get("title", ""))
 
@@ -149,10 +149,8 @@ known = mastery.overview(log, today)["total"]
 if sum(known.values()):
     with st.container(key="prog_skills", horizontal=True, vertical_alignment="center"):
         met = known["learning"] + known["solid"] + known["mastered"]
-        st.html(f'<p class="prog-rest"><b>What you know:</b> {known["mastered"]} '
-                f'{"idea" if known["mastered"] == 1 else "ideas"} mastered, {known["solid"]} solid, '
-                f'{known["learning"]} still being learned, of {met} you\'ve met.</p>')
-        if st.button("Knowledge map", type="tertiary", key="prog_skills_open"):
+        st.html(tr('<p class="prog-rest"><b>What you know:</b> {mastered} mastered, {solid} solid, {learning} still being learned, of {met} ideas you\'ve met.</p>', mastered=known["mastered"], solid=known["solid"], learning=known["learning"], met=met))
+        if st.button(tr("Knowledge map"), type="tertiary", key="prog_skills_open"):
             st.switch_page("views/skills.py")
 
 # how her streak is kept: rest days, in one calm line
@@ -162,15 +160,15 @@ with st.container(key="prog_habit", horizontal=True, vertical_alignment="center"
 # the milestones she has reached (coach/habit.py), newest kinds last
 reached = habit.milestones(log, today)
 if reached:
-    with st.expander(f"Milestones · {len(reached)}"):
+    with st.expander(tr('Milestones · {p0}', p0=len(reached))):
         st.html('<ul class="ms-list">' + "".join(f"<li>{escape(m['text'])}</li>" for m in reversed(reached)) + "</ul>")
 
 # her review collection (coach/review.py): one quiet way in
 if (deck := review.cards(log)):
     waiting = len(ui.review_due(log))
     with st.container(key="prog_review"):
-        if st.button(f"Review collection · {len(deck)} {'card' if len(deck) == 1 else 'cards'}"
-                     + (f" · {waiting} due today" if waiting else ""), type="tertiary", key="prog_review_open"):
+        if st.button(trn("Review collection · {n} card", "Review collection · {n} cards", len(deck))
+                     + (" · " + tr("{n} due today", n=waiting) if waiting else ""), type="tertiary", key="prog_review_open"):
             st.session_state.rv_view = "Today" if waiting else "Collection"
             st.switch_page("views/review.py")
 
@@ -194,21 +192,20 @@ def view_day():
     """The day picked: new for each day, so it eases in."""
     with st.container(key=f"prog_day_{picked.isoformat()}"):
         stats = history.day_stats(log, picked, today)
-        st.markdown(f"#### {core.weekday_name(picked)}, {picked:%B} {picked.day}"
-                    + (f", {picked.year}" if picked.year != today.year else ""))
+        st.markdown("#### " + i18n.day_long(picked, year=picked.year != today.year))
         on_day = history.entries_on(log, picked)
         if not on_day:
             planned = catalog.name(ui.topic_for(picked))
             if stats["status"] == "future":
-                st.caption(f"Coming up: {planned}.")
+                st.caption(tr('Coming up: {planned}.', planned=planned))
             elif settings.is_legacy(config):
-                st.caption(f"Nothing recorded. {core.weekday_name(picked)}s are for {planned}.")
+                st.caption(tr('Nothing recorded. {weekday} is for {planned}.', weekday=i18n.weekday(picked), planned=planned))
             elif picked >= settings.start_day(config, ui.TIMEZONE):
-                st.caption(f"Nothing recorded. This day was for {planned}.")
+                st.caption(tr('Nothing recorded. This day was for {planned}.', planned=planned))
             else:
-                st.caption("Nothing recorded.")
+                st.caption(tr("Nothing recorded."))
         else:
-            st.markdown('<span class="day-status">' + {"done": "Completed", "partial": "Partly done"}.get(
+            st.markdown('<span class="day-status">' + {"done": tr("Completed"), "partial": tr("Partly done")}.get(
                 stats["status"], "") + "</span>", unsafe_allow_html=True)
             for e in on_day:
                 show_entry(e, "day")
@@ -232,31 +229,31 @@ def view_sessions():
             if st.session_state.get("sessions_topic") not in ("all", *subjects):
                 st.session_state.pop("sessions_topic", None)     # a subject she has since taken out
             topic_filter = st.selectbox(
-                "Subject",
+                tr("Subject"),
                 ["all", *subjects],
-                format_func=lambda k: "All subjects" if k == "all" else catalog.name(k),
+                format_func=lambda k: tr("All subjects") if k == "all" else catalog.name(k),
                 label_visibility="collapsed",
                 key="sessions_topic",
             )
         entries = [e for e in reversed(log["entries"])
                    if topic_filter == "all" or e["topic"] == topic_filter]
-        count_spot.markdown(f'<span class="view-count">{len(entries)} {"session" if len(entries) == 1 else "sessions"}</span>',
+        count_spot.markdown('<span class="view-count">' + trn("{n} session", "{n} sessions", len(entries)) + "</span>",
                             unsafe_allow_html=True)
         if not entries:
-            st.caption("Nothing recorded for this subject yet.")
+            st.caption(tr("Nothing recorded for this subject yet."))
         shown = st.session_state.setdefault("sessions_shown", PAGE)
         with st.container(key=f"sessions_list_{topic_filter}"):      # a new filter eases in
             for e in entries[:shown]:
                 day = date.fromisoformat(e["date"])
                 mark = "●" if e.get("completed") else "○"
                 title = e.get("title") or catalog.name(e["topic"])
-                with st.expander(f"{mark} {core.weekday_name(day)[:3]}, {day:%b} {day.day}, {day.year} · {title}"):
-                    if st.button("Show on the calendar", key=f"oncal_{e['date']}_{e['topic']}", type="tertiary"):
+                with st.expander(f"{mark} {i18n.day_short(day, year=True)} · {title}"):
+                    if st.button(tr("Show on the calendar"), key=f"oncal_{e['date']}_{e['topic']}", type="tertiary"):
                         st.session_state.prog_reveal = True
                         go((day.year, day.month), day, way=toward((day.year, day.month)))
                     show_entry(e, "list")
         if len(entries) > shown:
-            if st.button(f"Show {min(PAGE, len(entries) - shown)} more of {len(entries) - shown}", key="sessions_more"):
+            if st.button(tr('Show {p0} more of {p1}', p0=min(PAGE, len(entries) - shown), p1=len(entries) - shown), key="sessions_more"):
                 st.session_state.sessions_shown = shown + PAGE
                 st.rerun()
 
@@ -281,43 +278,44 @@ def view_subjects():
                 with st.container(key=f"prog_links_{key}", horizontal=True):
                     if visuals.known(key):        # into its world (a goal of hers has none)
                         with st.container(key=f"enter_{key}", horizontal=True):
-                            if st.button(f"Enter {label}", type="tertiary", key=f"prog_world_{key}"):
+                            if st.button(tr('Enter {label}', label=label), type="tertiary", key=f"prog_world_{key}"):
                                 ui.enter_world(key)
-                    if st.button("Course map", type="tertiary", key=f"prog_course_{key}"):
+                    if st.button(tr("Course map"), type="tertiary", key=f"prog_course_{key}"):
                         ui.open_course(key)
                 continue
             # Reading has no syllabus: one line, the books finished, and the way to the shelf
             finished = sum(1 for b in log["books"] if b["status"] == "finished")
-            st.page_link("views/reading.py", label=f"{label} · {finished} {'book' if finished == 1 else 'books'} finished")
+            st.page_link("views/reading.py", label=trn('{label} · {n} book finished', '{label} · {n} books finished', finished, label=label))
 
 
 # ============================================================
 # TWO SIDES: the month | one view at a time (the day, every session, the subjects)
 # ============================================================
-VIEWS = ["Day", "Sessions", "Subjects"]
+VIEWS = [N_("Day"), N_("Sessions"), N_("Subjects")]
 with st.container(key="prog_main"):
     month_col, panel_col = st.columns([5, 6], gap="large")
 
 with month_col:
     summary = history.month_summary(log, year, month, today)
     with st.container(key="cal_head", horizontal=True, vertical_alignment="center"):
-        st.markdown(f"#### {calendar.month_name[month]} {year}")
+        st.markdown("#### " + i18n.month_year(date(year, month, 1)))
         with st.container(key="cal_nav", horizontal=True, horizontal_alignment="right", gap="small"):
             if st.button("‹", key="cal_prev"):
                 go(history.shift(year, month, -1), way="prev")
-            if st.button("Today", key="cal_today", disabled=(year, month) == now and picked == today):
+            if st.button(tr("Today"), key="cal_today", disabled=(year, month) == now and picked == today):
                 go(now, today, way=toward(now))
             if st.button("›", key="cal_next"):
                 go(history.shift(year, month, 1), way="next")
     st.markdown('<span class="cal-summary">' + progress_bar.rolled(   # the month's numbers roll when it changes
-        "cal_summary", f"{days(summary['studied'])} studied · {days(summary['completed'])} completed · "
-                       f"{summary['lessons']} {'lesson' if summary['lessons'] == 1 else 'lessons'} passed")
+        "cal_summary", tr("{studied} studied · {completed} completed", studied=days(summary['studied']),
+                          completed=days(summary['completed'])) + " · "
+                       + trn("{n} lesson passed", "{n} lessons passed", summary['lessons']))
                 + "</span>", unsafe_allow_html=True)
 
     # weekday names; on the old weekly schedule, each with the subject that day of the week is for
     weekly = settings.is_legacy(config)
     st.html('<div class="cal-week">' + "".join(
-        f'<span><b>{name[:3]}</b>'
+        f'<span><b>{tr(name[:3])}</b>'
         + (f'<i>{history.short_topic(core.WEEKDAY_TOPIC[k])}</i>' if weekly else "") + "</span>"
         for k, name in enumerate(core.WEEKDAYS)) + "</div>")
     # the grid is new for each month (its key names the month), so it slides in
@@ -335,10 +333,10 @@ with month_col:
                         st.session_state.prog_reveal = True     # on a phone the day shows below: bring it up
                         ym = (d["date"].year, d["date"].month)
                         go(ym, d["date"], way=toward(ym))
-    st.html('<div class="cal-key"><span><i class="k-done"></i>Completed</span>'
-            '<span><i class="k-part"></i>Partly done</span>'
-            + ('<span><i class="k-rest"></i>Rest day</span>' if streak["rest_days"] else "") +
-            '<span>The line under a day grows with the lessons passed</span></div>')
+    st.html(f'<div class="cal-key"><span><i class="k-done"></i>{tr("Completed")}</span>'
+            f'<span><i class="k-part"></i>{tr("Partly done")}</span>'
+            + (f'<span><i class="k-rest"></i>{tr("Rest day")}</span>' if streak["rest_days"] else "") +
+            f'<span>{tr("The line under a day grows with the lessons passed")}</span></div>')
 
 with panel_col:
     # one view at a time, so the right side stays calm: the day picked on the
@@ -346,8 +344,8 @@ with panel_col:
     st.session_state.setdefault("prog_view", "Day")
     if (pending := st.session_state.pop("prog_view_next", None)):
         st.session_state.prog_view = pending
-    view = st.segmented_control("Show", VIEWS, key="prog_view", required=True,
-                                label_visibility="collapsed", width="stretch") or "Day"
+    view = st.segmented_control(tr("Show"), VIEWS, key="prog_view", required=True,
+                                label_visibility="collapsed", width="stretch", format_func=tr) or "Day"
     with st.container(key=f"view_{view.lower()}"):
         {"Day": view_day, "Sessions": view_sessions, "Subjects": view_subjects}[view]()
 
@@ -357,30 +355,29 @@ with panel_col:
 # ============================================================
 MAX_BACKUP_BYTES = 20_000_000     # a year of daily lessons is a few MB; anything much bigger isn't ours
 
-with st.expander("Backup and restore"):
+with st.expander(tr("Backup and restore")):
     if ui.using_cloud():
-        st.caption("Your records are in the Supabase database, so they survive app restarts. "
-                   "Download a copy if you'd like one of your own.")
+        st.caption(tr("Your records are in the Supabase database, so they survive app restarts. "
+                   "Download a copy if you'd like one of your own."))
     else:
-        st.caption("Your records are on the app's server and may be wiped when Streamlit Cloud restarts, "
-                   "so download a backup now and then.")
+        st.caption(tr("Your records are on the app's server and may be wiped when Streamlit Cloud restarts, "
+                   "so download a backup now and then."))
     st.download_button(
-        "Download a backup",
+        tr("Download a backup"),
         data=json.dumps(log, ensure_ascii=False, indent=2),
         file_name=f"learning_log_{today.isoformat()}.json",
         mime="application/json",
     )
     uploaded = st.file_uploader("Import a backup", type="json")
-    if uploaded is not None and st.button("Replace my records with this backup"):
+    if uploaded is not None and st.button(tr("Replace my records with this backup")):
         new_log = None
         if uploaded.size > MAX_BACKUP_BYTES:
-            st.error(f"This file is too large to be a backup from this app (over {MAX_BACKUP_BYTES // 1_000_000} MB), "
-                     "so nothing was changed.")
+            st.error(tr('This file is too large to be a backup from this app (over {p0} MB), so nothing was changed.', p0=MAX_BACKUP_BYTES // 1_000_000))
         else:
             try:
                 new_log = core.parse_log(json.loads(uploaded.getvalue().decode("utf-8")))
             except (ValueError, UnicodeDecodeError, RecursionError):   # json errors are ValueErrors
-                st.error("This file isn't a backup from this app, so nothing was changed.")
+                st.error(tr("This file isn't a backup from this app, so nothing was changed."))
         if new_log is not None:
             if ui.replace_log(new_log):
                 st.session_state.coach_log = new_log

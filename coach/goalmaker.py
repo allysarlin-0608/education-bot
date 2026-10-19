@@ -21,6 +21,7 @@ from html import escape
 import streamlit as st
 
 from coach import llm, paths, settings, tokens
+from coach.i18n import tr
 
 RETRY = "We couldn't design a path just now. Your goal is kept: try again in a moment."
 ENOUGH = ("We couldn't turn this into a path yet. Pick one of the goals below, "
@@ -58,7 +59,7 @@ def _use_idea(key: str, group: str, get, put) -> None:
     idea = st.session_state.get(_k(key, f"idea_{group}"))
     st.session_state[_k(key, f"idea_{group}")] = None
     if idea:
-        _use(key, idea, get, put)
+        _use(key, tr(idea), get, put)           # her goal in her words: the idea as she read it
 
 
 def _use(key: str, text: str, get, put) -> None:
@@ -94,7 +95,7 @@ def design(key: str, d: dict, put, pace: int) -> bool:
     if calls >= paths.DESIGN_ATTEMPTS:
         st.session_state[_k(key, "note")] = ENOUGH
         return False
-    with st.spinner("Designing your path…"):
+    with st.spinner(tr("Designing your path…")):
         system, messages = paths.design_messages(goal, pace)
         data, error = llm.ask_json(system, messages, max_tokens=tokens.PATH_MAX_TOKENS)
         result = {"status": "error", "message": error} if error else paths.read_design(data, goal)
@@ -137,8 +138,8 @@ def form(key: str, get, put, *, pace: int = settings.DEFAULT_PACE, skip=None, on
         st.session_state.setdefault(_k(key, name), d["goal"][name])
     st.session_state.setdefault(_k(key, "start"), d["goal"]["start"])
 
-    st.text_area("In your own words", key=_k(key, "text"), max_chars=paths.GOAL_MAX_CHARS, height=96,
-                 placeholder="e.g. Understand how investing works before I put money in",
+    st.text_area(tr("In your own words"), key=_k(key, "text"), max_chars=paths.GOAL_MAX_CHARS, height=96,
+                 placeholder=tr("e.g. Understand how investing works before I put money in"),
                  on_change=_keep, args=(key, get, put))
     # the answer to the goal she wrote, just under it
     reply = d.get("design") or {}
@@ -147,8 +148,8 @@ def form(key: str, get, put, *, pace: int = settings.DEFAULT_PACE, skip=None, on
             st.html(f'<p class="gm-reply" role="status">{escape(reply["message"])}</p>'
                     + ("".join(f'<p class="gm-q">{escape(q)}</p>' for q in reply["questions"])))
             if reply["status"] == "clarify" and reply.get("calls", 0) < paths.DESIGN_ATTEMPTS:
-                st.text_input("Your answer", key=_k(key, "answers"), max_chars=paths.TEXT_LIMIT,
-                              placeholder="A few words are enough", on_change=_keep, args=(key, get, put))
+                st.text_input(tr("Your answer"), key=_k(key, "answers"), max_chars=paths.TEXT_LIMIT,
+                              placeholder=tr("A few words are enough"), on_change=_keep, args=(key, get, put))
             if reply["suggestions"]:
                 with st.container(key=_k(key, "suggested"), horizontal=True):
                     for k, idea in enumerate(reply["suggestions"]):
@@ -156,25 +157,26 @@ def form(key: str, get, put, *, pace: int = settings.DEFAULT_PACE, skip=None, on
 
     with st.container(key=_k(key, "ideas")):
         # one kind of learner's ideas at a time (work, curiosity, study), so the list stays short
-        group = st.segmented_control("Or start from an idea", list(paths.SUGGESTIONS), key=_k(key, "idea_group"),
+        group = st.segmented_control(tr("Or start from an idea"), list(paths.SUGGESTIONS), key=_k(key, "idea_group"),
                                      default=ideas if ideas in paths.SUGGESTIONS else next(iter(paths.SUGGESTIONS)),
-                                     required=True)
+                                     required=True, format_func=tr)
         with st.container(key=_k(key, "idea_list")):
-            st.pills(group, paths.SUGGESTIONS[group], key=_k(key, f"idea_{group}"), label_visibility="collapsed",
+            st.pills(tr(group), paths.SUGGESTIONS[group], key=_k(key, f"idea_{group}"), label_visibility="collapsed",
+                     format_func=tr,
                      on_change=_use_idea, args=(key, group, get, put))
     with st.container(key=_k(key, "start_sw")):
-        st.segmented_control("Where are you now?", list(paths.STARTS), format_func=lambda s: paths.STARTS[s][0],
+        st.segmented_control(tr("Where are you now?"), list(paths.STARTS), format_func=lambda s: tr(paths.STARTS[s][0]),
                              key=_k(key, "start"), required=True, width="stretch",
                              on_change=_keep, args=(key, get, put))
     note = st.session_state.pop(_k(key, "note"), "")
     if note:
         st.html(f'<p class="ob-note gm-note" role="status">{escape(note)}</p>')
     with st.container(key="ob_nav", horizontal=True, vertical_alignment="center"):
-        st.button("Design my path", key=_k(key, "design"), type="primary", on_click=_ask, args=(key,))
+        st.button(tr("Design my path"), key=_k(key, "design"), type="primary", on_click=_ask, args=(key,))
         if skip:
             st.button(skip[0], key=_k(key, "skip"), type="tertiary", on_click=skip[1])
-    st.html('<p class="ob-note">One short lesson at a time, written when you reach it. '
-            "Lessons teach well-established knowledge, each with links to check it yourself.</p>")
+    st.html(tr('<p class="ob-note">One short lesson at a time, written when you reach it. '
+            "Lessons teach well-established knowledge, each with links to check it yourself.</p>"))
 
 
 def again(get, put) -> None:
@@ -236,13 +238,11 @@ def scope(key: str, get, put, pace: int = settings.DEFAULT_PACE) -> None:
     d = get()
     orig, p = d.get("path_original") or d["path"], d["path"]
     some = d.get("scope") == "some"
-    st.html(f'<div class="gm-path"><p class="gm-eyebrow">The outline</p><h3>{escape(orig["title"])}</h3>'
-            f'<p class="gm-outcome">{escape(orig["outcome"])}</p>'
-            f'<p class="gm-meta" role="status" aria-live="polite">{escape(scope_line(orig, p, some, pace))}</p></div>')
+    st.html(tr('<div class="gm-path"><p class="gm-eyebrow">The outline</p><h3>{p0}</h3><p class="gm-outcome">{p1}</p><p class="gm-meta" role="status" aria-live="polite">{p2}</p></div>', p0=escape(orig["title"]), p1=escape(orig["outcome"]), p2=escape(scope_line(orig, p, some, pace))))
     st.session_state[_k(key, "scope")] = d.get("scope") or None      # (always her answer as kept)
     with st.container(key=_k(key, "scope_sw")):
-        st.segmented_control(f"Do you want to learn all of {orig['title']}?", ["all", "some"],
-                             format_func=lambda v: "Yes, all of it" if v == "all" else "No, only some parts",
+        st.segmented_control(tr('Do you want to learn all of {p0}?', p0=orig['title']), ["all", "some"],
+                             format_func=lambda v: tr("Yes, all of it") if v == "all" else tr("No, only some parts"),
                              key=_k(key, "scope"), width="stretch", on_change=_set_scope, args=(key, get, put))
     kept = {u["name"] for u in p["units"]}
     with st.container(key=_k(key, "outline")):
@@ -251,11 +251,11 @@ def scope(key: str, get, put, pace: int = settings.DEFAULT_PACE) -> None:
                 if some:
                     st.session_state[_k(key, f"part_{i}")] = u["name"] in kept      # (always as kept)
                     last = u["name"] in kept and len(kept) == 1          # (one part at least: the last can't go)
-                    st.checkbox(f"Part {i + 1}: {u['name']} · {len(u['lessons'])} lessons", key=_k(key, f"part_{i}"),
+                    st.checkbox(tr('Part {p0}: {p1} · {p2} lessons', p0=i + 1, p1=u['name'], p2=len(u['lessons'])), key=_k(key, f"part_{i}"),
                                 on_change=_tick, args=(key, get, put), disabled=last,
-                                help="Keep at least one part." if last else None)
+                                help=tr("Keep at least one part.") if last else None)
                 else:
-                    st.html(f'<p class="gm-u"><span>Part {i + 1}</span>{escape(u["name"])}</p>')
+                    st.html(tr('<p class="gm-u"><span>Part {p0}</span>{p1}</p>', p0=i + 1, p1=escape(u["name"])))
                 st.html('<ol class="gm-lessons">' + "".join(f"<li>{escape(t)}</li>" for t in u["lessons"]) + "</ol>")
 
 
@@ -288,12 +288,12 @@ def purpose(key: str, get, put, identity: str = "") -> None:
     with st.container(key=_k(key, "purposes"), gap=None):
         for i, o in enumerate(options):
             on = chosen == o
-            st.button(f"{o}{', selected' if on else ''}", key=_k(key, f"pp_{i}"), type="primary" if on else "secondary",
+            st.button(tr("{name}, selected", name=tr(o)) if on else tr(o), key=_k(key, f"pp_{i}"), type="primary" if on else "secondary",
                       on_click=_purpose, args=(key, get, put, o))
     own = chosen if chosen and chosen not in options and chosen != directions.ALL_OF_IT else ""
     st.session_state[_k(key, "own")] = own          # (always her answer as kept)
-    st.text_input("Or in your own words", key=_k(key, "own"), max_chars=paths.TEXT_LIMIT,
-                  placeholder="e.g. Understand the news about the economy", on_change=_purpose, args=(key, get, put))
+    st.text_input(tr("Or in your own words"), key=_k(key, "own"), max_chars=paths.TEXT_LIMIT,
+                  placeholder=tr("e.g. Understand the news about the economy"), on_change=_purpose, args=(key, get, put))
     st.session_state[_k(key, "all")] = chosen == directions.ALL_OF_IT
-    st.checkbox("No particular goal: I want to learn all of it", key=_k(key, "all"), on_change=_all_of_it,
+    st.checkbox(tr("No particular goal: I want to learn all of it"), key=_k(key, "all"), on_change=_all_of_it,
                 args=(key, get, put))

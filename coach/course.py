@@ -14,6 +14,7 @@ Units are the syllabus's own: "done" when every lesson in them is passed,
 from datetime import date
 
 from coach import catalog, curriculum
+from coach import i18n
 
 
 def _records(log: dict, topic: str) -> dict:
@@ -89,8 +90,7 @@ def build(log: dict, topic: str, today_plan: list = ()) -> dict:
 
 
 def short_date(iso: str) -> str:
-    d = date.fromisoformat(iso)
-    return f"{d:%b} {d.day}"
+    return i18n.day_short(date.fromisoformat(iso))
 
 
 def subject_name(topic: str) -> str:

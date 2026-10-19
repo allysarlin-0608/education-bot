@@ -28,39 +28,40 @@ import streamlit as st
 from streamlit.errors import StreamlitAPIException
 
 from coach import appconfig, ui
+from coach.i18n import N_, tr
 
 logger = logging.getLogger("coach.auth")
 
 PERSONAL, PUBLIC = "personal", "public"
 MIN_PASSWORD = 7
 
-SIGNIN_FAILED = "Sign-in didn't complete. Please try again."
-INVITE_ONLY = "This app is invite-only for now. Ask the person who shared it with you to add your email."
-NEUTRAL = "If an account can be created with this email, we've sent you a link. Check your inbox."
-NETWORK = "We couldn't reach the sign-in service. Check your connection and try again."
-PASSWORD_RULE = f"At least {MIN_PASSWORD} characters, with letters and numbers."
-PASSWORD_PROBLEM = f"Use at least {MIN_PASSWORD} characters, with at least one letter and one number."
+SIGNIN_FAILED = N_("Sign-in didn't complete. Please try again.")
+INVITE_ONLY = N_("This app is invite-only for now. Ask the person who shared it with you to add your email.")
+NEUTRAL = N_("If an account can be created with this email, we've sent you a link. Check your inbox.")
+NETWORK = N_("We couldn't reach the sign-in service. Check your connection and try again.")
+PASSWORD_RULE = N_("At least {n} characters, with letters and numbers.")
+PASSWORD_PROBLEM = N_("Use at least {n} characters, with at least one letter and one number.")
 
 NOTES = {   # ?auth=… / ?auth_error=… left by routes.py, shown once
-    "signed_out": "You've signed out.",
-    "deleted": "Your account and all your learning history have been deleted.",
+    "signed_out": N_("You've signed out."),
+    "deleted": N_("Your account and all your learning history have been deleted."),
     "google": SIGNIN_FAILED,
-    "link": "This link has expired or has already been used. You can ask for a new one below.",
-    "link_unknown": ("We couldn't finish that link here. If you were confirming your email, "
-                     "try signing in; if you were resetting your password, ask for a new link."),
-    "expired": "That took too long. Please sign in again.",
+    "link": N_("This link has expired or has already been used. You can ask for a new one below."),
+    "link_unknown": N_("We couldn't finish that link here. If you were confirming your email, "
+                       "try signing in; if you were resetting your password, ask for a new link."),
+    "expired": N_("That took too long. Please sign in again."),
     "network": NETWORK,
 }
 ERRORS = {  # supa_auth.AuthError codes → what the person reads
-    "invalid_credentials": "That email and password don't match. Try again, or reset your password.",
-    "email_not_confirmed": "Please confirm your email first — the link is in your inbox.",
+    "invalid_credentials": N_("That email and password don't match. Try again, or reset your password."),
+    "email_not_confirmed": N_("Please confirm your email first — the link is in your inbox."),
     "weak_password": PASSWORD_PROBLEM,
-    "invalid_email": "Enter a valid email address.",
-    "rate_limited": "Too many attempts. Please wait a few minutes and try again.",
+    "invalid_email": N_("Enter a valid email address."),
+    "rate_limited": N_("Too many attempts. Please wait a few minutes and try again."),
     "not_invited": INVITE_ONLY,
-    "session_expired": "Your session has ended. Please sign in again.",
+    "session_expired": N_("Your session has ended. Please sign in again."),
     "network": NETWORK,
-    "failed": "Something went wrong. Please try again.",
+    "failed": N_("Something went wrong. Please try again."),
 }
 
 
@@ -177,7 +178,7 @@ def _go(url: str) -> None:
     """Send the whole window (not just the app's frame) to url."""
     st.html(f"<script>(window.top || window).location.replace({json.dumps(url)});</script>",
             unsafe_allow_javascript=True)
-    _raw(f'<p class="si-note">Continuing… <a class="si-continue" href="{html.escape(url)}">Continue</a></p>')
+    _raw(f'<p class="si-note">{tr("Continuing…")} <a class="si-continue" href="{html.escape(url)}">{tr("Continue")}</a></p>')
     st.stop()
 
 
@@ -211,10 +212,10 @@ def _reload_for_fresh_session(why: str) -> None:
             "if(Date.now()-t>60000){try{w.sessionStorage.setItem('gnRenewAt',String(Date.now()))}catch(e){}"
             "w.location.reload();}})();</script>", unsafe_allow_javascript=True)
     with st.container(key="signin"):
-        st.html('<p class="si-title">GNOSIS</p>'
+        st.html(tr('<p class="si-title">GNOSIS</p>'
                 '<p class="si-lede">Your session needs to be renewed. If this page doesn\'t refresh by itself, '
-                'sign out and sign in again.</p>')
-        _raw(f'<a class="si-plain" href="{html.escape(signout_url())}">Sign out</a>')
+                'sign out and sign in again.</p>'))
+        _raw(f'<a class="si-plain" href="{html.escape(signout_url())}">' + tr("Sign out") + "</a>")
     st.stop()
 
 
@@ -287,7 +288,7 @@ def _run(action: str) -> None:
             if not _valid_email(email):
                 problem = ERRORS["invalid_email"]
             elif not password:
-                problem = "Enter your password."
+                problem = N_("Enter your password.")
             else:
                 session = supa_auth.sign_in(email, password)
                 _signed_in(session)
@@ -299,7 +300,7 @@ def _run(action: str) -> None:
             elif not password_ok(password):
                 problem = PASSWORD_PROBLEM
             elif password != confirm:
-                problem = "The passwords don't match."
+                problem = N_("The passwords don't match.")
             else:
                 supa_auth.sign_up(email, password, *routes.email_flow("signup"))
                 done = "sent"
@@ -338,19 +339,19 @@ def _run(action: str) -> None:
 
 def _google_button(busy: bool) -> None:
     href = html.escape(f"{_routes_base()}/auth/google")
-    _raw(f'<a class="si-google{" is-off" if busy else ""}" href="{href}"><span>Continue with Google</span></a>')
-    st.html('<p class="si-or"><span>or</span></p>')
+    _raw(f'<a class="si-google{" is-off" if busy else ""}" href="{href}"><span>' + tr("Continue with Google") + "</span></a>")
+    st.html(tr('<p class="si-or"><span>or</span></p>'))
 
 
 def _note_line() -> None:
     note = st.session_state.pop("auth_note", None)
     if note and note[1] in NOTES:
-        st.html(f'<p class="si-note" role="status">{html.escape(NOTES[note[1]])}</p>')
+        st.html(f'<p class="si-note" role="status">{html.escape(tr(NOTES[note[1]]))}</p>')
         if note[1] in ("link", "link_unknown"):
             st.session_state.auth_link_expired = True
     problem = st.session_state.get("auth_problem")
     if problem:
-        st.html(f'<p class="si-note si-problem" role="alert">{html.escape(problem)}</p>')
+        st.html(f'<p class="si-note si-problem" role="alert">{html.escape(tr(problem, n=MIN_PASSWORD))}</p>')
 
 
 def _switch(label: str, to: str, key: str, busy: bool) -> None:
@@ -367,56 +368,56 @@ def login_page() -> None:
     pending = st.session_state.get("auth_pending")
     busy = bool(pending)
     with st.container(key="signin"):
-        st.html('<p class="si-title">GNOSIS</p><p class="si-lede">Learn a little every day.</p>')
+        st.html(tr('<p class="si-title">GNOSIS</p><p class="si-lede">Learn a little every day.</p>'))
         if view == "sent":
-            st.html(f'<p class="si-note" role="status">{html.escape(NEUTRAL)}</p>')
-            _switch("Back to sign in", "signin", "si_back", busy)
+            st.html(f'<p class="si-note" role="status">{html.escape(tr(NEUTRAL))}</p>')
+            _switch(tr("Back to sign in"), "signin", "si_back", busy)
         elif view == "invite":
-            st.html(f'<p class="si-note" role="status">{html.escape(INVITE_ONLY)}</p>')
-            _switch("Back to sign in", "signin", "si_back", busy)
+            st.html(f'<p class="si-note" role="status">{html.escape(tr(INVITE_ONLY))}</p>')
+            _switch(tr("Back to sign in"), "signin", "si_back", busy)
         elif view in ("signin", "signup"):
             _google_button(busy)
             _note_line()
             if view == "signin":
                 with st.form("si_form", border=False, enter_to_submit=True):
-                    st.text_input("Email", key="si_email", autocomplete="email")
-                    st.text_input("Password", key="si_password", type="password",
+                    st.text_input(tr("Email"), key="si_email", autocomplete="email")
+                    st.text_input(tr("Password"), key="si_password", type="password",
                                   autocomplete="current-password")
-                    st.form_submit_button("Signing in…" if busy else "Sign in", type="primary",
+                    st.form_submit_button(tr("Signing in…") if busy else tr("Sign in"), type="primary",
                                           on_click=_queue, args=("signin",), disabled=busy,
                                           use_container_width=True)
                 with st.container(key="si_links", horizontal=True):
-                    _switch("Forgot password?", "forgot", "si_to_forgot", busy)
-                    _switch("Create an account", "signup", "si_to_signup", busy)
+                    _switch(tr("Forgot password?"), "forgot", "si_to_forgot", busy)
+                    _switch(tr("Create an account"), "signup", "si_to_signup", busy)
                 if st.session_state.get("auth_unconfirmed") or st.session_state.get("auth_link_expired"):
-                    _switch("Resend confirmation email", "resend", "si_to_resend", busy)
+                    _switch(tr("Resend confirmation email"), "resend", "si_to_resend", busy)
             else:
                 with st.form("su_form", border=False, enter_to_submit=True):
-                    st.text_input("Email", key="su_email", autocomplete="email")
-                    st.text_input("Password", key="su_password", type="password",
+                    st.text_input(tr("Email"), key="su_email", autocomplete="email")
+                    st.text_input(tr("Password"), key="su_password", type="password",
                                   autocomplete="new-password")
-                    st.html(f'<p class="si-rule">{PASSWORD_RULE}</p>')
-                    st.text_input("Confirm password", key="su_confirm", type="password",
+                    st.html(f'<p class="si-rule">{tr(PASSWORD_RULE, n=MIN_PASSWORD)}</p>')
+                    st.text_input(tr("Confirm password"), key="su_confirm", type="password",
                                   autocomplete="new-password")
-                    st.form_submit_button("Creating your account…" if busy else "Create account", type="primary",
+                    st.form_submit_button(tr("Creating your account…") if busy else tr("Create account"), type="primary",
                                           on_click=_queue, args=("signup",), disabled=busy,
                                           use_container_width=True)
                 with st.container(key="si_links", horizontal=True):
-                    st.html('<p class="si-hint">Already have an account?</p>')
-                    _switch("Sign in", "signin", "si_to_signin", busy)
+                    st.html(tr('<p class="si-hint">Already have an account?</p>'))
+                    _switch(tr("Sign in"), "signin", "si_to_signin", busy)
         else:   # forgot / resend
             forgot = view == "forgot"
             _note_line()
-            st.html('<p class="si-hint">' + ("Enter your email and we'll send you a link to set a new password."
-                                             if forgot else "Enter your email and we'll send the confirmation link again.")
+            st.html('<p class="si-hint">' + (tr("Enter your email and we'll send you a link to set a new password.")
+                                             if forgot else tr("Enter your email and we'll send the confirmation link again."))
                     + "</p>")
             with st.form("fp_form" if forgot else "rs_form", border=False, enter_to_submit=True):
-                st.text_input("Email", key="fp_email" if forgot else "rs_email", autocomplete="email")
-                label = ("Send reset link" if forgot else "Resend confirmation email")
-                st.form_submit_button("Sending…" if busy else label, type="primary", on_click=_queue,
+                st.text_input(tr("Email"), key="fp_email" if forgot else "rs_email", autocomplete="email")
+                label = (tr("Send reset link") if forgot else tr("Resend confirmation email"))
+                st.form_submit_button(tr("Sending…") if busy else label, type="primary", on_click=_queue,
                                       args=("forgot" if forgot else "resend",), disabled=busy,
                                       use_container_width=True)
-            _switch("Back to sign in", "signin", "si_back", busy)
+            _switch(tr("Back to sign in"), "signin", "si_back", busy)
     if pending:
         action, st.session_state.auth_sent = st.session_state.pop("auth_pending")
         _run(action)
@@ -430,15 +431,14 @@ def reset_password_page(who: dict) -> None:
     pending = st.session_state.get("auth_pending")
     busy = bool(pending) and pending[0] == "reset"
     with st.container(key="signin"):
-        st.html('<p class="si-title">GNOSIS</p>'
-                f'<p class="si-lede">Set a new password for {html.escape(who["email"])}.</p>')
+        st.html(tr('<p class="si-title">GNOSIS</p><p class="si-lede">Set a new password for {p0}.</p>', p0=html.escape(who["email"])))
         _note_line()
         with st.form("rp_form", border=False, enter_to_submit=True):
-            st.text_input("New password", key="rp_password", type="password", autocomplete="new-password")
-            st.html(f'<p class="si-rule">{PASSWORD_RULE}</p>')
-            st.text_input("Confirm new password", key="rp_confirm", type="password",
+            st.text_input(tr("New password"), key="rp_password", type="password", autocomplete="new-password")
+            st.html(f'<p class="si-rule">{tr(PASSWORD_RULE, n=MIN_PASSWORD)}</p>')
+            st.text_input(tr("Confirm new password"), key="rp_confirm", type="password",
                           autocomplete="new-password")
-            st.form_submit_button("Saving…" if busy else "Save new password", type="primary", on_click=_queue,
+            st.form_submit_button(tr("Saving…") if busy else tr("Save new password"), type="primary", on_click=_queue,
                                   args=("reset",), disabled=busy, use_container_width=True)
     if busy:
         st.session_state.auth_sent = st.session_state.pop("auth_pending")[1]
@@ -447,12 +447,12 @@ def reset_password_page(who: dict) -> None:
         if not password_ok(password):
             st.session_state.auth_problem = PASSWORD_PROBLEM
         elif password != confirm:
-            st.session_state.auth_problem = "The passwords don't match."
+            st.session_state.auth_problem = N_("The passwords don't match.")
         else:
             try:
                 supa_auth.set_password(access_token(), password)
             except supa_auth.AuthError as e:
-                st.session_state.auth_problem = ERRORS.get(e.code, "Your password wasn't changed. Please try again.")
+                st.session_state.auth_problem = ERRORS.get(e.code, N_("Your password wasn't changed. Please try again."))
             else:
                 st.session_state.pop("auth_problem", None)
                 _go(routes.handoff(None, None, _browser(), note="auth=password_set", recovery=False))
@@ -462,9 +462,8 @@ def reset_password_page(who: dict) -> None:
 
 def invite_only_page() -> None:
     with st.container(key="signin"):
-        st.html('<p class="si-title">GNOSIS</p>'
-                f'<p class="si-lede">{html.escape(INVITE_ONLY)}</p>')
-        _raw(f'<a class="si-plain" href="{html.escape(signout_url())}">Sign out</a>')
+        st.html(tr('<p class="si-title">GNOSIS</p><p class="si-lede">{p0}</p>', p0=html.escape(tr(INVITE_ONLY))))
+        _raw(f'<a class="si-plain" href="{html.escape(signout_url())}">' + tr("Sign out") + "</a>")
     st.stop()
 
 
@@ -487,16 +486,16 @@ def gate(store) -> None:
         reset_password_page(who)
     note = st.session_state.pop("auth_note", None)
     if note == ("auth", "password_set"):
-        st.toast("Your password has been updated.")
+        st.toast(tr("Your password has been updated."))
     elif note == ("auth", "confirmed"):
-        st.toast("Your email is confirmed. Welcome.")
+        st.toast(tr("Your email is confirmed. Welcome."))
     from coach import storage
     try:
         allowed = is_admin() or store.is_invited(who["email"])
     except storage.StorageError as e:
         if e.status == 401:
             _reload_for_fresh_session(f"the database refused the session: {e.detail[:200]}")
-        st.error(f"Couldn't check your invitation ({e}). Refresh the page in a moment to try again.")
+        st.error(tr("Couldn't check your invitation ({e}). Refresh the page in a moment to try again.", e=e))
         st.stop()
     if not allowed:
         invite_only_page()
@@ -504,7 +503,7 @@ def gate(store) -> None:
         try:
             store.touch_user(who["email"], who["name"], who["picture"])
         except storage.StorageError as e:
-            st.error(f"Couldn't sign you in ({e}). Refresh the page in a moment to try again.")
+            st.error(tr("Couldn't sign you in ({e}). Refresh the page in a moment to try again.", e=e))
             st.stop()
         st.session_state.auth_touched = who["sub"]
 
@@ -523,6 +522,6 @@ def account_menu() -> None:
                if who["picture"].startswith("https://") else "")
         st.html(f'<div class="acct-who">{pic}<div><p class="acct-name">{html.escape(who["name"])}</p>'
                 f'<p class="acct-email">{html.escape(who["email"])}</p></div></div>')
-        st.page_link("views/account.py", label="Account", icon=":material/person:")
-        st.page_link("views/settings.py", label="Goals & Settings", icon=":material/tune:")
-        _raw(f'<a class="acct-out" href="{html.escape(signout_url())}">Sign out</a>')
+        st.page_link("views/account.py", label=tr("Account"), icon=":material/person:")
+        st.page_link("views/settings.py", label=tr("Goals & Settings"), icon=":material/tune:")
+        _raw(f'<a class="acct-out" href="{html.escape(signout_url())}">' + tr("Sign out") + "</a>")

@@ -16,6 +16,7 @@ Pure functions, no Streamlit."""
 import os
 
 from coach import settings
+from coach.i18n import tr
 
 ENFORCED = False
 # Plans and prices on the pages (Account → Subscription, the menu). Off until plans and prices are decided
@@ -80,8 +81,8 @@ def value_line(plan: str, feature: str) -> str:
 def price_line(plan: str) -> str:
     p = PRICES.get(plan)
     if p == 0:
-        return "Free"
-    return "Price not set yet" if p is None else f"{CURRENCY} {p:.2f} a month"
+        return tr("Free")
+    return tr("Price not set yet") if p is None else tr("{price} a month", price=f"{CURRENCY} {p:.2f}")
 
 
 def due_today(plan: str) -> int:

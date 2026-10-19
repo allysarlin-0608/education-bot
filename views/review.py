@@ -10,18 +10,20 @@ from html import escape
 import streamlit as st
 
 from coach import catalog, exercise, quiz, review, ui
+from coach import i18n
+from coach.i18n import N_, tr
 
 log = st.session_state.coach_log
 today = ui.today()
 st.html('<div id="review-page"></div>')
-st.markdown("## Review")
-st.caption("What you've learned comes back just before you'd forget it: a day later, then further apart "
-           "each time you know it. A few minutes a day; your lessons never wait for it.")
+st.markdown(tr("## Review"))
+st.caption(tr("What you've learned comes back just before you'd forget it: a day later, then further apart "
+           "each time you know it. A few minutes a day; your lessons never wait for it."))
 
-VIEWS = ["Today", "Collection"]
+VIEWS = [N_("Today"), N_("Collection")]
 st.session_state.setdefault("rv_view", "Today")
-view = st.segmented_control("Show", VIEWS, key="rv_view", required=True,
-                            label_visibility="collapsed") or "Today"
+view = st.segmented_control(tr("Show"), VIEWS, key="rv_view", required=True,
+                            label_visibility="collapsed", format_func=tr) or "Today"
 
 
 def holder(card_id):
@@ -54,10 +56,10 @@ def answered(card_id, right, score=None):
 def when(iso):
     d = date.fromisoformat(iso)
     if d <= today:
-        return "due today"
+        return tr("due today")
     if (d - today).days == 1:
-        return "tomorrow"
-    return f"{d:%a}, {d:%b} {d.day}"
+        return tr("tomorrow")
+    return tr("on {day}", day=i18n.day_short(d))
 
 
 def source(card):
@@ -76,7 +78,7 @@ def show_question(card, q):
         recall(card, q["question"], f"A good answer: {q['answer']}")
         return
     answer = exercise.field(q, key, tag=q["type"] not in ("choice", "match"))
-    if st.button("Check", type="primary", key=f"{key}_check", disabled=not quiz.answered(q, answer), width="stretch"):
+    if st.button(tr("Check"), type="primary", key=f"{key}_check", disabled=not quiz.answered(q, answer), width="stretch"):
         mark = quiz.mark(q, answer)
         st.session_state.rv_answer = {"id": card["id"], "answer": answer}
         answered(card["id"], mark == 1, mark)
@@ -87,32 +89,32 @@ def recall(card, prompt, answer):
     st.markdown(f"**{prompt}**")
     shown = st.session_state.get("rv_shown") == card["id"]
     if not shown:
-        st.caption("Say it to yourself first, then look.")
-        if st.button("Show the answer", type="primary", key=f"rv_show_{card['id']}", width="stretch"):
+        st.caption(tr("Say it to yourself first, then look."))
+        if st.button(tr("Show the answer"), type="primary", key=f"rv_show_{card['id']}", width="stretch"):
             st.session_state.rv_shown = card["id"]
             st.rerun()
         return
     st.markdown(answer)
     with st.container(horizontal=True, key="rv_self"):
-        if st.button("I knew it", type="primary", key=f"rv_yes_{card['id']}", width="stretch"):
+        if st.button(tr("I knew it"), type="primary", key=f"rv_yes_{card['id']}", width="stretch"):
             st.session_state.rv_shown = None
             answered(card["id"], True)
-        if st.button("Not yet", key=f"rv_no_{card['id']}", width="stretch"):
+        if st.button(tr("Not yet"), key=f"rv_no_{card['id']}", width="stretch"):
             st.session_state.rv_shown = None
             answered(card["id"], False)
 
 
 def feedback(card, right):
     """Just answered: right or not (said in words, not only colour), the answer, what's next."""
-    st.markdown(f"**{'✓ Right.' if right else '✗ Not quite.'}** " +
-                (f"It comes back {when(card['due'])}." if right else "It comes back tomorrow."))
+    st.markdown(f"**{'✓ ' + tr('Right.') if right else '✗ ' + tr('Not quite.')}** " +
+                (tr("It comes back {when}.", when=when(card['due'])) if right else tr("It comes back tomorrow.")))
     mine = st.session_state.get("rv_answer") or {}
     if card["kind"] == "question" and mine.get("id") == card["id"] and card["question"]["type"] in quiz.LOCAL:
         item = card["question"]
         exercise.result(item, mine["answer"], quiz.mark(item, mine["answer"]), show_question=False)
     elif card["kind"] == "question":
         item = card["question"]
-        st.caption(f"Answer: {review._answer_text(item)}" + (f". {item['why']}" if item.get("why") else ""))
+        st.caption(tr("Answer: {answer}.", answer=review._answer_text(item)) + (f" {item['why']}" if item.get("why") else ""))
     elif card["kind"] == "word":
         st.caption(f"{card['front']}: {card['back']}" + (f" — {card['example']}" if card.get("example") else ""))
 
@@ -121,8 +123,7 @@ def pace(left):
     """How far through today's cards: a hairline and a few words."""
     done = review.reviewed_today(log, today)
     share = done / (done + left) if done + left else 1
-    st.html(f'<div class="rv-pace"><div class="rv-line"><span style="width:{share * 100:.0f}%"></span></div>'
-            f'<p>{done} done · {left} to go today</p></div>')
+    st.html(tr('<div class="rv-pace"><div class="rv-line"><span style="width:{p0:.0f}%"></span></div><p>{done} done · {left} to go today</p></div>', p0=share * 100, done=done, left=left))
 
 
 def today_view():
@@ -143,11 +144,11 @@ def today_view():
     if not due:
         done = review.reviewed_today(log, today)
         if not review.cards(log):
-            st.markdown("### Nothing to review yet")
-            st.caption("Questions you miss in a quiz, the words of each lesson you pass and the points you "
-                       "save come back here a day later, then further apart each time you know them.")
+            st.markdown(tr("### Nothing to review yet"))
+            st.caption(tr("Questions you miss in a quiz, the words of each lesson you pass and the points you "
+                       "save come back here a day later, then further apart each time you know them."))
         else:
-            st.markdown("### All reviewed for today" if done else "### Nothing due today")
+            st.markdown(tr("### All reviewed for today") if done else tr("### Nothing due today"))
             nxt = review.next_due(log, today)
             parts = ([f"You reviewed {done} {'card' if done == 1 else 'cards'} today."] if done else []) + \
                 ([f"The next ones come back {when(nxt.isoformat())}."] if nxt else [])
@@ -156,7 +157,7 @@ def today_view():
             if waiting:
                 parts = [f"That's today's {review.DAILY_LIMIT}. The other {len(waiting)} wait for tomorrow."]
             st.caption(" ".join(parts))
-        if st.button("Back to Home", key="rv_back", type="tertiary"):
+        if st.button(tr("Back to Home"), key="rv_back", type="tertiary"):
             st.switch_page("views/daily.py")
         return
     _, _, card = due[0]
@@ -172,32 +173,32 @@ def today_view():
             show_question(card, q)
     else:
         recall(card, card["front"], card["back"])
-    st.caption("Reviews don't hold up today's lessons, and you can stop any time.")
+    st.caption(tr("Reviews don't hold up today's lessons, and you can stop any time."))
 
 
 # ============================================================
 # COLLECTION: everything she has, searchable; pause or delete
 # ============================================================
-FILTERS = {"All": None, "Vocabulary": "word", "Missed questions": "question", "Saved points": "point"}
+FILTERS = {N_("All"): None, N_("Vocabulary"): "word", N_("Missed questions"): "question", N_("Saved points"): "point"}
 
 
 def collection_view():
     everything = review.cards(log)
     if not everything:
-        st.markdown("### Your collection is empty")
-        st.caption("It fills as you learn: missed quiz questions, the words of each lesson you pass, "
-                   "and the key points you save with “Save for review” under a lesson.")
+        st.markdown(tr("### Your collection is empty"))
+        st.caption(tr("It fills as you learn: missed quiz questions, the words of each lesson you pass, "
+                   "and the key points you save with “Save for review” under a lesson."))
         return
     with st.container(key="rv_tools"):
-        query = st.text_input("Search your collection", key="rv_query", placeholder="A word, a question, a subject…")
+        query = st.text_input(tr("Search your collection"), key="rv_query", placeholder=tr("A word, a question, a subject…"))
         counts = {name: sum(1 for _, _, c in everything if k is None or c["kind"] == k) for name, k in FILTERS.items()}
-        kind = st.pills("Kind", list(FILTERS), key="rv_kind", default="All", label_visibility="collapsed",
-                        format_func=lambda name: f"{name} {counts[name]}") or "All"
+        kind = st.pills(tr("Kind"), list(FILTERS), key="rv_kind", default="All", label_visibility="collapsed",
+                        format_func=lambda name: f"{tr(name)} {counts[name]}") or "All"
     found = review.search(log, query, FILTERS[kind])
     paused = sum(1 for _, _, c in everything if c["paused"])
-    st.caption(f"{len(found)} of {len(everything)} cards" + (f" · {paused} paused" if paused else ""))
+    st.caption(tr("{found} of {n} cards", found=len(found), n=len(everything)) + (" · " + tr("{n} paused", n=paused) if paused else ""))
     if not found:
-        st.caption("Nothing matches. Try another word or kind.")
+        st.caption(tr("Nothing matches. Try another word or kind."))
         return
     shown = st.session_state.get("rv_more", 30)
     for e, slot, c in found[:shown]:
@@ -211,7 +212,7 @@ def collection_view():
             confirm = st.session_state.get("rv_confirm") == c["id"]
             with st.container(horizontal=True, key=f"rv_acts_{c['id']}"):
                 if confirm:
-                    if st.button("Delete it", key=f"rv_del_yes_{c['id']}", type="primary"):
+                    if st.button(tr("Delete it"), key=f"rv_del_yes_{c['id']}", type="primary"):
                         held = holder(c["id"])
                         if held:
                             review.remove(held[1], c["id"])
@@ -219,21 +220,21 @@ def collection_view():
                                 ui.show_pending_error()
                         st.session_state.rv_confirm = None
                         st.rerun()
-                    if st.button("Keep it", key=f"rv_del_no_{c['id']}", type="tertiary"):
+                    if st.button(tr("Keep it"), key=f"rv_del_no_{c['id']}", type="tertiary"):
                         st.session_state.rv_confirm = None
                         st.rerun()
                 else:
-                    if st.button("Resume" if c["paused"] else "Pause", key=f"rv_pause_{c['id']}", type="tertiary"):
+                    if st.button(tr("Resume") if c["paused"] else tr("Pause"), key=f"rv_pause_{c['id']}", type="tertiary"):
                         held = holder(c["id"])
                         if held:
                             held[2]["paused"] = not held[2]["paused"]
                             if not ui.save_entry(log, held[0]):
                                 ui.show_pending_error()
                         st.rerun()
-                    if st.button("Delete", key=f"rv_del_{c['id']}", type="tertiary"):
+                    if st.button(tr("Delete"), key=f"rv_del_{c['id']}", type="tertiary"):
                         st.session_state.rv_confirm = c["id"]
                         st.rerun()
-    if len(found) > shown and st.button("Show more", key="rv_show_more", type="tertiary"):
+    if len(found) > shown and st.button(tr("Show more"), key="rv_show_more", type="tertiary"):
         st.session_state.rv_more = shown + 30
         st.rerun()
 

@@ -8,6 +8,7 @@ from html import escape
 import streamlit as st
 
 from coach import reports, storage
+from coach.i18n import tr
 
 THANKS = "Thanks. We'll check it."
 
@@ -31,11 +32,11 @@ def _form(key: str, reasons: tuple, on_send, choices: list = None) -> None:
         st.html(f'<p class="ob-note" role="status">{escape(done or THANKS)}</p>')
     pick = None
     if choices:
-        pick = st.selectbox("Which question?", range(len(choices)), key=f"{key}_which",
+        pick = st.selectbox(tr("Which question?"), range(len(choices)), key=f"{key}_which",
                             format_func=lambda i: f"{i + 1}. {choices[i][:70]}")
-    reason = st.radio("What's the problem?", reasons, key=f"{key}_why", format_func=reports.REASONS.get, index=None)
-    note = st.text_input("Anything to add? (optional)", key=f"{key}_note", max_chars=300)
-    if st.button("Send", key=f"{key}_send", type="primary", disabled=reason is None):
+    reason = st.radio(tr("What's the problem?"), reasons, key=f"{key}_why", format_func=reports.REASONS.get, index=None)
+    note = st.text_input(tr("Anything to add? (optional)"), key=f"{key}_note", max_chars=300)
+    if st.button(tr("Send"), key=f"{key}_send", type="primary", disabled=reason is None):
         said = on_send(reason, note, pick)
         st.session_state[f"{key}_said"] = said
         for k in (f"{key}_why", f"{key}_note"):
@@ -45,7 +46,7 @@ def _form(key: str, reasons: tuple, on_send, choices: list = None) -> None:
 
 def lesson(key: str, topic: str, n: int, title: str, text: str) -> None:
     """Report a problem with this lesson."""
-    with st.popover("Report a problem", key=f"{key}_menu"):
+    with st.popover(tr("Report a problem"), key=f"{key}_menu"):
         _form(key, reports.LESSON_REASONS,
               lambda reason, note, _: _send(reports.make(topic, n, title, "lesson", reason, (text or "")[:600], note)))
 
@@ -60,5 +61,5 @@ def question(key: str, topic: str, n: int, title: str, questions: list, on_repor
         if not said and on_reported:
             on_reported(texts[i])
         return said
-    with st.popover("Report a question", key=f"{key}_menu"):
+    with st.popover(tr("Report a question"), key=f"{key}_menu"):
         _form(key, reports.QUESTION_REASONS, send, choices=texts)

@@ -10,6 +10,7 @@ from urllib.parse import quote_plus
 import streamlit as st
 
 from coach import core
+from coach.i18n import tr
 
 # 【Key Idea】, **【Key Idea】**, ### 【Key Idea】: at the start of a line
 BLOCK = re.compile(r"^[ \t]*(?:#+[ \t]*)?(?:\*\*)?【([^】\n]+)】(?:\*\*)?[ \t]*[:：]?[ \t]*", re.MULTILINE)
@@ -175,7 +176,7 @@ def check_links(title: str) -> None:
         return
     links = " · ".join(f'<a href="{escape(url.format(q=quote_plus(q)))}" target="_blank" rel="noopener noreferrer">{name}</a>'
                        for name, url in CHECK)
-    st.html(f'<p class="l-check">Check it yourself: {links}</p>')
+    st.html(tr('<p class="l-check">Check it yourself: {links}</p>', links=links))
 
 
 def render(text: str, topic: str = None, key: str = "", title: str = "") -> None:

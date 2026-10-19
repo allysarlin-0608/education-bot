@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import streamlit as st
 
 from coach import appconfig, catalog, clock, core, curriculum, habit, prefs as prefs_, settings, storage
+from coach.i18n import N_, tr, trn
 
 logger = logging.getLogger("coach.ui")
 
@@ -81,22 +82,22 @@ def require_password():
     if url:
         st.session_state.setdefault("coach_asked_path", urlparse(url).path.strip("/").split("/")[-1])
     expected = appconfig.get_setting("APP_PASSWORD")
-    st.markdown("### GNOSIS")
+    st.markdown(tr("### GNOSIS"))
     if not expected:
         st.error(PASSWORD_MISSING)
         st.stop()
     with st.form("login"):
-        entered = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Enter", type="primary")
+        entered = st.text_input(tr("Password"), type="password")
+        submitted = st.form_submit_button(tr("Enter"), type="primary")
     if submitted and _check_password(entered, expected):
         st.session_state.coach_authed = True
         st.rerun()
     left = _cooling_down()
     if left:
         minutes = math.ceil(left / 60)
-        st.error(f"Too many wrong tries. Try again in {minutes} {'minute' if minutes == 1 else 'minutes'}.")
+        st.error(trn('Too many wrong tries. Try again in {n} minute.', 'Too many wrong tries. Try again in {n} minutes.', minutes))
     elif submitted:
-        st.error("Wrong password. Try again.")
+        st.error(tr("Wrong password. Try again."))
     st.stop()
 
 
@@ -134,7 +135,7 @@ def make_store():
                 current_email=lambda: (auth.identity() or {}).get("email", ""),
             )
         except storage.StorageError as e:
-            st.error(f"The app isn't set up correctly: {e}.")
+            st.error(tr("The app isn't set up correctly: {e}.", e=e))
             st.stop()
     return st.session_state.coach_store
 
@@ -156,7 +157,7 @@ def init_state():
             st.session_state.coach_log_fresh = True     # (read this run: no second read on arrival)
         except storage.StorageError as e:
             # Don't cache the failure: the next rerun tries to load again.
-            st.error(f"Couldn't load your records ({e}). Refresh the page in a moment to try again.")
+            st.error(tr("Couldn't load your records ({e}). Refresh the page in a moment to try again.", e=e))
             st.stop()
     if "coach_settings" not in st.session_state:
         load_settings()
@@ -185,7 +186,7 @@ def load_settings():
     try:
         row = store.load_settings()
     except storage.StorageError as e:
-        st.error(f"Couldn't load your settings ({e}). Refresh the page in a moment to try again.")
+        st.error(tr("Couldn't load your settings ({e}). Refresh the page in a moment to try again.", e=e))
         st.stop()
     st.session_state.coach_settings = (settings.legacy(uid) if store.settings_missing
                                        else settings.normalize(row, uid))
@@ -204,15 +205,15 @@ def save_settings(new: dict) -> bool:
     try:
         st.session_state.coach_store.save_settings(new)
     except storage.StorageError as e:
-        st.session_state.coach_save_error = f"Your settings weren't saved ({e}). Try again in a moment."
+        st.session_state.coach_save_error = tr("Your settings weren't saved ({e}). Try again in a moment.", e=e)
         return False
     st.session_state.coach_settings = new
     return True
 
 
 # ------------------------------------------------------------ her habits
-PREFS_MISSING = ("Reminders and light days need one more table in the database "
-                 "(supabase/goals.sql). Everything else works as usual.")
+PREFS_MISSING = N_("Reminders and light days need one more table in the database "
+                   "(supabase/goals.sql). Everything else works as usual.")
 
 
 def load_prefs() -> None:
@@ -241,13 +242,13 @@ def update_prefs(**fields) -> bool:
     after the rerun, if it couldn't be saved."""
     load_prefs()
     if st.session_state.get("coach_prefs_error") == PREFS_MISSING:
-        st.session_state.coach_save_error = PREFS_MISSING
+        st.session_state.coach_save_error = tr(PREFS_MISSING)
         return False
     new = prefs_.normalize(dict(prefs(), **fields))
     try:
         st.session_state.coach_store.save_prefs(new)
     except storage.StorageError as e:
-        st.session_state.coach_save_error = f"That wasn't saved ({e}). Try again in a moment."
+        st.session_state.coach_save_error = tr("That wasn't saved ({e}). Try again in a moment.", e=e)
         return False
     st.session_state.coach_prefs = new
     return True
@@ -341,7 +342,7 @@ def save_entry(log, entry):
     try:
         st.session_state.coach_store.save_entry(log, entry)
     except storage.StorageError as e:
-        st.session_state.coach_save_error = f"This wasn't saved ({e}). Try again in a moment."
+        st.session_state.coach_save_error = tr("This wasn't saved ({e}). Try again in a moment.", e=e)
         unsaved.add((entry["date"], entry["topic"]))     # kept as it is until a save succeeds
         return False
     unsaved.discard((entry["date"], entry["topic"]))
@@ -354,7 +355,7 @@ def save_path(log, path) -> bool:
     try:
         st.session_state.coach_store.save_path(log, path)
     except storage.StorageError as e:
-        st.session_state.coach_save_error = f"Your goal wasn't saved ({e}). Try again in a moment."
+        st.session_state.coach_save_error = tr("Your goal wasn't saved ({e}). Try again in a moment.", e=e)
         return False
     log["paths"] = [p for p in log.get("paths", []) if p["id"] != path["id"]] + [path]
     return True
@@ -403,7 +404,7 @@ def save_book(log, book):
     try:
         st.session_state.coach_store.save_book(log, book)
     except storage.StorageError as e:
-        st.session_state.coach_save_error = f"Your reading progress wasn't saved ({e}). Try again in a moment."
+        st.session_state.coach_save_error = tr("Your reading progress wasn't saved ({e}). Try again in a moment.", e=e)
         return False
     return True
 
@@ -423,7 +424,7 @@ def replace_log(log):
     try:
         st.session_state.coach_store.replace(log)
     except storage.StorageError as e:
-        st.error(f"The import wasn't saved ({e}). Try again in a moment.")
+        st.error(tr("The import wasn't saved ({e}). Try again in a moment.", e=e))
         return False
     return True
 
@@ -470,12 +471,12 @@ def calm_failure(where: str) -> None:
     if appconfig.get_setting("GNOSIS_RAISE_ERRORS") == "1":
         raise                       # (the tests see the real error, never the calm page)
     logger.exception("a page failed: %s", where)
-    st.html('<div class="calm-fail" role="alert"><p class="calm-fail-t">Something went wrong on this page.</p>'
-            '<p class="ob-note">What you did before is saved. Try again, or go back to Home.</p></div>')
+    st.html(tr('<div class="calm-fail" role="alert"><p class="calm-fail-t">Something went wrong on this page.</p>'
+            '<p class="ob-note">What you did before is saved. Try again, or go back to Home.</p></div>'))
     with st.container(key="calm_fail_nav", horizontal=True):
-        if st.button("Try again", key="calm_retry", type="primary"):
+        if st.button(tr("Try again"), key="calm_retry", type="primary"):
             st.rerun()
-        if st.button("Go to Home", key="calm_home", type="tertiary"):
+        if st.button(tr("Go to Home"), key="calm_home", type="tertiary"):
             st.switch_page("views/daily.py")
 
 

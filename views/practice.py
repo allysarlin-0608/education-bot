@@ -10,11 +10,12 @@ from html import escape
 import streamlit as st
 
 from coach import catalog, exercise, llm, mastery, practice, quiz, tokens, ui
+from coach.i18n import tr, trn
 
 log = st.session_state.coach_log
 today = ui.today()
 st.html('<div id="practice-page" hidden></div>')
-st.markdown("## Practice")
+st.markdown(tr("## Practice"))
 
 
 def current():
@@ -49,7 +50,7 @@ def write_more(short: list) -> None:
         return
     ui.update_prefs(practice_made=today.isoformat())      # (once a day, even if it fails: never a loop of calls)
     system, messages = practice.make_request(ideas)
-    with st.spinner("Writing new exercises for the ideas you need most…"):
+    with st.spinner(tr("Writing new exercises for the ideas you need most…")):
         data, error = llm.ask_json(system, messages, max_tokens=tokens.QUIZ_MAX_TOKENS, salvage=quiz.salvage)
     made = practice.made(data, len(ideas)) if data else {}
     flat = [(k, q) for k, qs in made.items() for q in qs]
@@ -57,7 +58,7 @@ def write_more(short: list) -> None:
         st.session_state.pr_problem = error or "New exercises couldn't be written just now. These are from your lessons."
         return
     system, messages = quiz.check_request([q for _, q in flat])
-    with st.spinner("Checking every answer…"):
+    with st.spinner(tr("Checking every answer…")):
         verdict, error = llm.ask_json(system, messages)
     flagged = quiz.problems(verdict, len(flat)) if verdict else None
     if error or flagged is None:
@@ -117,25 +118,25 @@ weak = mastery.needs_practice(log, today)
 # ------------------------------------------------------------------ no set yet
 if p is None or (p["done"] and st.session_state.get("pr_again")):
     if p is None and not mastery.weakest(log, today, limit=1):
-        st.markdown("### Nothing to practise yet")
-        st.caption("Practice opens once you've taken a lesson's quiz: it then picks the ideas you know least "
-                   "and mixes short exercises on them.")
-        if st.button("Back to Home", key="pr_back", type="tertiary"):
+        st.markdown(tr("### Nothing to practise yet"))
+        st.caption(tr("Practice opens once you've taken a lesson's quiz: it then picks the ideas you know least "
+                   "and mixes short exercises on them."))
+        if st.button(tr("Back to Home"), key="pr_back", type="tertiary"):
             st.switch_page("views/daily.py")
         st.stop()
     names = [f"{i['title']}" for _, _, i in (weak or mastery.weakest(log, today, limit=3))[:practice.IDEAS_PER_SET]]
     count = min(practice.SET_SIZE, practice.PER_IDEA * len(names))
-    st.html('<p class="hb-eyebrow">Focus for today</p>'
-            f'<p class="hb-text">{len(names)} {"idea" if len(names) == 1 else "ideas"} you know least: '
-            + ", ".join(f"“{escape(x)}”" for x in names) + ". "
-            f"{count} short exercises, mixed, about {count} minutes.</p>")
+    st.html('<p class="hb-eyebrow">' + tr("Focus for today") + '</p><p class="hb-text">'
+            + trn("{n} idea you know least: {ideas}.", "{n} ideas you know least: {ideas}.", len(names),
+                  ideas=", ".join(f"“{escape(x)}”" for x in names)) + " "
+            + tr("{count} short exercises, mixed, about {count} minutes.", count=count) + "</p>")
     if not weak:
-        st.caption("Nothing is fading right now. A short set keeps what's solid on its way to mastered.")
+        st.caption(tr("Nothing is fading right now. A short set keeps what's solid on its way to mastered."))
     if problem:
         st.caption(problem)
     spot = st.empty()
-    if spot.button("Start practice", type="primary", key="pr_start", width="stretch"):
-        spot.button("Getting it ready…", disabled=True, key="pr_wait", width="stretch")
+    if spot.button(tr("Start practice"), type="primary", key="pr_start", width="stretch"):
+        spot.button(tr("Getting it ready…"), disabled=True, key="pr_wait", width="stretch")
         start(avoid=tuple((p or {}).get("seen") or ()) + tuple(practice.qid(x["q"]) for x in (p or {}).get("items", [])))
         st.rerun()
     st.stop()
@@ -144,8 +145,8 @@ if p is None or (p["done"] and st.session_state.get("pr_again")):
 if p["done"] and st.session_state.get("pr_shown") is None:     # (after the last answer's feedback)
     now = levels_now()
     right = sum(1 for m in p["marks"] if m == 1)
-    st.markdown("### Practice done")
-    st.caption(f"{right} of {len(p['marks'])} right. Each answer went into your skill map.")
+    st.markdown(tr("### Practice done"))
+    st.caption(tr('{right} of {p0} right. Each answer went into your skill map.', right=right, p0=len(p['marks'])))
     seen = []
     rows = []
     for x in p["items"]:
@@ -161,20 +162,20 @@ if p["done"] and st.session_state.get("pr_shown") is None:     # (after the last
         rows.append(f'<li><span>{escape(title)}</span><small>{escape(catalog.name(x["topic"]))} · '
                     f'{escape(change)}</small></li>')
     st.html('<ul class="wk-review pr-ideas">' + "".join(rows) + "</ul>")
-    st.caption("An idea becomes solid when it holds on another day, and mastered when it keeps holding "
-               "over a week or more. Coming back tomorrow does more than another set today.")
+    st.caption(tr("An idea becomes solid when it holds on another day, and mastered when it keeps holding "
+               "over a week or more. Coming back tomorrow does more than another set today."))
     done_ids = tuple(p.get("seen") or ()) + tuple(practice.qid(x["q"]) for x in p["items"])
     nxt = practice.build(log, today, avoid=done_ids)
     more = bool(nxt["items"]) or bool(nxt["short"] and ui.prefs().get("practice_made") != today.isoformat())
     if not more or problem:
-        st.caption(problem or "That's all the practice ready for today. New exercises come tomorrow.")
+        st.caption(problem or tr("That's all the practice ready for today. New exercises come tomorrow."))
     with st.container(horizontal=True, key="pr_end"):
-        if st.button("Knowledge map", type="primary", key="pr_map"):
+        if st.button(tr("Knowledge map"), type="primary", key="pr_map"):
             st.switch_page("views/skills.py")
-        if more and st.button("Another set", key="pr_more", type="tertiary"):
+        if more and st.button(tr("Another set"), key="pr_more", type="tertiary"):
             st.session_state.pr_again = True
             st.rerun()
-        if st.button("Back to Home", key="pr_today", type="tertiary"):
+        if st.button(tr("Back to Home"), key="pr_today", type="tertiary"):
             st.switch_page("views/daily.py")
     st.stop()
 
@@ -184,15 +185,15 @@ k = next(j for j, m in enumerate(p["marks"]) if m is None) if st.session_state.g
 k = min(k, len(p["items"]) - 1)
 item = p["items"][k]
 done = sum(1 for m in p["marks"] if m is not None)
-st.html(f'<div class="rv-pace"><div class="rv-line"><span style="width:{done / len(p["items"]) * 100:.0f}%"></span>'
-        f'</div><p>{done} of {len(p["items"])} done</p></div>')
+st.html(f'<div class="rv-pace"><div class="rv-line"><span style="width:{done / len(p["items"]) * 100:.0f}%"></span></div><p>' + tr("{done} of {n} done", done=done, n=len(p["items"])) + "</p></div>")
 held = mastery.holder(log, item["topic"], item["n"])
-st.caption(f"{catalog.name(item['topic'])} · Lesson {item['n']}" + (f": {held[1]['title']}" if held else ""))
+st.caption(f"{catalog.name(item['topic'])} · " + (tr("Lesson {n}: {title}", n=item['n'], title=held[1]['title']) if held
+                                                   else tr("Lesson {n}", n=item['n'])))
 key = f"pr_{p['date']}_{k}_{practice.qid(item['q'])}"
 if p["marks"][k] is None:
     answer = exercise.field(item["q"], key)
     spot = st.empty()
-    if spot.button("Check", type="primary", key=f"{key}_check", width="stretch",
+    if spot.button(tr("Check"), type="primary", key=f"{key}_check", width="stretch",
                    disabled=not quiz.answered(item["q"], answer)):
         check(k, answer)
         st.session_state.pr_shown = k
@@ -202,7 +203,7 @@ else:
     st.markdown(f"### {q['question']}")
     st.markdown(f"**{exercise.sign(mark)} {exercise.verdict(mark)}**")
     exercise.result(q, p["answers"][k], mark, show_question=False)
-    if st.button("Next" if None in p["marks"] else "See how it went", type="primary", key="pr_next", width="stretch"):
+    if st.button(tr("Next") if None in p["marks"] else tr("See how it went"), type="primary", key="pr_next", width="stretch"):
         st.session_state.pr_shown = None
         st.rerun()
-st.caption("Practice never holds up your lessons. Stop any time; your place is kept for today.")
+st.caption(tr("Practice never holds up your lessons. Stop any time; your place is kept for today."))

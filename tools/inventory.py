@@ -28,7 +28,21 @@ AI = {"ask_json", "stream_reply", "stream_text"}
 EXTRA_SETTINGS = [("AI_DAILY_REQUEST_LIMIT", "coach/quota.py:23"), ("AI_DAILY_TOKEN_LIMIT", "coach/quota.py:23")]
 
 
+class _NoTr(ast.NodeTransformer):
+    """A translated label read as its English (coach/i18n.py: tr("…") → "…")."""
+    def visit_Call(self, node):
+        self.generic_visit(node)
+        if isinstance(node.func, ast.Name) and node.func.id in ("tr", "trn") and node.args \
+                and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+            text = node.args[0].value
+            return ast.Constant(re.sub(r"\{[^{}]*\}", "{…}", text) if node.keywords or node.func.id == "trn" else text)
+        return node
+
+
 def _text(node) -> str:
+    if node is not None:
+        import copy
+        node = _NoTr().visit(copy.deepcopy(node))
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         return node.value
     if isinstance(node, ast.JoinedStr):

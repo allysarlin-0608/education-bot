@@ -7,6 +7,7 @@ from html import escape
 import streamlit as st
 
 from coach import quiz
+from coach.i18n import tr
 
 ORDINALS = ("1st", "2nd", "3rd", "4th", "5th")
 
@@ -44,11 +45,11 @@ def field(item: dict, key: str, value=None, k: int = None, tag: bool = True):
             options = [o for o in range(len(names)) if o not in taken]
             current = chosen[j] if chosen[j] in options else None
             out.append(st.selectbox(row, options, index=options.index(current) if current is not None else None,
-                                    placeholder="Choose its match" if kind == "match" else "Choose a step",
+                                    placeholder=tr("Choose its match") if kind == "match" else tr("Choose a step"),
                                     format_func=lambda o, names=names: names[o], key=keys[j]))
         return out
     if kind == "blank":
-        return st.text_input(label(k, item), value=value or "", key=key, placeholder="The missing word or phrase")
+        return st.text_input(label(k, item), value=value or "", key=key, placeholder=tr("The missing word or phrase"))
     placeholder = ("One real example from your own life, work or goal"
                    if kind == "apply" else "Answer in a sentence or two, in your own words")
     return st.text_area(label(k, item), value=value or "", key=key, height=90, placeholder=placeholder)
@@ -69,23 +70,24 @@ def result(item: dict, answer, mark, feedback: str = "", k: int = None, show_que
     kind = item["type"]
     if kind in ("choice", "scenario"):
         if mark == 1:
-            st.caption(f"Your answer: {item['options'][answer]}. {item['why']}".strip())
+            st.caption((tr("Your answer: {answer}.", answer=item['options'][answer]) + " " + item['why']).strip())
         else:
             st.caption(f"{quiz.mistake(item, answer)} {item['why']}".strip())
     elif kind in ("match", "order", "blank"):
         miss = quiz.mistake(item, answer)
         if kind == "match" and mark != 1:
-            miss = f"{mark * len(item['key']):g} of {len(item['key'])} pairs right. {miss}"
+            miss = tr("{right} of {n} pairs right.", right=f"{mark * len(item['key']):g}", n=len(item['key'])) + " " + miss
         if kind == "order" and mark != 1:
-            miss = f"{mark * len(item['key']):g} of {len(item['key'])} in the right place. {miss}"
+            miss = tr("{right} of {n} in the right place.", right=f"{mark * len(item['key']):g}", n=len(item['key'])) + " " + miss
         if kind == "blank" and mark == 1 and not miss:
-            miss = f"Your answer: {answer}."
+            miss = tr("Your answer: {answer}.", answer=answer)
         st.caption(f"{miss} {item['why']}".strip())
     else:
-        st.caption(f"Your answer: {answer}")
+        st.caption(tr('Your answer: {answer}', answer=answer))
         note = feedback or item["why"]
         if mark == 1:
             st.caption(note)
         else:
-            st.caption(("What's missing: " if mark else "Why it's marked wrong: ") + note)
-            st.caption(("What a good answer shows: " if kind == "apply" else "A good answer: ") + item["answer"])
+            st.caption(tr("What's missing: {note}", note=note) if mark else tr("Why it's marked wrong: {note}", note=note))
+            st.caption(tr("What a good answer shows: {answer}", answer=item["answer"]) if kind == "apply"
+                       else tr("A good answer: {answer}", answer=item["answer"]))

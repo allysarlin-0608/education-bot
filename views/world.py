@@ -11,6 +11,7 @@ from html import escape
 import streamlit as st
 
 from coach import core, curriculum, settings, ui, visuals
+from coach.i18n import tr
 
 log = st.session_state.coach_log
 config = ui.config()
@@ -51,7 +52,7 @@ st.html('<div id="world-page" hidden></div>')
 
 # the way back: to all the subjects, this one still in focus
 with st.container(key="w_back"):
-    if st.button("All subjects", type="tertiary", key="w_all"):
+    if st.button(tr("All subjects"), type="tertiary", key="w_all"):
         all_subjects()
 
 # ---------- the world: its name at the top, its object, and what she can do here ----------
@@ -64,23 +65,21 @@ with st.container(key=f"world_{w['layout']}"):
         st.html(visuals.object_html(topic, "w-object", number)
                 + (f'<p class="w-credit">{escape(s["credit"])}</p>' if s["credit"] else ""))
     with st.container(key="w_copy"):
-        st.html(f'<div class="w-copy"><p class="w-about">{escape(s["description"])}</p>'
-                f'<p class="w-meta">{f["units"]} topics · {f["lessons"]} lessons · '
-                f'begins with {escape(f["first"])}</p></div>')
+        st.html(tr('<div class="w-copy"><p class="w-about">{p0}</p><p class="w-meta">{p1} topics · {p2} lessons · begins with {p3}</p></div>', p0=escape(s["description"]), p1=f["units"], p2=f["lessons"], p3=escape(f["first"])))
         # what she can do here
         when = next_day(topic)
         with st.container(key="w_actions", horizontal=True, vertical_alignment="center"):
             if when == today:
                 entry = core.find_entry(log, today, topic)
                 begun = entry is not None and any(x.get("lesson") for x in entry.get("lessons") or [])
-                if st.button("Continue today's lessons" if begun else "Begin today's lessons", type="primary",
+                if st.button(tr("Continue today's lessons") if begun else tr("Begin today's lessons"), type="primary",
                              key="w_today"):
                     st.switch_page("views/daily.py")
             else:
                 st.html(f'<p class="w-next">{"Next on " + f"{when:%A}, {when:%B} {when.day}" if when else "Not in your rotation"}</p>')
-            if st.button("Course map", type="tertiary", key="w_course"):
+            if st.button(tr("Course map"), type="tertiary", key="w_course"):
                 ui.open_course(topic)
-            if st.button("See its lessons so far", type="tertiary", key="w_history"):
+            if st.button(tr("See its lessons so far"), type="tertiary", key="w_history"):
                 st.session_state.prog_view_next = "Sessions"
                 st.session_state.sessions_topic = topic
                 st.switch_page("views/records.py")
@@ -125,12 +124,12 @@ if lately:
 others = [t for t in mine if t != topic and t in visuals.WORLD]
 if others:
     with st.container(key="w_sec_others"):
-        st.html('<p class="w-sec-title">Your other subjects</p>')
+        st.html(tr('<p class="w-sec-title">Your other subjects</p>'))
         with st.container(key="w_others", horizontal=True):
             for t in others:
                 o = visuals.subject(t)
                 with st.container(key=f"enter_{t}"):
                     st.html(visuals.object_html(t, "w-thumb", o["number"])
                             + f'<p class="w-thumb-name">{escape(o["title"])}</p>')
-                    if st.button(f"Enter {o['title']}", key=f"w_enter_{t}"):
+                    if st.button(tr('Enter {p0}', p0=o['title']), key=f"w_enter_{t}"):
                         ui.enter_world(t)

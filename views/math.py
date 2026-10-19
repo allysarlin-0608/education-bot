@@ -13,6 +13,7 @@ from html import escape
 import streamlit as st
 
 from coach import mathcourse, settings, ui
+from coach.i18n import tr, trn
 
 data = mathcourse.load()
 every = mathcourse.units(data)
@@ -62,39 +63,39 @@ def unit(u: dict) -> None:
         st.html(f'<div id="mc-{escape(u["id"])}" class="jump-anchor"></div>'
                 f'<p class="mc-t"><span>{escape(u["id"])}</span>{escape(u["title"])}</p>'
                 f'<p class="mc-sum">{escape(u["summary"])}</p>'
-                '<p class="mc-k">You\'ll be able to</p><ul class="mc-list">'
+                + '<p class="mc-k">' + tr("You'll be able to") + '</p><ul class="mc-list">'
                 + "".join(f"<li>{escape(x)}</li>" for x in u["learning_outcomes"]) + "</ul>"
-                f'<p class="mc-k">Practice</p><p class="mc-v">{escape(u["practice_focus"])}</p>'
-                + ('<p class="mc-k">Sources</p><p class="mc-v mc-src">' + " · ".join(link(s) for s in found) + "</p>"
-                   if found else ""))
+                + '<p class="mc-k">' + tr("Practice") + f'</p><p class="mc-v">{escape(u["practice_focus"])}</p>'
+                + ('<p class="mc-k">' + tr("Sources") + '</p><p class="mc-v mc-src">' + " · ".join(link(s) for s in found)
+                   + "</p>" if found else ""))
         before = mathcourse.prerequisites(u["id"], data)
         with st.container(key=f"mc_pre_{u['id'].replace('-', '_')}", horizontal=True,
                           vertical_alignment="center", gap="small"):
-            st.html('<p class="mc-k">Learn first</p>')
+            st.html(tr('<p class="mc-k">Learn first</p>'))
             if not before:
-                st.html('<p class="mc-v">Nothing: a starting point</p>')
+                st.html(tr('<p class="mc-v">Nothing: a starting point</p>'))
             for p in before:
                 st.button(f"{p['id']} {p['title']}", key=f"mc_go_{u['id']}_{p['id']}", type="tertiary",
                           on_click=go_to, args=(p["id"],))
 
 
 st.html('<div id="math-page"></div>')
-st.html('<p class="cm-eyebrow cm-top">Curriculum</p>')
+st.html(tr('<p class="cm-eyebrow cm-top">Curriculum</p>'))
 st.markdown(f"## {escape(data['title'])}")
 st.html(f'<p class="cm-outcome">{escape(data["description"])}</p>')
 c = mathcourse.counts(data)
-st.html(f'<div class="cm-head"><p>{c["phases"]} phases · {c["units"]} units · {c["sources"]} sources</p></div>')
+st.html(tr('<div class="cm-head"><p>{phases} phases · {units} units · {sources} sources</p></div>', phases=c["phases"], units=c["units"], sources=c["sources"]))
 # learning it day by day: Mathematics is a subject, a lesson for each learning outcome
 mine = "math" in settings.shown_subjects(ui.config())
 with st.container(key="mc_learn", horizontal=True, vertical_alignment="center"):
-    st.html('<p class="ob-note">' + ("You're learning this: a short lesson for each learning outcome, in this order."
-                                     if mine else "Learn it day by day: Mathematics is a subject, with a short lesson "
-                                     "for each learning outcome, in this order.") + "</p>")
+    st.html('<p class="ob-note">' + (tr("You're learning this: a short lesson for each learning outcome, in this order.")
+                                     if mine else tr("Learn it day by day: Mathematics is a subject, with a short lesson "
+                                                     "for each learning outcome, in this order.")) + "</p>")
     if mine:
-        if st.button("Your course map", key="mc_map", type="tertiary"):
+        if st.button(tr("Your course map"), key="mc_map", type="tertiary"):
             ui.open_course("math")
     else:
-        st.button("Add Mathematics to my days", key="mc_add", type="tertiary", on_click=add_math)
+        st.button(tr("Add Mathematics to my days"), key="mc_add", type="tertiary", on_click=add_math)
 if (said := st.session_state.pop("mc_added", None)):
     st.html(f'<p class="ob-note sc-next">{escape(said)}</p>')
 st.html(f'<p class="ob-note">{escape(data["progression_policy"])}</p>')
@@ -102,7 +103,7 @@ st.html(f'<p class="ob-note">{escape(data["progression_policy"])}</p>')
 with st.container(key="mc_phases"):
     for p in mathcourse.phases(data):
         n = len(p["units"])
-        with st.expander(f"{p['id']} · {p['title']} · {p['level']} · {n} {'unit' if n == 1 else 'units'}",
+        with st.expander(f"{p['id']} · {p['title']} · {p['level']} · " + trn("{n} unit", "{n} units", n),
                          key=f"mc_phase_{p['id']}", on_change="rerun"):
             st.html(f'<p class="cm-outcome">{escape(p["goal"])}</p>')
             for u in p["units"]:
@@ -110,7 +111,7 @@ with st.container(key="mc_phases"):
 
 with st.container(key="mc_sources"):
     st.html('<div id="mc-sources" class="jump-anchor"></div>')
-    st.markdown("#### Sources")
+    st.markdown(tr("#### Sources"))
     for s in data["sources"]:
         st.html(f'<p class="set-goal"><span>{link(s)}</span><b>{escape(s["organization"])} · {escape(s["type"])}</b></p>'
                 f'<p class="ob-note">{escape(s["coverage"])}</p>')

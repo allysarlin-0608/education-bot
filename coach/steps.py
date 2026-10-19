@@ -8,6 +8,7 @@ values:
              says what unlocks it
 - viewing:   the one open on the page (with completed or current)
 """
+from coach.i18n import tr
 
 COMPLETED, CURRENT, LOCKED = "completed", "current", "locked"
 
@@ -43,13 +44,13 @@ def label(plan):
     """The one line under the bar, e.g. "Lesson 2 of 5 · 1 done"."""
     now, total = current(plan), len(plan)
     if now is None:
-        return f"All {total} lessons done"
-    return f"Lesson {now + 1} of {total} · {done(plan)} done"
+        return tr("All {total} lessons done", total=total)
+    return tr("Lesson {n} of {total} · {done} done", n=now + 1, total=total, done=done(plan))
 
 
 def unlock_message(plan, k):
     """What a locked lesson says when she taps it."""
-    return f"Unlocks after you pass Lesson {plan[k - 1]['n']}'s quiz"
+    return tr("Unlocks after you pass Lesson {n}'s quiz", n=plan[k - 1]['n'])
 
 
 def just_completed(before, plan):

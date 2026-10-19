@@ -83,7 +83,7 @@ def test_the_path_a_lesson_read_again_and_continue(public_app, pages, clock, wid
 
 def test_the_ways_in_and_a_subject_that_is_not_today(public_app, pages, clock):
     covers("W-records-prog_course", "W-settings-set_course", "W-world-w_course",
-           "W-course-finished_of_before_this_one", "W-course-later_in_the_course_more_topics_lessons")
+           "W-course-finished_of_topic_before_this_one", "W-course-later_in_the_course_more_topics_lessons")
     app = public_app
     clock(D, "02:00:00")
     p = pages(width=1440)

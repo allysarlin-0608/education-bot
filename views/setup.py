@@ -21,15 +21,16 @@ from html import escape
 import streamlit as st
 
 from coach import choices, directions, goalmaker, paths, settings, ui
+from coach.i18n import N_, tr
 
-STEP_NAMES = {"identity": "About you", "want": "What to learn", "explore": "Find a topic",
-              "scope": "All of it, or some parts", "purpose": "What it's for", "confirm": "Confirm"}
-CHANGE = {"identity": "Change who you are", "want": "Change what you learn", "scope": "Change the parts",
-          "purpose": "Change what it's for"}
+STEP_NAMES = {"identity": N_("About you"), "want": N_("What to learn"), "explore": N_("Find a topic"),
+              "scope": N_("All of it, or some parts"), "purpose": N_("What it's for"), "confirm": N_("Confirm")}
+CHANGE = {"identity": N_("Change who you are"), "want": N_("Change what you learn"), "scope": N_("Change the parts"),
+          "purpose": N_("Change what it's for")}
 # who she is, as the start of a sentence
-YOU_ARE = {"Student": "You're a student", "Working adult": "You're a working adult",
-           "Changing careers": "You're changing careers", "Retired": "You're retired",
-           "Learning for the love of it": "You're learning for the love of it"}
+YOU_ARE = {"Student": N_("You're a student"), "Working adult": N_("You're a working adult"),
+           "Changing careers": N_("You're changing careers"), "Retired": N_("You're retired"),
+           "Learning for the love of it": N_("You're learning for the love of it")}
 
 
 def draft() -> dict:
@@ -165,7 +166,7 @@ def start() -> None:
     ui.refresh_settings()          # finished onto the row as stored now (as every settings save is)
     d = draft()
     if not d["path"]:
-        st.session_state.ob_problem = "Choose what you want to learn first."
+        st.session_state.ob_problem = tr("Choose what you want to learn first.")
         return
     try:
         done = settings.finish(ui.config(), d, settings.now_iso(), st.session_state.get("coach_log"))
@@ -174,12 +175,12 @@ def start() -> None:
         return
     path = dict(d["path"], why="" if d["purpose"] == directions.ALL_OF_IT else d["purpose"])
     if not ui.save_path(st.session_state.coach_log, path):
-        st.session_state.ob_problem = "Your goal wasn't saved. Try again in a moment."
+        st.session_state.ob_problem = tr("Your goal wasn't saved. Try again in a moment.")
         return
     if not ui.save_settings(done):
         # said beside the button she pressed (the page's own error line is at the top, out of sight: ISS-061)
         st.session_state.ob_problem = st.session_state.pop("coach_save_error", "") or \
-            "Your plan wasn't saved. Try again in a moment."
+            tr("Your plan wasn't saved. Try again in a moment.")
         return
     # who she is: kept for later (fewer questions next time). A preference that
     # can't be kept (its table missing) doesn't hold up her start.
@@ -191,43 +192,47 @@ def start() -> None:
 
 
 # ---------------------------------------------------------------- drawing
-def nav(back: bool = True, label: str = "Continue", ready: bool = True, note: str = "", on=None) -> None:
+def nav(back: bool = True, label: str = N_("Continue"), ready: bool = True, note: str = "", on=None) -> None:
     """Back and Continue, at the foot of the step (a note on what's missing just above)."""
     if note:
-        st.html(f'<p class="ob-note" role="status">{escape(note)}</p>')
+        st.html(f'<p class="ob-note" role="status">{escape(tr(note))}</p>')
     with st.container(key="ob_nav", horizontal=True, horizontal_alignment="distribute", vertical_alignment="center"):
         if back:
-            st.button("Back", key="ob_back", type="tertiary", on_click=go, args=(step_by(-1),))
+            st.button(tr("Back"), key="ob_back", type="tertiary", on_click=go, args=(step_by(-1),))
         else:
             st.html('<span class="pq-gap"></span>')
         if can_return(d) and step != "confirm" and not on:
-            st.button("Back to confirm", key="ob_to_review", type="tertiary", disabled=not ready,
+            st.button(tr("Back to confirm"), key="ob_to_review", type="tertiary", disabled=not ready,
                       on_click=go, args=("confirm",))
-        st.button(label, key="ob_next", type="primary", disabled=not ready,
+        st.button(tr(label), key="ob_next", type="primary", disabled=not ready,
                   on_click=on or go, args=() if on else (step_by(1),))
 
 
 def lead(title: str, lede: str) -> None:
-    st.markdown(f"## {title}")
-    st.html(f'<p class="ob-lede">{escape(lede)}</p>')
+    st.markdown(f"## {tr(title)}")
+    st.html(f'<p class="ob-lede">{escape(tr(lede))}</p>')
 
 
 def row(term: str, value_html: str, small: str = "") -> str:
-    return (f"<div><dt>{escape(term)}</dt><dd>{value_html}"
+    return (f"<div><dt>{escape(tr(term))}</dt><dd>{value_html}"
             + (f"<small>{escape(small)}</small>" if small else "") + "</dd></div>")
 
 
 def sentence(d: dict) -> str:
     """Everything she chose, in one sentence."""
     p, orig = d["path"], d.get("path_original") or d["path"]
-    who = YOU_ARE.get(d["identity"], f"You're: {d['identity']}" if d["identity"] else "")
+    who = (tr(YOU_ARE[d["identity"]]) if d["identity"] in YOU_ARE else
+           tr("You're: {who}", who=d["identity"]) if d["identity"] else "")
     n = paths.lesson_count(p)
-    what = (f"learning all of {p['title']}" if d["scope"] == "all" or paths.lesson_count(orig) == n
-            else f"learning {', '.join(u['name'] for u in p['units'])} from {p['title']}")
-    why = ("" if d["purpose"] == directions.ALL_OF_IT or not d["purpose"]
-           else f", {d['purpose'][0].lower()}{d['purpose'][1:]}")
-    head = f"{who}, {what[0].lower()}{what[1:]}" if who else f"{what[0].upper()}{what[1:]}"
-    return f"{head}: {n} lessons{why}."
+    what = (tr("learning all of {title}", title=p['title']) if d["scope"] == "all" or paths.lesson_count(orig) == n
+            else tr("learning {parts} from {title}", parts=", ".join(u['name'] for u in p['units']), title=p['title']))
+    why = ("" if d["purpose"] == directions.ALL_OF_IT or not d["purpose"] else tr(d["purpose"]))
+    if who:
+        return (tr("{who}, {what}: {n} lessons, {why}.", who=who, what=what, n=n, why=why) if why else
+                tr("{who}, {what}: {n} lessons.", who=who, what=what, n=n))
+    what = what[:1].upper() + what[1:]          # (the start of the sentence)
+    return (tr("{what}: {n} lessons, {why}.", what=what, n=n, why=why) if why else
+            tr("{what}: {n} lessons.", what=what, n=n))
 
 
 d = draft()
@@ -239,10 +244,10 @@ was = min(st.session_state.pop("ob_from", at), total - 1)
 
 st.html('<div id="setup-page" hidden></div>')     # a narrower, quieter page (style.py)
 # where she is: a hairline that fills step by step, and the step's name
-st.html(f'<div class="ob-progress" role="progressbar" aria-label="Setup" aria-valuemin="1" aria-valuemax="{total}" '
-        f'aria-valuenow="{at + 1}" aria-valuetext="Step {at + 1} of {total}, {STEP_NAMES[step]}">'
+st.html(f'<div class="ob-progress" role="progressbar" aria-label="{tr("Setup")}" aria-valuemin="1" aria-valuemax="{total}" '
+        f'aria-valuenow="{at + 1}" aria-valuetext="{tr("Step {n} of {total}, {name}", n=at + 1, total=total, name=tr(STEP_NAMES[step]))}">'
         f'<div class="ob-track"><i style="--from:{(was + 1) / total:.4f};--to:{(at + 1) / total:.4f}"></i></div>'
-        f'<div class="ob-where"><span>{STEP_NAMES[step]}</span><span>{at + 1} of {total}</span></div></div>')
+        f'<div class="ob-where"><span>{tr(STEP_NAMES[step])}</span><span>{tr("{n} of {total}", n=at + 1, total=total)}</span></div></div>')
 
 # each step is its own block, so it comes in from the side she is heading to;
 # inside it one editorial grid: the question on the left, the decision on the
@@ -251,93 +256,94 @@ with st.container(key=f"ob_step_{settings.STEPS.index(step)}_{came}"):
     if step == "identity":
         with st.container(key="ob_grid"):
             with st.container(key="ob_lead"):
-                lead("Welcome to GNOSIS. Who are you?",
-                     "Learn anything you want, a little every day. Tell us who you are once, "
-                     "and we'll ask fewer questions from here on.")
+                lead(N_("Welcome to GNOSIS. Who are you?"),
+                     N_("Learn anything you want, a little every day. Tell us who you are once, "
+                        "and we'll ask fewer questions from here on."))
             with st.container(key="ob_body"):
                 own = d["identity"] if d["identity"] and d["identity"] not in directions.IDENTITIES else ""
                 choices.rows("ident", [(x, x, "") for x in directions.IDENTITIES],
                              [d["identity"]] if d["identity"] in directions.IDENTITIES else [], pick_identity)
                 st.session_state.setdefault("ob_identity_own", own)
-                st.text_input("Something else", key="ob_identity_own", max_chars=60,
-                              placeholder="In a few words", on_change=set_own_identity)
+                st.text_input(tr("Something else"), key="ob_identity_own", max_chars=60,
+                              placeholder=tr("In a few words"), on_change=set_own_identity)
                 with st.container(key="ob_toggle"):
-                    st.checkbox("I know exactly what I want to learn: skip this", value=d["knows"], key="ob_knows",
+                    st.checkbox(tr("I know exactly what I want to learn: skip this"), value=d["knows"], key="ob_knows",
                                 on_change=set_knows)
                 ready = bool(d["identity"] or d["knows"])
-                nav(back=False, label="Get started", ready=ready,
-                    note="" if ready else "Choose who you are, or tick that you know what you want.")
+                nav(back=False, label=N_("Get started"), ready=ready,
+                    note="" if ready else N_("Choose who you are, or tick that you know what you want."))
 
     elif step == "want":
         with st.container(key="ob_grid"):
             with st.container(key="ob_lead"):
-                lead("What do you want to learn?",
-                     "Anything at all: a subject, a skill, a question you're curious about. "
-                     "A word is enough; we'll show you what it covers.")
+                lead(N_("What do you want to learn?"),
+                     N_("Anything at all: a subject, a skill, a question you're curious about. "
+                        "A word is enough; we'll show you what it covers."))
             with st.container(key="ob_body"):
                 if d["path"]:
                     st.html(goalmaker.summary_html(d["path_original"] or d["path"], d["units_per_day"],
-                                                   eyebrow="What you want to learn"))
+                                                   eyebrow=tr("What you want to learn")))
                     with st.container(key="ob_goal_acts", horizontal=True):
-                        st.button("Something else", key="ob_again", type="tertiary", on_click=other_goal)
+                        st.button(tr("Something else"), key="ob_again", type="tertiary", on_click=other_goal)
                     nav()
                 else:
                     goalmaker.form("obg", draft, put, pace=d["units_per_day"], ideas=directions.IDEAS.get(d["identity"]),
-                                   skip=("I don't know yet", start_explore), on_path=lambda: go("scope"))
+                                   skip=(tr("I don't know yet"), start_explore), on_path=lambda: go("scope"))
                     with st.container(key="ob_goal_back", horizontal=True):
-                        st.button("Back", key="ob_back", type="tertiary", on_click=go, args=("identity",))
+                        st.button(tr("Back"), key="ob_back", type="tertiary", on_click=go, args=("identity",))
 
     elif step == "explore":
         picked = d["explore"]
         options = directions.narrower(picked)
         with st.container(key="ob_grid"):
             with st.container(key="ob_lead"):
-                lead("Where would you like to start?" if not picked else " › ".join(picked),
-                     "Pick a direction, then narrow it down. You'll see what it covers before anything starts."
-                     if not picked else "Narrow it down a little more.")
+                lead(N_("Where would you like to start?") if not picked else " › ".join(tr(x) for x in picked),
+                     N_("Pick a direction, then narrow it down. You'll see what it covers before anything starts.")
+                     if not picked else N_("Narrow it down a little more."))
             with st.container(key="ob_body"):
                 choices.rows(f"dir{len(picked)}", [(o, o, "") for o in options], [], pick_direction)
                 with st.container(key="ob_nav", horizontal=True):
-                    st.button("Back", key="ob_back", type="tertiary", on_click=explore_back)
-                    st.button("I'll write it myself", key="ob_write", type="tertiary",
+                    st.button(tr("Back"), key="ob_back", type="tertiary", on_click=explore_back)
+                    st.button(tr("I'll write it myself"), key="ob_write", type="tertiary",
                               on_click=lambda: (put(dict(draft(), exploring=False)), go("want")))
 
     elif step == "scope":
         with st.container(key="ob_grid"):
             with st.container(key="ob_lead"):
-                lead("All of it, or some parts?", "Here's what it covers. Keep all of it, or tick only the parts "
-                                                  "you want; you can change this before you start.")
+                lead(N_("All of it, or some parts?"), N_("Here's what it covers. Keep all of it, or tick only the parts "
+                                                         "you want; you can change this before you start."))
             with st.container(key="ob_body"):
                 goalmaker.scope("obs", draft, put, pace=d["units_per_day"])
-                nav(ready=bool(d["scope"]), note="" if d["scope"] else "Choose all of it, or some parts.")
+                nav(ready=bool(d["scope"]), note="" if d["scope"] else N_("Choose all of it, or some parts."))
 
     elif step == "purpose":
         with st.container(key="ob_grid"):
             with st.container(key="ob_lead"):
-                lead("What's it for?", "So the examples and tasks fit you.")
+                lead(N_("What's it for?"), N_("So the examples and tasks fit you."))
             with st.container(key="ob_body"):
                 goalmaker.purpose("obp", draft, put, d["identity"])
                 nav(ready=bool(d["purpose"]),
-                    note="" if d["purpose"] else "Choose one, write your own, or tick that you want all of it.")
+                    note="" if d["purpose"] else N_("Choose one, write your own, or tick that you want all of it."))
 
     else:
         name, minutes = settings.PACES[d["units_per_day"]]
         with st.container(key="ob_grid"):
             with st.container(key="ob_lead"):
-                lead("Is this right?", "Change any part: your other answers are kept.")
+                lead(N_("Is this right?"), N_("Change any part: your other answers are kept."))
             with st.container(key="ob_body"):
                 st.html(f'<p class="ob-sentence">{escape(sentence(d))}</p>'
                         '<dl class="ob-summary">'
-                        + (row("You", escape(d["identity"])) if d["identity"] else "")
-                        + row("Learning", escape(d["path"]["title"]),
-                              f"{paths.lesson_count(d['path'])} lessons in {len(d['path']['units'])} parts")
-                        + row("For", escape(d["purpose"]))
-                        + row("Each day", escape(name), f"{d['units_per_day']} lessons · {minutes} · change it any time "
-                                                        "in Goals & Settings")
+                        + (row(N_("You"), escape(tr(d["identity"]))) if d["identity"] else "")
+                        + row(N_("Learning"), escape(d["path"]["title"]),
+                              tr("{n} lessons in {parts} parts", n=paths.lesson_count(d['path']), parts=len(d['path']['units'])))
+                        + row(N_("For"), escape(tr(d["purpose"])))
+                        + row(N_("Each day"), escape(tr(name)),
+                              tr("{n} lessons · {minutes} · change it any time in Goals & Settings",
+                                 n=d['units_per_day'], minutes=tr(minutes)))
                         + "</dl>")
                 with st.container(key="ob_changes", horizontal=True):
                     for n_ in ("identity", "want", "scope", "purpose"):
-                        st.button(CHANGE[n_], key=f"ob_change_{n_}", type="tertiary", on_click=go,
+                        st.button(tr(CHANGE[n_]), key=f"ob_change_{n_}", type="tertiary", on_click=go,
                                   args=(n_, "confirm"))
                 problem = st.session_state.pop("ob_problem", "")
-                nav(label="Start learning", ready=bool(d["path"]), note=problem, on=start)
+                nav(label=N_("Start learning"), ready=bool(d["path"]), note=problem, on=start)

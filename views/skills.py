@@ -9,20 +9,21 @@ from html import escape
 import streamlit as st
 
 from coach import catalog, mastery, ui
+from coach.i18n import tr, trn
 
 log = st.session_state.coach_log
 today = ui.today()
 st.html('<div id="skills-page" hidden></div>')
-st.markdown("## Knowledge Map")
-st.caption("What you really know, idea by idea: each lesson is one idea. An idea is solid once it holds on "
-           "another day, mastered once it keeps holding over a week or more, and it fades if it isn't practised.")
+st.markdown(tr("## Knowledge Map"))
+st.caption(tr("What you really know, idea by idea: each lesson is one idea. An idea is solid once it holds on "
+           "another day, mastered once it keeps holding over a week or more, and it fades if it isn't practised."))
 
 topics = mastery.topics(log)
 if not topics:
-    st.markdown("### Your map starts with your first lesson")
-    st.caption("Take a lesson and its quiz: the idea appears here, and grows with review, practice and "
-               "explaining it in your own words.")
-    if st.button("Back to Home", key="sk_back", type="tertiary"):
+    st.markdown(tr("### Your map starts with your first lesson"))
+    st.caption(tr("Take a lesson and its quiz: the idea appears here, and grows with review, practice and "
+               "explaining it in your own words."))
+    if st.button(tr("Back to Home"), key="sk_back", type="tertiary"):
         st.switch_page("views/daily.py")
     st.stop()
 
@@ -49,9 +50,9 @@ st.html(f'<div class="sk-summary">{bar(total)}<p class="sk-legend">{legend(total
 weak = mastery.needs_practice(log, today)
 with st.container(key="sk_actions", horizontal=True, vertical_alignment="center"):
     if weak:
-        if st.button(f"Practise the {min(3, len(weak))} shakiest", type="primary", key="sk_practice"):
+        if st.button(tr('Practise the {p0} shakiest', p0=min(3, len(weak))), type="primary", key="sk_practice"):
             st.switch_page("views/practice.py")
-    elif st.button("Practice", key="sk_practice_any", type="tertiary"):
+    elif st.button(tr("Practice"), key="sk_practice_any", type="tertiary"):
         st.switch_page("views/practice.py")
 
 # ---------------------------------------------------------------- one subject
@@ -59,15 +60,14 @@ pick = st.session_state.get("sk_topic")
 if pick not in topics:
     pick = ui.topic_for(today) if ui.topic_for(today) in topics else topics[0]
 if len(topics) > 1:
-    pick = st.segmented_control("Subject", topics, default=pick, key="sk_pick", required=True,
+    pick = st.segmented_control(tr("Subject"), topics, default=pick, key="sk_pick", required=True,
                                 format_func=lambda t: catalog.name(t), label_visibility="collapsed") or pick
 st.session_state.sk_topic = pick
 items = mastery.ideas(log, pick, today)
 reached = [x for x in items if x["reached"]]
 c = mastery.counts(reached)
 st.markdown(f"### {escape(catalog.name(pick))}")
-st.caption(f"{len(reached)} of {len(items)} ideas met · {c['mastered']} mastered · {c['solid']} solid · "
-           f"{c['learning']} learning")
+st.caption(tr('{p0} of {p1} ideas met · {p2} mastered · {p3} solid · {p4} learning', p0=len(reached), p1=len(items), p2=c['mastered'], p3=c['solid'], p4=c['learning']))
 
 for u in mastery.units(items):
     if not u["reached"]:
@@ -88,9 +88,9 @@ for u in mastery.units(items):
 
 ahead = sum(1 for u in mastery.units(items) if not u["reached"])
 if ahead:
-    st.caption(f"{ahead} more {'unit' if ahead == 1 else 'units'} ahead on the course map.")
+    st.caption(trn('{n} more unit ahead on the course map.', '{n} more units ahead on the course map.', ahead))
 with st.container(key="sk_links", horizontal=True):
-    if st.button("Course map", key="sk_course", type="tertiary"):
+    if st.button(tr("Course map"), key="sk_course", type="tertiary"):
         ui.open_course(pick)
-    if st.button("Back to Home", key="sk_today", type="tertiary"):
+    if st.button(tr("Back to Home"), key="sk_today", type="tertiary"):
         st.switch_page("views/daily.py")

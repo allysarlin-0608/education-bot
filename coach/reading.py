@@ -2,9 +2,10 @@
 import streamlit as st
 
 from coach import auth, books, core, llm, place, progress_bar, shelf, tokens, ui
+from coach.i18n import N_, tr
 
-SWITCH_MESSAGE = "OK, let's set up a new book. "
-RESTART_MESSAGE = "OK, let's start over. "
+SWITCH_MESSAGE = N_("OK, let's set up a new book.")
+RESTART_MESSAGE = N_("OK, let's start over.")
 
 
 def render(log, today):
@@ -48,7 +49,7 @@ def _render_current(log, today):
     if book["status"] == "reading" and today.isoformat() < book["started_on"]:
         # A date before the book started: no progress to show for it.
         st.markdown(f"### {book['title']}")
-        st.info(f"You started {book['title']} on {book['started_on']}, so there's no reading for this date yet.")
+        st.info(tr("You started {p0} on {p1}, so there's no reading for this date yet.", p0=book['title'], p1=book['started_on']))
         return None
 
     chat = _chat(book, today)
@@ -133,7 +134,7 @@ def _say(chat, text):
     st.session_state.book_pending = None
 
 
-INTERRUPTED = "That was interrupted before the coach answered. Send it again?"
+INTERRUPTED = N_("That was interrupted before the coach answered. Send it again?")
 
 
 def _recover_interrupted(book, chat):
@@ -167,20 +168,20 @@ def _render_retry(log, book, chat, today):
     retry = st.session_state.get("book_retry")
     if not retry or retry["id"] != book["id"]:
         return
-    st.warning(retry["error"])
-    if st.button("Retry", key=f"book_retry_{book['id']}"):
+    st.warning(tr(retry["error"]))
+    if st.button(tr("Retry"), key=f"book_retry_{book['id']}"):
         st.session_state.book_retry = None
         _handle_message(log, book, chat, retry["text"], today)
 
 
 def _placeholder(book):
     if book["status"] == "setup":
-        return "Answer the coach's question…"
+        return tr("Answer the coach's question…")
     if book["status"] == "planning":
-        return "What would you like to change? Or just say \"looks good\"…"
+        return tr("What would you like to change? Or just say \"looks good\"…")
     if _awaiting_day(book):
-        return "Tell me in your own words what you read today…"
-    return "Tell me when you've finished, or talk about the book…"
+        return tr("Tell me in your own words what you read today…")
+    return tr("Tell me when you've finished, or talk about the book…")
 
 
 # ============================================================
@@ -189,7 +190,7 @@ def _placeholder(book):
 
 def _render_header(book):
     if not book["title"]:
-        st.markdown("### A new book")
+        st.markdown(tr("### A new book"))
         return
     st.markdown(f"### {book['title']}")        # (a book being read has its own block: _render_now_reading)
 
@@ -198,30 +199,30 @@ def _render_now_reading(log, book, chat, today):
     """Currently reading: the book, its fourteen days as a thin line, today's
     reading and the button to say it's done."""
     with st.container(key="now_reading"):
-        st.html('<div class="bk-label">Currently reading</div>'
+        st.html(f'<div class="bk-label">{tr("Currently reading")}</div>'
                 f'<div class="bk-now"><span class="bk-now-title">{shelf._e(book["title"])}</span>'
                 + (f'<span class="bk-now-author">{shelf._e(book["author"])}</span>' if book.get("author") else "")
                 + "</div>" + shelf.line_html(book, flowing=progress_bar.entering()) + shelf.today_html(book, today))
         _render_reading_controls(log, book, chat, today)
-        with st.expander("14-day plan"):
+        with st.expander(tr("14-day plan")):
             st.markdown(books.plan_table(book))
 
 
 def _render_bookshelf_start(log, today):
     """No book being read: one line and the way to start one."""
     with st.container(key="now_reading"):
-        st.html('<div class="bk-label">Currently reading</div>')
+        st.html(tr('<div class="bk-label">Currently reading</div>'))
         finished = [b for b in log["books"] if b["status"] == "finished"]
         last = finished[-1] if finished else None
         if last and not last.get("final_summary"):
             # the wrap-up of the book just finished didn't come through: offer it again
             st.warning(st.session_state.get("book_summary_error") or llm.FAILED)
-            if st.button("Retry", key=f"summary_retry_{last['id']}"):
+            if st.button(tr("Retry"), key=f"summary_retry_{last['id']}"):
                 if _write_final_summary(log, last, today):
                     st.rerun()
-        st.markdown("No book in progress. We'll split a book into 14 days, then each day you read your part "
-                    "and come back to talk about it.")
-        if st.button("Start a new book", key="start_book"):
+        st.markdown(tr("No book in progress. We'll split a book into 14 days, then each day you read your part "
+                    "and come back to talk about it."))
+        if st.button(tr("Start a new book"), key="start_book"):
             _start_new_book(log, today, intro=None)
             st.rerun()
 
@@ -229,7 +230,7 @@ def _render_bookshelf_start(log, today):
 def _render_shelf(log, today):
     """Books finished or stopped, most recent first; a book finished today
     opens on its own, with its wrap-up."""
-    st.html('<div class="bk-label">Bookshelf</div>')    # the same quiet label as Currently reading
+    st.html(tr('<div class="bk-label">Bookshelf</div>'))    # the same quiet label as Currently reading
     just = next((b["id"] for b in shelf.on_shelf(log["books"]) if b.get("finished_on") == today.isoformat()), "")
     # a book picked in Search opens on the shelf
     st.html(shelf.shelf_html(log["books"], open_id=st.session_state.pop("shelf_open", None) or just))
@@ -240,49 +241,50 @@ def _start_new_book(log, today, intro):
     _save(log, book, today)          # a draft: not in log["books"] yet
     opening = books.question_for(book)
     st.session_state[f"book_chat_{book['id']}"] = [
-        {"role": "assistant", "content": f"{intro}{opening}" if intro else opening}
+        {"role": "assistant", "content": f"{tr(intro)} {opening}" if intro else opening}
     ]
     _set_awaiting(book, None)
     return book
 
 
 def _render_other_options(log, book, today):
-    with st.expander("More options"):
+    with st.expander(tr("More options")):
         if book["chapters"] and book["status"] in ("planning", "reading"):
             _render_title_editor(log, book, today)
             st.divider()
         if book["status"] == "reading":
-            st.caption("Switching books is completely fine. This one's progress stays on your bookshelf and we set up the new one.")
-            if st.button("Stop this book and start another", key=f"switch_{book['id']}"):
+            st.caption(tr("Switching books is completely fine. This one's progress stays on your bookshelf and we set up the new one."))
+            if st.button(tr("Stop this book and start another"), key=f"switch_{book['id']}"):
                 book["status"] = "switched"
                 if _save(log, book, today):
                     _start_new_book(log, today, intro=SWITCH_MESSAGE)
                 st.rerun()
         else:
-            st.caption("The plan isn't confirmed yet, so you can start the setup over at any time.")
-            if st.button("Start the setup over", key=f"restart_{book['id']}"):
+            st.caption(tr("The plan isn't confirmed yet, so you can start the setup over at any time."))
+            if st.button(tr("Start the setup over"), key=f"restart_{book['id']}"):
                 st.session_state.book_draft = None
                 _start_new_book(log, today, intro=RESTART_MESSAGE)
                 st.rerun()
 
 
 def _render_title_editor(log, book, today):
-    st.markdown("**Rename a chapter**")
+    st.markdown(tr("**Rename a chapter**"))
     number = st.selectbox(
-        "Chapter", list(range(1, len(book["chapters"]) + 1)),
-        format_func=lambda n: f"Chapter {n}: {book['chapters'][n - 1]}",
+        tr("Chapter"), list(range(1, len(book["chapters"]) + 1)),
+        format_func=lambda n: tr("Chapter {n}: {title}", n=n, title=book['chapters'][n - 1]),
         key=f"edit_ch_{book['id']}",
     )
-    new_title = st.text_input("New title", key=f"edit_title_{book['id']}_{number}",
+    new_title = st.text_input(tr("New title"), key=f"edit_title_{book['id']}_{number}",
                               value=book["chapters"][number - 1])
-    if st.button("Save title", key=f"edit_save_{book['id']}") and new_title.strip():
+    if st.button(tr("Save title"), key=f"edit_save_{book['id']}") and new_title.strip():
         book["chapters"][number - 1] = new_title.strip()
         if _save(log, book, today):
             chat = _chat(book, today)
             if book["status"] == "planning":
-                _say(chat, f"Done: Chapter {number} is now \"{new_title.strip()}\". The updated plan:\n\n{books.plan_table(book)}")
+                _say(chat, tr("Done: Chapter {n} is now \"{title}\".", n=number, title=new_title.strip()) + " "
+                     + tr("The updated plan:") + f"\n\n{books.plan_table(book)}")
             else:
-                _say(chat, f"Done: Chapter {number} is now \"{new_title.strip()}\".")
+                _say(chat, tr("Done: Chapter {n} is now \"{title}\".", n=number, title=new_title.strip()))
         st.rerun()
 
 
@@ -303,28 +305,28 @@ def _handle_setup(log, book, chat, text, today):
 def _render_plan_controls(log, book, chat, today):
     # a key of its own, so it stays open while she makes one move after another
     # (each move adds a chat message above it, which would otherwise make it a new, closed panel)
-    with st.expander("Adjust a day yourself", key=f"adjust_open_{book['id']}", on_change="rerun"):
+    with st.expander(tr("Adjust a day yourself"), key=f"adjust_open_{book['id']}", on_change="rerun"):
         day = st.selectbox(
-            "Day", list(range(1, books.DAYS)), format_func=lambda d: f"Day {d}",
+            tr("Day"), list(range(1, books.DAYS)), format_func=lambda d: tr("Day {n}", n=d),
             key=f"adjust_day_{book['id']}",
         )
         col1, col2 = st.columns(2)
-        if col1.button(f"Lighter: move its last chapter to Day {day + 1}", use_container_width=True):
+        if col1.button(tr('Lighter: move its last chapter to Day {p0}', p0=day + 1), use_container_width=True):
             _apply_manual_move(log, book, chat, today, books.move_last_to_next, day,
-                               f"I moved Day {day}'s last chapter to Day {day + 1}.")
-        if col2.button(f"Heavier: bring over Day {day + 1}'s first chapter", use_container_width=True):
+                               tr("I moved Day {day}'s last chapter to Day {next}.", day=day, next=day + 1))
+        if col2.button(tr("Heavier: bring over Day {p0}'s first chapter", p0=day + 1), use_container_width=True):
             _apply_manual_move(log, book, chat, today, books.move_first_from_next, day,
-                               f"I moved Day {day + 1}'s first chapter to Day {day}.")
-    if st.button("Confirm the plan", type="primary", use_container_width=True):
+                               tr("I moved Day {next}'s first chapter to Day {day}.", day=day, next=day + 1))
+    if st.button(tr("Confirm the plan"), type="primary", use_container_width=True):
         _confirm_plan(log, book, chat, today)
         st.rerun()
 
 
 def _apply_manual_move(log, book, chat, today, move, day, done_text):
     if not move(book["plan"], day):
-        st.toast("There's no chapter to move on that day.")
+        st.toast(tr("There's no chapter to move on that day."))
         return
-    _say(chat, f"OK. {done_text} The updated plan:\n\n{books.plan_table(book)}")
+    _say(chat, tr("OK.") + f" {done_text} " + tr("The updated plan:") + f"\n\n{books.plan_table(book)}")
     _save(log, book, today)
     st.rerun()
 
@@ -349,20 +351,20 @@ def _handle_planning(log, book, chat, text, today):
     if books.is_yes(text):
         _confirm_plan(log, book, chat, today)
         st.rerun()
-    with st.spinner("Adjusting the plan…"):
+    with st.spinner(tr("Adjusting the plan…")):
         data, error = llm.ask_json(_system(books.adjust_prompt(book)), [{"role": "user", "content": text}])
     if error:
         _failed(book, chat, error, text)
     applied = books.apply_moves(book["plan"], data.get("moves"))
     reply = str(data.get("reply") or "").strip()
     if applied:
-        reply = f"{reply}\n\nThe updated plan:\n\n{books.plan_table(book)}".strip()
+        reply = f"{reply}\n\n{tr('The updated plan:')}\n\n{books.plan_table(book)}".strip()
     if data.get("confirmed") is True:
         if reply:
             _say(chat, reply)
         _confirm_plan(log, book, chat, today)
     else:
-        _say(chat, reply or books.PLAN_QUESTION)
+        _say(chat, reply or tr(books.PLAN_QUESTION))
         _save(log, book, today)
     st.rerun()
 
@@ -375,13 +377,13 @@ def _render_reading_controls(log, book, chat, today):
     awaiting = _awaiting_day(book)
     day = books.next_day(book)
     if awaiting:
-        if st.button("Not now, maybe later", key=f"cancel_{book['id']}"):
+        if st.button(tr("Not now, maybe later"), key=f"cancel_{book['id']}"):
             _set_awaiting(book, None)
-            _say(chat, "No problem. Tell me when you're ready.")
+            _say(chat, tr("No problem. Tell me when you're ready."))
             st.rerun()
     elif day and books.is_open(book, day, today):      # (otherwise the line above says when it opens)
-        if st.button("I've finished today's reading", type="primary", use_container_width=True):
-            chat.append({"role": "user", "content": f"I've read Day {day}."})
+        if st.button(tr("I've finished today's reading"), type="primary", use_container_width=True):
+            chat.append({"role": "user", "content": tr("I've read Day {n}.", n=day)})
             _start_check(book, chat, day)
             st.session_state.book_follow = True
             st.rerun()
@@ -412,7 +414,7 @@ def _handle_reading(log, book, chat, text, today):
         _say(chat, core.finalize_reply(reply, lesson=False, topic="reading"))
         st.rerun()
 
-    with st.spinner("The coach is reading what you shared…"):
+    with st.spinner(tr("The coach is reading what you shared…")):
         data, error = llm.ask_json(_system(books.judge_prompt(book, day)),
                                    [{"role": "user", "content": text}])
     if error:
@@ -422,12 +424,12 @@ def _handle_reading(log, book, chat, text, today):
     if data.get("passed") is not True:
         # Not marked, not advanced; her next message is checked again.
         _set_awaiting(book, day)
-        _say(chat, reply or "Have another look and come back to tell me about it; we'll just check again.")
+        _say(chat, reply or tr("Have another look and come back to tell me about it; we'll just check again."))
         st.rerun()
 
     books.record_pass(book, day, text, today)
     _set_awaiting(book, None)
-    _say(chat, reply or "That counts for today.")
+    _say(chat, reply or tr("That counts for today."))
     _record_learning_entry(log, book, today)
     _save(log, book, today)
     if book["status"] == "finished":
@@ -439,7 +441,7 @@ def _write_final_summary(log, book, today):
     """Stream the end-of-book wrap-up. Her daily notes are clipped until
     the request fits the token budget. On failure the book stays
     finished and the bookshelf view offers Retry."""
-    messages = [{"role": "user", "content": f"I've finished all of {book['title']}."}]
+    messages = [{"role": "user", "content": tr("I've finished all of {title}.", title=book['title'])}]
     for chars in (150, 100, 60, 30, 0):
         system = _system(books.final_summary_prompt(book, summary_chars=chars))
         if tokens.estimate_request(system, messages, tokens.LESSON_MAX_TOKENS) <= tokens.REQUEST_BUDGET:
