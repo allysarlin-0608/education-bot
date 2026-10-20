@@ -2657,8 +2657,16 @@ EDITORIAL = """
 """
 
 
+# A language written right to left (i18n.page_html marks it): the page's
+# content and the sidebar read right to left; the frame stays as it is.
+RTL = """<style>
+html[data-dir="rtl"] [data-testid="stMainBlockContainer"],
+html[data-dir="rtl"] [data-testid="stSidebarUserContent"] { direction: rtl; }
+</style>"""
+
+
 def stylesheet() -> str:
-    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, WORLDS, ACCOUNT, TOUCH, EDITORIAL))
+    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, WORLDS, ACCOUNT, TOUCH, EDITORIAL, RTL))
     return CSS.replace("</style>", rest + "</style>")
 
 

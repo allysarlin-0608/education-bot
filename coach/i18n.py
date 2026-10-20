@@ -249,10 +249,12 @@ def for_model(system: str, lang: str = None) -> str:
 
 
 def page_html(lang: str = None) -> str:
-    """Sets the page's lang (and dir="rtl" for a language written right to
-    left) on the document, so the browser, screen readers and the layout
-    follow it."""
+    """Sets the page's lang on the document, and for a language written
+    right to left marks it (data-dir="rtl"): style.py then runs the page's
+    content and the sidebar's right to left. The document itself stays
+    left to right, so Streamlit's frame (the sidebar sliding in from the
+    left, the header) keeps working as it does."""
     lang = lang or current()
     return ('<div id="lang-hook" hidden></div><script>(function(){const d=window.parent.document.documentElement;'
-            f'd.setAttribute("lang",{json.dumps(lang)});d.setAttribute("dir",{json.dumps("rtl" if rtl(lang) else "ltr")});'
-            '})();</script>')
+            f'd.setAttribute("lang",{json.dumps(lang)});d.setAttribute("data-dir",{json.dumps("rtl" if rtl(lang) else "ltr")});'
+            'd.removeAttribute("dir");})();</script>')

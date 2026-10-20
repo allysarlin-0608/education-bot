@@ -101,3 +101,11 @@ def test_the_language_picker_in_goals_and_settings(monkeypatch, tmp_path):
     assert not at.exception and at.session_state["lang"] == "zh-Hant"
     assert at.session_state["coach_prefs"]["language"] == "zh-Hant"
     assert any("目標與設定" in str(m.value) for m in at.markdown)
+
+
+def test_a_right_to_left_language_marks_the_page_not_the_frame():
+    # (dir="rtl" on the whole document moved Streamlit's sidebar over the page on a phone)
+    ar, zh = i18n.page_html("ar"), i18n.page_html("zh-Hant")
+    assert '"data-dir","rtl"' in ar and '"lang","ar"' in ar and '"data-dir","ltr"' in zh
+    from coach import style
+    assert 'html[data-dir="rtl"] [data-testid="stMainBlockContainer"]' in style.stylesheet()

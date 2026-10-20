@@ -513,7 +513,10 @@ setup's first step). Before she picks, her browser's language is used
   format_func translates, so it lists translated labels and maps back.)
 - **Dates** only through `i18n.weekday / month / day_long / day_short /
   date_long / month_year / relative_day` (never `%A`/`%B`).
-- **Catalogs**: `coach/locales/<code>.json`, one file per language.
+- **Catalogs**: `coach/locales/<code>.json`, one file per language: all 16
+  (English, Traditional and Simplified Chinese, Hindi, Spanish, Arabic,
+  French, Bengali, Portuguese, Russian, Indonesian, Urdu, German, Japanese,
+  Marathi, Telugu).
   `python tools/i18n.py` lists every sentence in the code and, per
   language, what is missing and any translation whose `{parts}` or HTML
   tags differ from the English (`tests/test_i18n.py` fails on either).
@@ -527,7 +530,9 @@ setup's first step). Before she picks, her browser's language is used
   (`tests/test_budget.py`, per language). A lesson already written keeps
   the language it was written in.
 - **The page**: `i18n.page_html()` sets `<html lang>` and, for Arabic and
-  Urdu, `dir="rtl"`. Browser-side words (the subject stage's hints in
+  Urdu, `data-dir="rtl"`: style.py (`RTL`) then runs the page's content and
+  the sidebar right to left. Not `dir` on the whole document: that moved
+  Streamlit's sidebar over the page on a phone. Browser-side words (the subject stage's hints in
   `motion.py`) come from `motion.words_script()`, sent on every run after
   her language is known.
 - **Her choice** is `language` in her preferences (`learner_prefs`, JSON:
