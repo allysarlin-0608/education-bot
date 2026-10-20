@@ -6,8 +6,10 @@
 #     tests/test_pages_smoke.py  every page loads, and every way into the course map works
 #     tests/test_freshen.py      new code on disk is loaded whole (no half-old app after a deploy)
 #   - the feature inventory: every control the code has is named by a test
+#   - coach/curriculum/math.txt matches the math curriculum file (tools/math_syllabus.py)
 # The full browser suite (pytest tests/e2e) is longer and runs before a release.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 python -m pytest -q tests -p no:cacheprovider
 python tools/inventory.py --check
+python tools/math_syllabus.py --check

@@ -1,6 +1,6 @@
 """The math curriculum, from zero to research (data/math_curriculum_zh-Hant.json).
 
-A reference curriculum to browse, not a course she takes: phases (L0–L7) in
+A reference curriculum to browse, not a course she takes: phases (L0–L8) in
 order, each with its units: a summary, what she will be able to do, what to
 practise, the units to know first, and where the material comes from (the
 sources list, linked). Read from the file once; nothing here calls the model

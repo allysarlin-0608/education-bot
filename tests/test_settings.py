@@ -89,7 +89,7 @@ def test_legacy_keeps_the_weekday_schedule_five_lessons_and_reading():
     for k in range(7):
         day = date(2026, 9, 21) + timedelta(days=k)
         assert settings.topic_for(s, day, TZ) == core.scheduled_topic(day)
-    assert settings.shown_subjects(s) == list(settings.SUBJECTS)
+    assert settings.shown_subjects(s) == list(settings.LEGACY_SUBJECTS)   # Sunday is still General Knowledge
 
 
 def test_finish_validates_and_never_saves_half_done():
@@ -115,10 +115,10 @@ def test_levels_are_per_subject():
 
 def test_toggle_keeps_order_and_caps_at_three():
     s = []
-    for t in ("fashion", "cosmos", "free", "jewelry"):
+    for t in ("fashion", "cosmos", "math", "jewelry"):
         s = settings.toggle_subject(s, t)
-    assert s == ["fashion", "cosmos", "free"]
-    assert settings.toggle_subject(s, "cosmos") == ["fashion", "free"]
+    assert s == ["fashion", "cosmos", "math"]
+    assert settings.toggle_subject(s, "cosmos") == ["fashion", "math"]
 
 
 def test_change_keeps_levels_and_starts_new_subjects_at_beginner():
@@ -246,3 +246,11 @@ def test_starting_level_raises_a_lesson_never_lowers_it():
     slot = curriculum.new_slot("cosmos", 1)
     ctx = core.build_history_context({"entries": [], "books": []}, "cosmos", date(2026, 9, 26), slot, "Advanced")
     assert "Advanced" in ctx and "起始程度" in ctx
+
+
+def test_general_knowledge_is_no_longer_offered():
+    # ISS-109: not in the list, and a stored choice of it is dropped (her record of it stays)
+    assert "free" not in settings.SUBJECTS and "free" in settings.LEGACY_SUBJECTS
+    s = settings.normalize({"user_id": "u1", "subjects": ["philosophy", "free"], "onboarded_at": "2026-09-01T00:00:00Z"}, "u1")
+    assert s["subjects"] == ["philosophy"]
+    assert settings.toggle_subject([], "free") == []

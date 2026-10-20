@@ -426,19 +426,19 @@ def test_math_curriculum_screens(public_app, pages, width, scheme):
     flows.onboard(p, subjects=("Philosophy",))
     flows.tap(p, p.page.locator(".st-key-site_menu button").first)
     flows.tap(p, p.page.get_by_role("link", name="Math Curriculum"))
-    assert flows.wait_text(p.page, "從零到數學研究前沿", 20)
+    assert flows.wait_text(p.page, "數學：從零到研究前沿", 20)
     flows.idle(p.page)
     shot(p, f"90_math_phases_{tag}", problems)
-    flows.tap(p, p.page.get_by_text("L4 · 大學基礎數學", exact=False).first)
+    flows.tap(p, p.page.get_by_text("L1 · 分數、比例與代數入門", exact=False).first)
     flows.idle(p.page)
-    p.page.locator(".st-key-mc_u_L4_02").scroll_into_view_if_needed()
+    p.page.locator(".st-key-mc_u_L1_03").scroll_into_view_if_needed()
     shot(p, f"91_math_unit_{tag}", problems)
-    assert p.page.locator(".st-key-mc_u_L4_02 a[target=_blank]").count() >= 1, "its sources open in a new tab"
-    flows.tap(p, p.page.locator(".st-key-mc_go_L4-02_L4-03 button:visible").first)
+    assert p.page.locator(".st-key-mc_u_L1_03 a[target=_blank]").count() >= 1, "its sources open in a new tab"
+    flows.tap(p, p.page.locator(".st-key-mc_go_L1-03_L0-08 button:visible").first)
     flows.idle(p.page)
     p.page.wait_for_timeout(900)
-    assert "unit=L4-03" in p.page.url
-    assert p.page.locator('[class*="st-key-mc_u_L4_03_here"]').is_visible(), "the prerequisite is open and in view"
+    assert "unit=L0-08" in p.page.url
+    assert p.page.locator('[class*="st-key-mc_u_L0_08_here"]').is_visible(), "the prerequisite is open and in view"
     shot(p, f"92_math_prerequisite_{tag}", problems)
     p.page.locator(".st-key-mc_sources").scroll_into_view_if_needed()
     shot(p, f"93_math_sources_{tag}", problems)
@@ -459,12 +459,12 @@ def test_math_subject_screens(public_app, pages, width, scheme):
     p = pages(width=width, height=SIZES[width], scheme=scheme)
     flows.sign_in(p, app, email=f"ms{next(_n)}-{int(time.time() * 1000)}@example.com")
     flows.onboard(p, subjects=("Mathematics",))
-    assert flows.wait_text(p.page, "Reading, writing and comparing numbers", 20), "lesson 1 is the first outcome"
+    assert flows.wait_text(p.page, "Count a set of objects and explain that the last number said is the total", 20), "lesson 1 is the first outcome"
     flows.start_lesson(p)
     p.page.locator(".st-key-current_lesson, [class*='st-key-lcard_']").first.scroll_into_view_if_needed()
     shot(p, f"94_math_lesson_{tag}", problems)
     flows.open_app(p, app, "/course?subject=math")
-    assert flows.wait_text(p.page, "L0-01 Numbers, place value and the number line", 20)
+    assert flows.wait_text(p.page, "L0-01 Counting and Numerals", 20)
     shot(p, f"95_math_course_map_{tag}", problems)
     flows.tap(p, p.page.locator(".st-key-cm_math button:visible").first)
     p.page.wait_for_timeout(900)

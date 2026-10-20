@@ -11,8 +11,8 @@ from test_pages_smoke import app, loads
 def test_the_file_holds_together():
     assert mathcourse.check() == []
     c = mathcourse.counts()
-    assert c["phases"] == 8 and c["units"] > 60 and c["sources"] == 7
-    assert [p["id"] for p in mathcourse.phases()] == [f"L{k}" for k in range(8)]
+    assert c["phases"] == 9 and c["units"] == 160 and c["sources"] == 811
+    assert [p["id"] for p in mathcourse.phases()] == [f"L{k}" for k in range(9)]
 
 
 def test_what_check_catches():
@@ -36,9 +36,9 @@ def test_a_loop_of_prerequisites_is_caught():
 
 def test_prerequisites_leads_and_sources():
     every = mathcourse.units()
-    assert [u["id"] for u in mathcourse.prerequisites("L4-02")] == ["L4-01", "L4-03"]
-    assert "L4-02" in [u["id"] for u in mathcourse.leads_to("L4-03")]
-    assert mathcourse.prerequisites("L0-01") == [] and mathcourse.phase_of("L4-02") == "L4"
+    assert [u["id"] for u in mathcourse.prerequisites("L1-03")] == ["L0-08", "L1-02"]
+    assert "L1-03" in [u["id"] for u in mathcourse.leads_to("L0-08")]
+    assert mathcourse.prerequisites("L0-01") == [] and mathcourse.phase_of("L1-03") == "L1"
     assert all(s["url"].startswith("https://") for u in every.values() for s in mathcourse.sources_of(u))
 
 
@@ -50,23 +50,23 @@ def test_the_page_shows_every_phase_and_unit(monkeypatch, tmp_path):
     # covers: W-math-mc_phase
     at = loads(app(monkeypatch, tmp_path), "views/math.py")
     labels = [e.label for e in at.expander]
-    assert len(labels) == 8 and labels[0].startswith("L0 · 數字與基本運算 · 入門")
+    assert len(labels) == 9 and labels[0].startswith("L0 · 數感與基本運算 · 入門")
     body = html(at)
     for u in mathcourse.units().values():
         assert u["title"] in body and u["summary"] in body and u["learning_outcomes"][0] in body
     assert "You'll be able to" in body and "Practice" in body and "Learn first" in body
-    assert 'href="https://openstax.org/k12/math" target="_blank" rel="noopener noreferrer"' in body
+    assert 'href="https://www.thecorestandards.org/Math/Content/K/introduction/" target="_blank" rel="noopener noreferrer"' in body
     assert mathcourse.load()["attribution_and_use"] in body
-    pre = [b for b in at.button if b.key == "mc_go_L4-02_L4-03"]
-    assert pre and pre[0].label.startswith("L4-03 ")
+    pre = [b for b in at.button if b.key == "mc_go_L1-03_L0-08"]
+    assert pre and pre[0].label.startswith("L0-08 ")
 
 
 def test_a_prerequisite_opens_its_unit(monkeypatch, tmp_path):
     # covers: W-math-mc_go
     at = loads(app(monkeypatch, tmp_path), "views/math.py")
-    next(b for b in at.button if b.key == "mc_go_L4-02_L4-03").click().run()
+    next(b for b in at.button if b.key == "mc_go_L1-03_L0-08").click().run()
     assert not at.exception
-    assert at.query_params["unit"] == ["L4-03"] and at.session_state["mc_phase_L4"] is True
+    assert at.query_params["unit"] == ["L0-08"] and at.session_state["mc_phase_L0"] is True
 
 
 def test_an_address_naming_a_unit_opens_its_phase(monkeypatch, tmp_path):
@@ -103,10 +103,10 @@ def test_the_syllabus_is_the_curriculum_one_lesson_per_outcome():
 def test_each_lesson_is_taught_with_its_unit_and_at_its_phase_level():
     from coach import core, curriculum
     first, last = curriculum.lesson("math", 1), curriculum.lesson("math", curriculum.written("math"))
-    assert first["unit"].startswith("L0-01 ") and last["unit"].startswith("L7-05 ")
+    assert first["unit"].startswith("L0-01 ") and last["unit"].startswith("L8-10 ")
     assert curriculum.level_for(1, "math") == "Beginner" and curriculum.level_for(curriculum.written("math"), "math") == "Advanced"
     lines = "\n".join(core._syllabus_lines("math", curriculum.new_slot("math", 7)))
-    assert "L0-03「倍數、因數與質數」" in lines and "用整除、倍數、因數及質數描述整數結構" in lines
+    assert "L0-03「加法」" in lines and mathcourse.units()["L0-03"]["summary"] in lines
     assert "建議練習方向" in lines
     assert "數學" in core.load_system_prompt("math", public=True)
 

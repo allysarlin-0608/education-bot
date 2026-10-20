@@ -1,285 +1,696 @@
-# L0-01 Numbers, place value and the number line
-Reading, writing and comparing numbers
-Place value: what each digit stands for
-Placing numbers on the number line
-# L0-02 The four operations and their order
-Mixed calculations with all four operations
-Using brackets to set the order of a calculation
-Checking an answer by estimating
-# L0-03 Multiples, factors and primes
-Divisibility and prime numbers
-Greatest common factor and least common multiple
-Breaking a number into prime factors
-# L0-04 Fractions
-Simplifying fractions and finding a common denominator
-Adding, subtracting, multiplying and dividing fractions
-Word problems with fractions
-# L0-05 Decimals, percentages and estimation
-Moving between fractions, decimals and percentages
-Estimating, and saying how precise an answer is
-Discounts, tax rates and other percentage problems
-# L0-06 Ratio, proportion and units
-Simplifying ratios and solving proportions
-Unit rates and scaling in proportion
-Converting between common units
-# L0-07 Negative numbers and absolute value
-Comparing positive and negative numbers
-Calculating with negative numbers and fractions
-Absolute value as distance
-# L0-08 Powers, square roots and scientific notation
-The rules of whole-number exponents
-Common square roots
-Writing very large and very small numbers in scientific notation
-# L0-09 Mental arithmetic, written methods and sense-checking
-Checking by estimating and by the inverse operation
-Spotting common calculation mistakes
-Choosing an exact or an approximate answer
-# L1-01 Algebraic symbols and expressions
-Variables, coefficients and constant terms
-Collecting like terms
-Turning words into algebraic expressions
-# L1-02 Linear equations and inequalities
-Solving linear equations in one unknown
-Solving simple inequalities and drawing them on a number line
-Writing everyday problems as equations
-# L1-03 Rates, proportion and word problems
-Speed, unit price and rate of work
-Choosing an unknown and building a model
-Checking an answer's units and that it makes sense
-# L1-04 The coordinate plane and straight lines
-Plotting and reading coordinates
-Recognising a linear relationship from a table or graph
-What slope means
-# L1-05 Polynomials and factorising
-Adding, subtracting and multiplying polynomials
-The common product formulas
-Factorising by taking out a common factor and by grouping
-# L1-06 Simultaneous linear equations
-Solving a pair of equations by substitution and by elimination
-Reading the solution as where two lines cross
-Word problems with two unknowns
-# L1-07 Surds and square roots
-Simplifying surds
-Calculating with surds
-Solving simple equations with squares
-# L1-08 Angles, lines and triangles
-Finding unknown angles from angle facts
-The angles of a triangle add up to 180°
-When two triangles are congruent
-# L1-09 Polygons, perimeter and area
-Perimeter and area of polygons
-Splitting a compound shape into simple ones
-Choosing the right unit of area
-# L1-10 Volume, surface area and similarity
-Prisms, cylinders, pyramids, cones and spheres
-Using a scale factor for lengths and areas
-Pythagoras' theorem for the sides of a right triangle
-# L2-01 Functions and their graphs
-What is and isn't a function
-Domain and range
-Moving between a formula, a table and a graph
-# L2-02 Linear functions and slope
-Finding the slope and the intercept
-Writing the equation of a line
-What the numbers in a linear model mean
-# L2-03 Quadratic functions and equations
-Solving quadratics by factorising, completing the square and the formula
-The vertex, the axis of symmetry and the intercepts of a parabola
-Building a simple quadratic model
-# L2-04 Polynomial and rational functions
-Finding zeros and factors of a polynomial
-Dividing polynomials
-Where a rational function isn't defined
-# L2-05 Exponential and logarithmic functions
-The laws of exponents and logarithms
-Solving simple exponential and logarithmic equations
-Comparing rates of growth on a graph
-# L2-06 Sequences and series
-Recursive and closed-form rules for a sequence
-The general term of arithmetic and geometric sequences
-Sums of finite arithmetic and geometric series
-# L2-07 Trigonometric ratios and the unit circle
-Sine, cosine and tangent in a right triangle
-Radians and the unit circle
-Graphs of the basic trigonometric functions
-# L2-08 Vectors and analytic geometry
-Adding and scaling vectors, and the dot product
-Equations of lines and circles
-Parabolas, ellipses and hyperbolas
-# L2-09 Counting, permutations, combinations and probability
-The addition and multiplication principles of counting
-Permutations and combinations
-Simple and conditional probability
-# L2-10 First steps in statistics
-Mean, median, quartiles and the idea of standard deviation
-Reading charts and distributions
-Correlation is not causation
-# L2-11 First steps with complex numbers
-The imaginary unit i
-Calculating with complex numbers
-Complex numbers on the complex plane
-# L2-12 Logic, sets and a first look at induction
-Set notation and set operations
-Statements and conditional statements
-The base case and the inductive step
-# L3-01 Sets, maps and relations
-Set operations and the Cartesian product
-Injective, surjective and bijective maps
-Equivalence relations and equivalence classes
-# L3-02 Propositional logic and quantifiers
-And, or, if-then, and if and only if
-Negating "for all" and "there exists"
-Turning everyday sentences into logical form
-# L3-03 Methods of proof
-Choosing a proof strategy: direct, contradiction, contrapositive
-Writing a clear step-by-step argument
-Disproving a general claim with a counterexample
-# L3-04 Induction and recursion
-Proof by induction
-Strong induction
-Defining and analysing recursive sequences
-# L3-05 Vectors, matrices and linear systems
-Solving systems of linear equations
-Multiplying and inverting matrices
-Linear transformations and the geometry of vectors
-# L3-06 Limits and the intuition of calculus
-What limits, derivatives and integrals mean
-Continuity and instantaneous change
-Accumulated area and antiderivatives
-# L3-07 Discrete structures and algorithmic thinking
-Reading simple recursive definitions
-Vertices and edges of a graph
-Describing an algorithm's steps and its basic efficiency
-# L4-01 Single-variable calculus
-Defining continuity with limits
-Computing derivatives and analysing change
-Definite integrals and the fundamental theorem of calculus
-Testing basic series for convergence
-# L4-03 Linear algebra
-Bases and dimension
-Eigenvalues, eigenvectors and diagonalisation
-Orthogonal projection and least squares
-# L4-02 Multivariable and vector calculus
-Partial derivatives and multiple integrals
-The gradient and directional derivatives
-Line integrals, surface integrals and the fundamental theorems
-# L4-04 Ordinary differential equations
-Separable and first-order linear equations
-Linear equations with constant coefficients
-Initial value problems and the basics of stability
-# L4-05 Discrete mathematics and graph theory
-Graphs, trees and networks
-Recursion and a first look at generating functions
-Proving basic counting and graph results
-# L4-06 Combinatorics
-Bijections, inclusion-exclusion and the pigeonhole principle
-Deriving recurrence relations
-Basic combinatorial identities
-# L4-07 Probability and statistics
-Random variables and common distributions
-Expectation and variance
-Sampling, estimation and the basics of hypothesis testing
-# L4-08 Numerical analysis and computational mathematics
-Floating-point and truncation error
-Solving equations and integrating numerically
-Comparing how algorithms converge and how stable they are
-# L4-09 First steps in optimisation
-Setting up an objective and its constraints
-Solving basic linear programming problems
-Using the gradient in unconstrained optimisation
-# L5-01 Real analysis
-Completeness and convergent sequences
-Proving the basic properties of continuous functions
-Uniform convergence and sequences of functions
-# L5-02 Abstract algebra
-Groups, subgroups and quotient groups
-The homomorphism theorems
-Rings, ideals and a first look at field extensions
-# L5-03 Topology
-Topological spaces, bases and continuity
-Compactness and connectedness
-The idea of the fundamental group
-# L5-04 Complex analysis
-Cauchy's integral theorem and formula
-Residues and contour integrals
-Why analytic functions are so rigid
-# L5-05 Number theory, elementary and algebraic
-Congruences and the Chinese remainder theorem
-The statement of quadratic reciprocity
-Algebraic integers, and why ideals were invented
-# L5-06 Measure theory and the Lebesgue integral
-Measures and measurable functions
-When the convergence theorems apply
-Riemann and Lebesgue integrals compared
-# L5-07 Functional analysis
-Banach and Hilbert spaces
-Bounded linear operators
-The basic ideas of spectral theory
-# L5-08 Differential geometry
-Tangent spaces and a first look at differential forms
-Curvature and geodesics in examples
-What Stokes' theorem means geometrically
-# L5-09 First steps in algebraic geometry
-Varieties and ideals
-Affine and projective space in basic examples
-Reading the language of algebraic geometry
-# L5-10 Mathematical logic and set theory
-Syntax and semantics
-Provability and completeness
-Cardinals and ordinals
-# L6-01 Partial differential equations and harmonic analysis
-Classifying the basic linear PDEs
-Weak solutions and regularity
-Fourier analysis for the classic equations
-# L6-02 Dynamical systems and ergodic theory
-Fixed points and periodic orbits
-Stability, and examples of chaos
-Invariant measures and ergodicity
-# L6-03 Representation theory and Lie theory
-Representations of groups and Lie algebras
-Decomposing finite-dimensional representations in basic examples
-Symmetry in geometric and physical models
-# L6-04 Algebraic number theory and arithmetic geometry
-Number fields and their rings of integers
-Ideal class groups and localisation
-The basic arithmetic of elliptic curves
-# L6-05 Algebraic topology
-Fundamental groups and covering spaces in examples
-Homology groups and chain complexes
-Algebraic invariants for geometric problems
-# L6-06 Probability, stochastic processes and stochastic analysis
-Markov chains and stochastic processes
-Martingales and Brownian motion
-What Itô integrals and stochastic differential equations are for
-# L6-07 Extremal combinatorics and advanced graph theory
-The probabilistic method and double counting
-Extremal problems in graph theory
-Algebraic methods in combinatorics, by example
-# L6-08 Optimisation, information theory and computational complexity
-Convexity and duality
-Entropy and the basic coding theorems
-What complexity classes such as P and NP mean
-# L6-09 Mathematical physics and geometric analysis
-Variational and field-equation models
-How curvature and analysis interact
-Following a mathematical argument across fields
-# L7-01 Reading papers and mapping a field
-Tracing a theorem's citations and context
-A paper's assumptions, conclusions and methods
-Concept maps and reading notes for a field
-# L7-02 Rebuilding proofs and reproducibility
-Filling in skipped steps and checking assumptions
-Redoing a paper's examples and calculations
-Writing down derivations others can check
-# L7-03 Finding a small question worth researching
-Stating a problem and what is already known
-Comparing possible approaches
-Making a conjecture that can be tested or refuted
-# L7-04 Open problems as case studies
-Where a problem sits and the background it needs
-Proven results, conjectures and what is still open
-Never treating an unchecked claim as a proof
-# L7-05 Writing research and peer review
-Writing a complete proof others can follow
-Giving counterexamples and edge cases
-Revising an argument after expert feedback
+# L0-01 Counting and Numerals
+Count a set of objects and explain that the last number said is the total
+Read and write numbers up to 1000
+Compare two numbers using the greater-than, less-than and equals signs
+# L0-02 Place Value and the Decimal System
+Identify the place value of each digit in a multi-digit number
+Write a number in expanded form as a sum of place values
+Round a whole number to a given place
+# L0-03 Addition
+Explain addition as combining two quantities
+Add multi-digit numbers with regrouping (carrying)
+Use the commutative and associative properties to add mentally
+# L0-04 Subtraction
+Explain subtraction as taking away or as finding a difference
+Subtract multi-digit numbers with regrouping (borrowing)
+Check a subtraction result using addition
+# L0-05 Meaning of Multiplication and Times Tables
+Rewrite a multiplication as repeated addition
+Represent a multiplication with an array of dots
+Recall and use the facts of the 9×9 multiplication table
+# L0-06 Meaning of Division
+Explain division as sharing a quantity equally
+Explain division as finding how many equal groups fit
+Divide with a remainder and explain what the remainder means
+# L0-07 Multi-digit Multiplication and Long Division
+Multiply multi-digit numbers using the standard algorithm
+Divide multi-digit numbers by one- or two-digit divisors using long division
+Use estimation to judge whether a product or quotient is reasonable
+# L0-08 Introduction to Fractions
+Represent a unit fraction with a diagram
+Locate a fraction on a number line
+Compare two fractions with the same denominator
+# L0-09 Time and Money
+Tell the time on an analogue clock
+Calculate the time elapsed between two times
+Calculate a total price and the change owed
+# L0-10 Length, Mass and Capacity
+Measure the length of an object with a ruler and record the unit
+Identify common metric units of length, mass and capacity
+Convert between metric units of the same kind
+# L0-11 Plane and Solid Shapes
+Identify common plane shapes by their numbers of sides and angles
+Identify common solids by their faces, edges and vertices
+Find the lines of symmetry of a plane shape
+# L0-12 Patterns and Simple Data Displays
+Identify and continue a number or shape pattern
+Organise data into a tally chart
+Read information from a bar chart to answer questions
+# L1-01 Order of Operations
+Evaluate a mixed expression following brackets, then multiplication and division, then addition and subtraction
+Explain the left-to-right rule for operations of equal precedence
+Identify the step in a worked calculation that breaks the order of operations
+# L1-02 Factors, Multiples and Primes
+Determine whether a number is prime or composite
+Write the prime factorisation of a number
+Calculate the greatest common divisor of two numbers
+Calculate the least common multiple of two numbers
+# L1-03 Equivalent Fractions and Adding Fractions
+Simplify a fraction to lowest terms
+Rewrite two fractions with a common denominator
+Add and subtract fractions with unlike denominators
+# L1-04 Multiplying and Dividing Fractions
+Multiply two fractions
+Divide fractions by multiplying by the reciprocal
+Convert mixed numbers to improper fractions to multiply or divide them
+# L1-05 Decimals
+Identify the place value of each digit in a decimal
+Convert between fractions and decimals
+Multiply decimals and place the decimal point correctly
+# L1-06 Percentages
+Convert a percentage to a fraction and to a decimal
+Calculate a given percentage of a quantity
+Calculate a percentage increase or decrease
+# L1-07 Ratios, Rates and Proportion
+Write the ratio of two quantities in simplest form
+Calculate unit rates and compare two unit prices
+Solve a proportion with one unknown
+# L1-08 Negative Numbers and Integer Arithmetic
+Place negative numbers on a number line and compare them
+Explain absolute value as distance from zero
+Add and subtract positive and negative integers
+Determine the sign of a product or quotient of integers
+# L1-09 Algebraic Expressions
+Translate a verbal description into an algebraic expression using a variable
+Combine like terms in an algebraic expression
+Expand a bracketed expression using the distributive property
+Evaluate an algebraic expression for given values
+# L1-10 Linear Equations in One Variable
+Solve a one-variable linear equation using the properties of equality
+Set up a one-variable linear equation from a word problem
+Check a solution by substituting it into the equation
+# L1-11 Linear Inequalities in One Variable
+Solve a one-variable linear inequality
+Explain why the inequality sign reverses when both sides are multiplied by a negative number
+Graph the solution set of an inequality on a number line
+# L1-12 Powers and Square Roots
+Write repeated multiplication using exponent notation
+Find the square root of a perfect square
+Estimate between which two integers the square root of a non-square lies
+# L1-13 Angles and Triangles
+Measure an angle with a protractor
+Classify triangles by their angles
+Find an unknown angle using the 180° angle sum of a triangle
+Identify corresponding and alternate angles formed by a transversal across parallel lines
+# L1-14 Perimeter, Area and Volume
+Calculate the area of triangles and parallelograms
+Calculate the circumference and area of a circle
+Calculate the volume of a cuboid and a cylinder
+# L1-15 The Coordinate Plane
+Plot given points on the Cartesian plane
+Read the coordinates of a point on the plane
+Determine which quadrant a point lies in
+# L1-16 Data Displays and Averages
+Calculate the mean of a data set
+Find the median of a data set
+Find the mode of a data set
+Choose a suitable chart for a given type of data
+# L1-17 Basic Probability
+List all the outcomes of a random experiment
+Calculate the probability of an event with equally likely outcomes
+Compare experimental frequency with theoretical probability
+# L2-01 Real Numbers and Radicals
+Classify a number as rational or irrational
+Simplify a square root
+Rationalise a denominator that contains a square root
+# L2-02 Laws of Exponents and Scientific Notation
+Simplify expressions with integer exponents using the laws of exponents
+Explain the meaning of zero and negative exponents
+Write very large or very small numbers in scientific notation
+# L2-03 Polynomial Arithmetic
+Identify the degree and coefficients of a polynomial
+Add and subtract polynomials
+Multiply two polynomials
+# L2-04 Special Products and Factorisation
+Expand expressions using the square and difference-of-squares identities
+Factor out the common factor of a polynomial
+Factor a quadratic trinomial by the cross method
+# L2-05 Lines and Slope
+Calculate the slope of a line through two points
+Write the slope–intercept equation of a line
+Determine from their slopes whether two lines are parallel or perpendicular
+# L2-06 Systems of Two Linear Equations
+Solve a system of two linear equations by substitution
+Solve a system of two linear equations by elimination
+Explain the number of solutions using how the two lines meet
+# L2-07 The Concept of a Function
+Determine whether a relation is a function
+Evaluate a function using f(x) notation
+Read the domain and range from the graph of a function
+# L2-08 Quadratic Functions
+Rewrite a quadratic function in vertex form by completing the square
+Find the vertex and axis of symmetry of a parabola
+Determine from the leading coefficient whether a parabola opens up or down
+# L2-09 Quadratic Equations
+Solve a quadratic equation by factorisation
+Solve a quadratic equation using the quadratic formula
+Use the discriminant to determine the number of real roots
+# L2-10 Rational Expressions and Equations
+Simplify a rational expression by cancelling common factors
+Add and subtract rational expressions
+Solve a rational equation and reject extraneous roots that make a denominator zero
+# L2-11 Congruence and Similarity
+Prove two triangles congruent using SSS, SAS or ASA
+Show two triangles are similar using AA
+Find an unknown length using proportional sides of similar triangles
+# L2-12 Pythagoras' Theorem and the Distance Formula
+Find an unknown side of a right triangle using Pythagoras' theorem
+Use the converse of Pythagoras' theorem to decide whether a triangle is right-angled
+Calculate the distance between two points using the distance formula
+# L2-13 Properties of Circles
+Explain why a tangent is perpendicular to the radius at the point of contact
+Find angles using the inscribed angle theorem
+Calculate arc length and the area of a sector
+# L2-14 Introduction to Geometric Proof
+Distinguish axioms, definitions and theorems
+Write a two-column geometric proof
+Identify a missing justification in a geometric argument
+# L2-15 Right-Triangle Trigonometry
+Define sine, cosine and tangent from the sides of a right triangle
+Find an unknown side of a right triangle using a trigonometric ratio
+Find an unknown angle of a right triangle using an inverse trigonometric function
+# L2-16 Geometric Transformations
+Describe a translated figure using coordinates
+Draw the reflection of a figure in a line
+Draw the image of a figure after a rotation about a point
+Draw an enlargement given a centre and scale factor
+# L2-17 Arithmetic and Geometric Sequences
+Write the general term of an arithmetic sequence
+Write the general term of a geometric sequence
+Calculate the sum of the first n terms of an arithmetic sequence
+Calculate the sum of the first n terms of a geometric sequence
+# L2-18 Permutations and Combinations
+Count outcomes using the multiplication principle
+Calculate the number of permutations of r objects from n
+Calculate the number of combinations of r objects from n
+Determine whether order matters in a counting problem
+# L2-19 Rules of Probability
+Calculate the probability of an 'or' event using the addition rule
+Calculate the probability of independent events both occurring using the multiplication rule
+Calculate a conditional probability in a simple situation
+# L2-20 Descriptive Statistics: Spread
+Calculate the range and interquartile range of a data set
+Calculate the standard deviation of a data set
+Draw and interpret a box plot
+Identify outliers using the 1.5 × IQR rule
+# L3-01 Transformations and Composition of Functions
+Explain how f(x−h)+k translates a graph
+Explain how a·f(x) and f(bx) stretch or compress a graph
+Compute the composition of two functions
+# L3-02 Inverse Functions
+Use the horizontal line test to decide whether a function is one-to-one
+Find the inverse of a one-to-one function
+Explain why the graphs of a function and its inverse are symmetric about y = x
+# L3-03 Polynomial Functions
+Divide polynomials by long or synthetic division
+Use the remainder theorem to find the remainder on division by x − a
+Use the factor theorem to find factors of a polynomial
+Determine the end behaviour of a polynomial graph from its degree and leading coefficient
+# L3-04 Rational Functions
+Find the vertical asymptotes of a rational function
+Find the horizontal asymptote of a rational function
+Identify a hole (removable discontinuity) in the graph of a rational function
+# L3-05 Exponential Functions
+Identify graphs of exponential growth and decay
+Calculate compound interest
+Explain e as the limit of continuous compounding
+# L3-06 Logarithmic Functions
+Convert between exponential and logarithmic form
+Expand or combine logarithms using the laws of logarithms
+Solve an exponential equation using logarithms
+# L3-07 Radians and the Unit Circle
+Convert between degrees and radians
+Define sine and cosine of any angle using the unit circle
+State the trigonometric values of special angles
+# L3-08 Graphs of Trigonometric Functions
+Sketch the graphs of the sine and cosine functions
+Find the amplitude and period from a formula
+Model a periodic phenomenon with a sine function
+# L3-09 Trigonometric Identities
+Simplify trigonometric expressions using sin²θ + cos²θ = 1
+Calculate trigonometric values using the angle-sum formulas
+Rewrite trigonometric expressions using the double-angle formulas
+Solve a simple trigonometric equation on a given interval
+# L3-10 The Laws of Sines and Cosines
+Find a side or angle of any triangle using the law of sines
+Find a side or angle of any triangle using the law of cosines
+Calculate the area of a triangle using ½ab·sin C
+# L3-11 Vectors
+Add vectors and multiply them by scalars in two and three dimensions
+Calculate the magnitude of a vector
+Calculate the angle between two vectors using the dot product
+# L3-12 Matrices and Determinants
+Multiply two matrices
+Calculate the determinant of a 2×2 or 3×3 matrix
+Solve a 2×2 linear system using the inverse matrix
+# L3-13 Complex Numbers
+Add, subtract, multiply and divide complex numbers
+Represent a complex number in the complex plane
+Write a complex number in polar form
+Calculate an integer power of a complex number using De Moivre's theorem
+# L3-14 Conic Sections
+Find the centre and radius of a circle from its standard equation
+Find the focus and directrix of a parabola from its standard equation
+Find the foci and axes of an ellipse from its standard equation
+Find the foci and asymptotes of a hyperbola from its standard equation
+# L3-15 Polar Coordinates and Parametric Equations
+Convert a point between rectangular and polar coordinates
+Sketch a simple polar curve
+Describe a curve with parametric equations and eliminate the parameter
+# L3-16 Sigma Notation and Infinite Geometric Series
+Write a finite sum using sigma notation
+Calculate sums using standard formulas such as the sum of 1 to n
+Determine whether an infinite geometric series converges and find its sum
+# L3-17 Binomial and Normal Distributions
+Calculate the probability of exactly k successes with the binomial formula
+Calculate the expected value of a binomial distribution
+Calculate normal probabilities by standardising to z-scores
+# L3-18 Sampling and Introductory Inference
+Compare simple random sampling with stratified sampling
+Identify sampling bias in a survey design
+Interpret a confidence interval and margin of error in a poll report
+# L4-01 Propositional Logic and Quantifiers
+Use truth tables to decide whether two propositions are logically equivalent
+Write the converse, inverse and contrapositive of a conditional statement
+Negate a statement that contains universal and existential quantifiers
+# L4-02 Proof Techniques
+Write a direct proof
+Prove a conditional statement by contraposition
+Prove a statement by contradiction
+Disprove a universal statement with a counterexample
+# L4-03 Mathematical Induction
+Explain the roles of the base case and the inductive step
+Prove a summation formula by induction
+Prove a statement by strong induction
+# L4-04 Sets, Functions and Relations
+Compute unions, intersections, differences and complements of sets
+Determine whether a function is injective, surjective or bijective
+Determine whether a relation is an equivalence relation
+Write down the equivalence classes of an equivalence relation
+# L4-05 Limits and Continuity
+Estimate a limit from a table or graph
+Compute limits of algebraic functions using the limit laws
+Explain the precise meaning of a limit using the ε–δ definition
+Apply the intermediate value theorem to show an equation has a root
+# L4-06 The Derivative
+Compute the derivative of a simple function from the limit definition
+Apply the power, product and quotient rules
+Differentiate composite functions with the chain rule
+Differentiate exponential, logarithmic and trigonometric functions
+# L4-07 Applications of the Derivative
+Use the first derivative to find intervals of increase and decrease and extrema
+Use the second derivative to determine concavity and inflection points
+Set up and solve an optimisation problem
+Solve a related-rates problem using implicit differentiation
+# L4-08 Integrals and the Fundamental Theorem of Calculus
+Approximate the area under a curve with a Riemann sum
+State both parts of the fundamental theorem of calculus
+Evaluate a definite integral using an antiderivative
+# L4-09 Techniques of Integration
+Evaluate an integral by substitution
+Evaluate an integral by integration by parts
+Integrate a rational function using partial fractions
+Determine whether an improper integral converges
+# L4-10 Applications of Integration
+Calculate the area between two curves
+Calculate a volume of revolution using the disc method
+Calculate the arc length of a curve
+Calculate the work done by a variable force using an integral
+# L4-11 Convergence of Sequences and Series
+Compute the limit of a sequence
+Test a series for convergence with the comparison test
+Test a series for convergence with the ratio test
+Distinguish absolute from conditional convergence
+# L4-12 Power Series and Taylor Series
+Find the radius of convergence of a power series
+Write the Taylor series of a common function
+Approximate a function value with a Taylor polynomial and bound the error
+# L4-13 Multivariable Differential Calculus
+Compute partial derivatives of a multivariable function
+Compute the gradient and explain that it points in the direction of fastest increase
+Classify critical points using the second-derivative test
+Find constrained extrema using Lagrange multipliers
+# L4-14 Multiple Integrals
+Evaluate a double integral over a rectangle
+Set up a double integral over a general region as an iterated integral
+Evaluate a double integral in polar coordinates
+Change variables in a multiple integral using the Jacobian
+# L4-15 Vector Calculus
+Compute the line integral of a vector field along a curve
+Determine whether a vector field is conservative
+Use Green's theorem to convert a line integral to a double integral
+Explain which quantities the divergence theorem and Stokes' theorem relate
+# L4-16 Linear Systems and Gaussian Elimination
+Reduce an augmented matrix to reduced row echelon form by Gaussian elimination
+Determine whether a linear system has one, no or infinitely many solutions
+Write an infinite solution set in parametric form
+# L4-17 Vector Spaces
+Verify whether a set is a subspace of a vector space
+Determine whether a set of vectors is linearly independent
+Find a basis for a subspace and state its dimension
+# L4-18 Linear Transformations
+Write the matrix of a linear transformation with respect to the standard basis
+Compute the kernel and image of a linear transformation
+Apply the rank–nullity theorem
+# L4-19 Eigenvalues and Diagonalisation
+Find the eigenvalues of a matrix from its characteristic polynomial
+Find the eigenvectors for an eigenvalue
+Determine whether a matrix is diagonalisable and write it as PDP⁻¹
+# L4-20 Inner Products and Orthogonality
+Compute the orthogonal projection of a vector onto a subspace
+Construct an orthonormal basis with the Gram–Schmidt process
+Find the least-squares solution of an inconsistent system
+# L4-21 First-Order Ordinary Differential Equations
+Solve a separable differential equation
+Solve a first-order linear equation using an integrating factor
+Build a population-growth or cooling model with a differential equation
+Describe the qualitative behaviour of solutions from a slope field
+# L4-22 Second-Order Linear Differential Equations
+Solve a constant-coefficient homogeneous second-order equation via its characteristic equation
+Find a particular solution of a non-homogeneous equation by undetermined coefficients
+Classify a spring system as underdamped, critically damped or overdamped
+# L4-23 Discrete Mathematics: Counting and Graphs
+Count the elements of a union using inclusion–exclusion
+Prove an existence statement with the pigeonhole principle
+Count the edges of a graph using the handshake lemma
+Determine whether a graph has an Eulerian path
+# L4-24 Introduction to Probability Theory
+Update a conditional probability with Bayes' theorem
+Calculate the expectation and variance of a discrete random variable
+Calculate a probability for a continuous random variable from its density
+Explain the meaning of the law of large numbers
+# L5-01 Completeness of the Real Numbers
+Find the supremum and infimum of a bounded set
+Prove that a sequence converges using the ε–N definition
+Prove convergence of a sequence with the monotone convergence theorem
+Explain why every Cauchy sequence of real numbers converges
+# L5-02 Continuity and Uniform Continuity
+Prove continuity at a point using the ε–δ definition
+Apply the extreme value theorem to continuous functions on closed intervals
+Distinguish continuity from uniform continuity with an example of each
+# L5-03 Rigorous Theory of Differentiation
+Prove that a differentiable function is continuous
+Prove the mean value theorem from Rolle's theorem
+Use the mean value theorem to prove an inequality
+# L5-04 The Riemann Integral
+Define the Riemann integral using upper and lower sums
+Prove that a continuous function on a closed interval is integrable
+Give a function that is not Riemann integrable and explain why
+# L5-05 Sequences of Functions and Uniform Convergence
+Determine whether a sequence of functions converges pointwise
+Determine whether a sequence of functions converges uniformly
+Use the Weierstrass M-test to show a series of functions converges uniformly
+Explain why uniform convergence allows limits and integrals to be interchanged
+# L5-06 Metric Spaces
+Verify whether a function satisfies the axioms of a metric
+Determine whether a set in a metric space is open or closed
+Determine whether a metric space is complete
+Apply the Banach fixed-point theorem
+# L5-07 Point-Set Topology
+Verify whether a family of sets forms a topology
+Determine whether a map is continuous using preimages of open sets
+Decide whether a subset of Euclidean space is compact using the Heine–Borel theorem
+Determine whether a space is connected
+# L5-08 Group Theory
+Verify whether a set with an operation is a group
+Use Lagrange's theorem to deduce possible orders of subgroups
+Determine whether a map between groups is a homomorphism and find its kernel
+Explain the relationship between normal subgroups and quotient groups
+# L5-09 Rings and Ideals
+Verify whether a set with two operations is a ring
+Determine whether a subset is an ideal
+Compute in the quotient ring ℤ/nℤ
+Determine whether a ring is an integral domain
+# L5-10 Fields and Introduction to Galois Theory
+Calculate the degree of a field extension
+Find the minimal polynomial of an algebraic number
+Explain how the Galois correspondence links subgroups and intermediate fields
+Explain what it means that the general quintic has no solution in radicals
+# L5-11 Elementary Number Theory
+Use the Euclidean algorithm to find a gcd and a Bézout identity
+Solve a linear congruence
+Use Fermat's little theorem to compute remainders of large powers
+Solve a system of congruences with the Chinese remainder theorem
+# L5-12 Complex Analysis: Analytic Functions
+Use the Cauchy–Riemann equations to decide whether a function is analytic
+Evaluate the complex exponential and complex logarithm
+Explain the multivalued complex logarithm and branch cuts
+# L5-13 Complex Integration and Residues
+Apply Cauchy's integral theorem to a closed contour integral
+Evaluate an integral using Cauchy's integral formula
+Calculate the residue at a pole
+Evaluate a real improper integral using the residue theorem
+# L5-14 Differential Geometry of Curves and Surfaces
+Calculate the curvature of a space curve
+Calculate the torsion of a space curve
+Compute the first fundamental form of a surface
+Explain the meaning of Gauss's Theorema Egregium
+# L5-15 Introduction to Partial Differential Equations
+Classify a second-order linear PDE as elliptic, parabolic or hyperbolic
+Solve the one-dimensional heat equation by separation of variables
+Solve the one-dimensional wave equation with d'Alembert's formula
+Explain the maximum principle for solutions of Laplace's equation
+# L5-16 Fourier Analysis
+Calculate the Fourier coefficients of a periodic function
+Explain how a Fourier series behaves at a jump (the Gibbs phenomenon)
+Compute the Fourier transform of a simple function
+Apply Parseval's identity
+# L5-17 Numerical Analysis
+Approximate a root with Newton's method
+Compare the errors of the trapezoidal rule and Simpson's rule
+Approximate the solution of an ODE with Euler's method
+Distinguish truncation error from rounding error
+# L5-18 Combinatorics and Graph Theory
+Solve a counting problem with a generating function
+Solve a linear recurrence relation
+Explain the equivalent characterisations of trees and count their edges
+Find the chromatic number of a simple graph
+# L5-19 Mathematical Statistics
+Derive a maximum-likelihood estimator
+Determine whether an estimator is unbiased
+Construct a confidence interval for a mean
+Carry out a hypothesis test and interpret the p-value
+# L5-20 Mathematical Logic and Computability
+Formalise a mathematical statement in first-order logic
+Explain how a Turing machine works
+Explain the argument that the halting problem is undecidable
+State the content of Gödel's first incompleteness theorem
+# L5-21 Linear Programming and Optimisation
+Formulate a resource-allocation problem as a linear programme
+Solve a two-variable linear programme graphically
+Explain how the simplex method moves between vertices of the feasible region
+Write the dual of a linear programme
+# L6-01 Measure Theory
+Verify whether a collection of sets is a σ-algebra
+Explain the definition of Lebesgue outer measure
+Explain why non-measurable sets exist (the Vitali set)
+# L6-02 The Lebesgue Integral
+Define the Lebesgue integral of a non-negative measurable function via simple functions
+Apply the monotone convergence theorem
+Apply the dominated convergence theorem to interchange a limit and an integral
+Apply Fubini's theorem to change the order of integration
+# L6-03 Lᵖ Spaces and Banach Spaces
+Verify whether a function is a norm
+Apply Hölder's inequality
+Explain the completeness of Lᵖ spaces (the Riesz–Fischer theorem)
+State the Hahn–Banach theorem
+# L6-04 Hilbert Spaces and Spectral Theory
+Decompose a vector using the projection theorem in a Hilbert space
+Represent a continuous linear functional with the Riesz representation theorem
+Explain the spectral theorem for compact self-adjoint operators
+# L6-05 Commutative Algebra
+Determine whether an ideal is prime or maximal
+State the Hilbert basis theorem
+Compute the localisation of a ring at a prime ideal
+# L6-06 Modules and Homological Algebra
+Determine whether a sequence of modules is exact
+Compute the tensor product of two finitely generated abelian groups
+Compute a simple Tor group using a free resolution
+# L6-07 Representation Theory of Finite Groups
+Verify whether a map is a group representation
+Compute the character table of a small finite group
+Decompose a representation into irreducibles using character orthogonality
+# L6-08 Fundamental Group and Covering Spaces
+Explain what it means for two paths to be homotopic
+Compute the fundamental group of the circle
+Compute a fundamental group using the Seifert–van Kampen theorem
+Explain the correspondence between covering spaces and subgroups of the fundamental group
+# L6-09 Homology Theory
+Compute the homology groups of a simplicial complex
+Distinguish surfaces using the Euler characteristic
+Compute homology using the Mayer–Vietoris sequence
+Prove the Brouwer fixed-point theorem using homology
+# L6-10 Smooth Manifolds
+Verify that a set is a smooth manifold using an atlas
+Compute the differential of a smooth map at a point
+Compute the exterior derivative of a differential form
+State the generalised Stokes theorem
+# L6-11 Riemannian Geometry
+Write down the Riemannian metric of a common manifold
+Compute the Christoffel symbols of the Levi-Civita connection
+Write the geodesic equation
+Explain the geometric meaning of sectional curvature
+# L6-12 Introduction to Algebraic Geometry
+Explain the correspondence between affine varieties and polynomial ideals
+State Hilbert's Nullstellensatz
+Describe points of the projective plane in homogeneous coordinates
+Count the intersections of two plane curves with Bézout's theorem
+# L6-13 Riemann Surfaces and Advanced Complex Analysis
+Explain the uniqueness of analytic continuation
+Apply the conclusion of the Riemann mapping theorem
+Explain the definition of a Riemann surface as a one-dimensional complex manifold
+# L6-14 Theory of Partial Differential Equations
+Explain the definition of a weak derivative
+Explain the definition of a Sobolev space
+Prove existence of a weak solution to an elliptic equation with the Lax–Milgram theorem
+# L6-15 Measure-Theoretic Probability
+Define a random variable in the language of probability spaces
+State the strong law of large numbers
+State the central limit theorem
+Verify whether a stochastic process is a martingale
+# L6-16 Axiomatic Set Theory
+Describe the main axioms of ZFC
+Prove the reals are uncountable with Cantor's diagonal argument
+Compare ordinal numbers with cardinal numbers
+Explain what it means that the continuum hypothesis is independent of ZFC
+# L6-17 Introduction to Analytic Number Theory
+Write down the Euler product of the zeta function
+State the prime number theorem
+State Dirichlet's theorem on primes in arithmetic progressions
+# L6-18 Introduction to Algebraic Number Theory
+Find the ring of integers of a quadratic number field
+Give an example where unique factorisation fails in a ring of integers
+Explain how the ideal class group measures the failure of unique factorisation
+# L7-01 Number Theory Track: Modular Forms
+Explain how the modular group SL₂(ℤ) acts on the upper half-plane
+Verify that an Eisenstein series satisfies the transformation law of a modular form
+Explain how the Fourier coefficients of a modular form can encode arithmetic information
+# L7-02 Number Theory Track: Elliptic Curves
+Add two points on an elliptic curve using the chord-and-tangent method
+State Mordell's theorem that the group of rational points is finitely generated
+Distinguish the proven cases of the Birch–Swinnerton-Dyer conjecture from what remains open
+# L7-03 Number Theory Track: Overview of the Langlands Programme
+Explain the two kinds of objects the Langlands programme seeks to connect (Galois representations and automorphic forms)
+Explain how the proof of Fermat's Last Theorem uses the modularity theorem
+Distinguish proven theorems in the Langlands programme from parts that remain conjectural
+# L7-04 Algebraic Geometry Track: Schemes
+Compute the prime spectrum Spec of a ring
+Explain the definition of a sheaf on a topological space
+Explain how schemes generalise classical varieties
+# L7-05 Algebraic Geometry Track: Curves and Sheaf Cohomology
+Calculate the genus of a smooth plane curve
+State the Riemann–Roch theorem
+Use Riemann–Roch to compute the dimension of a linear system
+# L7-06 Geometric Topology Track: Knots and Low-Dimensional Topology
+Use Reidemeister moves to decide whether two knot diagrams are equivalent
+Compute the Jones polynomial or tricolourability of a knot
+Explain the Ricci-flow approach Perelman used to prove the Poincaré conjecture
+# L7-07 Geometric Topology Track: Symplectic Geometry
+Verify whether a two-form is symplectic
+Write the Hamiltonian vector field of a Hamiltonian function
+Explain that Darboux's theorem means symplectic manifolds have no local invariants
+# L7-08 Geometric Topology Track: Geometric Group Theory
+Draw the Cayley graph of a finitely generated group
+Explain what it means for two metric spaces to be quasi-isometric
+Determine in simple examples whether a group is hyperbolic
+# L7-09 Analysis Track: Harmonic Analysis
+Explain the definition of the Hardy–Littlewood maximal function
+State the Lᵖ boundedness of the Hilbert transform
+Explain the Kakeya conjecture and its current status
+# L7-10 Analysis Track: Nonlinear PDE and Fluids
+Write the incompressible Navier–Stokes equations and explain the physical meaning of each term
+Distinguish existence of weak solutions from global regularity of smooth solutions
+Explain which part of the three-dimensional Navier–Stokes Millennium Problem remains unsolved
+# L7-11 Analysis Track: Dynamical Systems and Ergodic Theory
+Determine the stability of a fixed point by linearisation
+Compute bifurcation points of the logistic map
+State Birkhoff's ergodic theorem
+# L7-12 Probability Track: Stochastic Processes and Brownian Motion
+Compute the stationary distribution of a finite Markov chain
+State the defining properties of Brownian motion
+Explain what it means that Brownian paths are nowhere differentiable
+# L7-13 Probability Track: Stochastic Calculus
+Explain how the Itô integral differs from the Riemann integral
+Apply Itô's lemma to compute the differential of a process
+Solve the stochastic differential equation of geometric Brownian motion
+# L7-14 Combinatorics Track: Ramsey Theory and the Probabilistic Method
+Explain the proof that the Ramsey number R(3,3) = 6
+Prove a lower bound for diagonal Ramsey numbers with the probabilistic method
+Explain recent progress on upper bounds for diagonal Ramsey numbers and what remains open
+# L7-15 Combinatorics Track: Additive Combinatorics
+Compute the size of the sumset of finite sets
+State Szemerédi's theorem
+State the Green–Tao theorem on arithmetic progressions in the primes
+# L7-16 Computational Track: Numerical Linear Algebra
+Compute the LU factorisation of a matrix
+Explain the geometric meaning of the singular value decomposition
+Use the condition number to assess the numerical stability of a linear system
+Explain which problems the conjugate gradient method is suited to
+# L7-17 Computational Track: Convex Optimisation
+Determine whether a function is convex
+Write the KKT conditions for a constrained optimisation problem
+Explain the convergence behaviour of gradient descent on convex problems
+# L7-18 Logic Track: Computational Complexity and P vs NP
+Explain the definitions of the complexity classes P and NP
+Explain how a reduction shows a problem is NP-complete
+Explain why P vs NP remains open and what known barrier results say
+# L7-19 Logic Track: Category Theory
+Verify whether a collection of objects and morphisms forms a category
+Determine whether an assignment is a functor
+Describe products and coproducts by their universal properties
+Give an example of a pair of adjoint functors
+# L7-20 Statistics Track: High-Dimensional Statistics and Learning Theory
+Explain the bias–variance trade-off
+Explain how LASSO regularisation produces sparse solutions
+Explain the relationship between VC dimension and generalisation bounds
+Distinguish established results from contested explanations in the theory of deep-learning generalisation
+# L8-01 Reading Research Papers
+Identify a paper's main theorem from its abstract and introduction
+Map the dependencies between the lemmas and theorems of a paper
+Test a key lemma of a paper on a small example
+# L8-02 Mathematical Writing and LaTeX
+Typeset theorems, proofs and formulas in LaTeX
+Rewrite a proof so that every step has an explicit justification
+Write an abstract and introduction following journal conventions
+# L8-03 Literature Search and Preprints
+Find relevant preprints on arXiv by category and keyword
+Narrow a search using Mathematics Subject Classification (MSC) codes
+Distinguish preprints from peer-reviewed journal articles
+# L8-04 Strategies for Exploring Research Problems
+Find a pattern by examining special cases and small examples
+Generalise a known theorem into a new research question
+Test a conjecture by searching for counterexamples
+# L8-05 Experimental Mathematics and Computer Algebra
+Carry out a symbolic computation with a computer algebra system
+Look up a sequence in the On-Line Encyclopedia of Integer Sequences (OEIS)
+Explain the difference between numerical evidence and a mathematical proof
+# L8-06 Formal Proof and Lean
+Explain how a proof assistant checks the correctness of a proof
+Write a formal proof of a simple statement in Lean
+Explain the role of formal libraries such as mathlib
+# L8-07 Overview of the Millennium Prize Problems
+List the seven Millennium Prize Problems and their fields
+Explain that the Poincaré conjecture is the only Millennium Problem solved so far
+Explain what question the Hodge conjecture asks
+# L8-08 The Riemann Hypothesis: What Is Known and Unknown
+State the Riemann hypothesis about the non-trivial zeros of the zeta function
+Explain what the Riemann hypothesis would imply for the error term in the distribution of primes
+Distinguish proven partial results (such as infinitely many zeros on the critical line) from the open full conjecture
+# L8-09 Frontier: Artificial Intelligence and Mathematical Research
+Explain historical cases of computer-assisted proof such as the four colour theorem
+Explain how machine learning has been used to suggest conjectures or find examples
+Distinguish peer-reviewed AI-assisted mathematical results from unverified claims
+# L8-10 The Mathematical Community: Publishing, Review and Ethics
+Explain the peer-review process at mathematics journals
+Identify research-ethics problems such as plagiarism and improper authorship
+Explain the roles of major mathematical societies and the International Congress of Mathematicians

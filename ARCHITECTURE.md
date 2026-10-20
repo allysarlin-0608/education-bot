@@ -244,9 +244,10 @@ outline's reply may be a little longer (`tokens.PATH_MAX_TOKENS` 3400).
 - *Math curriculum* (`data/math_curriculum_zh-Hant.json`, `coach/mathcourse.py`,
   `views/math.py` at /math, ISS-106): a curriculum to browse, not one of
   her courses (it isn't scheduled, quizzed or counted). The file is the one
-  source: 8 phases (L0–L7), each unit with its summary, learning outcomes,
-  practice focus, prerequisite ids and source ids; the sources list (title,
-  organization, link, coverage) and how they may be used. `mathcourse`
+  source: 9 phases (L0–L8, 160 units), each unit with its title, summary
+  and learning outcomes (in Chinese and in English), practice focus,
+  prerequisite ids and source ids; the sources list (811: title,
+  organization, link, coverage, licence and use) and how they may be used. `mathcourse`
   reads it once and answers the page (units by id, a unit's prerequisites,
   the units that need it, its sources); `mathcourse.check()` holds the file
   together (every prerequisite and source named exists, ids unique, no
@@ -260,9 +261,12 @@ outline's reply may be a little longer (`tokens.PATH_MAX_TOKENS` 3400).
   curriculum, edit the file: the tests say if a link is broken.
 - *Mathematics, the subject* (ISS-107): the same curriculum taught day by
   day like every other subject. `coach/curriculum/math.txt` is its
-  syllabus: a unit per curriculum unit, headed "<id> <English title>", and
-  a lesson per learning outcome (214), every unit after the units it needs
-  (so L4-03 comes before L4-02); the tests hold it to the JSON. A lesson's
+  syllabus, written from the JSON by `tools/math_syllabus.py` (check.sh
+  fails when it is out of date): a unit per curriculum unit, headed
+  "<id> <English title>", and a lesson per learning outcome (536, its
+  English text), every unit after the units it needs. The lesson's
+  neighbours are named in its prompt shortened to 60 characters (an
+  outcome is a whole sentence; the prompt is near its budget). A lesson's
   level is its phase's (`mathcourse.level_of`: L0–L1 Beginner, L2–L3
   Intermediate, L4 on Advanced; `curriculum.level_for(n, topic)`), and the
   lesson's model is also told its unit's summary and practice focus from

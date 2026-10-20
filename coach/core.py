@@ -447,6 +447,10 @@ def lesson_level(n: int, start_level: str = None, topic: str = None) -> str:
     return level
 
 
+def _clip(text: str, most: int = 60) -> str:
+    return text if len(text) <= most else text[:most - 1].rstrip() + "…"
+
+
 def _syllabus_lines(topic: str, slot: dict, start_level: str = None) -> list:
     """Where this lesson sits in the fixed syllabus, so the model teaches
     exactly this title at this level and doesn't run ahead."""
@@ -467,10 +471,10 @@ def _syllabus_lines(topic: str, slot: dict, start_level: str = None) -> list:
         lines.append("- 這是她這個目標的第一課：寫短一點（約350到500字），今天的任務5分鐘內就做得完，"
                      "讓她今天就有一個看得見的小成功；【Note】用一句話把這課連到她寫的原因。")
     before, after = curriculum.lesson(topic, n - 1), curriculum.lesson(topic, n + 1)
-    if before:
-        lines.append(f"- 上一課是「{before['title']}」，可以自然銜接，但不要重講。")
+    if before:      # (the neighbours' titles shortened: a math title is a whole sentence, and the prompt is near its budget)
+        lines.append(f"- 上一課是「{_clip(before['title'])}」，可以自然銜接，但不要重講。")
     if after:
-        lines.append(f"- 下一課是「{after['title']}」，這一課不要提前講它的內容。")
+        lines.append(f"- 下一課是「{_clip(after['title'])}」，這一課不要提前講它的內容。")
     return lines
 
 

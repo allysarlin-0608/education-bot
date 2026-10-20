@@ -14,8 +14,11 @@ from coach import catalog, clock, core, paths
 
 DEFAULT_USER_ID = "owner"
 
-# The subjects she can choose, in the order they are offered.
-SUBJECTS = ("philosophy", "cosmos", "investing", "business", "fashion", "jewelry", "math", "free")
+# The subjects she can choose, in the order they are offered. General
+# Knowledge ("free") is no longer offered (ISS-109): only the original
+# weekly setup (is_legacy, the owner's personal app) still has it, on Sundays.
+SUBJECTS = ("philosophy", "cosmos", "investing", "business", "fashion", "jewelry", "math")
+LEGACY_SUBJECTS = SUBJECTS + ("free",)
 DESCRIPTIONS = {
     "philosophy": "Arguments, the great thinkers East and West, and how to live.",
     "cosmos": "The sky, the solar system, stars and galaxies, and how we know.",
@@ -447,7 +450,7 @@ def builtin_offered(s: dict, log: dict = None) -> bool:
 
 def shown_subjects(s: dict) -> list:
     """The subjects the pages show: hers, or all of them on the old setup."""
-    return list(SUBJECTS) if is_legacy(s) else chosen_subjects(s)
+    return list(LEGACY_SUBJECTS) if is_legacy(s) else chosen_subjects(s)
 
 
 def reading_on(s: dict) -> bool:
