@@ -83,7 +83,7 @@ def placement(key: str, topic: str, check: dict, on_answer, on_move, on_again) -
     qs = pq.questions(topic)
     if check.get("level"):
         with st.container(key=f"pqdone_{key}", horizontal=True, vertical_alignment="center"):
-            st.html(tr('<p class="pq-result"><b>{p0}</b><span>{p1} of {p2} right</span></p>', p0=_e(check["level"]), p1=check["score"], p2=pq.COUNT))
+            st.html(tr('<p class="pq-result"><b>{p0}</b><span>{p1} of {p2} right</span></p>', p0=_e(tr(check["level"])), p1=check["score"], p2=pq.COUNT))
             st.button(tr("Take it again"), key=f"pqagain_{key}", type="tertiary", on_click=on_again)
         return
     at = min(max(check.get("at") or 0, 0), pq.COUNT - 1)
@@ -91,8 +91,8 @@ def placement(key: str, topic: str, check: dict, on_answer, on_move, on_again) -
     question, options, _ = qs[at]
     # a new container for each question, so the next one comes in on its own
     with st.container(key=f"pq_{key}_{at}", gap=None):
-        st.html(tr('<p class="pq-count">Question {p0} of {p1}</p><p class="pq-q">{p2}</p>', p0=at + 1, p1=pq.COUNT, p2=_e(question)))
-        rows(f"pq{key}{at}", [(i, o, "") for i, o in enumerate(options)],
+        st.html(tr('<p class="pq-count">Question {p0} of {p1}</p><p class="pq-q">{p2}</p>', p0=at + 1, p1=pq.COUNT, p2=_e(tr(question))))
+        rows(f"pq{key}{at}", [(i, tr(o), "") for i, o in enumerate(options)],
              {answers[at]} if answers[at] is not None else set(), lambda i: on_answer(i))
         with st.container(key=f"pqnav_{key}", horizontal=True, horizontal_alignment="distribute",
                           vertical_alignment="center"):

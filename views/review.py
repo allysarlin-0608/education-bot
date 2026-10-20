@@ -65,7 +65,7 @@ def when(iso):
 def source(card):
     subject = catalog.name(card.get("topic"), "")
     lesson = f"Lesson {card['n']}" if card.get("n") else ""
-    return " · ".join(x for x in (review.KIND_NAMES[card["kind"]], subject, lesson) if x)
+    return " · ".join(x for x in (tr(review.KIND_NAMES[card["kind"]]), subject, lesson) if x)
 
 
 # ============================================================
@@ -134,7 +134,7 @@ def today_view():
         card = found[2]
         pace(len(due))
         st.caption(source(card))
-        st.markdown(f"### {card['front'] if card['kind'] != 'question' else card['question']['question']}")
+        st.markdown(f"### {review.front(card) if card['kind'] != 'question' else card['question']['question']}")
         feedback(card, current["right"])
         label = tr("Next card") if due else tr("Finish")
         if st.button(label, type="primary", key="rv_next", width="stretch"):
@@ -172,7 +172,7 @@ def today_view():
         else:
             show_question(card, q)
     else:
-        recall(card, card["front"], card["back"])
+        recall(card, review.front(card), card["back"])
     st.caption(tr("Reviews don't hold up today's lessons, and you can stop any time."))
 
 
@@ -207,7 +207,7 @@ def collection_view():
             # tight and, on iPad Safari, ran into each other and the buttons)
             meta = f"{source(c)} · " + (tr("paused") if c["paused"] else tr("next review {when}", when=when(c['due'])))
             back = c["back"] if c["kind"] != "question" else tr("Answer: {answer}", answer=c['back'])
-            st.html(f'<div class="rv-card"><p class="rv-front">{escape(c["front"])}</p>'
+            st.html(f'<div class="rv-card"><p class="rv-front">{escape(review.front(c))}</p>'
                     f'<p class="rv-meta">{escape(meta)}</p><p class="rv-back">{escape(back)}</p></div>')
             confirm = st.session_state.get("rv_confirm") == c["id"]
             with st.container(horizontal=True, key=f"rv_acts_{c['id']}"):

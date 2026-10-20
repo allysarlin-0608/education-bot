@@ -89,12 +89,12 @@ def show_entry(e, where):
         curriculum.refresh_titles(e["topic"], e["lessons"])
         ns = [s["n"] for s in e["lessons"]]
         done_count = sum(1 for s in e["lessons"] if s["completed"])
-        st.caption(tr('{p0} · Lessons {p1}–{p2} · {p3} · {done_count} of {p4} passed', p0=catalog.name(e['topic']), p1=min(ns), p2=max(ns), p3=e['level'], done_count=done_count, p4=len(ns)))
+        st.caption(tr('{p0} · Lessons {p1}–{p2} · {p3} · {done_count} of {p4} passed', p0=catalog.name(e['topic']), p1=min(ns), p2=max(ns), p3=tr(e['level']), done_count=done_count, p4=len(ns)))
         lesson_rows(e)
         readable = {s["n"]: curriculum.content(log, e["topic"], s) for s in e["lessons"]}
         readable = {n: s for n, s in readable.items() if s.get("lesson")}
         if readable:
-            pick = st.pills(tr("Read a lesson"), list(readable), format_func=lambda n: f"Lesson {n}",
+            pick = st.pills(tr("Read a lesson"), list(readable), format_func=lambda n: tr("Lesson {n}", n=n),
                             key=f"read_{key}", label_visibility="collapsed")
             if pick in readable:
                 s = readable[pick]

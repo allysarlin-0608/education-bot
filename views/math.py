@@ -103,7 +103,7 @@ st.html(f'<p class="ob-note">{escape(data["progression_policy"])}</p>')
 with st.container(key="mc_phases"):
     for p in mathcourse.phases(data):
         n = len(p["units"])
-        with st.expander(f"{p['id']} · {p['title']} · {p['level']} · " + trn("{n} unit", "{n} units", n),
+        with st.expander(f"{p['id']} · {p['title']} · {tr(p['level'])} · " + trn("{n} unit", "{n} units", n),
                          key=f"mc_phase_{p['id']}", on_change="rerun"):
             st.html(f'<p class="cm-outcome">{escape(p["goal"])}</p>')
             for u in p["units"]:

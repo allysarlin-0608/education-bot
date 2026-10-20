@@ -153,6 +153,8 @@ def texts() -> list:
     out += [core.CLOSING_LINE, core.DISCLAIMER]
     out += list(plans.NAMES.values()) + list(plans.BLURBS.values()) + list(plans.EVERY_PLAN)
     out += [w["kicker"] for w in visuals.WORLD.values()] + [w["shows"] for w in visuals.WORLD.values()]
+    from coach import placement
+    out += [x for qs in placement.QUESTIONS.values() for q, options, _ in qs for x in (q, *options)]
     out += list(WEEKDAYS) + list(MONTHS) + [d[:3] for d in WEEKDAYS] + [m[:3] for m in MONTHS]
     return out
 

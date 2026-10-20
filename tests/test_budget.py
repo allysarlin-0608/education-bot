@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from coach import books, core, tokens
+from coach import books, core, i18n, tokens
 
 TODAY = date(2026, 9, 23)
 LONG = "這是一段刻意寫得很長的內容，用來測試最壞的情況會不會超出預算。" * 10
@@ -27,10 +27,11 @@ def test_calibration_overestimates_the_real_413_request():
     assert tokens.estimate(full) >= 7391
 
 
+@pytest.mark.parametrize("lang", i18n.offered())
 @pytest.mark.parametrize("topic", [t for t in core.TOPICS if t != "reading"])
-def test_lesson_request_fits_for_every_topic(topic):
+def test_lesson_request_fits_for_every_topic(topic, lang):
     log = heavy_log(topic)
-    system = core.build_system_prompt(log, topic, TODAY)
+    system = i18n.for_model(core.build_system_prompt(log, topic, TODAY), lang)     # as llm._prepare sends it
     kickoff = [{"role": "user", "content": core.build_kickoff_message(topic, TODAY, "我想了解" + LONG[:96])}]
     total = tokens.estimate_request(system, kickoff, tokens.LESSON_MAX_TOKENS)
     assert total <= tokens.REQUEST_BUDGET, total

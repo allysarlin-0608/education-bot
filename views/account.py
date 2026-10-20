@@ -34,10 +34,19 @@ with st.container(key="set_sec_profile"):
 
 # ---------- About you: who she said she is in the setup (fewer questions later) ----------
 OTHER = N_("Something else")
+IDENTITY_OPTIONS = [N_("Not set"), *directions.IDENTITIES, OTHER]
+
+
+def _chosen() -> str:
+    # The options are shown already translated (a translating format_func
+    # trips Streamlit's test harness), so map the label back to its value.
+    labels = [tr(o) for o in IDENTITY_OPTIONS]
+    shown = st.session_state.get("acct_identity")
+    return IDENTITY_OPTIONS[labels.index(shown)] if shown in labels else "Not set"
 
 
 def set_identity() -> None:
-    pick = st.session_state.get("acct_identity")
+    pick = _chosen()
     own = str(st.session_state.get("acct_identity_own") or "").strip()[:60]
     ui.update_prefs(identity=own if pick == OTHER else ("" if pick == "Not set" else pick))
 
@@ -45,10 +54,10 @@ def set_identity() -> None:
 with st.container(key="set_sec_about"):
     st.markdown(tr("#### About you"))
     now = ui.prefs().get("identity", "")
-    options = [N_("Not set"), *directions.IDENTITIES, OTHER]
-    st.session_state.setdefault("acct_identity", now if now in directions.IDENTITIES else (OTHER if now else "Not set"))
-    st.selectbox(tr("Who you are"), options, key="acct_identity", on_change=set_identity, format_func=tr)
-    if st.session_state.get("acct_identity") == OTHER:
+    start = now if now in directions.IDENTITIES else (OTHER if now else "Not set")
+    st.selectbox(tr("Who you are"), [tr(o) for o in IDENTITY_OPTIONS], key="acct_identity",
+                 index=IDENTITY_OPTIONS.index(start), on_change=set_identity)
+    if _chosen() == OTHER:
         st.session_state.setdefault("acct_identity_own", "" if now in directions.IDENTITIES else now)
         st.text_input(tr("In a few words"), key="acct_identity_own", max_chars=60, on_change=set_identity)
     st.html(tr('<p class="ob-note">It shapes the ideas and goals suggested when you add something to learn.</p>'))

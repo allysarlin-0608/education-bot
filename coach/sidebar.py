@@ -14,13 +14,13 @@ from coach.i18n import tr
 def _reading(log: dict) -> str:
     book = books.current_book(log.get("books", []))
     if not book:
-        return ('<hr class="sb-rule"><div class="sb-label">Reading</div>'
-                '<div class="sb-quiet">No book in progress</div>')
+        return (f'<hr class="sb-rule"><div class="sb-label">{tr("Reading")}</div>'
+                f'<div class="sb-quiet">{tr("No book in progress")}</div>')
     reading_days = [d for d in range(1, books.DAYS + 1) if book["plan"][d - 1]]
     done = sum(1 for d in reading_days if str(d) in book["checks"])
     pct = progress_bar.percent(done, len(reading_days))
-    return ('<hr class="sb-rule"><div class="sb-label">Reading</div>'
-            f'<div class="sb-book">{escape(book["title"] or "(untitled)")}</div>'
+    return (f'<hr class="sb-rule"><div class="sb-label">{tr("Reading")}</div>'
+            f'<div class="sb-book">{escape(book["title"] or tr("(untitled)"))}</div>'
             + (f'<div class="sb-author">{escape(book["author"])}</div>' if book.get("author") else "")
             + f'<div class="sb-line" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{pct}">'
             f'<i style="width:{pct}%"></i></div>'

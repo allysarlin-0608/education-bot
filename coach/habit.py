@@ -8,6 +8,7 @@ draw them."""
 from datetime import date, datetime, timedelta
 
 from coach import catalog, core, course, curriculum, streaks
+from coach.i18n import tr
 
 AWAY_DAYS = 3                 # days without studying that make a return a "welcome back"
 CATCH_UP_REVIEWS = 8          # review cards offered on a light or returning day (never a wall)
@@ -151,14 +152,14 @@ def week(log: dict, monday: date, today: date) -> dict:
 def suggestion(days: int, days_before: int, lessons: int) -> str:
     """One gentle idea for the week ahead, from what this week looked like."""
     if days == 0:
-        return "A fresh week. One short lesson on a day that suits you is a good start."
+        return tr("A fresh week. One short lesson on a day that suits you is a good start.")
     if days <= 2:
-        return "Try one more day than this week. A light day, one lesson, counts just as much."
+        return tr("Try one more day than this week. A light day, one lesson, counts just as much.")
     if days < days_before:
-        return "A lighter week than the one before, and that's fine. Pick the days that fit; small and steady wins."
+        return tr("A lighter week than the one before, and that's fine. Pick the days that fit; small and steady wins.")
     if days >= 6:
-        return "A strong rhythm. Keep it, and take a light day whenever a day is full: your rest days have you covered."
-    return "A good rhythm. Keep the same days next week, or add one if you have the time."
+        return tr("A strong rhythm. Keep it, and take a light day whenever a day is full: your rest days have you covered.")
+    return tr("A good rhythm. Keep the same days next week, or add one if you have the time.")
 
 
 # --------------------------------------------------------------- milestones
@@ -170,9 +171,9 @@ def milestones(log: dict, today: date) -> list:
     """Every milestone she has reached: [{"key", "text"}], the most recent kinds last."""
     out = []
     best = core.longest_streak(log, today)
-    out += [{"key": f"streak-{n}", "text": f"A {n}-day streak"} for n in STREAKS if best >= n]
+    out += [{"key": f"streak-{n}", "text": tr("A {n}-day streak", n=n)} for n in STREAKS if best >= n]
     total = core.lessons_passed(log)
-    out += [{"key": f"lessons-{n}", "text": f"{n} lessons passed"} for n in LESSONS if total >= n]
+    out += [{"key": f"lessons-{n}", "text": tr("{n} lessons passed", n=n)} for n in LESSONS if total >= n]
     topics = {e["topic"] for e in log["entries"] if e["topic"] != "reading"} | {p["id"] for p in catalog.goals()}
     for topic in sorted(topics):
         if not catalog.known(topic) or not curriculum.has_syllabus(topic):
@@ -181,12 +182,12 @@ def milestones(log: dict, today: date) -> list:
         for u in m["units"]:
             if u["state"] == "done":
                 out.append({"key": f"unit-{topic}-{u['first']}",
-                            "text": f"Finished “{u['name']}” in {catalog.name(topic)}"})
+                            "text": tr("Finished “{unit}” in {name}", unit=u["name"], name=catalog.name(topic))})
         if catalog.is_goal(topic) and m["written"]:
             if m["done"] * 2 >= m["written"]:
-                out.append({"key": f"goal-half-{topic}", "text": f"Halfway through “{catalog.name(topic)}”"})
+                out.append({"key": f"goal-half-{topic}", "text": tr("Halfway through “{name}”", name=catalog.name(topic))})
             if m["done"] >= m["written"]:
-                out.append({"key": f"goal-done-{topic}", "text": f"Completed “{catalog.name(topic)}”"})
+                out.append({"key": f"goal-done-{topic}", "text": tr("Completed “{name}”", name=catalog.name(topic))})
     return out
 
 

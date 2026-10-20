@@ -30,6 +30,7 @@ import re
 from datetime import date
 
 from coach import catalog, core, mastery, quiz
+from coach.i18n import tr
 
 SET_SIZE = 6
 PER_IDEA = 2
@@ -164,11 +165,11 @@ def precheck(text: str) -> str:
     """A friendly reason not to send it to the coach, or ""."""
     words = re.findall(r"[A-Za-zÀ-ɏ一-鿿]{2,}", text or "")
     if not (text or "").strip():
-        return "Write a few sentences first: what the idea is, and why it matters."
+        return tr("Write a few sentences first: what the idea is, and why it matters.")
     if len(words) < MIN_WORDS:
-        return "A little more, please: two or three sentences, as if explaining it to a friend."
+        return tr("A little more, please: two or three sentences, as if explaining it to a friend.")
     if len(set(w.lower() for w in words)) < 3:
-        return "That doesn't read as an explanation yet. Try saying what the idea means, in your own words."
+        return tr("That doesn't read as an explanation yet. Try saying what the idea means, in your own words.")
     return ""
 
 
@@ -273,10 +274,10 @@ def split_reply(text: str, lesson: str = "") -> tuple:
 
 def based_label(where: str) -> str:
     if where == "unsure":
-        return "The coach isn't sure about this one: check it in a trusted source."
+        return tr("The coach isn't sure about this one: check it in a trusted source.")
     if where == "beyond":
-        return "Goes beyond this lesson."
-    return f"Based on this lesson: {where}" if where else ""
+        return tr("Goes beyond this lesson.")
+    return tr("Based on this lesson: {where}", where=tr(where)) if where else ""
 
 
 # --------------------------------------------------------------- the quiz

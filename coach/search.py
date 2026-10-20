@@ -11,6 +11,7 @@ newest first."""
 import re
 
 from coach import catalog
+from coach.i18n import tr
 
 SNIPPET = 90
 # how much a word found in each kind of field counts
@@ -85,31 +86,31 @@ def find(log: dict, query: str, limit: int = 30, topics=(), cards=()) -> list:
             text = _plain(s.get("lesson", ""))
             score = _score(patterns, (s.get("title"), TITLE), (s.get("unit"), UNIT), (subject, META), (text, TEXT))
             in_title = _score(patterns, (s.get("title"), TITLE), (s.get("unit"), UNIT))
-            add(score, kind="lesson", date=e["date"], title=f"Lesson {s['n']}: {s.get('title', '')}", meta=subject,
+            add(score, kind="lesson", date=e["date"], title=tr("Lesson {n}: {title}", n=s["n"], title=s.get("title", "")), meta=subject,
                 snippet=s.get("unit", "") if in_title else _snippet(text, patterns), open=("day", e["date"]))
         if not e.get("lessons"):
             add(_score(patterns, (e.get("title"), TITLE), (subject, META)), kind="lesson", date=e["date"],
                 title=e.get("title") or subject, meta=subject, snippet="", open=("day", e["date"]))
         if e.get("reflection"):
-            add(_score(patterns, (e["reflection"], TEXT)), kind="note", date=e["date"], title="Your reflection",
+            add(_score(patterns, (e["reflection"], TEXT)), kind="note", date=e["date"], title=tr("Your reflection"),
                 meta=subject, snippet=_snippet(e["reflection"], patterns), open=("day", e["date"]))
     for b in log.get("books", []):
         if b.get("status") not in ("reading", "finished", "switched"):
             continue
         when = b.get("finished_on") or b.get("last_active_on") or b.get("started_on") or ""
         add(_score(patterns, (b.get("title"), TITLE), (b.get("author"), META), (" ".join(b.get("chapters") or []), TEXT)),
-            kind="book", date=when, title=b.get("title") or "(untitled)", meta=b.get("author") or "Book", snippet="",
+            kind="book", date=when, title=b.get("title") or tr("(untitled)"), meta=b.get("author") or tr("Book"), snippet="",
             open=("book", b["id"]))
         for day, check in sorted((b.get("checks") or {}).items(), key=lambda kv: int(kv[0])):
             if check.get("summary"):
                 add(_score(patterns, (check["summary"], TEXT)), kind="note", date=check.get("passed_on", when),
-                    title=f"{b.get('title')}, day {day}", meta="Your notes",
+                    title=tr("{title}, day {day}", title=b.get("title"), day=day), meta=tr("Your notes"),
                     snippet=_snippet(check["summary"], patterns), open=("book", b["id"]))
     # her goals: what she asked for, and what it leads to
     for g in catalog.goals(active_only=False):
         add(_score(patterns, (g.get("title"), TITLE), (g.get("goal"), UNIT), (g.get("outcome"), TEXT)),
             kind="goal", date=str(g.get("created_at") or "")[:10], title=g.get("title", ""),
-            meta="Your goal" + ("" if g.get("status") == "active" else " · paused"),
+            meta=tr("Your goal") if g.get("status") == "active" else tr("Your goal · paused"),
             snippet=g.get("outcome", ""), open=("course", g["id"]))
     # the lessons still to come in her courses (by their titles; nothing is written yet)
     coming = []
@@ -120,8 +121,8 @@ def find(log: dict, query: str, limit: int = 30, topics=(), cards=()) -> list:
                 continue
             score = _score(patterns, (title, TITLE), (unit, UNIT)) * COMING
             if score:
-                coming.append(dict(kind="coming", date="", title=f"Lesson {n}: {title}",
-                                   meta=f"{catalog.name(t)} · coming up", snippet=unit, open=("course", t), score=score))
+                coming.append(dict(kind="coming", date="", title=tr("Lesson {n}: {title}", n=n, title=title),
+                                   meta=tr("{name} · coming up", name=catalog.name(t)), snippet=unit, open=("course", t), score=score))
     out += sorted(coming, key=lambda r: -r["score"])[:MORE_AT_MOST]
     # her review cards
     found = []
@@ -131,7 +132,7 @@ def find(log: dict, query: str, limit: int = 30, topics=(), cards=()) -> list:
         score = _score(patterns, (c.get("front"), TITLE), (c.get("back"), TEXT)) * CARD
         if score:
             found.append(dict(kind="card", date=c.get("added", ""), title=c.get("front", "")[:90],
-                              meta=f"Review card · {catalog.name(e['topic'])}", snippet=c.get("back", "")[:90],
+                              meta=tr("Review card · {name}", name=catalog.name(e["topic"])), snippet=c.get("back", "")[:90],
                               open=("review", query.strip()), score=score))
     out += sorted(found, key=lambda r: -r["score"])[:MORE_AT_MOST]
     out.sort(key=lambda r: r["date"], reverse=True)          # newest first among equals...

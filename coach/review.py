@@ -24,11 +24,12 @@ import re
 from datetime import date, timedelta
 
 from coach import catalog, core, quiz
+from coach.i18n import N_, tr
 
 INTERVALS = (1, 3, 7, 14, 30, 60)       # days until the next review, by box
 DAILY_LIMIT = 20                        # cards offered a day
 KINDS = ("question", "word", "point")
-KIND_NAMES = {"question": "Missed question", "word": "Vocabulary", "point": "Key point"}
+KIND_NAMES = {"question": N_("Missed question"), "word": N_("Vocabulary"), "point": N_("Key point")}
 # What she learned before review existed comes back too: each lesson she had
 # finished (or taken a quiz on) gives its cards, two lessons' worth a day
 # from LEGACY_FROM on, oldest first, so the first days aren't a flood. They
@@ -131,6 +132,19 @@ def add_words(slot: dict, today: date, topic: str) -> int:
 def save_point(slot: dict, label: str, text: str, today: date, topic: str) -> bool:
     return _add(slot, _card("point", f"{label} · Lesson {slot['n']}: {slot['title']}", text, today,
                             topic=topic, n=slot["n"]))
+
+
+POINT_FRONT = re.compile(r"^(.+?) · Lesson (\d+): (.*)$", re.S)
+
+
+def front(card: dict) -> str:
+    """A card's front in her language: a saved point's is stored as
+    "Key idea · Lesson 3: title" (in English), so its fixed words are shown
+    translated."""
+    m = POINT_FRONT.match(card.get("front", "")) if card.get("kind") == "point" else None
+    if not m:
+        return card.get("front", "")
+    return tr("{label} · Lesson {n}: {title}", label=tr(m.group(1)), n=m.group(2), title=m.group(3))
 
 
 def saved(slot: dict, label: str) -> bool:

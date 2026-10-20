@@ -6,7 +6,8 @@ import html
 import re
 from datetime import date
 
-from coach import books
+from coach import books, i18n
+from coach.i18n import tr, trn
 
 
 def _e(text) -> str:
@@ -15,8 +16,7 @@ def _e(text) -> str:
 
 def _day(iso: str) -> str:
     """"Sep 30" (no year: the shelf is recent books)."""
-    d = date.fromisoformat(iso)
-    return f"{d:%b} {d.day}"
+    return i18n.day_short(date.fromisoformat(iso))
 
 
 # ------------------------------------------------------------
@@ -39,8 +39,8 @@ def line_label(book: dict) -> str:
     reading_days = [d for d in range(1, books.DAYS + 1) if book["plan"][d - 1]]
     done = sum(1 for d in reading_days if str(d) in book["checks"])
     current = books.next_day(book)
-    head = f"Day {current} of {books.DAYS}" if current else f"All {books.DAYS} days"
-    return f"{head} · {done} of {len(reading_days)} reading days done"
+    head = tr("Day {n} of {total}", n=current, total=books.DAYS) if current else tr("All {total} days", total=books.DAYS)
+    return tr("{head} · {done} of {n} reading days done", head=head, done=done, n=len(reading_days))
 
 
 def line_html(book: dict, flowing: bool = False) -> str:
@@ -64,11 +64,13 @@ def today_html(book: dict, today: date) -> str:
     if day is None:
         return ""
     if books.is_open(book, day, today):
-        return (f'<div class="bk-today"><span class="bk-k">Today · Day {day}</span>'
+        return (f'<div class="bk-today"><span class="bk-k">{_e(tr("Today · Day {n}", n=day))}</span>'
                 f'<span class="bk-v">{_e(books.day_description(book, day))}</span></div>')
     opens = books.opens_on(book, day)
-    return (f'<div class="bk-today"><span class="bk-k">Done for today</span>'
-            f'<span class="bk-v">Day {day} opens on {opens:%B} {opens.day}: {_e(books.day_description(book, day))}</span></div>')
+    opens_on = tr("Day {n} opens on {date}: {what}", n=day, date=i18n.date_long(opens, year=False),
+                  what=books.day_description(book, day))
+    return (f'<div class="bk-today"><span class="bk-k">{_e(tr("Done for today"))}</span>'
+            f'<span class="bk-v">{_e(opens_on)}</span></div>')
 
 
 # ------------------------------------------------------------
@@ -84,11 +86,11 @@ def on_shelf(all_books: list) -> list:
 
 def status(book: dict) -> str:
     if book["status"] == "finished" and book.get("finished_on"):
-        return f"Finished · {_day(book['finished_on'])}"
+        return tr("Finished · {date}", date=_day(book["finished_on"]))
     if book["status"] == "finished":
-        return "Finished"
+        return tr("Finished")
     reached = max((int(d) for d in book["checks"]), default=1)
-    return f"Stopped at day {reached}"
+    return tr("Stopped at day {n}", n=reached)
 
 
 def _text(md: str) -> str:
@@ -128,20 +130,20 @@ def _days(book: dict) -> str:
     for d in range(1, books.DAYS + 1):
         check = book["checks"].get(str(d))
         if not book["plan"][d - 1]:
-            state, cls = "Rest", "rest"
+            state, cls = tr("Rest"), "rest"
         elif check:
-            state, cls = f"Passed · {_day(check['passed_on'])}", "passed"
+            state, cls = tr("Passed · {date}", date=_day(check["passed_on"])), "passed"
         else:
-            state, cls = "Not read", "unread"
+            state, cls = tr("Not read"), "unread"
         if not check and not finished:
             cls += " later"
             later += 1
         words = f'<p class="bk-words">{_e(check["summary"])}</p>' if check and check.get("summary") else ""
-        rows.append(f'<li class="{cls}"><span class="bk-d">Day {d}</span>'
+        rows.append(f'<li class="{cls}"><span class="bk-d">{_e(tr("Day {n}", n=d))}</span>'
                     f'<span class="bk-r">{_e(books.day_description(book, d))}</span>'
-                    f'<span class="bk-s">{state}</span>{words}</li>')
-    more = (f'<details class="bk-more"><summary><span class="bk-more-show">{later} {"day" if later == 1 else "days"} not read</span>'
-            '<span class="bk-more-hide">Show only the days read</span></summary></details>') if later else ""
+                    f'<span class="bk-s">{_e(state)}</span>{words}</li>')
+    more = (f'<details class="bk-more"><summary><span class="bk-more-show">{_e(trn("{n} day not read", "{n} days not read", later))}</span>'
+            f'<span class="bk-more-hide">{_e(tr("Show only the days read"))}</span></summary></details>') if later else ""
     return '<ol class="bk-days">' + "".join(rows) + "</ol>" + more
 
 
@@ -151,15 +153,15 @@ def shelf_html(all_books: list, open_id: str = "") -> str:
     and the wrap-up for a finished book. Open, the row offers Close."""
     shelf = on_shelf(all_books)
     if not shelf:
-        return '<p class="bk-empty">Books you finish will appear here.</p>'
+        return f'<p class="bk-empty">{_e(tr("Books you finish will appear here."))}</p>'
     rows = []
     for b in shelf:
         author = f'<span class="bk-author">{_e(b["author"])}</span>' if b.get("author") else ""
-        wrap = (f'<div class="bk-wrap"><span class="bk-k">Wrap-up</span>{_text(b["final_summary"])}</div>'
+        wrap = (f'<div class="bk-wrap"><span class="bk-k">{_e(tr("Wrap-up"))}</span>{_text(b["final_summary"])}</div>'
                 if b.get("final_summary") else "")
         rows.append(
             f'<details class="bk-book"{" open" if b["id"] == open_id else ""}>'
-            f'<summary><span class="bk-name"><span class="bk-title">{_e(b["title"] or "(untitled)")}</span>{author}</span>'
-            f'<span class="bk-side"><span class="bk-state">{_e(status(b))}</span><span class="bk-close">Close</span></span></summary>'
+            f'<summary><span class="bk-name"><span class="bk-title">{_e(b["title"] or tr("(untitled)"))}</span>{author}</span>'
+            f'<span class="bk-side"><span class="bk-state">{_e(status(b))}</span><span class="bk-close">{_e(tr("Close"))}</span></span></summary>'
             f'<div class="bk-open">{_days(b)}{wrap}</div></details>')
     return '<div class="bk-shelf">' + "".join(rows) + "</div>"

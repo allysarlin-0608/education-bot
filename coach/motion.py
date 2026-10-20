@@ -21,6 +21,9 @@ of truth, and draws one surface under it:
 The
 script has no "<" in it (Streamlit drops a script that looks like it
 holds a tag)."""
+import json
+
+from coach.i18n import tr
 
 SCRIPT = r"""
 (function () {
@@ -198,13 +201,14 @@ SCRIPT = r"""
       // what the subject is to her now, and how to change it: the row in the list is the switch
       const name = ((layer.querySelector('.sg-title') || {}).textContent || 'it').trim();
       const on = chosen(f);
-      let text = 'Not chosen', hint = 'Tap ' + name + ' in the list to add it to your days.';
-      if (/__dis/.test(f.className) && !on) hint = 'You have chosen the most you can. Remove one in the list to add ' + name + '.';
+      const say = (k, parts) => ((w.__cxWords || {})[k] || k).replace(/\{(\w+)\}/g, (_, p) => parts[p]);
+      let text = say('notChosen', {}), hint = say('add', { name });
+      if (/__dis/.test(f.className) && !on) hint = say('full', { name });
       if (on) {
         const o = f.querySelector('.opt');
         const day = o && o.dataset.day ? +o.dataset.day : rows.filter((r) => chosen(r) && r !== f).length + 1;
-        text = 'Chosen · day ' + day + ' of your rotation';
-        hint = 'Tap ' + name + ' in the list again to remove it.';
+        text = say('chosen', { day });
+        hint = say('remove', { name });
       }
       if (state.textContent !== text) state.textContent = text;
       if (how && how.textContent !== hint) how.textContent = hint;
@@ -399,6 +403,24 @@ SCRIPT = r"""
   soon();
 })();
 """
+
+
+def words() -> dict:
+    """What the subject stage says as it changes, in her language ({name} and
+    {day} are filled in the browser)."""
+    return {"notChosen": tr("Not chosen"),
+            "add": tr("Tap {name} in the list to add it to your days.", name="{name}"),
+            "full": tr("You have chosen the most you can. Remove one in the list to add {name}.", name="{name}"),
+            "chosen": tr("Chosen · day {day} of your rotation", day="{day}"),
+            "remove": tr("Tap {name} in the list again to remove it.", name="{name}")}
+
+
+def words_script() -> str:
+    """The words above, for the page: on every run, after her language is
+    known (the script itself is installed once per tab, and may have been
+    installed in another language)."""
+    said = json.dumps(words(), ensure_ascii=False).replace("<", "\\u003c")
+    return f'<script>window.parent.__cxWords = {said};</script>'
 
 
 def script() -> str:

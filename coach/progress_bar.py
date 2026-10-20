@@ -113,9 +113,9 @@ def build_vertical(heading: str, subject: str, done: int, total: int, *, previou
         ["flowing"] if previous is not None and previous != pct else [])
     count = count or today_count(done, total)
     return (
-        f'<div class="sb-label">Today</div><div class="lqv-date">{escape(heading)}</div>'
+        f'<div class="sb-label">{tr("Today")}</div><div class="lqv-date">{escape(heading)}</div>'
         f'<section class="{" ".join(classes)}" style="--to:{pct};--from:{previous or 0}" '
-        f'role="group" aria-label="Today">'
+        f'role="group" aria-label="{tr("Today")}">'
         f'<div class="lqv-tube" role="progressbar" aria-valuemin="0" aria-valuemax="100" '
         f'aria-valuenow="{pct}" aria-valuetext="{pct}% · {escape(count)}"><div class="lqv-liquid"></div></div>'
         f'<div class="lqv-info"><div class="lqv-subject">{escape(subject)}</div>'

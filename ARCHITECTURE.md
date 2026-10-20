@@ -492,6 +492,50 @@ sign-in is needed, or many more learners are invited.
 - any new external service goes behind one of our interfaces, with its
   reasons written down.
 
+## Her language (ISS-108)
+
+The site, her lessons, quizzes and the coach's answers are in the language
+she picks (Goals & Settings → Language; also on the sign-in page and the
+setup's first step). Before she picks, her browser's language is used
+(`st.context.locale`), else English.
+
+- **Sentences** (`coach/i18n.py`): the English sentence in the code is the
+  key. `tr("…{n}…", n=3)` shows it in her language; `trn(one, many, n)`
+  for counts; `N_("…")` marks a sentence kept as data and shown later with
+  `tr(value)`; `tr_in(lang, …)` for a given language. A missing
+  translation falls back to English, never to an error. Words kept as data
+  (subject names, levels, weekdays, placement questions…) are listed in
+  `i18n.texts()`.
+- **Option widgets keep English values**: a selectbox or pills shows
+  `format_func=tr` and stores the English value, so settings and records
+  never depend on the language. (One exception, the Account page's "Who you
+  are": Streamlit's test harness can't read a keyed selectbox whose
+  format_func translates, so it lists translated labels and maps back.)
+- **Dates** only through `i18n.weekday / month / day_long / day_short /
+  date_long / month_year / relative_day` (never `%A`/`%B`).
+- **Catalogs**: `coach/locales/<code>.json`, one file per language.
+  `python tools/i18n.py` lists every sentence in the code and, per
+  language, what is missing and any translation whose `{parts}` or HTML
+  tags differ from the English (`tests/test_i18n.py` fails on either).
+  A language is offered (`i18n.offered()`) once its file exists.
+- **The model** (`llm._prepare` → `i18n.for_model`): every system prompt
+  is told to write in her language. The section markers the app reads
+  (【Topic】, 【Key Idea】…), JSON keys, the vocabulary table's header and
+  the level words stay in English, so parsing is the same in every
+  language; `lesson_view` shows the headings translated. About 90 more
+  tokens a request; the longest lesson request still fits the budget
+  (`tests/test_budget.py`, per language). A lesson already written keeps
+  the language it was written in.
+- **The page**: `i18n.page_html()` sets `<html lang>` and, for Arabic and
+  Urdu, `dir="rtl"`. Browser-side words (the subject stage's hints in
+  `motion.py`) come from `motion.words_script()`, sent on every run after
+  her language is known.
+- **Her choice** is `language` in her preferences (`learner_prefs`, JSON:
+  no schema change).
+- **Not translated yet**: the built-in subjects' syllabus titles (English
+  content), the reading plan's chat messages (`coach/books.py`), the
+  admin Insights page, sources and image credits.
+
 ## Rules the code keeps (and tests that hold them)
 
 - **Layers** (`tests/test_layers.py`): the domain modules are pure (no

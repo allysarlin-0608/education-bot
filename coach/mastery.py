@@ -35,6 +35,7 @@ import hashlib
 from datetime import date, timedelta
 
 from coach import catalog, course, curriculum
+from coach.i18n import N_, tr
 
 LEVELS = ("new", "learning", "solid", "mastered")
 LEVEL_NAMES = {"new": "New", "learning": "Learning", "solid": "Solid", "mastered": "Mastered"}
@@ -334,9 +335,9 @@ def changes(log: dict, start: date, end: date) -> dict:
 def describe(x: dict) -> str:
     """One calm line about an idea's state, for the skill map."""
     if x["level"] == "new":
-        return "Not started yet" if not x["reached"] else "No quiz or practice yet"
+        return tr("Not started yet") if not x["reached"] else tr("No quiz or practice yet")
     if x["fading"]:
-        return "Fading: a little practice brings it back"
-    return {"learning": "Getting there: practise it on another day to make it stick",
-            "solid": "Solid: it held on another day",
-            "mastered": "Mastered: known again and again over time"}[x["level"]]
+        return tr("Fading: a little practice brings it back")
+    return tr({"learning": N_("Getting there: practise it on another day to make it stick"),
+               "solid": N_("Solid: it held on another day"),
+               "mastered": N_("Mastered: known again and again over time")}[x["level"]])

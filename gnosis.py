@@ -3,7 +3,7 @@ import streamlit as st
 import coach
 
 coach.freshen()     # an update that landed while nobody was here: load the new code whole, not half of it
-from coach import auth, i18n, place, settings, sidebar, style, topnav, ui  # noqa: E402
+from coach import auth, i18n, motion, place, settings, sidebar, style, topnav, ui  # noqa: E402
 
 st.set_page_config(
     page_title="GNOSIS",
@@ -19,6 +19,7 @@ else:
 ui.init_state()
 ui.apply_language()       # the language she chose, on every device (coach/i18n.py)
 st.html(i18n.page_html(), unsafe_allow_javascript=True)      # the page's lang (and right to left where it is)
+st.html(motion.words_script(), unsafe_allow_javascript=True)   # what the subject stage says, in it
 ui.refresh_settings()     # as stored now: another tab may have changed the pace or the subjects
 if st.session_state.get("coach_visit_day") != ui.today():     # one "visit" a day (coach/metrics.py)
     st.session_state.coach_visit_day = ui.today()
