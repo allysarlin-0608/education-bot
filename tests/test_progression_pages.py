@@ -128,3 +128,24 @@ def test_a_finished_goal_ends_with_its_capstone(monkeypatch, tmp_path):
     assert not at.exception, [e.value for e in at.exception]
     mine = stored_prefs(tmp_path)["capstones"][gid]
     assert calls == ["brief", "feedback"] and mine["feedback"]["criteria"][1]["level"] == "partly" and mine["tries"] == 1
+
+
+def test_practice_review_cards_and_the_collection_are_one_page(monkeypatch, tmp_path):
+    # covers: W-practice_nav-pn_tabs
+    at = app(monkeypatch, tmp_path, entries=seed_history.build(ui.today(), days=6, topics=("philosophy",)))
+    loads(at, "views/practice.py")
+    tabs = next(c for c in at.segmented_control if str(c.key).startswith("pn_tabs_"))
+    assert tabs.value == "Practice" and list(tabs.options) == ["Practice", "Review cards", "Collection"]
+    tabs.set_value("Review cards").run()
+    assert not at.exception and at.session_state["rv_view"] == "Today"
+    loads(at, "views/review.py")                      # (the test harness doesn't follow a page switch)
+    tabs = next(c for c in at.segmented_control if str(c.key).startswith("pn_tabs_"))
+    assert tabs.value == "Review cards"
+    tabs.set_value("Collection").run()
+    assert not at.exception and at.session_state["rv_view"] == "Collection"
+
+
+def test_the_learning_dashboard_is_for_admins_only(monkeypatch, tmp_path):
+    at = app(monkeypatch, tmp_path, history=False)
+    loads(at, "views/learning.py")
+    assert any("Only admins" in c.value for c in at.caption)

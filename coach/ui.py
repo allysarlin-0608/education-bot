@@ -444,6 +444,9 @@ def attempt(rows: list) -> None:
     store = st.session_state.get("coach_store")
     if not rows or not auth.is_public() or not hasattr(store, "add_attempts"):
         return
+    tag = f"retention:{arm('retention')}"          # (reviews are scheduled by her arm: coach/experiments.py)
+    rows = [dict(r, variant=",".join(x for x in (r["variant"], tag) if x)) if r and r["ctx"] in ("review", "warmup")
+            and "retention:" not in r["variant"] else r for r in rows]
     try:
         store.add_attempts([r for r in rows if r])
     except storage.StorageError as e:

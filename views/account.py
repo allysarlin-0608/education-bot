@@ -133,6 +133,8 @@ if auth.is_admin():
 if auth.is_admin():
     with st.container(key="set_sec_insights"):
         st.markdown(tr("#### Insights"))
+        if st.button(tr("Open the learning dashboard"), type="tertiary", key="ins_learning"):
+            st.switch_page("views/learning.py")
         since = st.date_input(tr("People who signed up since"), value=ui.today() - timedelta(days=30),
                               max_value=ui.today(), key="ins_since")
         try:

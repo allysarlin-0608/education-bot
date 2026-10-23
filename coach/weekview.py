@@ -69,7 +69,7 @@ def render(log: dict) -> None:
         shaky = mastery.needs_practice(log, today)[:3]
         if shaky:
             st.html('<p class="wk-note">' + tr("Shaky now: {ideas}.", ideas=", ".join(f"“{escape(x['title'])}”" for _, _, x in shaky)) + "</p>")
-        if st.button(tr("Knowledge map"), type="tertiary", key="wk_skills"):
+        if st.button(tr("Learning map"), type="tertiary", key="wk_skills"):
             st.switch_page("views/skills.py")
 
         st.markdown(tr("#### Worth a second look"))

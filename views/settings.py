@@ -119,7 +119,7 @@ if offered:
                         with st.container(key=f"enter_{focus}", horizontal=True):
                             if st.button(tr('Enter {p0}', p0=visuals.subject(focus)['title']), type="tertiary", key="set_world"):
                                 ui.enter_world(focus)
-                        if st.button(tr("Course map"), type="tertiary", key="set_course"):
+                        if st.button(tr("Learning map"), type="tertiary", key="set_course"):
                             ui.open_course(focus)
                 # (one not chosen: the stage itself says how to add it)
             with st.container(key="set_body"):
@@ -198,7 +198,7 @@ with st.container(key="set_sec_goals"):
         p = curriculum.progress(st.session_state.coach_log, g["id"])
         with st.container(key=f"setgoal_{g['id']}_{'on' if on else 'off'}", horizontal=True, vertical_alignment="center"):
             st.html(tr('<p class="set-goal"><span>{p0}</span><b>{p1} of {p2} lessons · {p3}{p4}</b></p>', p0=escape(g["title"]), p1=p["done"], p2=p["written"], p3=escape(g["level"]), p4="" if on else " · paused"))
-            if st.button(tr("Course map"), key=f"setgoal_map_{g['id']}", type="tertiary"):
+            if st.button(tr("Learning map"), key=f"setgoal_map_{g['id']}", type="tertiary"):
                 ui.open_course(g["id"])
             if on:
                 st.button(tr("Pause"), key=f"setgoal_pause_{g['id']}", type="tertiary", on_click=pause_goal, args=(g["id"],))

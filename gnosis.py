@@ -40,7 +40,8 @@ if not settings.onboarded(config) or not (settings.is_legacy(config) or settings
 
 # the pages of every day, in the bar (coach/topnav.py)
 pages = [st.Page("views/daily.py", title="Home", default=True),
-         st.Page("views/review.py", title="Review", url_path="review")]     # part of every day: in the bar
+         # practice, review cards and her collection: one page with three tabs (coach/practice_nav.py)
+         st.Page("views/practice.py", title="Practice", url_path="practice")]
 if settings.reading_on(config):             # no reading plan: no Reading page at all
     pages.append(st.Page("views/reading.py", title="Reading Plan", url_path="reading"))
 pages += [
@@ -64,7 +65,7 @@ new_goal = st.Page("views/goal.py", title="New goal", url_path="goal")
 week_page = st.Page("views/week.py", title="Your week", url_path="week")
 # what she knows, idea by idea, and practice on what she knows least (Phase 3)
 skills_page = st.Page("views/skills.py", title="Knowledge Map", url_path="skills")
-practice_page = st.Page("views/practice.py", title="Practice", url_path="practice")
+review_page = st.Page("views/review.py", title="Review", url_path="review")    # (Practice's review-cards tab)
 # a unit's check, once its lessons are passed (the course map, and Home when a unit is just finished)
 unit_page = st.Page("views/unit.py", title="Unit check", url_path="unit")
 # the math curriculum, from zero to research, to browse (the Menu, and Courses)
@@ -72,8 +73,10 @@ math_page = st.Page("views/math.py", title="Math Curriculum", url_path="math")
 # where to start a goal (its diagnostic), and its capstone at the end (docs/LEARNING_DESIGN.md §4)
 start_page = st.Page("views/diagnostic.py", title="Where to start", url_path="start")
 capstone_page = st.Page("views/capstone.py", title="Capstone", url_path="capstone")
-others = [subjects_page, path_page, account_page, world, course_map, new_goal, week_page, skills_page, practice_page,
-          unit_page, math_page, start_page, capstone_page]
+# is it making people learn? (admins: Account → Insights)
+learning_page = st.Page("views/learning.py", title="Learning dashboard", url_path="learning")
+others = [subjects_page, path_page, account_page, world, course_map, new_goal, week_page, skills_page, review_page,
+          unit_page, math_page, start_page, capstone_page, learning_page]
 # Streamlit does the routing; the pages are shown by the connected control
 # at the top of every page (coach/topnav.py), not as a list in the sidebar
 page = st.navigation(pages + others, position="hidden")

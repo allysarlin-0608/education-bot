@@ -11,8 +11,8 @@ from html import escape
 
 import streamlit as st
 
-from coach import (catalog, core, i18n, course, curriculum, habit, lesson_view, mastery, practice, quiz, review, settings, ui,
-                   unitcheck, visuals)
+from coach import (capstone, catalog, core, diagnostic, i18n, course, curriculum, habit, lesson_view, mastery, practice,
+                   progression, quiz, review, settings, ui, unitcheck, visuals)
 from coach.i18n import N_, tr, trn
 
 log = st.session_state.coach_log
@@ -105,7 +105,7 @@ def open_lesson(n):
 # WHERE SHE IS: the subject, how far, and the next step
 # ============================================================
 share = m["done"] / m["written"] if m["written"] else 0
-st.html(tr('<p class="cm-eyebrow cm-top">Course map</p>'))
+st.html(tr('<p class="cm-eyebrow cm-top">Learning map</p>'))
 st.markdown(f"## {escape(course.subject_name(topic))}")
 goal = catalog.path(topic)
 if goal:                    # her goal: what the path is for
@@ -126,6 +126,22 @@ if j["started"]:
                         first=j["first_avg"], recent=j["recent_avg"]) if j["first_avg"] is not None else "")
     st.html(f'<p class="cm-journey">{escape(then_now + trend)}</p>')
 
+# what she knows on this path, idea by idea (the Knowledge Map's picture, here beside the path)
+known = {x["n"]: x for x in mastery.ideas(log, topic, today)}
+reached = [x for x in known.values() if x["reached"]]
+if reached:
+    c = mastery.counts(reached)
+    fading = sum(1 for x in reached if x["fading"])
+    total = sum(c[lv] for lv in ("learning", "solid", "mastered")) or 1
+    segs = "".join(f'<span class="sk-seg sk-{lv}" style="width:{c[lv] / total * 100:.1f}%"></span>'
+                   for lv in ("mastered", "solid", "learning") if c[lv])
+    keys = "".join(f'<span class="sk-key"><i class="sk-dot sk-{lv}"></i>{c[lv]} {tr(mastery.LEVEL_NAMES[lv]).lower()}</span>'
+                   for lv in ("mastered", "solid", "learning"))
+    st.html(f'<div class="sk-summary"><div class="sk-bar">{segs}</div><p class="sk-legend">{keys}'
+            + ('<span class="sk-key">· ' + tr("{n} fading", n=fading) + "</span>" if fading else "") + "</p></div>")
+    st.caption(tr("An idea is solid once it holds on another day, mastered once it keeps holding over a week or "
+                  "more, and it fades if it isn't practised."))
+
 with st.container(key="cm_next"):
     nxt = m["next"]
     if nxt is None:
@@ -141,9 +157,15 @@ with st.container(key="cm_next"):
             st.markdown(tr('**Next: Lesson {nxt}, {p0}**{day}', nxt=nxt, p0=escape(title), day=day))
             st.caption(tr("Today is {p0}'s day: your subjects take turns, one a day.", p0=catalog.name(ui.topic_for(today), 'another subject')))
     with st.container(key="cm_links", horizontal=True):
-        if st.button(tr("Knowledge map"), type="tertiary", key="cm_skills"):
-            st.session_state.sk_topic = topic
-            st.switch_page("views/skills.py")
+        if mastery.needs_practice(log, today) and st.button(tr("Practise the shakiest"), type="tertiary", key="cm_skills"):
+            st.switch_page("views/practice.py")
+        placed = (ui.prefs().get("diag") or {}).get(topic)
+        if diagnostic.offered(topic) and not (placed and placed["applied"]) and \
+                st.button(tr("Find my starting point"), type="tertiary", key="cm_diag"):
+            st.switch_page("views/diagnostic.py", query_params={"subject": topic})
+        for c_ in capstone.offered(log, topic):        # a goal, or a math phase, done: its capstone
+            if st.button(tr("Capstone · {title}", title=c_["title"]), type="tertiary", key=f"cm_cap_{c_['key']}"):
+                st.switch_page("views/capstone.py", query_params={"subject": topic, "key": c_["key"]})
         if visuals.known(topic) and st.button(tr('Enter {p0}', p0=course.subject_name(topic)), type="tertiary", key="cm_world"):
             ui.enter_world(topic)       # (a goal has no world)
         if topic == "math" and st.button(tr("The whole curriculum"), type="tertiary", key="cm_math"):
@@ -151,7 +173,7 @@ with st.container(key="cm_next"):
             st.switch_page("views/math.py", query_params={"unit": here} if here else None)
         others = [t for t in mine if t != topic and curriculum.has_syllabus(t)]
         for t in others:                     # her other courses' maps, named as such
-            if st.button(tr('{p0}: course map', p0=course.subject_name(t)), type="tertiary", key=f"cm_other_{t}"):
+            if st.button(tr("{p0}: learning map", p0=course.subject_name(t)), type="tertiary", key=f"cm_other_{t}"):
                 ui.open_course(t)
 
 
@@ -159,14 +181,16 @@ with st.container(key="cm_next"):
 # THE PATH: units in order, lessons in each
 # ============================================================
 STATE_WORDS = {"today": N_("Today"), "next": N_("Next"), "started": N_("Started")}
-known = {x["n"]: x for x in mastery.ideas(log, topic, today)}       # what she knows, idea by idea
+gate = progression.gate(log, topic)            # a unit check standing before the next unit
 
 
 def rows(unit):
     """A unit's lessons, one line each; a lesson she has written opens."""
     for x in unit["lessons"]:
         meta = ""
-        if x["state"] == "done":
+        if x.get("skipped"):
+            meta = tr("known already")
+        elif x["state"] == "done":
             meta = tr("passed {date}", date=course.short_date(x['passed'])) if x["passed"] else tr("passed")
             meta += f" · {x['best']}%" if x["best"] is not None else ""
         elif x["state"] in STATE_WORDS:
@@ -190,7 +214,9 @@ def unit_check(u, named=False):
     if not unitcheck.offered(log, topic, u):
         return
     r = unitcheck.result(log, topic, u)
+    needed = gate is not None and gate["key"] == u["key"]
     said = (tr("Unit check passed · best {score}%", score=r['best']) if r.get("passed_on") else
+            tr("Unit check · needed before “{opens}”", opens=gate["opens"]) if needed else
             tr("Unit check · best so far {score}%", score=r['best']) if r.get("attempts") else
             tr("Unit check · ready: show you've learned this unit as a whole"))
     if named:
@@ -205,7 +231,7 @@ def unit_check(u, named=False):
 units, cur = m["units"], m["current"]
 with st.container(key="cm_path"):
     if cur is None:
-        st.caption(tr("There's nothing on this course map yet: its lessons appear here once they're set."))
+        st.caption(tr("There's nothing on this learning map yet: its lessons appear here once they're set."))
     else:
         behind = [u for k, u in enumerate(units) if k < cur]
         done_units = [u for u in behind if u["state"] == "done"]

@@ -9,21 +9,19 @@ from html import escape
 
 import streamlit as st
 
-from coach import catalog, exercise, quiz, review, ui
+from coach import attempts, catalog, exercise, practice_nav, quiz, review, session_ui, ui
 from coach import i18n
 from coach.i18n import N_, tr, trn
 
 log = st.session_state.coach_log
 today = ui.today()
 st.html('<div id="review-page"></div>')
-st.markdown(tr("## Review"))
-st.caption(tr("What you've learned comes back just before you'd forget it: a day later, then further apart "
-           "each time you know it. A few minutes a day; your lessons never wait for it."))
-
-VIEWS = [N_("Today"), N_("Collection")]
-st.session_state.setdefault("rv_view", "Today")
-view = st.segmented_control(tr("Show"), VIEWS, key="rv_view", required=True,
-                            label_visibility="collapsed", format_func=tr) or "Today"
+view = st.session_state.get("rv_view") if st.session_state.get("rv_view") in ("Today", "Collection") else "Today"
+practice_nav.tabs("Collection" if view == "Collection" else "Review cards")
+if view == "Today":
+    st.caption(tr("What you've learned comes back just before you'd forget it: the cards closest to being "
+                  "forgotten first, then further apart each time you know them. Your warm-up on Home takes a "
+                  "few of them each day; here are the rest."))
 
 
 def holder(card_id):
@@ -38,12 +36,18 @@ def holder(card_id):
     return found
 
 
-def answered(card_id, right, score=None):
+def answered(card_id, right, score=None, conf=None):
     found = holder(card_id)
     if found is None:
         st.rerun()
     e, slot, card = found
-    review.grade(card, right, today)
+    gap = attempts.gap(slot.get("ev"), today)
+    review.grade(card, right, today, confidence=conf, target=ui.target_retention())
+    kind = card["question"]["type"] if card["kind"] == "question" and card["question"]["type"] in attempts.KINDS else \
+        ("word" if card["kind"] == "word" else "point" if card["kind"] == "point" else "choice")
+    ui.attempt([attempts.row(today, e["topic"], card.get("n") or 0, "review", kind,
+                             score=float(right) if score is None else score, conf=conf,
+                             secs=session_ui.seconds(f"rv{card_id}"), gap=gap)])
     # what she knows (the skill map): a review is evidence for its lesson's idea
     ui.learned(slot, e["date"], "review", float(right) if score is None else score,
                source=f"{card_id}-{card['reviews']}")
@@ -77,11 +81,13 @@ def show_question(card, q):
     if q["type"] in quiz.WRITTEN:
         recall(card, q["question"], tr("A good answer: {answer}", answer=q['answer']))
         return
+    session_ui.shown(f"rv{card['id']}")
     answer = exercise.field(q, key, tag=q["type"] not in ("choice", "match"))
-    if st.button(tr("Check"), type="primary", key=f"{key}_check", disabled=not quiz.answered(q, answer), width="stretch"):
+    conf = session_ui.confidence_buttons(key, quiz.answered(q, answer))      # (checking it says how sure she was)
+    if conf:
         mark = quiz.mark(q, answer)
         st.session_state.rv_answer = {"id": card["id"], "answer": answer}
-        answered(card["id"], mark == 1, mark)
+        answered(card["id"], mark == 1, mark, conf)
 
 
 def recall(card, prompt, answer):

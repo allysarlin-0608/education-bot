@@ -9,13 +9,13 @@ from html import escape
 
 import streamlit as st
 
-from coach import catalog, exercise, llm, mastery, practice, quiz, tokens, ui
+from coach import attempts, catalog, exercise, llm, mastery, practice, practice_nav, quiz, tokens, ui
 from coach.i18n import tr, trn
 
 log = st.session_state.coach_log
 today = ui.today()
 st.html('<div id="practice-page" hidden></div>')
-st.markdown(tr("## Practice"))
+practice_nav.tabs("Practice")
 
 
 def current():
@@ -105,6 +105,8 @@ def check(k: int, answer) -> None:
     item = p["items"][k]
     mark = quiz.mark(item["q"], answer)
     p["answers"][k], p["marks"][k] = answer, mark
+    kind = item["q"]["type"] if item["q"]["type"] in attempts.KINDS else "choice"
+    ui.attempt([attempts.row(today, item["topic"], item["n"], "practice", kind, score=mark, diff=item["q"].get("diff"))])
     ui.learned_elsewhere(log, item["topic"], item["n"], "practice", mark,
                          source=f"{practice.qid(item['q'])}-{today.isoformat()}")
     if None not in p["marks"]:
@@ -172,8 +174,8 @@ if p["done"] and st.session_state.get("pr_shown") is None:     # (after the last
     if not more or problem:
         st.caption(problem or tr("That's all the practice ready for today. New exercises come tomorrow."))
     with st.container(horizontal=True, key="pr_end"):
-        if st.button(tr("Knowledge map"), type="primary", key="pr_map"):
-            st.switch_page("views/skills.py")
+        if st.button(tr("Learning map"), type="primary", key="pr_map"):
+            ui.open_course(p["items"][0]["topic"])
         if more and st.button(tr("Another set"), key="pr_more", type="tertiary"):
             st.session_state.pr_again = True
             st.rerun()

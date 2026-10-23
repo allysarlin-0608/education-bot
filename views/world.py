@@ -78,7 +78,7 @@ with st.container(key=f"world_{w['layout']}"):
                     st.switch_page("views/daily.py")
             else:
                 st.html(f'<p class="w-next">{tr("Next on {day}", day=i18n.day_long(when)) if when else tr("Not in your rotation")}</p>')
-            if st.button(tr("Course map"), type="tertiary", key="w_course"):
+            if st.button(tr("Learning map"), type="tertiary", key="w_course"):
                 ui.open_course(topic)
             if st.button(tr("See its lessons so far"), type="tertiary", key="w_history"):
                 st.session_state.prog_view_next = "Sessions"

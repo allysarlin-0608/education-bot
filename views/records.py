@@ -150,7 +150,7 @@ if sum(known.values()):
     with st.container(key="prog_skills", horizontal=True, vertical_alignment="center"):
         met = known["learning"] + known["solid"] + known["mastered"]
         st.html(tr('<p class="prog-rest"><b>What you know:</b> {mastered} mastered, {solid} solid, {learning} still being learned, of {met} ideas you\'ve met.</p>', mastered=known["mastered"], solid=known["solid"], learning=known["learning"], met=met))
-        if st.button(tr("Knowledge map"), type="tertiary", key="prog_skills_open"):
+        if st.button(tr("Learning map"), type="tertiary", key="prog_skills_open"):
             st.switch_page("views/skills.py")
 
 # how her streak is kept: rest days, in one calm line
@@ -282,7 +282,7 @@ def view_subjects():
                         with st.container(key=f"enter_{key}", horizontal=True):
                             if st.button(tr('Enter {label}', label=label), type="tertiary", key=f"prog_world_{key}"):
                                 ui.enter_world(key)
-                    if st.button(tr("Course map"), type="tertiary", key=f"prog_course_{key}"):
+                    if st.button(tr("Learning map"), type="tertiary", key=f"prog_course_{key}"):
                         ui.open_course(key)
                 continue
             # Reading has no syllabus: one line, the books finished, and the way to the shelf

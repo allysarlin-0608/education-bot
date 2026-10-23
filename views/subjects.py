@@ -41,7 +41,7 @@ def course_row(t: str, k: str, chosen: bool) -> None:
                    + "</p>" if nxt else ""))
         with st.container(key=f"sc_acts_{k}_{t}", horizontal=True):
             if chosen:                     # hers: its map and its world
-                if st.button(tr("Course map"), key=f"sc_map_{k}_{t}", type="tertiary"):
+                if st.button(tr("Learning map"), key=f"sc_map_{k}_{t}", type="tertiary"):
                     ui.open_course(t)
                 if visuals.known(t) and st.button(tr('Enter {p0}', p0=catalog.name(t)), key=f"sc_enter_{k}_{t}", type="tertiary"):
                     ui.enter_world(t)

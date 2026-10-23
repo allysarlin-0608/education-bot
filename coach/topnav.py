@@ -1,5 +1,5 @@
 """The top of every page: one connected control for the pages of every
-day (Home, Review, Reading when she has a reading plan, Record, Plan) with a
+day (Home, Practice, Reading when she has a reading plan, Record, Plan) with a
 single active surface that travels between them; then Menu, every part of
 GNOSIS grouped (menu()), and Search at its end.
 
@@ -20,7 +20,7 @@ from coach.i18n import N_, tr, trn
 
 # the bar's short names for the pages of every day (their full names are in the menu)
 SHORT = {"Reading Plan": N_("Reading"), "Learning Record": N_("Record"), "Goals & Settings": N_("Goals")}
-ICONS = {"Review": ":material/replay:", "Reading Plan": ":material/menu_book:", "Learning Record": ":material/insights:",
+ICONS = {"Practice": ":material/replay:", "Reading Plan": ":material/menu_book:", "Learning Record": ":material/insights:",
          "Goals & Settings": ":material/tune:"}
 
 # The site's sections, in order: (group, [(label, page title, or None: not built yet)]).
@@ -31,8 +31,8 @@ ICONS = {"Review": ":material/replay:", "Reading Plan": ":material/menu_book:", 
 # and which day it comes on), Learning Record (her history, and her week).
 SECTIONS = (
     (N_("Learn"), ((N_("Home"), "Home"), (N_("Courses"), "Courses"), (N_("Math Curriculum"), "Math Curriculum"),
-               (N_("Reading Plan"), "Reading Plan"), (N_("Knowledge Map"), "Knowledge Map"), (N_("Knowledge Exploration"), None))),
-    (N_("Practice"), ((N_("Review"), "Review"), (N_("Practice"), "Practice"), (N_("Examinations"), None))),
+               (N_("Reading Plan"), "Reading Plan"), (N_("Learning map"), "Course"), (N_("Knowledge Exploration"), None))),
+    (N_("Practice"), ((N_("Practice"), "Practice"), (N_("Review cards"), "Review"), (N_("Examinations"), None))),
     (N_("Progress"), ((N_("Learning Record"), "Learning Record"), (N_("Certificates"), None))),
     (N_("Research"), ((N_("Research"), None), (N_("Research Portfolio"), None))),
     (N_("You"), ((N_("Goals & Settings"), "Goals & Settings"), (N_("Account"), "Account"))),
@@ -47,11 +47,11 @@ def render(pages: list, log: dict, everything: list = (), here: str = None) -> N
     with st.container(key="topnav", horizontal=True, vertical_alignment="center", gap=None):
         with st.container(key="topnav_items", horizontal=True, vertical_alignment="center", gap=None):
             for p in pages:                        # (a subject's world isn't in the bar)
-                # its name on a wide page; where the bar is narrow, Review, Reading and
+                # its name on a wide page; where the bar is narrow, Practice, Reading and
                 # Goals become icons (style.py), like Search beside them
                 st.page_link(p, label=tr(SHORT.get(p.title, p.title)), icon=ICONS.get(p.title))
         menu(list(pages) + list(everything), here)
-        # cards waiting: a quiet dot on Review (place.py puts it on the link)
+        # cards waiting: a quiet dot on Practice (place.py puts it on the link)
         waiting = len(ui.review_due(log))
         st.html(f'<div id="review-due" hidden data-n="{waiting}"></div>')
         if st.button(tr("Search"), icon=":material/search:", key="nav_search"):

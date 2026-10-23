@@ -92,7 +92,7 @@ with st.container(key="mc_learn", horizontal=True, vertical_alignment="center"):
                                      if mine else tr("Learn it day by day: Mathematics is a subject, with a short lesson "
                                                      "for each learning outcome, in this order.")) + "</p>")
     if mine:
-        if st.button(tr("Your course map"), key="mc_map", type="tertiary"):
+        if st.button(tr("Your learning map"), key="mc_map", type="tertiary"):
             ui.open_course("math")
     else:
         st.button(tr("Add Mathematics to my days"), key="mc_add", type="tertiary", on_click=add_math)

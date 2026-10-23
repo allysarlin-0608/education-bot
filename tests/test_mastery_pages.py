@@ -15,29 +15,21 @@ def texts(at):
     return _texts(at) + " " + " ".join(c.value for c in at.caption)
 
 
-def test_the_skill_map_before_any_lesson(monkeypatch, tmp_path):
-    # covers: W-skills-sk_back
+def test_an_old_knowledge_map_link_opens_the_learning_map(monkeypatch, tmp_path):
+    """The Knowledge Map is part of each course's learning map now (ISS-110)."""
     at = app(monkeypatch, tmp_path, history=False)
     loads(at, "views/skills.py")
-    assert "Your map starts with your first lesson" in texts(at)
-    at.button(key="sk_back").click().run()
-    assert not at.exception
+    assert "Learning map" in texts(at) and "course-page" in texts(at)
 
 
-def test_the_skill_map_with_two_subjects(monkeypatch, tmp_path):
-    # covers: W-skills-sk_pick, W-skills-sk_practice, W-skills-sk_course, W-skills-sk_today
+def test_the_learning_map_shows_what_she_knows_and_where_to_practise(monkeypatch, tmp_path):
+    # covers: W-course-cm_skills
     at = app(monkeypatch, tmp_path, entries=history_until(ui.today() - timedelta(days=1)))
-    loads(at, "views/skills.py")
+    loads(at, "views/course.py", subject="philosophy")
     t = texts(at)
-    assert "Knowledge Map" in t and "learning" in t and "Learning" in t and "ideas met" in t
-    assert has(at, "sk_practice") and "shakiest" in str(at.button(key="sk_practice").proto.label)
-    other = [x for x in at.segmented_control[0].options if x != at.segmented_control[0].value][0]
-    at.segmented_control[0].set_value(other).run()
-    assert not at.exception and at.session_state["sk_topic"] != "" and "ideas met" in texts(at)
-    at.button(key="sk_course").click().run()
-    assert not at.exception
-    loads(at, "views/skills.py")
-    at.button(key="sk_today").click().run()
+    assert "sk-summary" in t and "learning" in t and "fades if it isn" in t
+    assert has(at, "cm_skills") and "shakiest" in str(at.button(key="cm_skills").proto.label)
+    at.button(key="cm_skills").click().run()
     assert not at.exception
 
 
@@ -51,15 +43,10 @@ def solid_history():
     return entries
 
 
-def test_nothing_shaky_the_map_still_offers_practice_and_today_doesnt_push_it(monkeypatch, tmp_path):
-    # covers: W-skills-sk_practice_any
+def test_nothing_shaky_the_map_doesnt_push_practice(monkeypatch, tmp_path):
     at = app(monkeypatch, tmp_path, entries=solid_history(), subjects=("philosophy",))
-    loads(at, "views/skills.py")
-    assert not has(at, "sk_practice") and has(at, "sk_practice_any") and "Solid" in texts(at)
-    at.button(key="sk_practice_any").click().run()
-    assert not at.exception
-    loads(at, "views/daily.py")
-    assert not has(at, "today_practice"), "nothing shaky: Today doesn't push practice"
+    loads(at, "views/course.py", subject="philosophy")
+    assert not has(at, "cm_skills") and "Solid" in texts(at)
 
 
 def answer_right(at):
@@ -127,13 +114,10 @@ def test_the_ways_in_from_progress_and_the_week(monkeypatch, tmp_path):
 
 
 def test_the_course_map_shows_each_ideas_level(monkeypatch, tmp_path):
-    # covers: W-course-cm_skills
     at = app(monkeypatch, tmp_path, entries=solid_history(), subjects=("philosophy",))
     loads(at, "views/course.py", subject="philosophy")
     t = texts(at)
     assert "sk-chip sk-solid" in t and "solid or mastered" in t
-    at.button(key="cm_skills").click().run()
-    assert not at.exception and at.session_state["sk_topic"] == "philosophy"
 
 
 def test_practice_before_any_quiz(monkeypatch, tmp_path):
