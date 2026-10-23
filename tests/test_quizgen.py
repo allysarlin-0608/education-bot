@@ -13,9 +13,9 @@ CLEAN = {"problems": []}
 
 
 def short_by(k):
-    """A full reply with k questions made unusable (a choice with no options)."""
+    """A full reply with k of the check's questions made unusable (a choice with no options)."""
     reply = model_reply()
-    for j, item in enumerate(reply["questions"][:k]):
+    for j, item in enumerate([x for x in reply["questions"] if x.get("role") != "practice"][:k]):
         item.clear()
         item.update(type="choice", question=f"Broken {j}?")
     return reply
@@ -49,7 +49,8 @@ def test_a_clean_quiz_is_two_calls(model):
     script, asked = model
     script.update(quiz=[model_reply()], check=[CLEAN])
     questions, error = quizgen.make(SLOT, "test")
-    assert error is None and len(questions) == 10 and asked == ["quiz", "check"]
+    assert error is None and len(questions) == quiz.QUESTIONS + 2 and asked == ["quiz", "check"]
+    assert [q.get("role") for q in questions[-2:]] == ["practice", "practice"]       # the guided practice, after
 
 
 def test_one_bad_question_asks_for_just_that_one(model):
@@ -63,9 +64,9 @@ def test_one_bad_question_asks_for_just_that_one(model):
 def test_a_cut_off_reply_keeps_its_questions_and_fills_the_rest(model):
     script, asked = model
     text = json.dumps(model_reply())
-    cut = text[:text.index('"type"', len(text) * 3 // 4) - 3]
-    kept = len(quiz.parse_items(quiz.salvage(cut)))
-    script.update(quiz=[cut], fill=[fill_of(10 - kept)], check=[CLEAN])
+    cut = text[:text.index('"type"', len(text) // 2) - 3]
+    kept = [q for q in quiz.parse_items(quiz.salvage(cut)) if q.get("role") != "practice"]
+    script.update(quiz=[cut], fill=[fill_of(quiz.QUESTIONS - len(kept))], check=[CLEAN])
     questions, error = quizgen.make(SLOT, "test")
     assert error is None and asked == ["quiz", "fill", "check"], asked
 
@@ -104,3 +105,12 @@ def test_a_flagged_question_is_rewritten_and_checked_again(model):
     script.update(quiz=[model_reply()], fill=[fill_of(1)], check=[{"problems": [{"id": 0, "issue": "x"}]}, CLEAN])
     questions, error = quizgen.make(SLOT, "test")
     assert error is None and asked == ["quiz", "check", "fill", "check"]
+
+
+def test_a_flagged_practice_item_is_left_out_not_rewritten(model):
+    """The guided practice costs no extra call: flagged, it is dropped."""
+    script, asked = model
+    script.update(quiz=[model_reply()], check=[{"problems": [{"id": quiz.QUESTIONS, "issue": "gap ambiguous"}]}])
+    questions, error = quizgen.make(SLOT, "test")
+    assert error is None and asked == ["quiz", "check"]
+    assert [q["type"] for q in questions if q.get("role") == "practice"] == ["problem"]

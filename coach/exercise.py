@@ -28,9 +28,28 @@ def field(item: dict, key: str, value=None, k: int = None, tag: bool = True):
         kind_tag(item)
     if kind == "scenario":
         st.html(f'<p class="ex-scenario">{escape(item["scenario"])}</p>')
-    if kind in ("choice", "scenario"):
+    if kind in quiz.CHOICE_LIKE:
         return st.radio(label(k, item), range(len(item["options"])), index=value, key=key,
                         format_func=lambda o, item=item: item["options"][o])
+    if kind == "spot":
+        # the worked lines, numbered, then which one is wrong
+        st.markdown(label(k, item))
+        st.html('<ol class="ex-lines">' + "".join(f"<li>{escape(x)}</li>" for x in item["lines"]) + "</ol>")
+        return st.radio(tr("The line with the mistake"), range(len(item["lines"])), index=value, key=key,
+                        format_func=lambda o: tr("Line {n}", n=o + 1), horizontal=True)
+    if kind == "steps":
+        # the worked example: the steps shown, the gaps hers to fill
+        st.markdown(label(k, item))
+        out, j = [], 0
+        start = value if isinstance(value, list) and len(value) == len(item["answers"]) else [""] * len(item["answers"])
+        for n, line in enumerate(item["steps"], start=1):
+            if "____" in line:
+                out.append(st.text_input(f"{n}. {line}", value=start[j] or "", key=f"{key}_{j}",
+                                         placeholder=tr("What goes in the gap")))
+                j += 1
+            else:
+                st.html(f'<p class="ex-step"><span>{n}.</span> {escape(line)}</p>')
+        return out
     if kind in ("match", "order"):
         st.markdown(label(k, item))
         keys = [f"{key}_{j}" for j in range(len(item["key"]))]
@@ -68,7 +87,20 @@ def result(item: dict, answer, mark, feedback: str = "", k: int = None, show_que
     if show_question:
         st.markdown(f"{sign(mark)} {f'{k}. ' if k else ''}{item['question']}")
     kind = item["type"]
-    if kind in ("choice", "scenario"):
+    if kind == "spot":
+        if mark == 1:
+            st.caption((tr("Right: line {n} has the mistake. It should say: {fix}", n=item["answer"] + 1,
+                           fix=item["fix"]) + " " + item["why"]).strip())
+        else:
+            st.caption(f"{quiz.mistake(item, answer)} {item['why']}".strip())
+        return
+    if kind == "steps":
+        filled = iter(item["answers"])
+        worked = [line.replace("____", f"**{next(filled)}**") if "____" in line else line for line in item["steps"]]
+        st.markdown("\n".join(f"{n}. {line}" for n, line in enumerate(worked, start=1)))
+        st.caption(f"{quiz.mistake(item, answer)} {item['why']}".strip())
+        return
+    if kind in quiz.CHOICE_LIKE:
         if mark == 1:
             st.caption((tr("Your answer: {answer}.", answer=item['options'][answer]) + " " + item['why']).strip())
         else:

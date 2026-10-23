@@ -1,72 +1,98 @@
-"""The quiz at the end of each lesson: ten questions on that lesson, of
-three kinds, so it checks understanding from different angles:
-
-- "choice": multiple choice, four options, one right (1 point)
-- "match":  pair four terms with their meanings (1 point, a quarter per pair)
-- "short":  a one- or two-sentence answer in her own words, marked by the
-            model against a model answer (1 point)
-
-Every quiz is checked by a second model call before she sees it (is each
-keyed answer factually right and the only defensible one?); questions that
+"""A lesson's mastery check and its guided practice (docs/LEARNING_DESIGN.md
+§3), written together in one call while she reads the lesson and checked
+by a second call before she sees them (is each keyed answer factually right
+and the only defensible one, and does the lesson teach it?); questions that
 fail are rewritten and checked again.
 
-Eight points or more (80%) completes the lesson; otherwise she can take a
-fresh set of questions as often as she likes.
+The mastery check: QUESTIONS questions aligned to the lesson's objective,
+of several kinds, all marked here at once (no call to mark them), each
+tagged with a difficulty (1 recall, 2 understand and apply, 3 analyse or
+transfer): one "choice", one "scenario", one "blank", one "order" (or
+another scenario when the lesson has no real sequence), one "match" and one
+"spot" (find the mistake in a short worked solution). PASS_MARK (80%) or
+more completes the lesson; otherwise she gets what she missed explained and
+can take a fresh set as often as she likes.
+
+The guided practice (PRACTICE, "role": "practice", kept apart from the
+check: slot["guided"], coach/session.py): a worked problem with one or two
+steps left for her to fill in ("steps": the worked example fading into a
+problem), then a problem of her own ("problem"). Every choice-like question
+has a note per wrong option (the misconception behind it) and a "hint"
+that nudges without giving the answer away.
 
 A lesson's quiz lives in its slot, slot["quiz"]:
 {"id", "questions", "answers": her last submitted answers (or None),
- "marks": points per question (None for a short answer not marked yet),
- "feedback": a line per question (short answers), "score": % once every
+ "marks": points per question (None for a written answer not marked yet),
+ "feedback": a line per question (written answers), "score": % once every
  question is marked, "attempts", "best", "draft": answers given so far,
- saved as she goes, until she submits}. Quizzes saved before question
-kinds existed are all multiple choice."""
+ saved as she goes, until she submits, "conf": how sure she was of each}.
+Quizzes from before (ten questions, two written answers marked by the
+model) are read and marked as they always were."""
 import json
 import random
 import re
 import uuid
 
-QUESTIONS = 10
+QUESTIONS = 6
 OPTIONS = 4
 PAIRS = 4
 STEPS = (3, 5)          # an ordering question has 3 to 5 steps
 PASS_MARK = 80          # percent
-# The mix she gets (ten questions). An ordering question only when the lesson
+LINES = (3, 6)          # a "spot the mistake" solution, a worked problem: 3 to 6 lines
+# The mix of the mastery check (six questions). An ordering question only when the lesson
 # has a real sequence; otherwise another scenario takes its place.
-MIX = {"choice": 3, "scenario": 2, "blank": 1, "order": 1, "match": 1, "short": 1, "apply": 1}
-LOCAL = ("choice", "scenario", "blank", "order", "match")     # marked here, at once
-WRITTEN = ("short", "apply")                                  # marked by the model
+MIX = {"choice": 1, "scenario": 1, "blank": 1, "order": 1, "match": 1, "spot": 1}
+PRACTICE = {"steps": 1, "problem": 1}          # the guided practice written with it
+LOCAL = ("choice", "scenario", "blank", "order", "match", "spot", "steps", "problem")   # marked here, at once
+CHOICE_LIKE = ("choice", "scenario", "problem")
+WRITTEN = ("short", "apply")                                  # marked by the model (quizzes from before)
 KIND_NAMES = {"choice": "Multiple choice", "scenario": "Scenario", "blank": "Fill in the blank",
               "order": "Put in order", "match": "Matching", "short": "In your own words",
-              "apply": "Apply it to your life"}
+              "apply": "Apply it to your life", "spot": "Spot the mistake", "steps": "Finish the worked problem",
+              "problem": "Your turn"}
+DIFFICULTY = (1, 2, 3)
 CHECK_ROUNDS = 2        # rewrite-and-recheck rounds before giving up
 RECOVERIES = 2          # extra calls when the questions come back incomplete (views/daily.py)
-FILL_AT_MOST = 6        # up to this many missing: ask for just those; more: the whole quiz again
+FILL_AT_MOST = 3        # up to this many missing: ask for just those; more: the whole check again
 BLANK = re.compile(r"_{3,}")
 
-SYSTEM = f"""You write a short quiz that checks whether a learner really understood one lesson.
+SYSTEM = f"""You write the practice and the mastery check for one lesson a learner has just read.
+They must check that she can do what the lesson teaches (its objective, when given), not that she
+remembers its wording.
 
-Write exactly {QUESTIONS} questions about the lesson you are given, in English, in this mix:
-- {MIX["choice"]} "choice" questions: exactly {OPTIONS} short options, exactly one correct; the wrong
-  options are plausible to someone who skimmed. No "all of the above" / "none of the above".
-  "notes" gives, for each option in the same order, a few words on why it is wrong ("" for the
-  right one): the mistake a learner who picked it made.
-- {MIX["scenario"]} "scenario" questions: a short, concrete situation (2-3 sentences) where the idea
-  applies, then a question with {OPTIONS} options and "notes", as for "choice". Test using the idea,
-  not remembering words.
-- {MIX["blank"]} "blank" question: one sentence from the idea with one key word or short phrase
-  replaced by "____". Only one word or phrase can fit; list close variants that are also right
-  (plural, synonym, spelling) in "accept".
-- {MIX["order"]} "order" question, ONLY if the lesson has a real sequence (steps of a method, stages,
-  events in time): 3-5 short steps listed in the correct order, with exactly one defensible order.
-  If the lesson has no real sequence, write one more "scenario" question instead.
-- {MIX["match"]} "match" question: exactly {PAIRS} pairs linking a term, name or idea from the lesson
-  to its meaning or example (each side a few words, all different).
-- {MIX["short"]} "short" question she answers in one or two sentences in her own words: explain why or
-  how, or compare two things. Give a model answer.
-- {MIX["apply"]} "apply" question: she applies the idea to her own life, work or goal (see "Her goal" if
-  given). Ask for one concrete example; in "answer", say what a good answer must show (the criteria).
-Cover the whole lesson (key idea, deep dive, example, vocabulary) and test understanding, not
-wording. Only ask about what the lesson actually says. "why" is one sentence explaining the answer.
+Write exactly {QUESTIONS + sum(PRACTICE.values())} items about the lesson you are given, in English:
+
+A. Guided practice ("role": "practice"), 2 items:
+- 1 "steps": a NEW worked problem like the lesson's example, solved in 3-5 short steps ("steps"). In 1 or
+  2 of the steps, replace the key word, number or phrase with "____" (one gap per step at most);
+  "answers" lists what fills each gap, in order; "accept" gives close variants for each gap (a list
+  per gap). The other steps are shown worked out, so she sees the method and fills in the rest.
+- 1 "problem": a new problem or situation she solves on her own: "question", exactly {OPTIONS} options,
+  "answer" (its index), "notes".
+
+B. The mastery check ("role": "check"), {QUESTIONS} items in this mix:
+- 1 "choice": exactly {OPTIONS} short options, exactly one correct; wrong options plausible to someone
+  who skimmed. No "all of the above" / "none of the above".
+- 1 "scenario": a short, concrete situation (2-3 sentences) where the idea applies, then a question
+  with {OPTIONS} options. Test using the idea.
+- 1 "blank": one sentence from the idea with one key word or short phrase replaced by "____". Only
+  one word or phrase can fit; close variants that are also right go in "accept".
+- 1 "order", ONLY if the lesson has a real sequence (steps of a method, stages, events in time): 3-5
+  short steps in the correct order ("steps"), exactly one defensible order. Otherwise one more
+  "scenario".
+- 1 "match": exactly {PAIRS} pairs linking a term or idea from the lesson to its meaning or example.
+- 1 "spot": a short worked solution, argument or explanation in 3-5 numbered lines ("lines") with
+  exactly ONE line that contains a typical mistake; "answer" is that line's index (0-based); "fix" is
+  what that line should say.
+
+Every item has:
+- "diff": 1 (recall a fact or term), 2 (understand or apply it to a familiar case) or 3 (analyse,
+  compare or apply it to a new case). Spread the check over all three.
+- "why": one sentence explaining the answer.
+- "hint": one sentence that points her toward the answer without giving it away (what to look at,
+  which rule applies).
+- for "choice", "scenario" and "problem": "notes", for each option in the same order, the mistake a
+  learner who picked it made, in a few words ("" for the right one).
 
 Correctness comes first:
 - The keyed answer must be factually correct in the real world, not just in the lesson, and it
@@ -75,26 +101,28 @@ Correctness comes first:
 - No two options may both be defensible. Every wrong option must be clearly wrong on reflection.
 - If a question asks for the most common, main, best or usual thing, the true answer must be
   among the options.
-- Matching pairs, the order of steps, blanks and model answers must be correct too.
+- Matching pairs, the order of steps, gaps, worked steps and the mistake to spot must be correct
+  too; a "spot" item has exactly one wrong line.
 - Never contradict the lesson: a keyed answer must agree with every rule, number and definition
   the lesson gives (if the lesson says money needed in 5+ years can be invested, a goal 15 years
   away is a time to invest, not to save).
-- Each question tests a different point: no two questions ask the same thing in other words.
+- Each item tests a different point: no two ask the same thing in other words.
 - Learners live in many countries: no fact that holds in only one country (a law, an agency, an
   insurance or tax scheme, a currency) unless the lesson is about that country, and then the
   question names it. Prefer the general idea ("government deposit insurance").
 
-Reply with JSON only, in this shape (questions in any order):
+Reply with JSON only, in this shape (items in any order):
 {{"questions": [
-  {{"type": "choice", "question": "...", "options": ["...", "...", "...", "..."], "answer": 0, "notes": ["", "...", "...", "..."], "why": "..."}},
-  {{"type": "scenario", "scenario": "...", "question": "...", "options": ["...", "...", "...", "..."], "answer": 2, "notes": ["...", "...", "", "..."], "why": "..."}},
-  {{"type": "blank", "question": "A sentence with ____ in it.", "answer": "word", "accept": ["words"], "why": "..."}},
-  {{"type": "order", "question": "Put these steps in order.", "steps": ["first", "second", "third"], "why": "..."}},
-  {{"type": "match", "question": "Match each term to its meaning.", "pairs": [["term", "meaning"], ...], "why": "..."}},
-  {{"type": "short", "question": "...", "answer": "a model answer", "why": "..."}},
-  {{"type": "apply", "question": "...", "answer": "what a good answer must show", "why": "..."}}
+  {{"role": "practice", "type": "steps", "question": "the problem", "steps": ["step 1 worked", "step 2 with ____", "step 3"], "answers": ["word"], "accept": [["words"]], "diff": 2, "hint": "...", "why": "..."}},
+  {{"role": "practice", "type": "problem", "question": "...", "options": ["...", "...", "...", "..."], "answer": 1, "notes": ["...", "", "...", "..."], "diff": 2, "hint": "...", "why": "..."}},
+  {{"role": "check", "type": "choice", "question": "...", "options": ["...", "...", "...", "..."], "answer": 0, "notes": ["", "...", "...", "..."], "diff": 1, "hint": "...", "why": "..."}},
+  {{"role": "check", "type": "scenario", "scenario": "...", "question": "...", "options": ["...", "...", "...", "..."], "answer": 2, "notes": ["...", "...", "", "..."], "diff": 3, "hint": "...", "why": "..."}},
+  {{"role": "check", "type": "blank", "question": "A sentence with ____ in it.", "answer": "word", "accept": ["words"], "diff": 1, "hint": "...", "why": "..."}},
+  {{"role": "check", "type": "order", "question": "Put these steps in order.", "steps": ["first", "second", "third"], "diff": 2, "hint": "...", "why": "..."}},
+  {{"role": "check", "type": "match", "question": "Match each term to its meaning.", "pairs": [["term", "meaning"], ...], "diff": 1, "hint": "...", "why": "..."}},
+  {{"role": "check", "type": "spot", "question": "Which line has the mistake?", "lines": ["...", "...", "..."], "answer": 1, "fix": "what line 2 should say", "diff": 3, "hint": "...", "why": "..."}}
 ]}}
-"answer" in a choice or scenario question is the index (0-{OPTIONS - 1}) of the correct option."""
+"answer" in a choice, scenario or problem question is the index (0-{OPTIONS - 1}) of the correct option."""
 
 RECALL = """Also write ONE extra question, with "recall": true, of type "choice", about the earlier
 lesson below, which she found hard. It checks the earlier lesson's key idea, not today's lesson,
@@ -124,12 +152,19 @@ CHECKER = """You check a quiz before a learner sees it. For each question, decid
 - "order": the steps are correct and there is exactly one defensible order (the one given), and the
   lesson itself teaches that sequence; steps that could reasonably go in another order are a problem.
 - "match": every pair is factually correct and no term could reasonably match a different meaning.
+- "spot": exactly one line (the keyed one) contains a mistake, the fix is correct, and every other
+  line is correct.
+- "steps": every worked step is correct, the steps solve the problem, and the words given for the
+  gaps (and their variants) are the only ones that fit.
+- "problem": as for "choice".
 - "short": the model answer is factually correct and answers the question.
 - "apply": the question can be answered from her own life, and the criteria are fair and correct.
 Judge by real-world facts, not only by what a lesson might have said.
 When the lesson is given: a question (other than one marked "earlier lesson") is a problem if the
 lesson doesn't teach what it needs, so a learner who read the lesson carefully couldn't answer it,
-or if its keyed answer goes against a rule, number or definition the lesson gives.
+if it tests something other than the lesson's objective (when given), or if its keyed answer goes
+against a rule, number or definition the lesson gives. A hint that gives the answer away is a
+problem too.
 Also a problem: a question that tests the same point as an earlier one (list the later one), and
 a fact that holds in only one country (a law, agency, insurance or tax scheme) when the question
 doesn't name that country.
@@ -311,8 +346,69 @@ def _short(item, rng):
     return {"type": kind, "question": question, "answer": answer, "why": _text(item.get("why"))}
 
 
+def _problem(item, rng):
+    """A problem of her own (the guided practice): a choice in a new situation."""
+    q = _choice(item, rng)
+    return {**q, "type": "problem"} if q else None
+
+
+def _spot(item, rng):
+    """A short worked solution with one wrong line to find."""
+    lines = item.get("lines")
+    if not isinstance(lines, list) or not LINES[0] <= len(lines) <= LINES[1]:
+        return None
+    lines = [_LINE_NO.sub("", _text(x)) for x in lines]
+    answer = item.get("answer")
+    if isinstance(answer, str) and answer.strip().isdigit():
+        answer = int(answer.strip())
+    if not all(lines) or len({x.casefold() for x in lines}) != len(lines) or not isinstance(answer, int) \
+            or isinstance(answer, bool) or not 0 <= answer < len(lines) or not _text(item.get("fix")):
+        return None
+    return {"type": "spot", "question": _text(item.get("question")) or "Which line has the mistake?",
+            "lines": lines, "answer": answer, "fix": _text(item["fix"]), "why": _text(item.get("why"))}
+
+
+def _steps(item, rng):
+    """A worked problem with one or two steps left for her to fill in."""
+    question, steps, answers = _text(item.get("question")), item.get("steps"), item.get("answers")
+    if not question or not isinstance(steps, list) or not LINES[0] <= len(steps) <= LINES[1]:
+        return None
+    steps = [BLANK.sub("____", _LINE_NO.sub("", _text(x))) for x in steps]
+    gaps = [k for k, x in enumerate(steps) if "____" in x]
+    if isinstance(answers, str):
+        answers = [answers]
+    if not all(steps) or not 1 <= len(gaps) <= 2 or any(steps[k].count("____") != 1 for k in gaps) \
+            or not isinstance(answers, list) or len(answers) != len(gaps) or not all(_text(a) for a in answers):
+        return None
+    raw = item.get("accept") if isinstance(item.get("accept"), list) else []
+    if raw and not isinstance(raw[0], list):        # one gap's variants given as a flat list
+        raw = [raw]
+    accept = [[_text(a) for a in (raw[j] if j < len(raw) and isinstance(raw[j], list) else []) if _text(a)][:5]
+              for j in range(len(gaps))]
+    return {"type": "steps", "question": question, "steps": steps, "answers": [_text(a) for a in answers],
+            "accept": accept, "why": _text(item.get("why"))}
+
+
+_LINE_NO = re.compile(r"^\s*(?:\(?\d+[).:]|line\s+\d+\s*[:.)-])\s*", re.IGNORECASE)
+
+
 KINDS = {"choice": _choice, "scenario": _scenario, "blank": _blank, "order": _order, "match": _match,
-         "short": _short, "apply": _short}
+         "short": _short, "apply": _short, "spot": _spot, "steps": _steps, "problem": _problem}
+
+
+def _extras(q: dict, item: dict) -> dict:
+    """What every kind may carry: its role (practice or check), difficulty and hint."""
+    if item.get("role") == "practice" or q["type"] in PRACTICE:
+        q["role"] = "practice"
+    diff = item.get("diff")
+    if isinstance(diff, str) and diff.strip().isdigit():
+        diff = int(diff.strip())
+    if isinstance(diff, int) and not isinstance(diff, bool) and diff in DIFFICULTY:
+        q["diff"] = diff
+    hint = _text(item.get("hint"))
+    if hint:
+        q["hint"] = hint[:300]
+    return q
 
 
 def parse(data, rng=random) -> list:
@@ -370,7 +466,7 @@ def assemble(questions: list):
     (then any kind she can answer: never more than two written answers to
     mark), repeats left out (each point once: alike()); None if there aren't enough. A question about
     an earlier lesson ("recall") is never one of them (recall_of())."""
-    unique = distinct(questions)
+    unique = [q for q in distinct(questions) if q.get("role") != "practice"]
     picked = []
     for kind, n in MIX.items():
         picked += [q for q in unique if q["type"] == kind][:n]
@@ -409,21 +505,45 @@ def recall_of(questions: list):
     return next((q for q in questions if q.get("recall")), None)
 
 
+def practice_of(questions: list) -> list:
+    """The guided practice written with the check: a worked problem to
+    finish, then a problem of her own (whichever came out usable)."""
+    out = []
+    for kind in PRACTICE:
+        found = next((q for q in questions if q["type"] == kind and q.get("role") == "practice"), None)
+        if found:
+            out.append(found)
+    return out
+
+
 def missing(questions: list) -> list:
-    """The kinds still needed to make a full quiz of these questions (the
-    MIX's gaps: written answers, matching, a blank and a scenario first; an
-    ordering question is never asked for on its own), e.g. ["short", "choice"]."""
-    have = {same_as(q): q["type"] for q in distinct(questions)}
+    """The kinds still needed to make a full mastery check of these questions
+    (the MIX's gaps: spot the mistake, matching, a blank and a scenario first;
+    an ordering question is never asked for on its own), e.g. ["spot", "choice"]."""
+    have = {same_as(q): q["type"] for q in distinct(questions) if q.get("role") != "practice"}
     need = QUESTIONS - len(have)
     gaps = []
-    for kind in ("apply", "short", "match", "blank", "scenario", "choice"):
+    for kind in ("spot", "match", "blank", "scenario", "choice"):
         gaps += [kind] * max(0, MIX[kind] - sum(1 for t in have.values() if t == kind))
     gaps += ["choice"] * need
     return gaps[:max(0, need)]
 
 
 def _describe(k: int, q: dict) -> str:
-    if q["type"] in ("choice", "scenario"):
+    hint = f"\n  hint: {q['hint']}" if q.get("hint") else ""
+    return _described(k, q) + hint
+
+
+def _described(k: int, q: dict) -> str:
+    if q["type"] == "spot":
+        lines = "\n".join(f"  {'*' if j == q['answer'] else '-'} line {j + 1}: {x}" for j, x in enumerate(q["lines"]))
+        return f"id {k} (spot): {q['question']}\n{lines}\n  (* = the line with the mistake; fix: {q['fix']})"
+    if q["type"] == "steps":
+        fills = iter(q["answers"])
+        steps = "\n".join(f"  {j + 1}. {x}" + (f"  (gap: {next(fills)})" if "____" in x else "")
+                           for j, x in enumerate(q["steps"]))
+        return f"id {k} (steps): {q['question']}\n{steps}"
+    if q["type"] in CHOICE_LIKE:
         notes = q.get("notes") or [""] * len(q["options"])
         opts = "\n".join(f"  {'*' if j == q['answer'] else '-'} {o}" + (f"  (note: {n})" if n else "")
                          for j, (o, n) in enumerate(zip(q["options"], notes)))
@@ -471,11 +591,12 @@ def problems(data, n: int):
 def _more_request(slot: dict, kinds: list, notes: str):
     wanted = ", ".join(f'{kinds.count(t)} "{t}"' for t in KINDS if t in kinds)
     system = SYSTEM.split("Reply with JSON only")[0].replace(
-        f"Write exactly {QUESTIONS} questions about the lesson you are given, in English, in this mix:",
+        f"Write exactly {QUESTIONS + sum(PRACTICE.values())} items about the lesson you are given, in English:",
         f"Write exactly {len(kinds)} replacement questions ({wanted}) about the lesson you are given, "
         "in English. The kinds are:")
     system += ("Reply with JSON only, in the same shape as before: "
-               '{"questions": [{"type": "choice" | "scenario" | "blank" | "order" | "match" | "short" | "apply", ...}]}.')
+               '{"questions": [{"role": "check" | "practice", "type": "choice" | "scenario" | "blank" | "order" '
+               '| "match" | "spot" | "steps" | "problem", ...}]}.')
     return system, [{"role": "user", "content": f"Lesson {slot['n']}: {slot['title']}\n\n{slot['lesson']}\n\n{notes}"}]
 
 
@@ -541,6 +662,10 @@ def _kind(item) -> str:
         return kind
     if "pairs" in item:
         return "match"
+    if "lines" in item:
+        return "spot"
+    if "steps" in item and "answers" in item:
+        return "steps"
     if "steps" in item:
         return "order"
     if "scenario" in item and "options" in item:
@@ -559,8 +684,10 @@ def parse_items(data, rng=random) -> list:
         if isinstance(item, dict):
             q = KINDS[_kind(item)](item, rng)
             if q:
+                q = _extras(q, item)
                 if item.get("recall") is True and q["type"] in ("choice", "scenario"):
                     q["recall"] = True
+                    q.pop("role", None)
                 out.append(q)
     return out
 
@@ -575,7 +702,8 @@ def replace(questions: list, flagged: dict, fresh: list):
         if match is None:
             return None
         fresh.remove(match)
-        out[k] = match
+        out[k] = dict(match, role=questions[k]["role"]) if questions[k].get("role") else \
+            {x: v for x, v in match.items() if x != "role"}
     return out
 
 
@@ -584,7 +712,7 @@ def replace(questions: list, flagged: dict, fresh: list):
 # she opens it (its attempts and best score carry over); one she answered is
 # her record and stays as it was. The version is part of the quiz's id
 # ("v2-1a2b3c4d"), so every store keeps it without a field of its own.
-VERSION = 2
+VERSION = 3              # 3: the six-question mastery check with its guided practice (ISS-110)
 _VERSIONED = re.compile(r"^v(\d+)-")
 
 
@@ -619,22 +747,26 @@ def new(questions: list, previous=None) -> dict:
 def blank_draft(quiz: dict) -> list:
     """Unanswered: None for choice, a None per term (or step) for matching
     and ordering, "" for written answers and blanks."""
-    out = []
-    for q in quiz["questions"]:
-        if q["type"] == "match":
-            out.append([None] * len(q["left"]))
-        elif q["type"] == "order":
-            out.append([None] * len(q["items"]))
-        elif q["type"] in WRITTEN + ("blank",):
-            out.append("")
-        else:
-            out.append(None)
-    return out
+    return [blank_answer(q) for q in quiz["questions"]]
+
+
+def blank_answer(q: dict):
+    if q["type"] == "match":
+        return [None] * len(q["left"])
+    if q["type"] == "order":
+        return [None] * len(q["items"])
+    if q["type"] == "steps":
+        return [""] * len(q["answers"])
+    if q["type"] in WRITTEN + ("blank",):
+        return ""
+    return None
 
 
 def answered(question: dict, answer) -> bool:
-    if question["type"] in ("choice", "scenario"):
+    if question["type"] in CHOICE_LIKE + ("spot",):
         return answer is not None
+    if question["type"] == "steps":
+        return isinstance(answer, list) and len(answer) == len(question["answers"]) and all(_text(a) for a in answer)
     if question["type"] in ("match", "order"):
         return isinstance(answer, list) and None not in answer and len(set(answer)) == len(answer)
     return bool(_text(answer))
@@ -682,11 +814,26 @@ def blank_result(question: dict, answer) -> str:
     return "wrong"
 
 
+def gap(question: dict, j: int) -> dict:
+    """Gap j of a worked problem, as a fill-in-the-blank of its own."""
+    step = [x for x in question["steps"] if "____" in x][j]
+    accept = question.get("accept") or []
+    return {"type": "blank", "question": step, "answer": question["answers"][j],
+            "accept": accept[j] if j < len(accept) else []}
+
+
+def gap_result(question: dict, j: int, answer) -> str:
+    return blank_result(gap(question, j), answer) if j < len(question["answers"]) else "wrong"
+
+
 def _mark(question: dict, answer):
     """Points for one answer; None for a written answer (the model marks those)."""
     kind = question["type"]
-    if kind in ("choice", "scenario"):
+    if kind in CHOICE_LIKE + ("spot",):
         return 1.0 if answer == question["answer"] else 0.0
+    if kind == "steps":
+        results = [gap_result(question, j, a) for j, a in enumerate(answer or [])]
+        return round(sum(r != "wrong" for r in results) / len(question["answers"]), 3)
     if kind in ("match", "order"):
         return sum(1 for a, k in zip(answer or [], question["key"]) if a == k) / len(question["key"])
     if kind == "blank":
@@ -704,7 +851,21 @@ def mistake(question: dict, answer) -> str:
     option she chose and why it isn't right, the pairs or steps out of
     place, the word that fits. "" when it's right."""
     kind = question["type"]
-    if kind in ("choice", "scenario"):
+    if kind == "spot":
+        if answer == question["answer"] or answer is None:
+            return ""
+        return (f"Line {answer + 1} is right as it is. The mistake is in line {question['answer'] + 1}: "
+                f"{question['fix'].rstrip('.')}.")
+    if kind == "steps":
+        said = []
+        for j, a in enumerate(answer or []):
+            result = gap_result(question, j, a)
+            if result == "wrong":
+                said.append(f"Gap {j + 1}: you wrote “{_text(a)}”; it's “{question['answers'][j]}”.")
+            elif result == "typo":
+                said.append(f"Gap {j + 1}: right (it's spelled “{question['answers'][j]}”).")
+        return " ".join(said)
+    if kind in CHOICE_LIKE:
         if answer == question["answer"] or answer is None:
             return ""
         note = (question.get("notes") or [""] * len(question["options"]))[answer]
@@ -820,7 +981,28 @@ def _saved_question(q):
     base = {"type": kind, "question": _text(q["question"]), "why": _text(q.get("why"))}
     if isinstance(q.get("from"), int) and not isinstance(q.get("from"), bool):
         base["from"] = q["from"]              # about an earlier lesson (doesn't count toward the score)
-    if kind in ("choice", "scenario"):
+    if q.get("role") == "practice":
+        base["role"] = "practice"
+    if isinstance(q.get("diff"), int) and not isinstance(q.get("diff"), bool) and q["diff"] in DIFFICULTY:
+        base["diff"] = q["diff"]
+    if _text(q.get("hint")):
+        base["hint"] = _text(q["hint"])[:300]
+    if kind == "spot":
+        lines, answer = q.get("lines"), q.get("answer")
+        if (isinstance(lines, list) and lines and all(_text(x) for x in lines) and isinstance(answer, int)
+                and not isinstance(answer, bool) and 0 <= answer < len(lines) and _text(q.get("fix"))):
+            return {**base, "lines": [_text(x) for x in lines], "answer": answer, "fix": _text(q["fix"])}
+        return None
+    if kind == "steps":
+        steps, answers = q.get("steps"), q.get("answers")
+        gaps = [x for x in steps if isinstance(x, str) and "____" in x] if isinstance(steps, list) else []
+        if (isinstance(steps, list) and all(_text(x) for x in steps) and isinstance(answers, list)
+                and len(answers) == len(gaps) >= 1 and all(_text(a) for a in answers)):
+            accept = q.get("accept") if isinstance(q.get("accept"), list) else []
+            return {**base, "steps": [_text(x) for x in steps], "answers": [_text(a) for a in answers],
+                    "accept": [[_text(a) for a in (x if isinstance(x, list) else []) if _text(a)] for x in accept][:len(gaps)]}
+        return None
+    if kind in CHOICE_LIKE:
         options, answer = q.get("options"), q.get("answer")
         if (isinstance(options, list) and len(options) == OPTIONS and isinstance(answer, int)
                 and not isinstance(answer, bool) and 0 <= answer < OPTIONS):
@@ -833,6 +1015,7 @@ def _saved_question(q):
                     return None
                 out["scenario"] = _text(q["scenario"])
             return out
+        return None
     elif kind in ("match", "order"):
         left = q.get("left") if kind == "match" else q.get("items")
         right, key = (q.get("right") if kind == "match" else left), q.get("key")
@@ -876,10 +1059,16 @@ def parse_saved(data):
     draft = data.get("draft")
     if not (answers is None and isinstance(draft, list) and len(draft) == n):
         draft = None
-    return {"id": str(data.get("id") or uuid.uuid4().hex[:8]), "questions": questions, "answers": answers,
-            "marks": marks, "feedback": feedback,
-            "score": number(data.get("score")) if answers is not None else None,
-            "attempts": number(data.get("attempts")) or 0, "best": number(data.get("best")), "draft": draft}
+    conf = data.get("conf")
+    conf = [c if isinstance(c, int) and not isinstance(c, bool) and c in (1, 2, 3) else None for c in conf] \
+        if isinstance(conf, list) and len(conf) == n else None
+    out = {"id": str(data.get("id") or uuid.uuid4().hex[:8]), "questions": questions, "answers": answers,
+           "marks": marks, "feedback": feedback,
+           "score": number(data.get("score")) if answers is not None else None,
+           "attempts": number(data.get("attempts")) or 0, "best": number(data.get("best")), "draft": draft}
+    if conf is not None:
+        out["conf"] = conf                  # how sure she was of each answer (1-3)
+    return out
 
 
 def why_unusable(data) -> str:

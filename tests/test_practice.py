@@ -210,6 +210,7 @@ def test_the_checker_sees_the_notes_and_the_markers_ignore_instructions_in_answe
 def test_two_scenarios_asking_the_same_about_different_situations_are_both_kept():
     a = dict(SCEN, scenario="Mia's train is late.")
     b = dict(SCEN, scenario="Leo's flight is cancelled.")
-    others = [one({"type": "choice", "question": f"Q{k}?", "options": ["a", "b", "c", "d"], "answer": 0}) for k in range(8)]
+    others = [one({"type": "choice", "question": f"Q{k}?", "options": ["a", "b", "c", "d"], "answer": 0})
+              for k in range(quiz.QUESTIONS - 2)]
     assert quiz.assemble(others + [a, b]) is not None
     assert quiz.assemble(others + [a, a]) is None, "the very same one twice is a repeat"

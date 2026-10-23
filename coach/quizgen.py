@@ -30,7 +30,8 @@ def _quietly(label):
 
 
 def write_questions(slot, where, started, step=_quietly, context=None):
-    """(questions, recall question or None, None) or (None, None, friendly error)."""
+    """(questions, recall question or None, guided practice, None) or
+    (None, None, [], friendly error)."""
     system, messages = quiz.request(slot, context)
     with step("Writing your quiz…"):
         data, error = llm.ask_json(system, messages, max_tokens=tokens.QUIZ_MAX_TOKENS, salvage=quiz.salvage)
@@ -45,12 +46,12 @@ def write_questions(slot, where, started, step=_quietly, context=None):
                 recall["from"] = context["recall"]["n"]
             else:
                 recall = None
-            return questions, recall, None
+            return questions, recall, quiz.practice_of(usable), None
         why = error or f"unusable quiz: {quiz.why_unusable(data)}"
         if error in (llm.LIMIT, llm.NO_KEY, llm.BUSY) or recovery == quiz.RECOVERIES:
             llm.logger.warning("quiz for %s failed after %.1fs and %d extra calls: %s", where,
                                time.monotonic() - started, recovery, why)
-            return None, None, error or llm.FAILED
+            return None, None, [], error or llm.FAILED
         gaps = quiz.missing(usable)
         if usable and len(gaps) <= quiz.FILL_AT_MOST and last != "fill":
             last = "fill"
@@ -70,12 +71,16 @@ def write_questions(slot, where, started, step=_quietly, context=None):
 def make(slot, where, step=_quietly, context=None):
     """A checked quiz's questions for this lesson: (questions, None) or
     (None, friendly error). `where` names the lesson in the log; `step(label)`
-    is a context manager shown around each call (the page's spinner). A
-    question on an earlier idea, if any, comes last (its "from": the lesson)."""
+    is a context manager shown around each call (the page's spinner). The
+    guided practice written with it follows the check's questions ("role":
+    "practice"), and a question on an earlier idea, if any, comes last (its
+    "from": the lesson). Both are checked with the others and, if flagged,
+    simply left out (never rewritten: no extra call for them)."""
     started = time.monotonic()
-    questions, recall, error = write_questions(slot, where, started, step, context)
+    questions, recall, practice, error = write_questions(slot, where, started, step, context)
     if questions is None:
         return None, error
+    questions = questions + practice
     if recall is not None:
         questions = questions + [recall]
     for attempt in range(quiz.CHECK_ROUNDS + 1):
@@ -93,6 +98,10 @@ def make(slot, where, step=_quietly, context=None):
         if recall is not None and len(questions) - 1 in flagged:        # the earlier idea's question: left out
             flagged.pop(len(questions) - 1)
             questions, recall = questions[:-1], None
+        extra = [k for k in flagged if questions[k].get("role") == "practice"]
+        if extra:                                                       # guided practice: left out too
+            questions = [q for k, q in enumerate(questions) if k not in extra]
+            flagged = {k - sum(1 for x in extra if x < k): v for k, v in flagged.items() if k not in extra}
         if not flagged:
             break
         if attempt == quiz.CHECK_ROUNDS:

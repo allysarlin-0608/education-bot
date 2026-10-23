@@ -1844,6 +1844,10 @@ SETUP = """
 .ex-kind { margin: var(--space-4) 0 2px; font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-3); }
 .ex-scenario { margin: 0 0 var(--space-2); padding: var(--space-3) var(--space-4); background: var(--surface); border-radius: var(--radius-medium);
   font-size: 0.9375rem; line-height: 1.55; color: var(--label); }
+.ex-lines { margin: 0 0 var(--space-2); padding-left: 1.6em; font-size: 0.9375rem; line-height: 1.6; color: var(--label); }
+.ex-lines li { padding: 2px 0; }
+.ex-step { margin: 0 0 var(--space-2); font-size: 0.9375rem; line-height: 1.55; color: var(--label); }
+.ex-step span { display: inline-block; min-width: 1.6em; color: var(--label-3); }
 .ex-earlier { margin: var(--space-5) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--rule); font-size: 0.8125rem; color: var(--label-3); }
 .tutor-based { margin: var(--space-2) 0 0; font-size: 0.8125rem; color: var(--label-3); }
 .idea-state { margin: var(--space-3) 0 0; font-size: 0.875rem; line-height: 1.5; color: var(--label-2); }

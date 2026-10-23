@@ -17,9 +17,11 @@ Two layouts:
   invitation list) and ai_usage tables, the export of one person's data,
   and the deletion of it all (one transaction, the delete_user_data
   function in supabase/multiuser.sql)."""
+import hashlib
 import json
 import logging
 import os
+import re
 import threading
 import time
 from datetime import date
@@ -42,6 +44,8 @@ PREFS_TABLE = "learner_prefs"      # supabase/goals.sql (habits: reminders, ligh
 SIGNALS_TABLE = "learning_signals"  # supabase/mastery.sql (is she learning? counts only, coach/metrics.py)
 REPORTS_TABLE = "content_reports"   # supabase/reports.sql (a problem reported in a lesson or a question)
 WAITS_TABLE = "ai_waits"            # supabase/ai_health.sql (AI calls that were busy, failed or slow: counts only)
+ATTEMPTS_TABLE = "learning_attempts"  # supabase/learning_v2.sql (one row per answer, coach/attempts.py)
+ITEMS_TABLE = "shared_items"          # supabase/learning_v2.sql (checked questions shared by everyone, coach/itembank.py)
 PATHS_TABLE_MISSING = (
     "Supabase doesn't have the learning_paths table yet. Run supabase/goals.sql in "
     "Supabase's SQL Editor, then refresh this page."
@@ -191,6 +195,15 @@ def _is_secret_key(key: str) -> bool:
 
 def _now() -> str:
     return clock.now_iso()
+
+
+def pseudonymous(row: dict) -> dict:
+    """An answer as admins see it (learning_attempts_since): who only as a
+    stand-in, a goal of hers only as "goal:" and a stand-in."""
+    topic = row["topic"]
+    shown = topic if re.fullmatch(r"[a-z]{2,20}", topic) else "goal:" + hashlib.md5(topic.encode()).hexdigest()[:8]
+    out = {k: v for k, v in row.items() if k != "user_id"}
+    return dict(out, learner=hashlib.md5(str(row.get("user_id", "")).encode()).hexdigest(), topic=shown)
 
 
 class _Scope:
@@ -393,6 +406,8 @@ class FileStore(_Scope):
                 "usage_events": [r for r in self._rows(EVENTS_TABLE) if r["user_id"] == uid],
                 "ai_waits": [r for r in self._rows(WAITS_TABLE) if r["user_id"] == uid],
                 "learning_signals": [r for r in self._rows(SIGNALS_TABLE) if r["user_id"] == uid],
+                "learning_attempts": [{k: v for k, v in r.items() if k != "user_id"}
+                                      for r in self._rows(ATTEMPTS_TABLE) if r["user_id"] == uid],
                 "learner_prefs": self.load_prefs()}
 
     def load_prefs(self):
@@ -425,6 +440,50 @@ class FileStore(_Scope):
         from coach import metrics
         return metrics.summarize(self._rows(USERS_TABLE), self._rows(EVENTS_TABLE) + self._rows(SIGNALS_TABLE),
                                  since, today)
+
+    # ---------------------------------------------------- measuring learning
+    def add_attempts(self, rows: list) -> None:
+        """Her answers (coach/attempts.py), as add_learning_attempts does."""
+        from coach import attempts
+        uid = self._uid()
+        rows = attempts.rows(rows)
+        if not rows:
+            return
+        with _FILE_LOCK:
+            stored = self._rows(ATTEMPTS_TABLE)
+            stored += [dict(r, user_id=uid) for r in rows]
+            self._write_rows(ATTEMPTS_TABLE, stored)
+
+    def attempts_since(self, since: date) -> list:
+        """Everyone's answers since a day, as learning_attempts_since gives them
+        (who only as a stand-in; a goal only as "goal:" and a stand-in)."""
+        return [pseudonymous(r) for r in self._rows(ATTEMPTS_TABLE) if r["day"] >= since.isoformat()]
+
+    # ------------------------------------------------- the shared question bank
+    def shared_items(self, curriculum: str, lang: str, units: list) -> list:
+        return [{"id": r["id"], "unit": r["unit"], "item": r["item"]} for r in self._rows(ITEMS_TABLE)
+                if r["curriculum"] == curriculum and r["lang"] == lang and r["unit"] in units
+                and r.get("reports", 0) < 2][:400]
+
+    def add_shared_items(self, curriculum: str, lang: str, rows: list) -> None:
+        uid = self._uid()
+        with _FILE_LOCK:
+            stored = self._rows(ITEMS_TABLE)
+            top = max((r["id"] for r in stored), default=0)
+            for k, r in enumerate(rows[:20], start=1):
+                stored.append({"id": top + k, "created_by": uid, "curriculum": curriculum, "lang": lang,
+                               "unit": str(r["unit"])[:40], "item": r["item"], "reports": 0, "by": []})
+            self._write_rows(ITEMS_TABLE, stored)
+
+    def report_shared_item(self, item_id: int) -> None:
+        uid = self._uid()
+        with _FILE_LOCK:
+            stored = self._rows(ITEMS_TABLE)
+            for r in stored:
+                if r["id"] == item_id and uid not in r.setdefault("by", []):
+                    r["by"].append(uid)
+                    r["reports"] = r.get("reports", 0) + 1
+            self._write_rows(ITEMS_TABLE, stored)
 
     def add_report(self, report: dict) -> None:
         """A problem she reported (coach/reports.py), at most reports.PER_DAY a day."""
@@ -630,6 +689,34 @@ class SupabaseStore(_Scope):
         """The key numbers (gnosis_metrics: totals, admins only)."""
         self._uid()
         return self._request("POST", json={"p_since": since.isoformat()}, table="rpc/gnosis_metrics").json()
+
+    # ---------------------------------------------------- measuring learning
+    def add_attempts(self, rows: list) -> None:
+        """Her answers (add_learning_attempts: hers, at most 40 at a time)."""
+        from coach import attempts
+        self._uid()
+        rows = attempts.rows(rows)
+        if rows:
+            self._request("POST", json={"p_rows": rows}, prefer="return=minimal", table="rpc/add_learning_attempts")
+
+    def attempts_since(self, since: date) -> list:
+        """Everyone's answers since a day (learning_attempts_since: admins only, never who)."""
+        self._uid()
+        return self._request("POST", json={"p_since": since.isoformat()}, table="rpc/learning_attempts_since").json()
+
+    def shared_items(self, curriculum: str, lang: str, units: list) -> list:
+        self._uid()
+        return self._request("POST", json={"p_curriculum": curriculum, "p_lang": lang, "p_units": list(units)},
+                             table="rpc/shared_items_for").json()
+
+    def add_shared_items(self, curriculum: str, lang: str, rows: list) -> None:
+        self._uid()
+        self._request("POST", json={"p_curriculum": curriculum, "p_lang": lang, "p_rows": rows[:20]},
+                      prefer="return=minimal", table="rpc/add_shared_items")
+
+    def report_shared_item(self, item_id: int) -> None:
+        self._uid()
+        self._request("POST", json={"p_id": item_id}, prefer="return=minimal", table="rpc/report_shared_item")
 
     def add_report(self, report: dict) -> None:
         """A problem she reported (add_content_report: hers, on the server's clock)."""
@@ -843,8 +930,18 @@ class SupabaseStore(_Scope):
             "usage_events": [] if self.paths_error else
                             self._request("GET", params={**mine, "order": "day.asc"}, table=EVENTS_TABLE).json(),
             "learning_signals": self._signals(mine),
+            "learning_attempts": self._attempts(),
             "learner_prefs": None if self.paths_error else self.load_prefs(),
         }
+
+    def _attempts(self) -> list:
+        """Her answers (supabase/learning_v2.sql); none where that isn't made yet."""
+        try:
+            return self._request("POST", json={}, table="rpc/my_learning_attempts").json()
+        except StorageError as e:
+            if e.status == 404:
+                return []
+            raise
 
     def _signals(self, mine: dict) -> list:
         """Her learning counts (supabase/mastery.sql); none where that table isn't made yet."""

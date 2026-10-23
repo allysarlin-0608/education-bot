@@ -13,21 +13,32 @@ restored with the lessons:
 - "point":    a key point she saved from a lesson (the Key Idea or a Deep
   Dive point), recalled and then checked by her.
 
-Each card sits in a box. A right answer moves it up a box and its next
-review further away (INTERVALS days); a wrong one puts it back in the
-first box, due tomorrow. At most DAILY_LIMIT cards are offered a day, the
-oldest due first; reviews never hold up the day's lessons and never count
-for the streak (they change no day's completion)."""
+When a card comes back is set by its memory (docs/LEARNING_DESIGN.md §2b,
+coach/learner.py, FSRS-4.5): its stability (how many days until recall
+falls to 90%) and difficulty move with each answer and how sure she was
+(wrong: again; right but guessed: hard; fairly sure: good; sure: easy),
+and the next review is set for the day recall would fall to the target
+retention (90%; 85% in one arm of the retention experiment,
+coach/experiments.py). A card from before this (only a box: INTERVALS
+days) is given the stability its box stood for the next time it is
+answered; nothing is rewritten before then. The box is still kept, so an
+older copy of the app reads the card as before.
+
+At most DAILY_LIMIT cards are offered a day: an error she was sure of
+first (worth fixing soonest), then the ones closest to being forgotten;
+reviews never hold up the day's lessons and never count for the streak
+(they change no day's completion)."""
 import hashlib
 import random
 import re
 from datetime import date, timedelta
 
-from coach import catalog, core, quiz
+from coach import catalog, core, learner, quiz
 from coach.i18n import N_, tr
 
 INTERVALS = (1, 3, 7, 14, 30, 60)       # days until the next review, by box
 DAILY_LIMIT = 20                        # cards offered a day
+RELEARN_DAYS = 1                        # a card she missed comes back the next day
 KINDS = ("question", "word", "point")
 KIND_NAMES = {"question": N_("Missed question"), "word": N_("Vocabulary"), "point": N_("Key point")}
 # What she learned before review existed comes back too: each lesson she had
@@ -153,8 +164,12 @@ def saved(slot: dict, label: str) -> bool:
 
 
 def _answer_text(item: dict) -> str:
-    if item["type"] in ("choice", "scenario"):
+    if item["type"] in quiz.CHOICE_LIKE:
         return item["options"][item["answer"]]
+    if item["type"] == "spot":
+        return f"Line {item['answer'] + 1}: {item['fix']}"
+    if item["type"] == "steps":
+        return "; ".join(item["answers"])
     if item["type"] == "match":
         return "; ".join(f"{left} → {item['right'][k]}" for left, k in zip(item["left"], item["key"]))
     if item["type"] == "order":
@@ -223,7 +238,9 @@ def due(log: dict, today: date, limit: int = None) -> list:
     returning day: coach/habit.py, so a break never leaves a wall of cards)."""
     waiting = [x for x in cards(log) if not x[2]["paused"] and x[2]["due"] <= today.isoformat()
                and x[2].get("last") != today.isoformat() and not catalog.removed(x[0]["topic"])]
-    waiting.sort(key=lambda x: (x[2]["due"], x[2]["added"], x[2]["id"]))
+    # an error she was sure of first, then the closest to being forgotten, then the oldest due
+    waiting.sort(key=lambda x: (not x[2].get("hc"), round(recall_chance(x[2], today), 3), x[2]["due"],
+                                x[2]["added"], x[2]["id"]))
     return waiting[:max(0, (limit or DAILY_LIMIT) - reviewed_today(log, today))]
 
 
@@ -233,14 +250,40 @@ def next_due(log: dict, today: date):
     return date.fromisoformat(min(later)) if later else None
 
 
-def grade(card: dict, right: bool, today: date) -> None:
-    """A right answer: up a box, next review further away. A wrong one: back
-    to the first box, due tomorrow."""
-    card["box"] = min(card["box"] + 1, len(INTERVALS) - 1) if right else 0
+def memory(card: dict, today: date):
+    """(stability, difficulty, days since the last review) of a card, or
+    None for one never reviewed. A card from before FSRS: the stability its
+    box stood for (a card in the 7-day box lasts about 7 days)."""
+    if card.get("last") is None or not card.get("reviews"):
+        return None
+    elapsed = max(0, (today - date.fromisoformat(card["last"])).days)
+    if isinstance(card.get("st"), (int, float)) and isinstance(card.get("df"), (int, float)):
+        return float(card["st"]), float(card["df"]), elapsed
+    return float(INTERVALS[card.get("box", 0)]), min(10.0, 5.0 + card.get("lapses", 0)), elapsed
+
+
+def recall_chance(card: dict, today: date) -> float:
+    """How likely she is to remember it today (a card never reviewed: 0.5)."""
+    m = memory(card, today)
+    return learner.retrievability(m[2], m[0]) if m else 0.5
+
+
+def grade(card: dict, right: bool, today: date, confidence=None, target: float = learner.TARGET) -> None:
+    """The card's memory after this answer (FSRS), and its next review: the
+    day recall would fall to `target`. A wrong answer she was sure of is
+    marked to come back first (card["hc"])."""
+    rating = learner.rating(right, confidence)
+    m = memory(card, today)
+    stability, difficulty = learner.first(rating) if m is None else learner.review(m[0], m[1], m[2], rating)
+    card["st"], card["df"] = round(stability, 3), round(difficulty, 3)
+    card["hc"] = learner.overconfident(right, confidence)
+    card["box"] = min(card["box"] + 1, len(INTERVALS) - 1) if right else 0     # (for an older copy of the app)
     card["lapses"] += 0 if right else 1
     card["reviews"] += 1
     card["last"] = today.isoformat()
-    card["due"] = (today + timedelta(days=INTERVALS[card["box"]])).isoformat()
+    # a miss is relearned tomorrow (the relearning step), then spaced by its memory again
+    days = learner.interval(stability, target) if right else RELEARN_DAYS
+    card["due"] = (today + timedelta(days=days)).isoformat()
 
 
 def word_question(log: dict, card: dict) -> dict:
@@ -298,6 +341,12 @@ def parse_cards(data) -> list:
                 "due": c["due"], "added": c["added"], "last": c["last"] if _iso(c.get("last")) else None,
                 "reviews": _count(c.get("reviews")), "lapses": _count(c.get("lapses")),
                 "paused": c.get("paused") is True}
+        st_, df_ = c.get("st"), c.get("df")            # its memory (FSRS), once answered since it began
+        if (isinstance(st_, (int, float)) and not isinstance(st_, bool) and 0 < st_ <= 36500
+                and isinstance(df_, (int, float)) and not isinstance(df_, bool) and 1 <= df_ <= 10):
+            card["st"], card["df"] = float(st_), float(df_)
+        if c.get("hc") is True:
+            card["hc"] = True
         for field in ("topic", "example"):
             if isinstance(c.get(field), str):
                 card[field] = c[field]

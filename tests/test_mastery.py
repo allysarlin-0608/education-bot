@@ -32,7 +32,7 @@ def test_it_fades_without_practice_and_comes_back_with_it():
     assert mastery.state(solid, D + timedelta(days=1))["level"] == "solid"
     later = mastery.state(solid, D + timedelta(days=15))
     assert later["level"] == "learning" and later["fading"], "two weeks untouched: it fades, and says so"
-    assert mastery.state(solid, D + timedelta(days=60))["recall"] < later["recall"] < 0.6
+    assert mastery.state(solid, D + timedelta(days=60))["recall"] < later["recall"] < mastery.state(solid, D + timedelta(days=1))["recall"]
     back = solid + ev((15, "practice", 1.0))
     assert mastery.state(back, D + timedelta(days=15))["level"] == "solid"
 

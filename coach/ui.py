@@ -404,6 +404,39 @@ def record(event: str) -> None:
         logger.warning("couldn't count %s (%s)", event, e)
 
 
+def experiments_on() -> bool:
+    """Experiments run on the public (test) site unless GNOSIS_EXPERIMENTS=off."""
+    from coach import appconfig, auth, experiments
+    return experiments.enabled(appconfig.get_setting("GNOSIS_EXPERIMENTS"), auth.is_public())
+
+
+def arm(name: str, *unit) -> str:
+    """Her arm of an experiment (coach/experiments.py), for this day or idea."""
+    from coach import experiments
+    return experiments.arm(name, user_id() or "", *unit, on=experiments_on())
+
+
+def target_retention() -> float:
+    from coach import experiments
+    return experiments.TARGETS[arm("retention")]
+
+
+def attempt(rows: list) -> None:
+    """Her answers, for measuring learning (coach/attempts.py; the public
+    site's signed-in learners only). Never in her way: a failure (the table
+    not made yet included) is logged once, not shown."""
+    from coach import auth
+    store = st.session_state.get("coach_store")
+    if not rows or not auth.is_public() or not hasattr(store, "add_attempts"):
+        return
+    try:
+        store.add_attempts([r for r in rows if r])
+    except storage.StorageError as e:
+        if not st.session_state.get("coach_attempts_warned"):
+            st.session_state.coach_attempts_warned = True
+            logger.warning("couldn't record answers (%s)", e)
+
+
 def learned(slot: dict, entry_date: str, kind: str, score: float, source: str = "") -> None:
     """Add a piece of evidence to a lesson's slot (coach/mastery.py) and count
     what it showed (missed, recovered, held, slipped, mastered). The caller

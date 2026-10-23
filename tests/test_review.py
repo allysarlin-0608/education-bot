@@ -52,13 +52,54 @@ def test_missed_questions_and_words_become_cards_once():
 
 
 def test_right_moves_it_further_away_wrong_starts_again():
+    """FSRS (coach/learner.py): each right answer pushes the next review
+    further away, a wrong one brings it back within a day or two."""
     c = review._card("point", "front", "back", D)
     review.grade(c, True, D + timedelta(days=1))
-    assert c["box"] == 1 and c["due"] == (D + timedelta(days=4)).isoformat()
-    review.grade(c, True, D + timedelta(days=4))
-    assert c["box"] == 2 and c["due"] == (D + timedelta(days=11)).isoformat()
-    review.grade(c, False, D + timedelta(days=11))
-    assert c["box"] == 0 and c["due"] == (D + timedelta(days=12)).isoformat() and c["lapses"] == 1
+    first = (date.fromisoformat(c["due"]) - (D + timedelta(days=1))).days
+    assert c["box"] == 1 and 3 <= first <= 5 and c["st"] > 3
+    review.grade(c, True, date.fromisoformat(c["due"]))
+    second = (date.fromisoformat(c["due"]) - date.fromisoformat(c["last"])).days
+    assert second > first
+    review.grade(c, False, date.fromisoformat(c["due"]))
+    again = (date.fromisoformat(c["due"]) - date.fromisoformat(c["last"])).days
+    assert c["box"] == 0 and again <= 2 and c["lapses"] == 1
+
+
+def test_how_sure_she_was_sets_how_far_away_it_goes():
+    guessed, sure = (review._card("point", f"f{k}", "back", D) for k in range(2))
+    review.grade(guessed, True, D, confidence=1)
+    review.grade(sure, True, D, confidence=3)
+    assert sure["due"] > guessed["due"]
+    wrong = review._card("point", "w", "back", D)
+    review.grade(wrong, False, D, confidence=3)          # sure, and wrong: it comes back first
+    assert wrong["hc"] is True
+    review.grade(wrong, True, date.fromisoformat(wrong["due"]))
+    assert wrong["hc"] is False
+
+
+def test_a_card_from_before_fsrs_keeps_its_place():
+    """A card with only a box: its stability is what the box stood for, and
+    nothing about it changes until it is answered."""
+    c = review._card("point", "old", "back", D)
+    c.update(box=3, reviews=3, last=(D - timedelta(days=14)).isoformat(), due=D.isoformat())
+    stability, difficulty, elapsed = review.memory(c, D)
+    assert stability == review.INTERVALS[3] and elapsed == 14
+    assert abs(review.recall_chance(c, D) - 0.9) < 0.01      # due today: about 90% recalled
+    review.grade(c, True, D)
+    assert c["st"] > review.INTERVALS[3]
+    assert review.parse_cards([c])[0]["st"] == c["st"]
+
+
+def test_the_closest_to_being_forgotten_comes_first():
+    s = slot()
+    fresh, faded = review._card("point", "fresh", "b", D), review._card("point", "faded", "b", D)
+    fresh.update(reviews=1, last=(D - timedelta(days=2)).isoformat(), due=D.isoformat(), st=30.0, df=5.0)
+    faded.update(reviews=1, last=(D - timedelta(days=20)).isoformat(), due=D.isoformat(), st=4.0, df=5.0)
+    for c in (fresh, faded):
+        review._add(s, c)
+    log = {"entries": [{"date": D.isoformat(), "topic": "fashion", "completed": False, "lessons": [s]}]}
+    assert [c["front"] for _, _, c in review.due(log, D)] == ["faded", "fresh"]
 
 
 def test_due_respects_the_daily_limit_pause_and_what_was_done_today():

@@ -11,6 +11,8 @@ being finished:
 - "practice": an exercise on it in Practice
 - "explain":  explaining it in her own words (marked by the coach)
 - "ask":      a question to the coach that showed she was confused
+- "check":    a quick check inside the lesson, or its guided practice
+- "diag":     the goal's diagnostic, or testing out of a unit
 
 Each piece of evidence is {"id", "d" (date), "k" (kind), "s" (0..1)},
 kept on the lesson's own slot (slot["ev"]), so it is saved, merged
@@ -18,14 +20,21 @@ kept on the lesson's own slot (slot["ev"]), so it is saved, merged
 this existed has its evidence worked out from its quiz and review cards
 (derived()), and stored once something new is added (seed()).
 
-From the evidence, in date order:
-- strength moves toward each score (newer evidence counts more);
+From the evidence, in date order (docs/LEARNING_DESIGN.md §2):
+- strength is the chance the idea is learned, P(L), by Bayesian knowledge
+  tracing (coach/learner.bkt): a right answer may be a guess, a wrong one a
+  slip, and each practice is a chance to learn it;
 - stability: how long it lasts. It grows with each success on a new day
   (spaced retrieval) and halves after a failure;
-- recall now = strength x retention(days since the last evidence), a
-  forgetting curve that keeps 90% after `stability` days: an idea not
+- recall now = strength x retention(days since the last evidence), the
+  FSRS forgetting curve that keeps 90% after `stability` days: an idea not
   practised fades (a solid one in about two weeks, a mastered one in a
   month or more), and practising it brings it back.
+
+The model changed on SWITCH (it used to be a moving average): an idea with
+evidence from before then never shows a lower level than the old model
+gives it, until she gets it wrong after the change (no one loses a level
+because the arithmetic changed).
 
 Levels: new (no evidence), learning, solid (recall >= SOLID, two
 successes on different days), mastered (recall >= MASTERED, three successes
@@ -34,19 +43,23 @@ on another day. Pure functions; no AI call."""
 import hashlib
 from datetime import date, timedelta
 
-from coach import catalog, course, curriculum
+from coach import catalog, course, curriculum, learner
 from coach.i18n import N_, tr
 
 LEVELS = ("new", "learning", "solid", "mastered")
 LEVEL_NAMES = {"new": "New", "learning": "Learning", "solid": "Solid", "mastered": "Mastered"}
-KINDS = ("quiz", "recall", "review", "practice", "explain", "ask")
-WEIGHT = {"quiz": 1.0, "recall": 0.8, "review": 0.6, "practice": 0.8, "explain": 1.0, "ask": 0.5}
+KINDS = ("quiz", "recall", "review", "practice", "explain", "ask", "check", "diag")
+WEIGHT = {"quiz": 1.0, "recall": 0.8, "review": 0.6, "practice": 0.8, "explain": 1.0, "ask": 0.5,
+          "check": 0.6, "diag": 0.8}      # (the old model's: the level floor, legacy_state())
+SWITCH = date(2026, 10, 24)   # the day knowledge tracing took over (the floor: state())
 ALPHA = 0.55              # how far one piece of evidence moves strength (x its weight)
 SUCCESS, FAILURE = 0.8, 0.5
 STABILITY0 = 3.0          # days an idea lasts after its first success
 GROWTH = 2.2              # each spaced success makes it last this much longer
 MAX_STABILITY = 180.0
-SOLID, MASTERED = 0.6, 0.85
+SOLID, MASTERED = 0.6, 0.85         # (the old model's bars on recall)
+LEARNED_SOLID, LEARNED_MASTERED = 0.8, 0.95     # P(L): learned
+KEPT_SOLID, KEPT_MASTERED = 0.82, 0.9           # retention: still remembered (fades below)
 MASTERED_SPAN = 7         # days between the first and last of the successes
 MAX_EVENTS = 40           # evidence kept per idea (the oldest go first)
 HELD_AFTER = 14           # days: an idea still known this long after its last practice "held"
@@ -131,9 +144,13 @@ def parse(data) -> list:
 
 # -------------------------------------------------------------- the state
 def retention(gap: int, stability: float) -> float:
-    """How much of it is still there `gap` days after the last practice: a
-    forgetting curve (falls fast at first, then slowly), 0.9 after
+    """How much of it is still there `gap` days after the last practice: the
+    FSRS forgetting curve (falls fast at first, then slowly), 0.9 after
     `stability` days."""
+    return learner.retrievability(gap, stability)
+
+
+def _old_retention(gap: int, stability: float) -> float:
     return 1 / (1 + gap / (9 * stability))
 
 
@@ -148,11 +165,23 @@ def _daily(events: list) -> list:
 
 def state(events: list, today: date) -> dict:
     """How well she knows an idea today, from its evidence. It climbs at
-    most one level a day (never from learning to mastered in one sitting)."""
-    s = _state(events, today)
+    most one level a day (never from learning to mastered in one sitting).
+    An idea with evidence from before SWITCH shows at least the level the
+    old model gives it, until she gets it wrong after SWITCH."""
+    s = _capped(events, today, _state)
+    if s["last"] and any(e["d"] < SWITCH.isoformat() for e in events) and not any(
+            e["d"] >= SWITCH.isoformat() and e["s"] < FAILURE and e["k"] != "ask" for e in events):
+        old = _capped(events, today, legacy_state)
+        if LEVELS.index(old["level"]) > LEVELS.index(s["level"]):
+            s = dict(s, level=old["level"], fading=old["fading"])
+    return s
+
+
+def _capped(events: list, today: date, model) -> dict:
+    s = model(events, today)
     if s["last"]:
         before = [e for e in events if e["d"] < s["last"]]
-        prev = _state(before, date.fromisoformat(s["last"]))["level"] if before else "new"
+        prev = model(before, date.fromisoformat(s["last"]))["level"] if before else "new"
         cap = LEVELS[min(LEVELS.index(prev) + 1, len(LEVELS) - 1)]
         if LEVELS.index(s["level"]) > LEVELS.index(cap):
             s = dict(s, level=cap, fading=False)
@@ -160,13 +189,27 @@ def state(events: list, today: date) -> dict:
 
 
 def _state(events: list, today: date) -> dict:
-    strength, stability, successes, last_success, first_success = 0.0, STABILITY0, 0, None, None
+    return _walk(events, today, knowledge_tracing=True)
+
+
+def legacy_state(events: list, today: date) -> dict:
+    """The model from before SWITCH (strength a moving average of the scores):
+    kept only for the floor in state()."""
+    return _walk(events, today, knowledge_tracing=False)
+
+
+def _walk(events: list, today: date, knowledge_tracing: bool) -> dict:
+    strength = learner.P_INIT if knowledge_tracing else 0.0
+    stability, successes, last_success, first_success = STABILITY0, 0, None, None
     last = None
     for e in _daily(events):
         day = date.fromisoformat(e["d"])
         if day > today:
             continue
-        strength += ALPHA * WEIGHT[e["k"]] * (e["s"] - strength)
+        if knowledge_tracing:
+            strength = learner.bkt(strength, e["s"], e["k"])
+        else:
+            strength += ALPHA * WEIGHT[e["k"]] * (e["s"] - strength)
         if e["s"] >= SUCCESS and (last_success is None or day > last_success):
             successes += 1
             if successes > 1:
@@ -174,12 +217,15 @@ def _state(events: list, today: date) -> dict:
             last_success, first_success = day, first_success or day
         elif e["s"] < FAILURE and e["k"] != "ask":
             stability = max(STABILITY0, stability / 2)
+            if knowledge_tracing and successes > 1:     # a miss: it has to hold again on another day
+                successes, first_success = 1, last_success
         last = day
     if last is None:
         return {"level": "new", "recall": 0.0, "strength": 0.0, "fading": False, "last": None,
                 "successes": 0, "stability": stability, "evidence": 0}
     gap = (today - last).days
-    recall = strength * retention(gap, stability)
+    kept = retention(gap, stability) if knowledge_tracing else _old_retention(gap, stability)
+    recall = strength * kept
     span = (last_success - first_success).days if last_success else 0
 
     def level(r):
@@ -188,7 +234,18 @@ def _state(events: list, today: date) -> dict:
         if r >= SOLID and successes >= 2:
             return "solid"
         return "learning"
-    now, fresh = level(recall), level(strength)
+
+    def traced(p, r):
+        """Learned (P(L)) and still remembered (retention), each its own bar."""
+        if p >= LEARNED_MASTERED and r >= KEPT_MASTERED and successes >= 3 and span >= MASTERED_SPAN:
+            return "mastered"
+        if p >= LEARNED_SOLID and r >= KEPT_SOLID and successes >= 2:
+            return "solid"
+        return "learning"
+    if knowledge_tracing:
+        now, fresh = traced(strength, kept), traced(strength, 1.0)
+    else:
+        now, fresh = level(recall), level(strength)
     return {"level": now, "recall": round(recall, 3), "strength": round(strength, 3),
             "fading": LEVELS.index(now) < LEVELS.index(fresh), "last": last.isoformat(),
             "successes": successes, "stability": round(stability, 1), "evidence": len(events)}

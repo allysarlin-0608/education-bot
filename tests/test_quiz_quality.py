@@ -34,10 +34,10 @@ def test_two_questions_on_the_same_point_are_one():
     assert not quiz.alike(q1, explain) or quiz.same_as(q1) == quiz.same_as(explain), \
         "a choice and an explain-it question on one idea are two ways to test it"
     assert quiz.distinct([q1, q4, other]) == [q1, other]
-    tens = [choice(f"Question number {k} about topic {k}?", f"answer {k}") for k in range(8)]
-    assert quiz.assemble(tens + [q1, q4, other]) is not None
-    assert quiz.assemble(tens + [q1, q4]) is None, "eight plus one: a tenth is still needed"
-    assert quiz.missing(tens + [q1, q4]), "and asked for"
+    some = [choice(f"Question number {k} about topic {k}?", f"answer {k}") for k in range(quiz.QUESTIONS - 2)]
+    assert quiz.assemble(some + [q1, q4, other]) is not None
+    assert quiz.assemble(some + [q1, q4]) is None, "four plus one: a sixth is still needed"
+    assert quiz.missing(some + [q1, q4]), "and asked for"
 
 
 def test_a_reported_question_is_remembered_and_the_next_quiz_avoids_it():

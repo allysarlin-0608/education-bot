@@ -74,6 +74,8 @@ class FakeDB:
         self.auth_users = set()
         self.reports = []                    # content_reports (reports.sql): reached only through its functions
         self.waits = []                      # ai_waits (ai_health.sql): the same
+        self.attempts = []                   # learning_attempts (learning_v2.sql): the same
+        self.items = []                      # shared_items (learning_v2.sql): the same
         self.fail_delete_at = None           # to show delete_my_account is all-or-nothing
 
     @staticmethod
@@ -225,6 +227,36 @@ class FakeDB:
             from coach import metrics
             return Resp(200, metrics.ai_health(self.waits, list(self.tables[storage.USAGE_TABLE].values()),
                                                date.fromisoformat(args["p_since"])))
+        if fn == "add_learning_attempts":
+            from coach import attempts
+            assert set(args) == {"p_rows"}
+            if not isinstance(args["p_rows"], list) or len(args["p_rows"]) > 40:
+                return Resp(400, {"message": "between 0 and 40 rows"})
+            for r in args["p_rows"]:
+                if attempts.parse(r) != r:
+                    return Resp(400, {"message": "violates check constraint"})
+                self.attempts.append(dict(r, user_id=uid))
+            return Resp(204)
+        if fn == "my_learning_attempts":
+            return Resp(200, [{k: v for k, v in r.items() if k != "user_id"} for r in self.attempts if r["user_id"] == uid])
+        if fn == "learning_attempts_since":
+            if not self._admin(email):
+                return Resp(400, {"message": "admins only"})
+            return Resp(200, [storage.pseudonymous(r) for r in self.attempts if r["day"] >= args["p_since"]])
+        if fn == "shared_items_for":
+            return Resp(200, [{"id": r["id"], "unit": r["unit"], "item": r["item"]} for r in self.items
+                              if r["curriculum"] == args["p_curriculum"] and r["lang"] == args["p_lang"]
+                              and r["unit"] in args["p_units"] and len(r["by"]) < 2])
+        if fn == "add_shared_items":
+            for r in args["p_rows"][:20]:
+                self.items.append({"id": len(self.items) + 1, "curriculum": args["p_curriculum"], "lang": args["p_lang"],
+                                   "unit": r["unit"], "item": r["item"], "by": set()})
+            return Resp(204)
+        if fn == "report_shared_item":
+            for r in self.items:
+                if r["id"] == args["p_id"]:
+                    r["by"].add(uid)
+            return Resp(204)
         if fn == "delete_my_account":
             assert args == {}
             snapshot = {t: dict(rows) for t, rows in self.tables.items()}
@@ -236,6 +268,7 @@ class FakeDB:
                     del self.tables[t][key]
             self.reports = [x for x in self.reports if x["user_id"] != uid]     # (on delete cascade)
             self.waits = [x for x in self.waits if x["user_id"] != uid]         # (on delete cascade)
+            self.attempts = [x for x in self.attempts if x["user_id"] != uid]   # (on delete cascade)
             self.auth_users.discard(uid)
             return Resp(204)
         raise AssertionError(fn)
