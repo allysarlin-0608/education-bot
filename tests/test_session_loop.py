@@ -44,6 +44,19 @@ def test_an_old_lesson_finds_its_place_without_anything_rewritten():
     assert "session" not in {"n": 1}
 
 
+def test_reading_the_lesson_again_is_kept_when_the_day_is_saved():
+    """Back to the lesson after a failed check: the saved copy (at the check)
+    must not win the merge and put her back at the check."""
+    slot = {"n": 1, "lesson": LESSON}
+    session.move(slot, "practice")
+    session.move(slot, "check")
+    stored = session.parse(slot["session"])
+    session.move(slot, "learn")
+    assert session.merge(stored, slot["session"])["stage"] == "learn"
+    assert session.merge(slot["session"], stored)["stage"] == "learn"
+    assert session.parse(slot["session"]) == slot["session"]
+
+
 def test_a_session_survives_saving_and_two_tabs():
     a = {"stage": "practice", "checks": {"0": {"a": 1, "tries": 1, "right": True, "conf": 2}}, "guided": None}
     b = {"stage": "learn", "checks": {"1": {"a": 0, "tries": 2, "right": False, "conf": None}}, "guided": None, "jol": 3}
@@ -158,6 +171,15 @@ def test_a_few_questions_place_a_learner_on_the_math_path():
     assert state["skip"] and all(n <= us[39]["last"] for n in state["skip"]), "skips only what she knows"
     assert diagnostic.ahead(us, set(), set(), 0)[0] == diagnostic.next_unit(us, set(), set(), 0)
     assert len(diagnostic.ahead(us, set(), set(), 0)) <= 7
+
+
+def test_knowing_every_unit_still_leaves_the_last_one_to_do():
+    us = diagnostic.units("math")[:3]
+    state = diagnostic.blank(D)
+    state["known"] = [u["id"] for u in us]
+    diagnostic.finish(state, us)
+    assert state["start"] == us[-1]["first"] and us[-1]["first"] not in state["skip"]
+    assert us[-1]["id"] not in state["known"], "the result lists only what she skips"
 
 
 def test_skips_count_once_she_chooses_them_and_a_missed_spot_check_brings_a_unit_back():

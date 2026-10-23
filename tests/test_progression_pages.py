@@ -55,7 +55,8 @@ def test_where_to_start_places_her_in_a_few_questions_and_she_chooses(monkeypatc
         radios = [r for r in at.radio if str(r.key).startswith("dg_math_")]
         if not radios:
             break
-        radios[0].set_value(0).run()                       # "Right": she knows each one asked
+        r = radios[0]                                      # "Right" (options are shuffled): she knows each one
+        r.set_value(next(v for v in range(len(r.options)) if r.options[v] == "Right")).run()
         at.button(key=f"dg_{len(stored_prefs(tmp_path)['diag']['math']['asked'])}_conf2").click().run()
         assert not at.exception, [e.value for e in at.exception]
     state = stored_prefs(tmp_path)["diag"]["math"]
@@ -149,3 +150,18 @@ def test_the_learning_dashboard_is_for_admins_only(monkeypatch, tmp_path):
     at = app(monkeypatch, tmp_path, history=False)
     loads(at, "views/learning.py")
     assert any("Only admins" in c.value for c in at.caption)
+
+
+def test_placement_questions_that_cant_be_written_offer_another_try(monkeypatch, tmp_path):
+    # covers: W-diagnostic-dg_retry
+    monkeypatch.setattr(llm, "ask_json", lambda *a, **k: (None, "The coach is busy. Try again in a moment."))
+    at = app(monkeypatch, tmp_path, subjects=("math",), history=False)
+    loads(at, "views/diagnostic.py", subject="math")
+    at.button(key="dg_go").click().run()
+    assert not at.exception, [e.value for e in at.exception]
+    assert any(b.key == "dg_retry" for b in at.button), "a way to try again"
+    assert any("busy" in w.value for w in at.warning)
+    calls = []
+    fake_model(monkeypatch, calls)
+    at.button(key="dg_retry").click().run()
+    assert not at.exception and calls[:1] == ["write"] and any(str(r.key).startswith("dg_math_") for r in at.radio)

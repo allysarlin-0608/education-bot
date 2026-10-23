@@ -232,6 +232,31 @@ def test_the_days_reflection_keeps_her_thoughts_and_how_sure_she_is(monkeypatch,
     assert "Reflection saved" in " ".join(c.value for c in at.caption)
 
 
+def test_a_reflection_on_a_lesson_carried_over_is_kept_with_its_first_day(monkeypatch, tmp_path):
+    """A lesson begun yesterday and passed today: how sure she is goes with the
+    lesson, kept on the day it began."""
+    # covers: D-daily-save_day-6
+    from coach import settings
+    day = ui.today()
+    at = app(monkeypatch, tmp_path, subjects=("philosophy",), pace=1, history=False)
+    topic = settings.topic_for(at.session_state["coach_settings"], day, ui.TIMEZONE)
+    began = seed_history.build(day, days=1, topics=(topic,), per_day=1)
+    first = began[0]
+    lesson = first["lessons"][0]
+    lesson["passed_on"] = day.isoformat()
+    first["completed"] = False
+    link = {"n": lesson["n"], "title": lesson["title"], "unit": lesson.get("unit", ""), "from": first["date"],
+            "completed": True}
+    today_entry = dict(first, date=day.isoformat(), completed=True, reflection="", lessons=[link])
+    (tmp_path / "log.json").write_text(json.dumps({"version": 1, "entries": [first, today_entry], "books": []}))
+    at.session_state[f"lesson_{day.isoformat()}_{topic}"] = None
+    loads(at, "views/daily.py")
+    at.button(key=f"reflect_{day}_jol3").click().run()
+    assert not at.exception, [e.value for e in at.exception]
+    stored = {e["date"]: e for e in json.loads((tmp_path / "log.json").read_text())["entries"]}
+    assert stored[first["date"]]["lessons"][0]["session"]["jol"] == 3
+
+
 def test_progress_shows_what_another_device_saved_since(monkeypatch, tmp_path):
     """ISS-030: Progress (its figures and its backup) showed this session's
     copy of the record, older than what another device had saved."""

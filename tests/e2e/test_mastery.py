@@ -73,10 +73,10 @@ def signals(app, email):
 
 
 def skill_of(p, app, title):
-    """The skill map's word for one idea."""
-    flows.open_app(p, app, "/skills")
-    assert flows.wait_text(p.page, "Knowledge Map")
-    row = p.page.locator(".sk-ideas li", has_text=title).first
+    """The learning map's word for one idea."""
+    flows.open_app(p, app, "/course?subject=philosophy")
+    assert flows.wait_text(p.page, "lessons passed")
+    row = p.page.locator(".cm-row", has_text=title).first
     return row.locator(".sk-chip").text_content().strip()      # (its words, not their shown capitals)
 
 
@@ -96,12 +96,12 @@ def review_all(p):
             flows.button(p, "I knew it")
             continue
         flows.answer_all(p, correct=True)
-        flows.button(p, "Check")
+        flows.button(p, "Fairly sure")
     raise AssertionError("review never finished")
 
 
 def test_an_idea_rises_fades_and_practice_brings_it_back(public_app, pages, clock):
-    covers("W-daily-today_skills", "W-skills-sk_course", "W-daily-today_practice", "W-practice-pr_start",
+    covers("W-practice-pr_start",
            "W-practice-check", "W-practice-pr_next", "W-practice-pr_map", "W-practice-pr_today",
            "D-practice-save_day", "W-skills-sk_practice")
     app = public_app
@@ -116,15 +116,12 @@ def test_an_idea_rises_fades_and_practice_brings_it_back(public_app, pages, cloc
     flows.open_app(p, app, "/review")
     review_all(p)
     assert skill_of(p, app, L1) == "Solid"
-    flows.button(p, "Course map")
-    assert flows.wait_text(p.page, "lessons passed")
-    assert p.page.locator(".cm-row .sk-chip", has_text="Solid").count() >= 1, "the course map shows it too"
+    assert p.page.locator(".cm-row .sk-chip", has_text="Solid").count() >= 1, "the learning map shows it"
     # three weeks without it: it fades, and Today offers practice
     day(clock, D + timedelta(days=22))
     assert skill_of(p, app, L1) == "Learning · fading"
     flows.open_app(p, app)
-    assert flows.wait_text(p.page, "Practice · 1 idea to strengthen")
-    flows.button(p, "Practice · 1 idea to strengthen", exact=False)
+    flows.go(p, app, "Practice")
     assert flows.wait_text(p.page, "FOCUS FOR TODAY") and L1 in text(p) and "2 short exercises" in text(p)
     app.reset_calls()
     flows.button(p, "Start practice", wait=False)
@@ -146,8 +143,8 @@ def test_an_idea_rises_fades_and_practice_brings_it_back(public_app, pages, cloc
     assert len(ev) == 2, f"one piece of evidence per answer, never two: {ev}"
     assert signals(app, email).get("practice_done") == 1
     assert "That's all the practice ready for today" in text(p), "twice an idea a day: never a loop on one"
-    flows.button(p, "Knowledge map")
-    assert flows.wait_text(p.page, "Knowledge Map")
+    flows.button(p, "Learning map")
+    assert flows.wait_text(p.page, "lessons passed")
 
 
 def test_every_kind_answered_wrong_or_partly_says_exactly_what_was_wrong(public_app, pages, clock):
@@ -157,18 +154,13 @@ def test_every_kind_answered_wrong_or_partly_says_exactly_what_was_wrong(public_
     day(clock, D)
     p, email = person(app, pages, width=390, pace="Light")
     flows.start_lesson(p)
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "Submit answers", 40)
     flows.idle(p.page)
     t = text(p).upper()
-    for kind in ("MULTIPLE CHOICE", "SCENARIO", "FILL IN THE BLANK", "PUT IN ORDER", "MATCHING",
-                 "IN YOUR OWN WORDS", "APPLY IT TO YOUR LIFE"):
+    for kind in ("MULTIPLE CHOICE", "SCENARIO", "FILL IN THE BLANK", "PUT IN ORDER", "MATCHING", "SPOT THE MISTAKE"):
         assert kind in t, f"{kind} missing"
     flows.answer_all(p, correct=False)
-    areas = p.page.locator('textarea[placeholder^="Answer in a sentence"]')
-    areas.first.fill("The Sun goes away at the end of each day.")      # partly right
-    p.page.keyboard.press("Tab")
-    flows.idle(p.page)
     flows.button(p, "Submit answers", wait=False)
     assert flows.wait_text(p.page, "You need 80%", 40)
     t = text(p)
@@ -176,11 +168,8 @@ def test_every_kind_answered_wrong_or_partly_says_exactly_what_was_wrong(public_
     assert "You wrote “banana”; the word that fits is “axis”." in t
     assert "out of place. The order is: Taipei turns toward the Sun → The Sun rises in Taipei" in t
     assert "0 of 4 pairs right" in t and "“Axis” goes with “The line Earth spins around”" in t
-    assert "What's missing: On the right track" in t, "partly right, and what to add"
-    assert "Why it's marked wrong: It doesn't mention Earth's spin." in t
-    assert "◐" in t and "✗" in t
-    stored = slots(app, email)[1]["quiz"]
-    assert 0.5 in stored["marks"], "a partly right answer is half a point"
+    assert "Line 1 is right as it is. The mistake is in line 2" in t, "the mistake to spot, and where it was"
+    assert "✗" in t
     assert signals(app, email).get("missed") == 1
 
 
@@ -192,11 +181,11 @@ def test_a_shaky_earlier_idea_comes_back_in_the_next_lessons_quiz(public_app, pa
     p, email = person(app, pages, width=1440)
     flows.start_lesson(p)
     flows.take_quiz(p, correct=False)                         # lesson 1 shaky: wrong first...
-    flows.take_quiz(p, correct=True, start="Try a new quiz")  # ...then passed
+    flows.take_quiz(p, correct=True, start="Try a new set")  # ...then passed
     flows.button(p, "Next lesson →")
     app.reset_calls()
     flows.start_lesson(p)
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "Submit answers", 40)
     assert flows.wait_text(p.page, f"From an earlier lesson (Lesson 1: {L1})"), "one question on the shaky idea"
     assert len(app.calls("quiz")) == 1, "in the same call"
@@ -214,8 +203,8 @@ def test_explaining_it_back_good_poor_empty_and_once_a_day(public_app, pages, cl
     app = public_app
     app.set_llm()
     day(clock, D)
-    p, email = person(app, pages, width=820)
-    flows.pass_lesson(p)
+    p, email = person(app, pages, width=820, pace="Light")     # (one lesson a day: no unit ends in the two days)
+    flows.pass_day(p)                                   # (at the day's close)
     assert flows.wait_text(p.page, "EXPLAIN IT BACK") or flows.wait_text(p.page, "Explain it back")
     box = p.page.locator(".st-key-explain_back textarea")
     app.reset_calls()
@@ -237,16 +226,15 @@ def test_explaining_it_back_good_poor_empty_and_once_a_day(public_app, pages, cl
     flows.button(p, "Send", wait=False)
     assert flows.wait_text(p.page, "Yes: the spin is smooth and steady.", 30)
     assert len(app.calls("explain")) == 1 and len(app.calls("explain_follow")) == 1
-    kept = slots(app, email)[1]["explain"]                    # kept with the lesson (the course map shows it)
+    kept = next(x["explain"] for x in slots(app, email).values() if x.get("explain"))   # kept with the day's last lesson
     assert kept["reply_feedback"]["score"] == 1.0 and kept["feedback"]["question"]
-    # lesson 2, the same day: one explanation a day
-    flows.button(p, "Next lesson →")
-    flows.pass_lesson(p)
+    # the same day again: one explanation a day
+    flows.open_app(p, app)
     assert "Get feedback" not in text(p), "once a day"
     # the next day, a poor one
     day(clock, D + timedelta(days=1))
     flows.open_app(p, app)
-    flows.pass_lesson(p)
+    flows.pass_day(p)
     box = p.page.locator(".st-key-explain_back textarea")
     box.fill("Turtles are lovely animals that swim slowly in warm seas.")
     p.page.keyboard.press("Tab")
@@ -254,7 +242,7 @@ def test_explaining_it_back_good_poor_empty_and_once_a_day(public_app, pages, cl
     assert flows.wait_text(p.page, "Not there yet.", 30)
     assert "What to add: Say what causes day and night" in text(p)
     s = slots(app, email)
-    assert [e["s"] for e in s[1]["ev"] if e["k"] == "explain"] == [1.0, 1.0]
+    assert sorted(e["s"] for x in s.values() for e in x.get("ev", []) if e["k"] == "explain") == [0.0, 1.0, 1.0], "good, its follow-up, and the poor one"
     assert signals(app, email).get("explained") == 2
 
 
@@ -264,7 +252,7 @@ def test_the_explain_call_failing_keeps_her_words_and_offers_retry(public_app, p
     app.set_llm()
     day(clock, D)
     p, email = person(app, pages, width=1180, pace="Light")
-    flows.pass_lesson(p)
+    flows.pass_day(p)
     words = "Earth spins on its axis, so the Sun seems to rise and set each day."
     p.page.locator(".st-key-explain_back textarea").fill(words)
     p.page.keyboard.press("Tab")

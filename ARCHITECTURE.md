@@ -687,6 +687,16 @@ All in `coach/style.py`, tokens in `:root`; the existing typefaces are kept.
 - Goals: `tests/test_goals.py` (paths, catalog, turns, the prompt, the AI
   call rules, the numbers), `tests/test_goal_pages.py` (every goal page and
   flow, no browser), `tests/e2e/test_goals.py` (in a browser).
+- The learning system (ISS-110): `tests/test_learner.py` (the knowledge
+  tracing and memory model), `tests/test_session_loop.py` (quick checks,
+  guided practice and its fading, warm-up and mixed sets, the gate, the
+  diagnostic, the capstone), `tests/test_progression_pages.py`,
+  `tests/test_learnmetrics.py`; in a browser `tests/e2e/test_learning_loop.py`
+  (the first day and the next at all four widths, light and dark; a busy day
+  and coming back; where to start and the shared bank; the gate and its
+  corrective path; the capstone; the learning dashboard), screenshots
+  `L01`–`L41`. In the browser tests written before it, `flows.open_app`
+  skips Home's warm-up (they are about what comes after it).
 - `tests/e2e/` (Playwright, a fake Supabase and Groq, a settable clock):
   flows, two accounts, personas, odd input, accessibility, screenshots at
   390 / 820 / 1180 / 1440 light and dark, visual baselines

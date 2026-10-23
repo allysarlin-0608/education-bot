@@ -35,10 +35,6 @@ def test_odd_input_everywhere(public_app, pages, width):
     sideways = page.evaluate("document.documentElement.scrollWidth - window.innerWidth")
     main = page.evaluate("(() => { const m = document.querySelector('[data-testid=stMain]'); return m.scrollWidth - m.clientWidth; })()")
     assert sideways <= 1 and main <= 1, f"a long word pushed the page sideways ({sideways}, {main})"
-    flows.open_panel(p, "My thoughts")
-    page.get_by_label("Question to explore").fill(ODD)
-    flows.button(p, "Save my thoughts")
-    assert flows.wait_text(page, "Saved.", 10)
     flows.button(p, "Search", exact=False)
     q = page.get_by_placeholder("Lessons, goals, review cards, books, your notes…")
     for query in ("🌍", "<script>alert(1)</script>", "轉", LONG[:500]):

@@ -52,7 +52,7 @@ def test_the_path_a_lesson_read_again_and_continue(public_app, pages, clock, wid
     flows.take_quiz(p, correct=False)                      # Lesson 2 written, not passed
     clock(D + timedelta(days=2), "02:00:00")
     flows.open_app(p, app)
-    flows.button(p, "Course map", exact=False)
+    flows.button(p, "Learning map", exact=False)
     assert "/course" in page.url and "subject=fashion" in page.url
     assert flows.wait_text(page, "1 of 260 lessons passed", 10)
     t = text(p)
@@ -78,7 +78,7 @@ def test_the_path_a_lesson_read_again_and_continue(public_app, pages, clock, wid
     flows.idle(page, 40)
     assert flows.wait_text(page, "1 of 260 lessons passed", 15) and "subject=fashion" in page.url
     flows.button(p, "Continue · Lesson 2", exact=False)
-    assert flows.wait_text(page, "Try a new quiz", 15), "Continue opens today's lesson"
+    assert flows.wait_text(page, "Try a new set", 15), "Continue opens today's lesson"
 
 
 def test_the_ways_in_and_a_subject_that_is_not_today(public_app, pages, clock):
@@ -107,10 +107,10 @@ def test_the_ways_in_and_a_subject_that_is_not_today(public_app, pages, clock):
     assert flows.wait_text(page, "Lessons 11–15", 5) or "Lessons" in text(p)
     # from Settings and from the subject's world
     flows.open_app(p, app, "/settings")
-    flows.button(p, "Course map", exact=False)
+    flows.button(p, "Learning map", exact=False)
     assert "/course" in page.url
     flows.open_app(p, app, "/subject?subject=cosmos")
-    flows.button(p, "Course map", exact=False)
+    flows.button(p, "Learning map", exact=False)
     assert "subject=cosmos" in page.url and flows.wait_text(page, "Next: Lesson 1", 10)
     # many lessons passed: the finished topics fold into one line
     from seed_history import build
@@ -142,7 +142,7 @@ def test_every_way_in_on_every_device(public_app, pages, clock, width):
         assert "Traceback" not in text(p) and "Error" not in text(p)
 
     flows.open_app(p, app)                                          # Today
-    flows.button(p, "Course map", exact=False)
+    flows.button(p, "Learning map", exact=False)
     on_map()
     flows.open_app(p, app, "/records")                              # Progress → Subjects
     page.get_by_role("radio", name="Subjects").or_(page.get_by_role("button", name="Subjects", exact=True)).first.click()
@@ -151,10 +151,10 @@ def test_every_way_in_on_every_device(public_app, pages, clock, width):
     flows.idle(page)
     on_map()
     flows.open_app(p, app, "/settings")                             # Settings
-    flows.button(p, "Course map", exact=False)
+    flows.button(p, "Learning map", exact=False)
     on_map()
     flows.open_app(p, app, "/subject?subject=fashion")              # the subject's world
-    flows.button(p, "Course map", exact=False)
+    flows.button(p, "Learning map", exact=False)
     on_map()
     # the map: where she is, the finished topic folded, a finished lesson read again, back to the current one
     assert "YOU ARE HERE" in text(p).upper()
@@ -172,4 +172,6 @@ def test_every_way_in_on_every_device(public_app, pages, clock, width):
     flows.idle(page)
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"), "no sideways scroll"
     flows.button(p, "Continue · Lesson", exact=False)
-    assert flows.wait_text(page, "Start this lesson", 15), "Continue goes back to the current lesson"
+    flows.skip_warmup(p)                    # (if the day's warm-up is still there)
+    assert flows.wait_text(page, "Start this lesson", 15) or flows.wait_text(page, "Take the unit check", 2), \
+        "Continue goes back to the current lesson (or the unit check that stands before it)"

@@ -191,10 +191,10 @@ def test_a_second_goal_takes_its_turn_and_can_be_paused(public_app, pages, clock
     flows.button(p, "Pause")
     assert flows.wait_text(p.page, "paused")
     flows.open_app(p, app)
-    assert "Reading financial statements" not in text(p).split("Course map")[0], "a paused goal leaves the turns"
+    assert "Reading financial statements" not in text(p).split("Learning map")[0], "a paused goal leaves the turns"
     flows.open_app(p, app, "/settings")
     flows.button(p, "Resume")
-    flows.tap(p, p.page.locator('[class*="st-key-setgoal_"]').get_by_role("button", name="Course map"))
+    flows.tap(p, p.page.locator('[class*="st-key-setgoal_"]').get_by_role("button", name="Learning map"))
     flows.idle(p.page)
     assert flows.wait_text(p.page, "By the end you will be able to"), "the goal's course map"
     goals = mine(app, email, "learning_paths")

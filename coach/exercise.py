@@ -17,7 +17,7 @@ def label(k, item) -> str:
 
 
 def kind_tag(item) -> None:
-    st.html(f'<p class="ex-kind">{escape(quiz.KIND_NAMES.get(item["type"], ""))}</p>')
+    st.html(f'<p class="ex-kind">{escape(tr(quiz.KIND_NAMES[item["type"]]) if item["type"] in quiz.KIND_NAMES else "")}</p>')
 
 
 def field(item: dict, key: str, value=None, k: int = None, tag: bool = True):

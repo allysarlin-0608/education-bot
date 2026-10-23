@@ -52,7 +52,7 @@ def test_offline_and_back_keeps_the_answers(public_app, pages):
     app = public_app
     p = person(app, pages)
     flows.start_lesson(p)
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "Submit answers", 40)
     flows.idle(p.page)
     flows.tap(p, p.page.locator('[data-testid="stRadio"]').first.get_by_text("Solar flares", exact=True))
@@ -80,14 +80,9 @@ def test_a_failed_save_says_so_and_the_next_one_catches_up(public_app, pages):
     assert entries(app, p.email) == [], "the injected failure didn't happen"
     # the next save writes the whole entry, lesson included
     flows.idle(p.page)
-    p.page.get_by_text("My thoughts on the question to explore", exact=False).click()
-    flows.idle(p.page)
-    p.page.get_by_label("Question to explore").fill("A thought.")
-    p.page.keyboard.press("Tab")
-    flows.button(p, "Save my thoughts")
-    assert flows.wait_text(p.page, "Saved.", 10)
+    flows.practise(p)                     # moving on saves the day
     saved = entries(app, p.email)
-    assert len(saved) == 1 and saved[0]["reflection"] == "A thought."
+    assert len(saved) == 1
     lessons = saved[0]["lessons"]
     assert lessons[0]["lesson"], "the lesson written while the save failed was caught up"
 

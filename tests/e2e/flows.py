@@ -12,12 +12,13 @@ def _visible_text(page):
     return page.evaluate("document.body.innerText")
 
 
-def wait_text(page, text, timeout=20):
-    """True once text is in the visible page (innerText skips hidden parts)."""
+def wait_text(page, text, timeout=20, ci=False):
+    """True once text is in the visible page (innerText skips hidden parts;
+    `ci`: in any case, for a label the page shows in capitals)."""
     end = time.time() + timeout
     while time.time() < end:
         try:
-            if text in _visible_text(page):
+            if (text.lower() in _visible_text(page).lower()) if ci else text in _visible_text(page):
                 return True
         except Exception:
             pass
@@ -104,14 +105,25 @@ def timed_click(p, action, locator, done, timeout=30):
 
 
 # ---- signing in -------------------------------------------------------------
-def open_app(p, app, path="/"):
+def open_app(p, app, path="/", warmup=False):
     """Load a page (a new session). A personal app asks for its password
-    again on every load, as it always has; that's entered here."""
+    again on every load, as it always has; that's entered here. Home's
+    warm-up (earlier ideas recalled first) is skipped unless `warmup`: the
+    tests written before it are about what comes after."""
     p.page.goto(app.url + path)
     idle(p.page, 40)
     if app.mode == "personal" and p.page.get_by_label("Password", exact=True).count():
         p.page.get_by_label("Password", exact=True).fill("pw")
         button(p, "Enter")
+        idle(p.page)
+    if not warmup and path.split("?")[0] in ("/", ""):
+        skip_warmup(p)
+
+
+def skip_warmup(p):
+    skip = p.page.locator(".st-key-ss_warmup_skip button")
+    if skip.count() and skip.first.is_visible():
+        tap(p, skip.first)
         idle(p.page)
 
 
@@ -208,6 +220,8 @@ def go(p, app, name):
         idle(p.page)
     else:
         menu(p, FULL.get(name, name))
+    if name == "Home":
+        skip_warmup(p)
 
 
 def open_menu(p):
@@ -226,9 +240,21 @@ def menu(p, label):
 
 # ---- lessons and quizzes ----------------------------------------------------
 def start_lesson(p):
-    button(p, "Start this lesson", wait=False)
-    assert wait_text(p.page, "Next: practise it", 40), "the lesson didn't finish"
-    idle(p.page)
+    """Start the lesson (unless it was written in the background during the
+    warm-up: then it is there already, or arrives while she looks)."""
+    page = p.page
+    start = page.get_by_role("button", name="Start this lesson", exact=True)
+    end = time.time() + 40
+    while time.time() < end and "Next: practise it" not in _visible_text(page):
+        if start.count() and start.first.is_visible():
+            try:
+                start.first.click(timeout=3000) if p.width >= TOUCH_W else start.first.tap(timeout=3000)
+            except PlaywrightTimeout:       # (redrawn as she pressed: look again)
+                continue
+            break
+        page.wait_for_timeout(200)
+    assert wait_text(page, "Next: practise it", 40), "the lesson didn't finish: " + _visible_text(page)[-1500:]
+    idle(page)
 
 
 def practise(p, correct=True):
@@ -259,6 +285,16 @@ def practise(p, correct=True):
     idle(page)
 
 
+def to_check(p, start=True):
+    """From the lesson straight to the check ("I know this"), and start it
+    (unless it was written while she read: then it is already there)."""
+    page = p.page
+    button(p, "I know this: straight to the check", wait=False)
+    idle(page)
+    if start and not wait_text(page, "Submit answers", 2):
+        button(p, "Start the check", wait=False)
+
+
 MEANINGS = {"Axis": "The line Earth spins around", "Rotation": "One spin a day", "Orbit": "One trip around the Sun",
             "Sunrise": "When the Sun comes into view"}
 STEPS = {"1st": "Taipei turns toward the Sun", "2nd": "The Sun rises in Taipei", "3rd": "Taipei turns away: night falls"}
@@ -267,6 +303,9 @@ STEPS = {"1st": "Taipei turns toward the Sun", "2nd": "The Sun rises in Taipei",
 def take_quiz(p, correct=True, start="Start the check", before_submit=None):
     """Answer the (fake) quiz, every kind of question: all right, or all wrong."""
     page = p.page
+    if page.get_by_role("button", name="I know this: straight to the check", exact=True).count():
+        button(p, "I know this: straight to the check", wait=False)      # (still on the lesson)
+        idle(page)
     if not wait_text(page, "Submit answers", 2):       # (written while she read: already there)
         button(p, start, wait=False)
     assert wait_text(page, "Submit answers", 40), "the quiz didn't appear"
@@ -308,6 +347,11 @@ def answer_all(p, correct=True, scope=None):
     blanks = root.locator('input[placeholder="The missing word or phrase"]')
     for j in range(blanks.count()):
         blanks.nth(j).fill("axis" if correct else "banana")
+        page.keyboard.press("Tab")
+        page.wait_for_timeout(150)
+    gaps = root.locator('input[placeholder="What goes in the gap"]')
+    for j in range(gaps.count()):
+        gaps.nth(j).fill("away" if correct else "banana")
         page.keyboard.press("Tab")
         page.wait_for_timeout(150)
     areas = root.locator('textarea[placeholder^="Answer in a sentence"], textarea[placeholder^="One real example"]')
@@ -360,6 +404,29 @@ def pass_lesson(p):
     start_lesson(p)
     practise(p)
     take_quiz(p, correct=True)
+
+
+def reflect(p, thought="", sure="Mostly"):
+    """The day's close: the one thing she takes from today, and whether she'll
+    remember it next week."""
+    page = p.page
+    assert wait_text(page, "Will you remember today's idea next week?", 20), "no reflection at the day's close"
+    if thought:
+        page.get_by_placeholder("In a sentence…").fill(thought)
+        page.keyboard.press("Tab")
+        idle(page)
+    button(p, sure)
+    assert wait_text(page, "Reflection saved", 10)
+
+
+def pass_day(p):
+    """Every lesson of the day passed, on to the day's close."""
+    pass_lesson(p)
+    while p.page.get_by_role("button", name="Next lesson →").count():
+        button(p, "Next lesson →")
+        pass_lesson(p)
+    button(p, "Finish today →")
+    assert wait_text(p.page, "Today's done", 20)
 
 
 def open_panel(p, label):

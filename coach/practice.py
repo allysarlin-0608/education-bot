@@ -39,8 +39,9 @@ MAKE_PER_DAY = 1               # sets of new exercises the model writes a day
 MAKE_PER_IDEA = 2
 EXPLAIN_PER_DAY = 1
 MIN_WORDS = 6                  # an explanation shorter than this isn't sent
-EASY = ("choice", "match", "scenario", "blank", "order")       # an idea still being learned
-HARD = ("blank", "order", "scenario", "match", "choice")        # one that is fading or solid
+# (every kind in quiz.LOCAL: a kind left out would stop the sort below)
+EASY = ("choice", "problem", "match", "scenario", "blank", "steps", "order", "spot")   # an idea still being learned
+HARD = ("spot", "blank", "problem", "order", "steps", "scenario", "match", "choice")   # one that is fading or solid
 
 
 def qid(q: dict) -> str:

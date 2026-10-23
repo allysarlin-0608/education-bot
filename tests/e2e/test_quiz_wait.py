@@ -23,11 +23,11 @@ def one_learner(app, pages, read_for):
     flows.onboard(p, subjects=("Philosophy",))
     app.set_llm(delay=DELAY, quiz_flag_first=True)
     flows.button(p, "Start this lesson", wait=False)
-    assert flows.wait_text(p.page, "Take the quiz", 90), "the lesson didn't finish"
+    assert flows.wait_text(p.page, "Next: practise it", 90), "the lesson didn't finish"
     flows.idle(p.page)
     p.page.wait_for_timeout(read_for * 1000)
     t0 = time.monotonic()
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "Submit answers", 120), "the quiz didn't appear"
     waited = time.monotonic() - t0
     assert "Traceback" not in text(p)

@@ -33,7 +33,7 @@ def text(p):
 
 @pytest.mark.parametrize("away", [0, 14], ids=["day 10, back the next day", "back after two weeks"])
 def test_coming_back(public_app, pages, clock, away):
-    covers("W-daily-today_review", "W-daily-start_this_lesson")
+    covers("W-daily-start_this_lesson")
     app = public_app
     clock(TODAY, "02:00:00")
     p = pages(width=1180)

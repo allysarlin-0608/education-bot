@@ -45,10 +45,10 @@ def lessons_of(entry):
 
 @pytest.mark.parametrize("mode", ["public", "personal"])
 def test_a_whole_day(mode, pages, request):
-    covers("W-daily-next_lesson", "W-daily-next_lesson-2", "W-daily-see_the_quiz", "W-daily-key", "W-daily-keys_j",
+    covers("W-daily-next_lesson", "W-daily-next_lesson-2", "W-daily-see_the_check", "W-daily-key", "W-daily-keys_j",
            "W-daily-key-2", "W-daily-submit", "D-daily-save_entry-3", "D-daily-save_entry-4",
            "D-daily-save_entry-5", "D-daily-save_entry-6", "D-daily-save_entry-7", "D-daily-save_day", "D-daily-save_day-3",
-           "W-daily-take_the_quiz_if_q_is_none_else_try_a_ne", "AI-daily-ask_json", "D-ui-save_entry")
+           "W-daily-take_check", "AI-daily-ask_json", "D-ui-save_entry")
     app = request.getfixturevalue(f"{mode}_app")
     if mode == "personal":
         (app.state / "learning_log.json").unlink(missing_ok=True)
@@ -62,17 +62,18 @@ def test_a_whole_day(mode, pages, request):
         n += 1
         t = text(p)
         assert "Passed with 100%" in t
-        p.page.get_by_text("See the quiz", exact=True).click()
+        p.page.get_by_text("See the check", exact=True).click()
         assert flows.wait_text(p.page, "Your answer: It spins on its axis", 5), "the explanations are there"
         if p.page.get_by_role("button", name="Next lesson →").count():
             flows.button(p, "Next lesson →")
             assert flows.wait_text(p.page, f"Lesson {n + 1}", 10)
             continue
-        flows.button(p, "See today's summary →")
+        flows.button(p, "Finish today →")
         break
     assert flows.wait_text(p.page, "Today's done")
     t = text(p)
-    assert f"All {n} lessons passed" in t and "Current streak: 1 day" in t
+    assert (f"All {n} lessons passed" if n > 1 else "The lesson is passed") in t
+    assert "streak" not in t.lower(), "the streak is in the Learning Record, not Home"
     entries = stored_entries(app, email)
     assert len(entries) == 1, entries
     stored = lessons_of(entries[0])
@@ -83,7 +84,7 @@ def test_a_whole_day(mode, pages, request):
 
 
 def test_a_failed_quiz_shows_what_was_missed_and_a_new_set(public_app, pages):
-    covers("W-daily-see_what_you_missed", "W-daily-take_the_quiz_if_q_is_none_else_try_a_ne")
+    covers("W-daily-see_what_you_missed", "W-daily-take_check")
     app = public_app
     app.quiz_prep(False)                    # the new set written on the press, counted below
     p, email = fresh(app, pages)
@@ -91,11 +92,11 @@ def test_a_failed_quiz_shows_what_was_missed_and_a_new_set(public_app, pages):
     flows.take_quiz(p, correct=False)
     t = text(p)
     assert "You need 80%" in t and "See what you missed" in t
-    assert "Why it's marked wrong" in t and "A good answer" in t
+    assert "Read the lesson again" in t, "a way back to the lesson"
     q = lessons_of(stored_entries(app, email)[0])[0]["quiz"]
     assert f"{q['score']}%" in t and q["score"] < 80
     app.reset_calls()
-    flows.button(p, "Try a new quiz", wait=False)
+    flows.button(p, "Try a new set", wait=False)
     assert flows.wait_text(p.page, "Submit answers", 40)
     assert len(app.calls("quiz")) == 1
 
@@ -105,12 +106,12 @@ def test_answers_survive_a_reload(public_app, pages):
     app = public_app
     p, email = fresh(app, pages)
     flows.start_lesson(p)
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "Submit answers", 40)
     flows.idle(p.page)
     first = p.page.locator('[data-testid="stRadio"]').first
     flows.tap(p, first.get_by_text("Solar flares", exact=True))
-    p.page.locator('textarea[placeholder^="Answer in a sentence"]').first.fill("Because it spins.")
+    p.page.locator('input[placeholder="The missing word or phrase"]').first.fill("spin")
     p.page.keyboard.press("Tab")
     flows.idle(p.page)
     p.page.wait_for_timeout(500)
@@ -119,7 +120,7 @@ def test_answers_survive_a_reload(public_app, pages):
     first = p.page.locator('[data-testid="stRadio"]').first
     assert first.locator("input:checked").count() == 1
     assert first.get_by_role("radio", name="Solar flares").is_checked(), "a chosen answer was lost on reload"
-    assert p.page.locator('textarea[placeholder^="Answer in a sentence"]').first.input_value() == "Because it spins."
+    assert p.page.locator('input[placeholder="The missing word or phrase"]').first.input_value() == "spin"
 
 
 def test_submitting_with_open_questions_names_them(public_app, pages):
@@ -127,47 +128,52 @@ def test_submitting_with_open_questions_names_them(public_app, pages):
     app = public_app
     p, _ = fresh(app, pages)
     flows.start_lesson(p)
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "Submit answers", 40)
     flows.idle(p.page)
     flows.button(p, "Submit answers")
-    assert flows.wait_text(p.page, "Answer every question first (still open: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)")
+    assert flows.wait_text(p.page, "Answer every question first (still open: 1, 2, 3, 4, 5, 6)")
 
 
 def test_marking_fails_then_mark_my_answers(public_app, pages):
+    """A quiz from before, submitted with a written answer the marking of
+    which didn't go through: marked when she presses, retried on a failure."""
     covers("W-daily-mark_my_answers", "W-daily-coach_retry", "AI-quizgen-ask_json-4")
+    from datetime import date
     app = public_app
-    p, email = fresh(app, pages)
-    flows.start_lesson(p)
-    flows.button(p, "Take the quiz", wait=False)
-    assert flows.wait_text(p.page, "Submit answers", 40)
-    app.set_llm(mode="500")                               # the marking call fails
-    flows.idle(p.page)
-    page = p.page
-    flows.answer_all(p, correct=True)
-    flows.idle(page)
-    flows.button(p, "Submit answers", wait=False)
-    assert flows.wait_text(page, "busy", 40)
-    assert "Your answers are saved" in text(p)
-    stored = lessons_of(stored_entries(app, email)[0])[0]["quiz"]
-    assert stored["answers"] is not None, "the answers were kept for marking"
-    app.set_llm()
-    flows.button(p, "Retry", wait=False)
-    assert flows.wait_text(page, "Passed with 100%", 40)
+    day = date(2026, 11, 2)
+    app.set_clock(day, "02:00:00")
+    try:
+        p, email = fresh(app, pages)
+        qs = [{"type": "choice", "question": f"Seeded question {k + 1}?", "options": ["Right", "Wrong", "Also wrong", "No"],
+               "answer": 0, "why": "Seeded."} for k in range(9)]
+        qs.append({"type": "short", "question": "Why do we have day and night?", "answer": "Earth spins.", "why": "."})
+        q = {"id": "old1", "version": 2, "questions": qs, "answers": [0] * 9 + ["Because Earth spins on its axis."],
+             "marks": [1] * 9 + [None], "feedback": [""] * 10, "score": None, "attempts": 0, "best": None, "draft": None}
+        slot = {"n": 1, "title": "What philosophy is", "unit": "", "kickoff": "k", "lesson": "【Key Idea】 Seeded key idea.",
+                "followups": [], "completed": False, "quiz": q}
+        app.seed_entries(email, [{"date": day.isoformat(), "topic": "philosophy", "session_number": 1, "level": "Beginner",
+                                  "completed": False, "title": "", "followup_question": "", "reflection": "",
+                                  "lesson": "", "followups": [], "kickoff": "", "lessons": [slot]}])
+        flows.open_app(p, app)
+        page = p.page
+        assert flows.wait_text(page, "Your answers are saved", 20)
+        app.set_llm(mode="500")                               # the marking call fails
+        flows.button(p, "Mark my answers", wait=False)
+        assert flows.wait_text(page, "busy", 40)
+        app.set_llm()
+        flows.button(p, "Retry", wait=False)
+        assert flows.wait_text(page, "Passed with 100%", 40)
+    finally:
+        app.set_clock(None)
 
 
 def test_reflection_is_saved(public_app, pages):
-    covers("W-daily-my_thoughts_on_the_question_to_explore_o", "W-daily-reflection", "W-daily-save_my_thoughts",
-           "D-daily-save_entry-8")
+    covers("W-daily-reflect", "W-session_ui-jol", "D-daily-save_day-5")
     app = public_app
     p, email = fresh(app, pages)
-    flows.start_lesson(p)
-    p.page.get_by_text("My thoughts on the question to explore", exact=False).click()
-    box = p.page.get_by_label("Question to explore")
-    box.fill("  I think the air moves with us.  ")
-    p.page.keyboard.press("Tab")
-    flows.button(p, "Save my thoughts")
-    assert flows.wait_text(p.page, "Saved.", 5)
+    flows.pass_day(p)
+    flows.reflect(p, "  I think the air moves with us.  ")
     assert stored_entries(app, email)[0]["reflection"] == "I think the air moves with us."
 
 

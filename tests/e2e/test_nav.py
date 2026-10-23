@@ -65,7 +65,7 @@ def test_the_menu_reaches_every_part_and_shows_nothing_unbuilt(public_app, pages
     p, _, _ = person(app, pages)
     reached = {"Courses": ("/courses", "More subjects"),
                "Goals & Settings": ("/settings", "Daily pace"),
-               "Knowledge Map": ("/skills", "Knowledge Map"), "Review": ("/review", "Review"),
+               "Learning map": ("/course", "lessons passed"), "Review cards": ("/review", "Review"),
                "Practice": ("/practice", "Practice"), "Learning Record": ("/records", "Learning Record"),
                "Account": ("/account", "Profile"),
                "Home": ("/", "Start this lesson")}

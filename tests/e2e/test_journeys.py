@@ -69,21 +69,21 @@ def test_a_new_learner_from_sign_in_to_her_second_day(public_app, pages, width):
     assert "Check it yourself" in sound(p, "lesson")
     flows.take_quiz(p, correct=False)
     assert "You need 80%" in sound(p, "quiz failed")
-    flows.take_quiz(p, correct=True, start="Try a new quiz")
+    flows.take_quiz(p, correct=True, start="Try a new set")
     assert "Passed with" in sound(p, "quiz passed")
     while p.page.get_by_role("button", name="Next lesson →").count():
         flows.button(p, "Next lesson →")
         flows.pass_lesson(p)
-    flows.button(p, "See today's summary →")
+    flows.button(p, "Finish today →")
     assert "Today's done" in sound(p, "day done")
     app.set_clock(D + timedelta(days=1))
     flows.open_app(p, app)
     t = sound(p, "next day")
-    assert "Reading financial statements" in t and "Review ·" in t, "her goal again, and what's due"
+    assert "Reading financial statements" in t, "her goal again"
     goal = next(g["data"]["id"] for g in app.get("/__dump")["tables"]["learning_paths"]
                 if g["user_id"] == app.user_id(p.email))
-    for path, marker in (("/review", "Review"), (f"/course?subject={goal}", "COURSE MAP"),
-                         ("/skills", "Knowledge Map"), ("/records", "Learning Record"), ("/settings", "Goals & Settings"),
+    for path, marker in (("/review", "Review"), (f"/course?subject={goal}", "Learning map"),
+                         ("/skills", "Learning map"), ("/records", "Learning Record"), ("/settings", "Goals & Settings"),
                          ("/courses", "Courses"), ("/path", "Daily pace"), ("/account", "Profile"),
                          ("/practice", "Practice"), ("/week", "What you learned")):
         flows.open_app(p, app, path)

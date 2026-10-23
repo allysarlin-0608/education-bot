@@ -635,7 +635,8 @@ def build_app(access_ttl=3600):
         return JSONResponse({"id": auth.users[email]["id"]})
 
     async def dump(request):
-        return JSONResponse({"tables": {t: list(r.values()) for t, r in db.tables.items()},
+        return JSONResponse({"tables": {t: list(r.values()) for t, r in db.tables.items()}
+                             | {"learning_attempts": db.attempts, "shared_items": [dict(r, by=sorted(r["by"])) for r in db.items]},
                              "users": [{k: v for k, v in u.items() if k != "password"} | {"has_password": bool(u["password"])}
                                        for u in auth.users.values()]})
 

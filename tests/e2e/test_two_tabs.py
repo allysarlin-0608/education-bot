@@ -44,7 +44,7 @@ def test_a_lesson_started_in_one_tab_isnt_written_again_in_the_other(public_app,
     flows.idle(b.page, 40)
     assert len(app.calls("lesson")) == 1, f"the lesson was written twice: {app.calls()}"
     assert lessons(app, email)[0]["lesson"] == first
-    assert flows.wait_text(b.page, "Take the quiz", 20), "B shows the lesson A started"
+    assert flows.wait_text(b.page, "Next: practise it", 20), "B shows the lesson A started"
 
 
 def test_a_quiz_passed_in_one_tab_isnt_undone_by_the_other(public_app, pages):

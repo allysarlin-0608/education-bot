@@ -56,6 +56,14 @@ def test_midnight_with_the_page_open(public_app, pages, clock):
     assert [e["topic"] for e in saved] == ["philosophy", "cosmos"]
 
 
+def current_streak(p, app):
+    """The streak as the Learning Record shows it (Home doesn't: ISS-110)."""
+    flows.open_app(p, app, "/records")
+    figures = p.page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('.figure')].map(f =>
+        [f.querySelector('.figure-label').innerText.trim(), f.querySelector('.figure-value').innerText.replace(/\\s+/g, ' ').trim()]))""")
+    return figures["Current streak"]
+
+
 def test_a_completed_day_then_the_next_morning(public_app, pages, clock):
     covers("W-daily-next_lesson-2")
     app = public_app
@@ -66,14 +74,14 @@ def test_a_completed_day_then_the_next_morning(public_app, pages, clock):
     flows.onboard(p, pace="Light")                  # one lesson a day
     flows.open_app(p, app)
     flows.pass_lesson(p)
-    flows.button(p, "See today's summary →")
-    assert flows.wait_text(p.page, "Current streak: 1 day")
+    flows.button(p, "Finish today →")
+    assert flows.wait_text(p.page, "Today's done") and current_streak(p, app) == "1 day"
     clock(D + timedelta(days=1), "01:00:00")
     flows.open_app(p, app)
     assert flows.wait_text(p.page, "Start this lesson"), "a new day starts fresh"
     flows.pass_lesson(p)
-    flows.button(p, "See today's summary →")
-    assert flows.wait_text(p.page, "Current streak: 2 days")
+    flows.button(p, "Finish today →")
+    assert flows.wait_text(p.page, "Today's done") and current_streak(p, app) == "2 days"
     clock(D + timedelta(days=3), "01:00:00")        # a day missed
     flows.go(p, app, "Record")
     flows.open_app(p, app, "/records")
@@ -150,7 +158,7 @@ def test_a_lesson_not_passed_continues_the_next_day_on_the_same_record(public_ap
     page.keyboard.press("Enter")
     assert flows.wait_text(page, "And at the poles?", 30)
     flows.idle(page)
-    flows.take_quiz(p, correct=True, start="Try a new quiz")
+    flows.take_quiz(p, correct=True, start="Try a new set")
     assert app.calls("lesson") == [], "the lesson wasn't written again"
     saved = entries(app, email)
     assert [e["date"] for e in saved] == [D.isoformat(), nxt.isoformat()]
@@ -162,10 +170,11 @@ def test_a_lesson_not_passed_continues_the_next_day_on_the_same_record(public_ap
     assert second["from"] == D.isoformat() and second["completed"] is True
     assert not second.get("lesson") and not second.get("followups") and not second.get("quiz"), "no copy"
     assert saved[1]["completed"] is True and saved[0]["completed"] is False
-    flows.button(p, "See today's summary →")
-    assert flows.wait_text(page, "Current streak: 1 day")
+    flows.button(p, "Finish today →")
+    assert flows.wait_text(page, "Today's done")
     assert page.evaluate("() => [...document.querySelectorAll('.done-list .q')].map(e => e.innerText.trim())") == ["100%"], \
         "the summary shows the quiz from the original"
+    assert current_streak(p, app) == "1 day"
     # Progress: each lesson once per day, with where it came from / when it was passed
     flows.open_app(p, app, "/records")
     page.get_by_role("radio", name="Sessions").or_(page.get_by_role("button", name="Sessions", exact=True)).first.click()

@@ -43,7 +43,7 @@ def cards_of(app, email):
 
 @pytest.mark.parametrize("width", [1180, 390])
 def test_review_the_next_day(public_app, pages, clock, width):
-    covers("W-daily-today_review", "W-review-check", "W-daily-save_menu", "W-daily-save_point", "W-review-rv_view",
+    covers("W-practice_nav-key", "W-review-check", "W-daily-save_menu", "W-daily-save_point", "W-review-rv_view",
            "W-review-key", "W-review-rv_show", "W-review-rv_yes", "W-review-rv_next", "W-records-prog_review_open",
            "W-review-rv_query", "W-review-rv_kind", "W-review-rv_pause", "W-review-rv_del", "W-review-rv_del_yes",
            "D-review-save_entry", "D-review-save_entry-2", "D-review-save_entry-3")
@@ -68,34 +68,26 @@ def test_review_the_next_day(public_app, pages, clock, width):
     # the next day
     clock(D + timedelta(days=1), "02:00:00")
     app.reset_calls()
-    flows.open_app(p, app)
     n = len([c for c in cards])
-    assert flows.wait_text(page, f"Review · {n} cards due", 10)
-    flows.button(p, f"Review · {n} cards due", exact=False)
+    flows.open_app(p, app, warmup=True)
+    assert flows.wait_text(page, "Warm-up", 10, ci=True), "the next day starts by recalling earlier ideas"
+    flows.go(p, app, "Practice")
+    flows.tap(p, page.get_by_role("button", name="Review cards").or_(page.get_by_role("radio", name="Review cards")).first)
+    flows.idle(page)
     assert "/review" in page.url and flows.wait_text(page, f"0 done · {n} to go today", 10)
     page.wait_for_timeout(600)
     on = page.evaluate("() => [...document.querySelectorAll('.st-key-topnav [data-cx-on]')].map(a => a.innerText.trim())")
-    assert len(on) == 1 and on[0].endswith("Review"), f"the bar shows the page that is on: {on}"
+    assert len(on) == 1 and on[0].endswith("Practice"), f"the bar shows the section that is on: {on}"
     # a choice question: wrong on purpose, then right ones
     first = True
     for _ in range(n):
         flows.idle(page)
-        boxes = page.locator('[data-testid="stSelectbox"], input[placeholder="The missing word or phrase"]')
-        if page.locator('[data-testid="stRadio"]').count() == 0 and boxes.count():
-            flows.answer_all(p, correct=True)          # matching, steps in order, a blank
-            flows.button(p, "Check")
-            assert flows.wait_text(page, "Right.", 10)
-        elif page.locator('[data-testid="stRadio"]').count() == 0:
+        if page.get_by_role("button", name="Show the answer").count():          # a key point or a word
             flows.button(p, "Show the answer")
             flows.button(p, "I knew it")
-        else:
-            radio = page.locator('[data-testid="stRadio"]').first
-            opt = "Solar flares" if first else "It spins on its axis"
-            target = radio.get_by_text(opt, exact=True)
-            if target.count() == 0:
-                target = radio.locator("label").first
-            flows.tap(p, target)
-            flows.button(p, "Check")
+        else:                                       # an exercise of any kind: the first one wrong on purpose
+            flows.answer_all(p, correct=not first)
+            flows.button(p, "Fairly sure")
             assert flows.wait_text(page, "Not quite." if first else "Right.", 10)
             first = False
         flows.idle(page)
@@ -160,7 +152,7 @@ def test_matching_recall_not_yet_keep_and_show_more(public_app, pages, clock):
     boxes = page.locator('[data-testid="stSelectbox"]')
     flows.choose(p, boxes.nth(0), "The line Earth spins around")
     flows.choose(p, boxes.nth(1), "One trip around the Sun")
-    flows.button(p, "Check")
+    flows.button(p, "Fairly sure")
     assert flows.wait_text(page, "Right.", 10)
     flows.button(p, "Next card")
     flows.button(p, "Show the answer")
@@ -210,19 +202,18 @@ def test_lessons_from_before_review_come_back_and_the_bar_says_so(public_app, pa
     app.seed_entries(email, seed_history.build(first - timedelta(days=1), days=8))
     flows.open_app(p, app)
     page = p.page
-    assert flows.wait_text(page, "cards due", 10), "old lessons' cards are due on the first day"
     page.wait_for_timeout(800)
     dot = page.evaluate("() => [...document.querySelectorAll('.st-key-topnav [data-due]')].map(a => a.innerText.trim())")
-    assert len(dot) == 1 and dot[0].endswith("Review"), dot
+    assert len(dot) == 1 and dot[0].endswith("Practice"), dot
     assert cards_of(app, email) == [], "nothing is written for old lessons before she acts"
-    flows.go(p, app, "Review")
+    flows.open_app(p, app, "/review")
     assert "/review" in page.url
     flows.button(p, "Show the answer") if page.locator('[data-testid="stRadio"]').count() == 0 else None
     if page.get_by_role("button", name="I knew it").count():
         flows.button(p, "I knew it")
     else:
         flows.tap(p, page.locator('[data-testid="stRadio"]').first.locator("label").first)
-        flows.button(p, "Check")
+        flows.button(p, "Fairly sure")
     flows.idle(page)
     kept = cards_of(app, email)
     assert kept and len({c["n"] for c in kept}) == 1, "answering keeps that one lesson's cards"

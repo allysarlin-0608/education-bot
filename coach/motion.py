@@ -68,7 +68,9 @@ SCRIPT = r"""
     // the page that is on (it travels, and takes each word's width)
     { root: '.st-key-topnav_items', item: '[data-testid="stPageLink-NavLink"]', pages: true, target: 'p, [data-testid="stIconMaterial"]', cls: 'cx-line',
       shape: (b, r) => ({ x: b.x - 2, y: r.h - 1.5, w: b.w + 4, h: 1.5 }),
-      on: (items) => items.find((a) => a.getAttribute('href') && pathOf(a) === here()) || (here() === '/' ? items.find((a) => !a.getAttribute('href')) : null) },
+      // (Review cards is one of Practice's tabs: on it, Practice is the page on)
+      on: (items) => { const at = here() === '/review' ? '/practice' : here();
+        return items.find((a) => a.getAttribute('href') && pathOf(a) === at) || (at === '/' ? items.find((a) => !a.getAttribute('href')) : null); } },
     // switches (Progress's Day | Sessions | Subjects, a subject's starting
     // point): the lens slides along the track, over the words chosen
     { root: '.st-key-prog_view [data-testid="stButtonGroup"] > div', item: 'button', cls: 'cx-lens',
@@ -395,10 +397,24 @@ SCRIPT = r"""
     else { draw(g.root, s.b, reduced() ? 0 : 320); mark([...g.root.querySelectorAll(CONTROLS[0].item)], s.on); }   // or settles back
   }, { passive: true });
   // the navigation sits over the middle of the page's content (not of the
-  // window): with the sidebar open, that is to the right of the middle
+  // window): with the sidebar open, that is to the right of the middle; never
+  // so far right that its end runs under the app's own ⋮ menu (56px at the edge)
   const main = doc.querySelector('[data-testid="stMain"]');
-  const centre = () => { if (main) { const m = main.getBoundingClientRect(); doc.documentElement.style.setProperty('--cx-main', (m.left + m.width / 2) + 'px'); } };
-  if (main && w.ResizeObserver) new w.ResizeObserver(centre).observe(main);
+  const centre = () => {
+    if (!main) return;
+    const m = main.getBoundingClientRect();
+    const bar = doc.querySelector('.st-key-topnav');
+    const half = bar ? bar.getBoundingClientRect().width / 2 : 0;
+    const mid = m.left + m.width / 2;    // (on a phone the style sheet moves it instead)
+    const x = w.innerWidth > 640 ? Math.max(half + 8, Math.min(mid, w.innerWidth - 56 - half)) : mid;
+    doc.documentElement.style.setProperty('--cx-main', x + 'px');
+  };
+  if (main && w.ResizeObserver) {
+    const ro = new w.ResizeObserver(centre);
+    ro.observe(main);
+    const bar = doc.querySelector('.st-key-topnav');
+    if (bar) ro.observe(bar);
+  }
   centre();
   soon();
 })();

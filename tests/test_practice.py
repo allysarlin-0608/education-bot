@@ -214,3 +214,9 @@ def test_two_scenarios_asking_the_same_about_different_situations_are_both_kept(
               for k in range(quiz.QUESTIONS - 2)]
     assert quiz.assemble(others + [a, b]) is not None
     assert quiz.assemble(others + [a, a]) is None, "the very same one twice is a repeat"
+
+
+def test_every_kind_marked_at_once_has_a_place_in_a_practice_set():
+    """A lesson's check now holds a mistake to spot, worked steps and a problem
+    of her own: each is ordered in a set (one left out stopped the page)."""
+    assert set(practice.EASY) == set(practice.HARD) == set(quiz.LOCAL)

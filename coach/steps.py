@@ -8,7 +8,7 @@ values:
              says what unlocks it
 - viewing:   the one open on the page (with completed or current)
 """
-from coach.i18n import tr
+from coach.i18n import tr, trn
 
 COMPLETED, CURRENT, LOCKED = "completed", "current", "locked"
 
@@ -44,7 +44,7 @@ def label(plan):
     """The one line under the bar, e.g. "Lesson 2 of 5 · 1 done"."""
     now, total = current(plan), len(plan)
     if now is None:
-        return tr("All {total} lessons done", total=total)
+        return trn("{n} lesson done", "All {n} lessons done", total)
     return tr("Lesson {n} of {total} · {done} done", n=now + 1, total=total, done=done(plan))
 
 

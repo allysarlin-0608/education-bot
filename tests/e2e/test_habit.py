@@ -89,7 +89,7 @@ def test_a_long_break_a_warm_welcome_and_a_gentle_day(public_app, pages, clock):
     flows.open_app(p, app)
     assert p.page.locator('[class*="st-key-step_"] button').count() == 1, "one lesson today"
     flows.pass_lesson(p)
-    flows.button(p, "See today's summary →")
+    flows.button(p, "Finish today →")
     assert flows.wait_text(p.page, "Today's done")
 
 

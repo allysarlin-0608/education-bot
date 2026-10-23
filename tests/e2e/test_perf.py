@@ -193,26 +193,3 @@ def test_search(public_app, learner):
         flows.idle(page)
     record("search", xs, ACTION_P95)
     assert p95(xs) <= ACTION_P95, p95(xs)
-
-
-def test_save_thoughts(public_app, learner):
-    covers("W-daily-save_my_thoughts")
-    page = learner.page
-    page.goto(public_app.url + "/")
-    flows.idle(page)
-    if page.get_by_role("button", name="Start this lesson").count():     # the thoughts box comes with a lesson
-        flows.start_lesson(learner)
-    xs = []
-    page.get_by_text("My thoughts on the question to explore", exact=False).click()
-    for k in range(N):
-        page.get_by_label("Question to explore").fill(f"thought {k}")
-        page.keyboard.press("Tab")
-        flows.idle(page)
-        t0 = time.time()
-        page.get_by_role("button", name="Save my thoughts").click()
-        until(page, text_has(page, "Saved."))
-        xs.append(time.time() - t0)
-        flows.idle(page)
-        page.wait_for_timeout(300)
-    record("save my thoughts", xs, ACTION_P95)
-    assert p95(xs) <= ACTION_P95, p95(xs)

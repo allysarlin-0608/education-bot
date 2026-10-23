@@ -10,7 +10,7 @@ from conftest import covers
 
 @pytest.fixture(autouse=True)
 def _quiz_written_on_the_press(public_app):
-    """These tests are about what "Take the quiz" itself does (its calls, its
+    """These tests are about what "Start the check" itself does (its calls, its
     failures, its button), so the quiz isn't also written in the background
     while the lesson is read (that is tests/e2e/test_quiz_wait.py's)."""
     public_app.quiz_prep(False)
@@ -37,7 +37,7 @@ def test_start_lesson_shows_progress_fast_and_writes_once(public_app, pages):
     p = fresh(app, pages)
     app.set_llm(delay=2.0)
     loc = p.page.get_by_role("button", name="Start this lesson", exact=True)
-    total, feedback = flows.timed_click(p, "start_lesson", loc, lambda pg: "Take the quiz" in pg.evaluate("document.body.innerText"))
+    total, feedback = flows.timed_click(p, "start_lesson", loc, lambda pg: "Next: practise it" in pg.evaluate("document.body.innerText"))
     assert feedback is not None and feedback < 100, f"no visible feedback within 100 ms ({feedback} ms)"
     assert len(app.calls("lesson")) == 1
 
@@ -48,7 +48,7 @@ def test_double_click_start_lesson_writes_it_once(public_app, pages):
     p = fresh(app, pages)
     app.set_llm(delay=1.5)
     p.page.get_by_role("button", name="Start this lesson", exact=True).dblclick()
-    assert flows.wait_text(p.page, "Take the quiz", 40)
+    assert flows.wait_text(p.page, "Next: practise it", 40)
     flows.idle(p.page)
     assert len(app.calls("lesson")) == 1, app.calls()
 
@@ -64,7 +64,7 @@ def test_clicking_elsewhere_while_a_lesson_is_written_loses_nothing(public_app, 
     app.set_llm()
     flows.go(p, app, "Home")
     text = p.page.evaluate("document.body.innerText")
-    started = "Take the quiz" in text
+    started = "Next: practise it" in text
     can_start = "Start this lesson" in text
     assert started or can_start, "the lesson is neither shown nor startable"
     if started:
@@ -82,20 +82,21 @@ def test_leaving_while_the_lesson_streams_leaves_no_half_lesson(public_app, page
     app.set_llm()
     flows.go(p, app, "Home")
     text = p.page.evaluate("document.body.innerText")
-    if "Take the quiz" in text:
+    if "Next: practise it" in text:
         assert "Key Idea" in text, "the quiz is offered but the lesson itself is missing"
     else:
         assert "Start this lesson" in text, "the lesson is neither shown nor startable"
 
 
 def test_double_click_take_quiz_writes_one_quiz(public_app, pages):
-    covers("W-daily-take_the_quiz", "AI-quizgen-ask_json")
+    covers("W-daily-take_check", "AI-quizgen-ask_json")
     app = public_app
     p = fresh(app, pages)
     flows.start_lesson(p)
     app.reset_calls()
     app.set_llm(delay=1.0)
-    p.page.get_by_role("button", name="Take the quiz", exact=True).dblclick()
+    flows.to_check(p, start=False)
+    p.page.get_by_role("button", name="Start the check", exact=True).dblclick()
     assert flows.wait_text(p.page, "Submit answers", 40)
     flows.idle(p.page)
     assert len(app.calls("quiz")) == 1, app.calls()
@@ -117,17 +118,17 @@ def test_lesson_errors_show_a_message_and_retry_works(public_app, pages, mode, e
     assert "Traceback" not in text and "Error code" not in text and "groq" not in text.lower()
     app.set_llm()
     flows.button(p, "Retry", wait=False)
-    assert flows.wait_text(p.page, "Take the quiz", 40), f"{mode}: Retry didn't write the lesson"
+    assert flows.wait_text(p.page, "Next: practise it", 40), f"{mode}: Retry didn't write the lesson"
 
 
 def test_an_unreadable_quiz_reply_is_retried_once_automatically(public_app, pages):
-    covers("W-daily-take_the_quiz", "AI-quizgen-ask_json")
+    covers("W-daily-take_check", "AI-quizgen-ask_json")
     app = public_app
     p = fresh(app, pages)
     flows.start_lesson(p)
     app.reset_calls()
     app.set_llm(mode="invalid", fail_times=1)          # the first reply isn't JSON
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "Submit answers", 40), "one bad reply should be retried, not shown as an error"
 
 
@@ -137,7 +138,7 @@ def test_quiz_errors_show_retry(public_app, pages):
     p = fresh(app, pages)
     flows.start_lesson(p)
     app.set_llm(mode="invalid")                        # never readable
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "didn't manage", 40)
     app.set_llm()
     flows.button(p, "Retry", wait=False)
@@ -151,11 +152,11 @@ def test_the_answer_check_rewrites_a_flagged_question(public_app, pages):
     flows.start_lesson(p)
     app.reset_calls()
     app.set_llm(quiz_flag_first=True)
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "Submit answers", 40)
     assert [c["kind"] for c in app.calls()] == ["quiz", "quiz_check", "quiz_rewrite", "quiz_check"]
     log = app.log_text()
-    assert "quiz check round 1: 1 of 10 questions rejected" in log and "quiz check round 2: 0 of 10 questions rejected" in log
+    assert "quiz check round 1: 1 of 8 questions rejected" in log and "quiz check round 2: 0 of 8 questions rejected" in log
     assert flows.wait_text(p.page, "Which way does Earth spin?", 5), "the rewritten question is shown"
 
 
@@ -206,31 +207,34 @@ def test_an_incomplete_quiz_is_completed_on_the_first_click(public_app, pages, m
     """Issue A: a reply with an unusable question, or cut off at the reply
     limit, still gives a quiz on the first click: the good questions are kept
     and only the missing ones are asked for. No Retry, no second quiz."""
-    covers("W-daily-take_the_quiz", "AI-quizgen-ask_json", "AI-quizgen-ask_json-2")
+    covers("W-daily-take_check", "AI-quizgen-ask_json", "AI-quizgen-ask_json-2")
     app = public_app
     p = fresh(app, pages)
     flows.start_lesson(p)
     app.reset_calls()
     app.set_llm(mode=mode)
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "Submit answers", 40), f"{mode}: no quiz on the first click"
     flows.idle(p.page)
     assert "didn't manage" not in p.page.evaluate("document.body.innerText")
     assert [c["kind"] for c in app.calls()] == ["quiz"] + extra + ["quiz_check"], app.calls()
-    assert p.page.locator('[data-testid="stRadio"]').count() + p.page.locator('textarea').count() >= 9
+    page = p.page                 # the six of the check: choice, situation, mistake to spot, blank, order, match
+    assert page.locator('[data-testid="stRadio"]').count() == 3
+    assert page.locator('input[placeholder="The missing word or phrase"]').count() == 1
+    assert page.locator('[data-testid="stSelectbox"]').count() == 7
     assert "incomplete" in app.log_text() and "ready in" in app.log_text()
 
 
 def test_the_quiz_button_says_it_is_preparing_and_cannot_be_pressed_again(public_app, pages):
     """Issue A (A7): while the quiz is written the button reads "Preparing
     your quiz…" and is disabled, so a second press can't start another."""
-    covers("W-daily-take_the_quiz", "W-daily-quiz_preparing-2")
+    covers("W-daily-take_check", "W-daily-quiz_preparing-2")
     app = public_app
     p = fresh(app, pages)
     flows.start_lesson(p)
     app.reset_calls()
     app.set_llm(delay=2.5)
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     busy = p.page.get_by_role("button", name="Preparing your quiz…")
     busy.wait_for(timeout=3000)
     assert busy.is_disabled()
@@ -247,7 +251,7 @@ def test_retry_after_a_failed_quiz_also_cannot_be_pressed_twice(public_app, page
     p = fresh(app, pages)
     flows.start_lesson(p)
     app.set_llm(mode="invalid")
-    flows.button(p, "Take the quiz", wait=False)
+    flows.to_check(p)
     assert flows.wait_text(p.page, "didn't manage", 40)
     app.reset_calls()
     app.set_llm(delay=2.0)
@@ -265,7 +269,7 @@ def test_thirty_quizzes_in_a_row_each_on_the_first_click(public_app, pages):
     coach/quota.py) with the model's usual slips mixed in (a bad question, a
     cut-off reply, an unreadable reply, a 429); every one comes on the first
     click."""
-    covers("W-daily-take_the_quiz", "AI-quizgen-ask_json")
+    covers("W-daily-take_check", "AI-quizgen-ask_json")
     app = public_app
     slips = [{}, {"mode": "malformed_quiz", "fail_times": 1}, {}, {"mode": "truncated_quiz", "fail_times": 1},
              {}, {"mode": "invalid", "fail_times": 1}, {"mode": "429", "fail_times": 1}]
@@ -278,7 +282,9 @@ def test_thirty_quizzes_in_a_row_each_on_the_first_click(public_app, pages):
             flows.start_lesson(p)
         app.reset_calls()
         app.set_llm(**slips[k % len(slips)])
-        name = "Take the quiz" if k % 10 == 0 else "Try a new quiz"
+        if k % 10 == 0:
+            flows.to_check(p, start=False)
+        name = "Start the check" if k % 10 == 0 else "Try a new set"
         t0 = time.time()
         flows.button(p, name, wait=False)
         ok = flows.wait_text(page, "Submit answers", 40)
@@ -297,7 +303,7 @@ def test_thirty_quizzes_in_a_row_each_on_the_first_click(public_app, pages):
         flows.idle(page)
         app.set_llm()
         flows.button(p, "Submit answers", wait=False)
-        assert flows.wait_text(page, "Try a new quiz", 40), f"quiz {k}: no retake offered"
+        assert flows.wait_text(page, "Try a new set", 40), f"quiz {k}: no retake offered"
         flows.idle(page)
     times.sort()
     print(f"30 quizzes: p50 {times[14]:.1f}s, p95 {times[28]:.1f}s, max {times[-1]:.1f}s")

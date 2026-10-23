@@ -145,8 +145,11 @@ def keep(slot: dict) -> dict:
 
 def move(slot: dict, to: str) -> None:
     """On to a later stage (or back to the lesson to read it again, which
-    never undoes what she has done)."""
-    keep(slot)["stage"] = to
+    never undoes what she has done). Each move is counted, so the latest
+    one wins when two copies are merged (merge())."""
+    s = keep(slot)
+    s["stage"] = to
+    s["moves"] = s.get("moves", 0) + 1
 
 
 def answer_check(slot: dict, k: int, answer: int, right: bool, conf=None) -> dict:
@@ -237,18 +240,23 @@ def parse(data):
             checks[str(k)] = {"a": a, "tries": max(0, min(TRIES, tries)), "right": c.get("right") is True,
                               "conf": learner.confidence(c.get("conf"))}
     out = {"stage": data["stage"], "checks": checks, "guided": parse_guided(data.get("guided"))}
+    moves = data.get("moves")
+    if isinstance(moves, int) and not isinstance(moves, bool) and moves > 0:
+        out["moves"] = min(moves, 10_000)
     if learner.confidence(data.get("jol")):
         out["jol"] = data["jol"]
     return out
 
 
 def merge(a, b):
-    """Two copies of a lesson's session (two tabs): the one further on, with
-    every quick check either answered."""
+    """Two copies of a lesson's session (two tabs): the one moved last (going
+    back to read the lesson again is a move too), else the one further on,
+    with every quick check either answered."""
     if not a or not b:
         return a or b
     order = STAGES.index
-    far, near = (a, b) if order(a["stage"]) >= order(b["stage"]) else (b, a)
+    rank = lambda x: (x.get("moves", 0), order(x["stage"]))      # noqa: E731
+    far, near = (a, b) if rank(a) >= rank(b) else (b, a)
     out = dict(far, checks={**near["checks"], **far["checks"]})
     if not out.get("guided") and near.get("guided"):
         out["guided"] = near["guided"]

@@ -1073,8 +1073,15 @@ if i is None:
     known = mastery.counts([x for x in mastery.ideas(log, topic, today) if x["reached"]])
     with st.container(key="day_done"):
         passed = (tr("The lesson is passed.") if len(plan) == 1 else tr("All {n} lessons passed.", n=len(plan)))
-        knows = tr("In {subject} you now know {solid} ideas well, and {learning} are on their way.",
-                   subject=catalog.name(topic), solid=known["solid"] + known["mastered"], learning=known["learning"])
+        solid = known["solid"] + known["mastered"]
+        if solid:
+            knows = trn("In {subject} you now know {n} idea well.", "In {subject} you now know {n} ideas well.", solid,
+                        subject=catalog.name(topic))
+            if known["learning"]:
+                knows += " " + trn("{n} more is on its way.", "{n} more are on their way.", known["learning"])
+        else:                 # (her first days: nothing solid yet, said without a zero)
+            knows = trn("In {subject}, {n} idea is on its way.", "In {subject}, {n} ideas are on their way.",
+                        known["learning"], subject=catalog.name(topic)) if known["learning"] else ""
         st.html('<div class="done"><p class="done-eyebrow">' + tr("Complete") + "</p><h3>" + tr("Today's done")
                 + f'</h3><p class="done-sub">{passed} {escape(knows)}</p>'
                 f'<ol class="done-list">{"".join(rows)}</ol>'
@@ -1372,7 +1379,7 @@ else:
         answer_sheet(i, q)
 
 if entry["completed"]:
-    st.caption(tr('All {lessons} lessons done for today.', lessons=len(entry['lessons'])))
+    st.caption(trn("The lesson is done for today.", "All {n} lessons done for today.", len(entry["lessons"])))
 else:
     left_n = sum(1 for s in entry["lessons"] if not s["completed"])
     st.caption(trn('{n} lesson to go today.', '{n} lessons to go today.', left_n))

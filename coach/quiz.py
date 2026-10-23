@@ -33,6 +33,8 @@ import random
 import re
 import uuid
 
+from coach.i18n import N_
+
 QUESTIONS = 6
 OPTIONS = 4
 PAIRS = 4
@@ -46,10 +48,10 @@ PRACTICE = {"steps": 1, "problem": 1}          # the guided practice written wit
 LOCAL = ("choice", "scenario", "blank", "order", "match", "spot", "steps", "problem")   # marked here, at once
 CHOICE_LIKE = ("choice", "scenario", "problem")
 WRITTEN = ("short", "apply")                                  # marked by the model (quizzes from before)
-KIND_NAMES = {"choice": "Multiple choice", "scenario": "Scenario", "blank": "Fill in the blank",
-              "order": "Put in order", "match": "Matching", "short": "In your own words",
-              "apply": "Apply it to your life", "spot": "Spot the mistake", "steps": "Finish the worked problem",
-              "problem": "Your turn"}
+KIND_NAMES = {"choice": N_("Multiple choice"), "scenario": N_("Scenario"), "blank": N_("Fill in the blank"),
+              "order": N_("Put in order"), "match": N_("Matching"), "short": N_("In your own words"),
+              "apply": N_("Apply it to your life"), "spot": N_("Spot the mistake"),
+              "steps": N_("Finish the worked problem"), "problem": N_("Your turn")}     # shown through tr()
 DIFFICULTY = (1, 2, 3)
 CHECK_ROUNDS = 2        # rewrite-and-recheck rounds before giving up
 RECOVERIES = 2          # extra calls when the questions come back incomplete (views/daily.py)

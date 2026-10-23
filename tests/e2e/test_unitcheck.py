@@ -53,7 +53,7 @@ def test_a_unit_check_from_home_failed_then_passed(public_app, pages, width):
     answer_all(p, right=True)
     flows.button(p, "Check my answers")
     assert flows.wait_text(p.page, "100% · Passed")
-    flows.button(p, "Back to the course map")
+    flows.button(p, "Back to the learning map")
     assert flows.wait_text(p.page, "unit check passed · best 100%")
     flows.open_app(p, app)
     assert "Unit check ·" not in text(p), "taken: Home no longer points to it"

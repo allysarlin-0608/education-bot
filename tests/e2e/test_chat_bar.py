@@ -59,7 +59,7 @@ def test_the_end_of_today_is_never_under_the_chat_box(public_app, pages, width, 
     flows.start_lesson(p)                                    # the lesson state
     problems["lesson"] = at_end(page)
     page.screenshot(path=str(SHOTS / f"lesson_{width}x{height}.png"))
-    flows.button(p, "Take the quiz", wait=False)             # the quiz state
+    flows.to_check(p)             # the quiz state
     assert flows.wait_text(page, "Submit answers", 40)
     flows.idle(page)
     problems["quiz"] = at_end(page)
@@ -87,13 +87,14 @@ def test_a_retry_that_appears_under_the_chat_box_is_brought_into_view(public_app
     flows.open_app(p, app)
     app.set_llm()
     flows.start_lesson(p)
+    flows.to_check(p, start=False)
     page = p.page
     # the button low on the screen, just above the chat box, as when she taps it
-    page.evaluate("""() => { const b = [...document.querySelectorAll('button')].find(x => x.innerText.trim() === 'Take the quiz');
+    page.evaluate("""() => { const b = [...document.querySelectorAll('button')].find(x => x.innerText.trim() === 'Start the check');
         const d = document.querySelector('.st-key-chat_dock').getBoundingClientRect();
         window.scrollBy(0, b.getBoundingClientRect().bottom - d.top + 8); }""")
     app.set_llm(mode="invalid")
-    flows.tap(p, page.get_by_role("button", name="Take the quiz", exact=True))
+    flows.tap(p, page.get_by_role("button", name="Start the check", exact=True))
     assert flows.wait_text(page, "didn't manage", 40)
     flows.idle(page)
     page.wait_for_timeout(900)

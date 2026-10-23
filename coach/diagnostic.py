@@ -155,8 +155,12 @@ def answer(state: dict, us: list, uid: str, right: bool) -> dict:
 
 def finish(state: dict, us: list) -> dict:
     """Where she starts: the first unit not known; what she skips: the
-    lessons of every unit known."""
+    lessons of every unit known. The last unit is never skipped: a path
+    ends by doing its last part (and its capstone), whatever she knows."""
     known = set(state["known"])
+    if us and us[-1]["id"] in known and all(u["id"] in known for u in us):
+        known.discard(us[-1]["id"])
+        state["known"] = [k for k in state["known"] if k in known]
     first = next((u for u in us if u["id"] not in known), None)
     state["start"] = first["first"] if first else us[-1]["last"] + 1
     state["skip"] = [n for u in us if u["id"] in known for n in range(u["first"], u["last"] + 1)]
