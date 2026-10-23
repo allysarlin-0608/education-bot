@@ -10,12 +10,14 @@ import re
 TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 DEFAULT_TIME = "19:00"
 SEEN_LIMIT = 200          # milestones remembered (the oldest go first)
+BRIEF_KEPT = 400          # short days remembered (they count for the streak)
 
 
 def blank() -> dict:
     return {"reminder_on": False, "reminder_time": DEFAULT_TIME, "reminder_email": False,
             "light_day": "", "seen": [], "seen_init": False, "week_seen": "", "reminded_on": "", "reminder_hit": "",
-            "practice": None, "practice_made": "", "plan_choice": "", "identity": "", "language": ""}
+            "practice": None, "practice_made": "", "plan_choice": "", "identity": "", "language": "",
+            "warmup": None, "mixed": None, "brief_day": "", "brief_days": [], "reflected": ""}
 
 
 def normalize(row) -> dict:
@@ -29,7 +31,8 @@ def normalize(row) -> dict:
     p["reminder_email"] = row.get("reminder_email") is True
     p["seen_init"] = row.get("seen_init") is True
     # the plan she chose in the setup (what she asked for; her plan is coach/plans.plan_of)
-    for key in ("light_day", "week_seen", "reminded_on", "reminder_hit", "practice_made", "plan_choice"):
+    for key in ("light_day", "week_seen", "reminded_on", "reminder_hit", "practice_made", "plan_choice",
+                "brief_day", "reflected"):
         if isinstance(row.get(key), str) and len(row[key]) <= 12:
             p[key] = row[key]
     # who she said she is in the setup (coach/directions.py), or her own words
@@ -38,6 +41,12 @@ def normalize(row) -> dict:
     if isinstance(row.get("seen"), list):
         p["seen"] = [s for s in row["seen"] if isinstance(s, str) and len(s) <= 120][-SEEN_LIMIT:]
     p["practice"] = practice_set(row.get("practice"))
+    # the day's warm-up and mixed practice (coach/session.py), and the short days she chose
+    from coach import session
+    p["warmup"] = session.parse_set(row.get("warmup"))
+    p["mixed"] = session.parse_set(row.get("mixed"))
+    if isinstance(row.get("brief_days"), list):
+        p["brief_days"] = sorted({d for d in row["brief_days"] if isinstance(d, str) and len(d) == 10})[-BRIEF_KEPT:]
     # the language she chose to read in (coach/i18n.py; "" = her browser's)
     from coach import i18n
     if row.get("language") in i18n.LANGS:

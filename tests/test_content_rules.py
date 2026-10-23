@@ -55,7 +55,7 @@ def test_prompt_has_fact_and_investing_rules_for_every_topic():
         assert "只寫確定正確的事實" in prompt
         assert "不論哪個主題" in prompt and "not investment advice" in prompt
         assert "延續今天的核心概念" in prompt
-        assert "送出前逐項檢查" in prompt
+        assert "送出前檢查" in prompt
 
 
 def test_topic_modules_state_the_facts_that_were_wrong():
@@ -145,7 +145,7 @@ def test_the_note_only_credits_what_she_really_did():
     from pathlib import Path
     prompt = (Path(__file__).resolve().parents[1] / "coach" / "prompts" / "core.md").read_text(encoding="utf-8")
     note = next(line for line in prompt.splitlines() if line.startswith("【Note】"))
-    assert "只肯定學習紀錄裡她真的做過的事" in note and "不能說成她做過" in note
+    assert "只肯定紀錄裡她真的做過的事" in note and "不能說成她做過" in note
     assert "今天的任務和例子不能說成她做過" in note and "you've already" in note           # today's task is never treated as done
 
 

@@ -292,7 +292,8 @@ def _extras(mine: dict, stored: dict) -> dict:
     """What both copies of a lesson add to, whichever is further on: every
     piece of mastery evidence, every practice exercise kept for it, the
     later of their explain-it-back answers (coach/mastery.py, coach/practice.py),
-    and the unit check's result (coach/unitcheck.py)."""
+    the unit check's result (coach/unitcheck.py) and how far into the
+    lesson's loop she got (coach/session.py)."""
     from coach import mastery
     out = {}
     if "ev" in mine or "ev" in stored:
@@ -314,6 +315,10 @@ def _extras(mine: dict, stored: dict) -> dict:
     explained = [x for x in (mine.get("explain"), stored.get("explain")) if x]
     if explained:
         out["explain"] = max(explained, key=lambda x: (x.get("at", ""), bool(x.get("reply_feedback"))))
+    from coach import session
+    place = session.merge(mine.get("session"), stored.get("session"))
+    if place:
+        out["session"] = place
     return out
 
 
@@ -397,9 +402,13 @@ def parse_slots(data) -> list:
         checked = unitcheck.parse(s.get("unit_check"))
         if checked:                                  # the unit check, on a unit's last lesson
             slots[-1]["unit_check"] = checked
+        from coach import session
+        place = session.parse(s.get("session"))
+        if place:                                    # where she is in the lesson's loop (coach/session.py)
+            slots[-1]["session"] = place
         if slots[-1].get("from"):                   # a link holds no content of its own
             slots[-1].update(kickoff="", lesson="", followups=[], quiz=None)
-            for field in ("cards", "removed", "ev", "bank", "explain", "unit_check", "reported"):
+            for field in ("cards", "removed", "ev", "bank", "explain", "unit_check", "reported", "session"):
                 slots[-1].pop(field, None)
     return slots
 

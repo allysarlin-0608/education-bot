@@ -304,9 +304,17 @@ def lessons_passed(log: dict) -> int:
 
 def streak_dates(log: dict) -> set:
     """Days that count for a streak: at least one lesson passed that day
-    (a whole day finished, for sessions from before the syllabus)."""
-    return {date.fromisoformat(e["date"]) for e in log["entries"]
+    (a whole day finished, for sessions from before the syllabus), or a
+    short day she chose and finished: a warm-up and mixed practice
+    (log["brief_days"], from her preferences: coach/session.py)."""
+    days = {date.fromisoformat(e["date"]) for e in log["entries"]
             if e.get("completed") or any(s.get("completed") for s in e.get("lessons") or [])}
+    for d in log.get("brief_days") or ():
+        try:
+            days.add(date.fromisoformat(d))
+        except (TypeError, ValueError):
+            continue
+    return days
 
 
 def current_streak(log: dict, today: date) -> int:

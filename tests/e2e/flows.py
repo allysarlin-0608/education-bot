@@ -227,8 +227,36 @@ def menu(p, label):
 # ---- lessons and quizzes ----------------------------------------------------
 def start_lesson(p):
     button(p, "Start this lesson", wait=False)
-    assert wait_text(p.page, "Take the quiz", 40), "the lesson didn't finish"
+    assert wait_text(p.page, "Next: practise it", 40), "the lesson didn't finish"
     idle(p.page)
+
+
+def practise(p, correct=True):
+    """The guided practice (coach/session.py): the worked problem's gap, then
+    the problem of her own, then on to the check."""
+    page = p.page
+    button(p, "Next: practise it →", wait=False)
+    assert wait_text(page, "Practice", 40), "the practice didn't appear"
+    idle(page)
+    for _ in range(4):
+        if wait_text(page, "Next: the check", 2):
+            break
+        gap = page.locator('input[placeholder="What goes in the gap"]')
+        radios = page.locator('[class*="st-key-guided_"] [data-testid="stRadio"]')
+        if gap.count():
+            gap.first.fill("away" if correct else "banana")
+            page.keyboard.press("Tab")
+            idle(page)
+        elif radios.count():
+            tap(p, radios.first.get_by_text("It spins on its axis" if correct else "Solar flares", exact=True))
+            idle(page)
+        tap(p, page.get_by_role("button", name="Fairly sure", exact=True).first)
+        idle(page)
+        if page.get_by_role("button", name="Next", exact=True).count():
+            tap(p, page.get_by_role("button", name="Next", exact=True).first)
+            idle(page)
+    button(p, "Next: the check →")
+    idle(page)
 
 
 MEANINGS = {"Axis": "The line Earth spins around", "Rotation": "One spin a day", "Orbit": "One trip around the Sun",
@@ -236,10 +264,11 @@ MEANINGS = {"Axis": "The line Earth spins around", "Rotation": "One spin a day",
 STEPS = {"1st": "Taipei turns toward the Sun", "2nd": "The Sun rises in Taipei", "3rd": "Taipei turns away: night falls"}
 
 
-def take_quiz(p, correct=True, start="Take the quiz", before_submit=None):
+def take_quiz(p, correct=True, start="Start the check", before_submit=None):
     """Answer the (fake) quiz, every kind of question: all right, or all wrong."""
     page = p.page
-    button(p, start, wait=False)
+    if not wait_text(page, "Submit answers", 2):       # (written while she read: already there)
+        button(p, start, wait=False)
     assert wait_text(page, "Submit answers", 40), "the quiz didn't appear"
     idle(page)
     answer_all(p, correct)
@@ -259,6 +288,8 @@ def answer_all(p, correct=True, scope=None):
     for g in range(groups.count()):
         group = groups.nth(g)
         target = group.get_by_text("It spins on its axis" if correct else "Solar flares", exact=True)
+        if not target.count() and group.get_by_text("Line 2", exact=True).count():     # spot the mistake
+            target = group.get_by_text("Line 2" if correct else "Line 1", exact=True)
         if not target.count():          # a seeded lesson's question: "Right" is right
             target = group.get_by_text("Right", exact=True) if correct else group.locator("label").last
         tap(p, target)
@@ -327,6 +358,7 @@ def choose(p, box, text):
 
 def pass_lesson(p):
     start_lesson(p)
+    practise(p)
     take_quiz(p, correct=True)
 
 

@@ -70,12 +70,9 @@ def answer_right(at):
 
 def test_a_whole_practice_set_then_the_next_one(monkeypatch, tmp_path):
     # covers: W-practice-pr_start, W-practice-check, W-practice-pr_next, W-practice-pr_more, W-practice-pr_map,
-    # covers: W-practice-pr_today, W-daily-today_practice, D-practice-save_day
+    # covers: W-practice-pr_today, D-practice-save_day
     at = app(monkeypatch, tmp_path, entries=history_until(ui.today() - timedelta(days=1), topics=("philosophy",)),
              subjects=("philosophy",))
-    loads(at, "views/daily.py")
-    assert has(at, "today_practice") and "ideas to strengthen" in str(at.button(key="today_practice").proto.label)
-    at.button(key="today_practice").click().run()
     loads(at, "views/practice.py")
     assert "Focus for today" in texts(at) and "6 short exercises" in texts(at)
     at.button(key="pr_start").click().run()
@@ -113,7 +110,7 @@ def test_a_whole_practice_set_then_the_next_one(monkeypatch, tmp_path):
 
 
 def test_the_ways_in_from_progress_and_the_week(monkeypatch, tmp_path):
-    # covers: W-records-prog_skills_open, W-weekview-wk_skills, W-daily-today_skills
+    # covers: W-records-prog_skills_open, W-weekview-wk_skills, W-daily-today_course
     at = app(monkeypatch, tmp_path, entries=history_until(ui.today() - timedelta(days=1)))
     loads(at, "views/records.py")
     t = texts(at)
@@ -125,7 +122,7 @@ def test_the_ways_in_from_progress_and_the_week(monkeypatch, tmp_path):
     at.button(key="wk_skills").click().run()
     assert not at.exception
     loads(at, "views/daily.py")
-    at.button(key="today_skills").click().run()
+    at.button(key="today_course").click().run()          # the learning map: every idea and how well she knows it
     assert not at.exception
 
 
@@ -160,10 +157,10 @@ def test_explain_it_back_is_offered_once_a_lesson_is_passed(monkeypatch, tmp_pat
     for e in done:
         e["date"] = today
     log["entries"] = [e for e in log["entries"] if e["date"] != today] + done
-    at.session_state[f"lesson_{today}_{topic}"] = 0          # the passed lesson, open
+    at.session_state[f"lesson_{today}_{topic}"] = None       # the day's close, once every lesson is passed
     loads(at, "views/daily.py")
     t = texts(at)
-    assert "Explain it back" in t and "This idea:" in t and has(at, "explain_send")
+    assert "Before you go" in t and "Explain it back" in t and has(at, "explain_send")
     at.text_area(key=f"explain_{ui.today()}_{done[0]['lessons'][0]['n']}").input("Too short.").run()
     at.button(key="explain_send").click().run()
     assert not at.exception and any("A little more" in w.value for w in at.warning), "no call for too little"

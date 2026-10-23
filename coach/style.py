@@ -2661,6 +2661,48 @@ EDITORIAL = """
 """
 
 
+# Today's session (coach/session.py, coach/session_ui.py): the lesson's three
+# steps, the hint after a first miss, the check buttons that ask how sure she
+# is, the warm-up and mixed practice, the reflection. Hairlines and type, no slabs.
+SESSION = """<style>
+.ss-steps { list-style: none; display: flex; padding-left: 0 !important; margin-left: 0 !important; flex-wrap: wrap; align-items: center; gap: var(--space-2) 0;
+  margin: var(--space-2) 0 var(--space-5); padding: 0; }
+.ss-step { display: inline-flex; align-items: center; gap: var(--space-2); font-size: 0.8125rem; color: var(--label-3); }
+.ss-step + .ss-step::before { content: ""; display: inline-block; width: 28px; height: 1px; background: var(--rule-strong, var(--rule));
+  margin: 0 var(--space-3) 0 var(--space-2); }
+.ss-dot { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid var(--rule-strong, var(--rule)); font-size: 0.6875rem; font-variant-numeric: tabular-nums; color: var(--label-3); }
+.ss-now .ss-dot { border-color: var(--label); color: var(--label); font-weight: 600; }
+.ss-now .ss-name { color: var(--label); font-weight: 600; }
+.ss-done .ss-dot { border-color: var(--label-2); color: var(--label-2); }
+.ss-done .ss-name { color: var(--label-2); }
+.ss-ask { margin: var(--space-3) 0 var(--space-2); font-size: 0.8125rem; line-height: 1.45; color: var(--label-2); }
+.ss-sub { margin: 0 0 var(--space-3); font-size: 0.9375rem; line-height: 1.55; color: var(--label-2); }
+.ss-verdict { margin: var(--space-2) 0 var(--space-1); font-size: 0.9375rem; font-weight: 600; color: var(--label); }
+.ss-hint { margin: var(--space-2) 0 var(--space-3); padding: 2px 0 2px var(--space-4); border-left: 1px solid var(--strong); }
+.ss-hint p { margin: 0 0 var(--space-1); font-size: 0.9375rem; line-height: 1.55; color: var(--label); }
+.ss-hint p:last-child { margin: 0; color: var(--label-2); }
+.ss-hint b { font-weight: 600; }
+.ss-hint span { display: inline-block; margin-right: var(--space-2); font-size: 0.6875rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--label-3); }
+.ss-section { margin: var(--space-7) 0 var(--space-3); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--label-3); }
+[class*="st-key-qc_"] { margin: var(--space-4) 0 var(--space-5); padding: var(--space-4) 0 0; border-top: 1px solid var(--rule); }
+.st-key-ss_warmup, .st-key-ss_mixed, .st-key-reflect, .st-key-stage_next, [class*="st-key-guided_"] {
+  margin: var(--space-3) 0 var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--rule); }
+.st-key-ss_warmup { border-top-color: var(--strong); }
+[class*="st-key-ssconf_"], [class*="st-key-ssjol_"], [class*="st-key-ssself_"] { flex-wrap: wrap; }
+[class*="st-key-ssconf_"] button, [class*="st-key-ssjol_"] button, [class*="st-key-ssself_"] button { min-height: 44px; }
+[class*="st-key-ssconf_"] > div, [class*="st-key-ssjol_"] > div { flex: 1 1 0; min-width: 96px; }
+.st-key-lesson_tools { gap: var(--space-2); }
+.st-key-light_menu button { border-color: transparent !important; background: transparent !important; padding-left: var(--space-2) !important; padding-right: var(--space-2) !important; color: var(--label-2) !important; }
+.st-key-light_menu button:hover { color: var(--label) !important; }
+.st-key-brief_done { margin-top: var(--space-4); }
+.ex-rubric { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: var(--space-1) 0 var(--space-3); padding: 0 !important; }
+.ex-rubric li { margin: 0; font-size: 0.875rem; color: var(--label-3); }
+.ex-rubric li.yes { color: var(--label); }
+</style>"""
+
 # A language written right to left (i18n.page_html marks it): the page's
 # content and the sidebar read right to left; the frame stays as it is.
 RTL = """<style>
@@ -2670,7 +2712,7 @@ html[data-dir="rtl"] [data-testid="stSidebarUserContent"] { direction: rtl; }
 
 
 def stylesheet() -> str:
-    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, WORLDS, ACCOUNT, TOUCH, EDITORIAL, RTL))
+    rest = "".join(part.replace("<style>", "").replace("</style>", "") for part in (LIQUID, PROGRESS, BOOKS, NAV, SETUP, LENS, WORLDS, ACCOUNT, TOUCH, EDITORIAL, SESSION, RTL))
     return CSS.replace("</style>", rest + "</style>")
 
 

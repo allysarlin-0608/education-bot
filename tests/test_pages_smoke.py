@@ -19,7 +19,10 @@ PAGES = ["views/daily.py", "views/review.py", "views/reading.py", "views/records
 
 
 def app(monkeypatch, tmp_path, *, history=True, reading=True, subjects=("philosophy", "cosmos"), entries=None, pace=3,
-        paths=(), onboarding=None, onboarded=True):
+        paths=(), onboarding=None, onboarded=True, warmup=False):
+    """The app as she has it. Today's warm-up (coach/session.py) comes first on
+    Home; it is set aside (skipped) unless `warmup`, so a test of another part of
+    the page finds it as it was."""
     for name in ("SUPABASE_URL", "SUPABASE_KEY", "APP_MODE"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("APP_PASSWORD", "pw")
@@ -38,6 +41,10 @@ def app(monkeypatch, tmp_path, *, history=True, reading=True, subjects=("philoso
     if entries is not None or paths:
         (tmp_path / "log.json").write_text(json.dumps({"version": 1, "entries": entries or [], "books": [],
                                                        "paths": list(paths)}))
+    if not warmup:
+        from coach import prefs, session
+        skipped = dict(session.new_set(ui.today(), []), skipped=True)
+        store.save_prefs(dict(prefs.blank(), warmup=skipped))
     at = AppTest.from_file("../gnosis.py", default_timeout=30)
     at.session_state["coach_authed"] = True
     return at.run()
@@ -202,17 +209,27 @@ def test_work_a_save_failed_on_is_kept_until_it_is_saved(monkeypatch, tmp_path):
 
 
 
-def test_saving_empty_thoughts_makes_no_day(monkeypatch, tmp_path):
-    """ISS-029: Save my thoughts with nothing written, before any lesson, saved
-    an empty day: Days studied +1 and today's subject fixed."""
-    entries = seed_history.build(ui.today(), days=1, topics=("philosophy",), gaps=(), partial=(1,))
-    at = app(monkeypatch, tmp_path, subjects=("philosophy",), entries=entries)   # a lesson carried from yesterday
-    loads(at, "views/daily.py")
-    next(b for b in at.button if b.label == "Save my thoughts").click().run()
-    assert not at.exception, [e.value for e in at.exception]
+def test_the_days_reflection_keeps_her_thoughts_and_how_sure_she_is(monkeypatch, tmp_path):
+    """The day's close (coach/session.py): how sure she is she'll remember,
+    kept with the lesson; a rating alone never clears what she wrote before
+    (ISS-029's lesson: nothing empty is saved over what she has)."""
+    from coach import settings
     today = ui.today().isoformat()
-    assert all(e["date"] != today for e in at.session_state["coach_log"]["entries"])
-    assert all(e["date"] != today for e in json.loads((tmp_path / "log.json").read_text())["entries"])
+    at = app(monkeypatch, tmp_path, subjects=("philosophy",), pace=1, history=False)
+    topic = settings.topic_for(at.session_state["coach_settings"], ui.today(), ui.TIMEZONE)
+    done = seed_history.build(ui.today() + timedelta(days=1), days=1, topics=(topic,), per_day=1)
+    for e in done:
+        e.update(date=today, reflection="My earlier thought.")
+    (tmp_path / "log.json").write_text(json.dumps({"version": 1, "entries": done, "books": []}))
+    at.session_state[f"lesson_{today}_{topic}"] = None       # (the page had today's first lesson open)
+    loads(at, "views/daily.py")
+    assert any(str(b.key) == f"reflect_{ui.today()}_jol2" for b in at.button), "the close asks how sure she is"
+    at.button(key=f"reflect_{ui.today()}_jol2").click().run()
+    assert not at.exception, [e.value for e in at.exception]
+    stored_day = json.loads((tmp_path / "log.json").read_text())["entries"][0]
+    assert stored_day["reflection"] == "My earlier thought."
+    assert stored_day["lessons"][-1]["session"]["jol"] == 2
+    assert "Reflection saved" in " ".join(c.value for c in at.caption)
 
 
 def test_progress_shows_what_another_device_saved_since(monkeypatch, tmp_path):

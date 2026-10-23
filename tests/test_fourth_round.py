@@ -253,7 +253,7 @@ def test_an_old_unanswered_quiz_is_written_again_when_she_starts(monkeypatch, tm
     at = app(monkeypatch, tmp_path, subjects=("philosophy",), entries=_today_with_an_old_quiz())
     said = " ".join(c.value for c in at.caption)
     assert "rewritten with our latest checks" in said and "Your earlier attempts still count" in said
-    next(b for b in at.button if b.label == "Try a new quiz" or b.label == "Take the quiz").click().run()
+    next(b for b in at.button if b.label in ("Try a new set", "Start the check")).click().run()
     _, log = stored(tmp_path)
     q = log["entries"][0]["lessons"][0]["quiz"]
     assert made and q["id"].startswith(f"v{quiz_.VERSION}-") and q["attempts"] == 1 and q["best"] == 50

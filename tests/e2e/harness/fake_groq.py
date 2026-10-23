@@ -35,9 +35,16 @@ INJECT = ('<script>alert("xss")</script><img src=x onerror=alert(1)> '
           '[click me](javascript:alert(1)) **bold?** ## heading?')
 
 LESSON = ("【Topic】 Earth's rotation\n\n【Key Idea】 Earth spins once a day, which gives day and night.\n\n"
+          "【Quick Check】\nQ: What gives us day and night?\nA) Earth orbiting the Sun — ✗ the orbit gives the year\n"
+          "B) Earth spinning on its axis ✓\nC) The Moon blocking the Sun — ✗ that's an eclipse\n"
+          "Hint: Think of what happens once every 24 hours.\nWhy: One spin turns each place toward, then away from, the Sun.\n\n"
           "【Deep Dive】 The spin is west to east, so the Sun appears to rise in the east.\n\n"
           "| Term | Meaning |\n|---|---|\n| Axis | The line Earth spins around |\n\n"
-          "【Example】 Sunrise in Taipei comes before sunrise in Paris.\n\n【Today's Task】 Watch a sunset.\n\n"
+          "【Quick Check】\nQ: Which way does Earth spin?\nA) East to west — ✗ then the Sun would rise in the west\n"
+          "B) North to south — ✗ the axis runs north to south\nC) West to east ✓\n"
+          "Hint: Where does the Sun rise?\nWhy: Spinning west to east makes the Sun appear in the east.\n\n"
+          "【Example】 1. Taipei turns to face the Sun first. 2. Paris turns to face it hours later. "
+          "3. So sunrise in Taipei comes before sunrise in Paris.\n\n【Today's Task】 Watch a sunset.\n\n"
           "【Vocabulary】 axis｜the line it spins around｜Earth spins on its axis.\n\n"
           "【Question to Explore】 Why do we not feel the spin?\n\n【Note】 Keep going.")
 
@@ -64,7 +71,7 @@ def _kind(messages: list, stream: bool) -> str:
         return "design"
     if "replacement questions" in system:
         return "quiz_rewrite"
-    if system.startswith("You write a short quiz"):
+    if system.startswith(("You write a short quiz", "You write the practice and the mastery check")):
         return "quiz"
     if system.startswith("You write short practice exercises"):
         return "practice_make"
@@ -117,22 +124,30 @@ def _quiz(inject: bool, old: bool = False, recall: bool = False) -> dict:
                for q in ("Explain in your own words why we have day and night.",
                          "Why does the Sun seem to rise in the east?")]
         return {"questions": qs}
-    qs = [{"type": "choice", "question": f"{CHOICES[k]}{extra}", "options": OPTIONS,
-           "answer": 0, "notes": NOTES, "why": "Earth's spin turns each place toward and away from the Sun."}
-          for k in range(3)]
-    qs += [{"type": "scenario", "scenario": f"{SCENARIOS[k]}{extra}",
+    qs = [{"role": "check", "type": "choice", "question": f"{CHOICES[k]}{extra}", "options": OPTIONS,
+           "answer": 0, "notes": NOTES, "why": "Earth's spin turns each place toward and away from the Sun.",
+           "diff": 1, "hint": "Think of one whole day."} for k in range(1)]
+    qs += [{"role": "check", "type": "scenario", "scenario": f"{SCENARIOS[k]}{extra}",
             "question": "What causes what they see?", "options": OPTIONS, "answer": 0, "notes": NOTES,
-            "why": "Their side of Earth is turning toward or away from the Sun."} for k in range(2)]
-    qs.append({"type": "blank", "question": f"Earth spins on its ____ once a day.{extra}", "answer": "axis",
-               "accept": ["own axis"], "why": "The axis is the line it spins around."})
-    qs.append({"type": "order", "question": f"Put a day in Taipei in order.{extra}", "steps": STEPS,
-               "why": "The spin carries Taipei toward the Sun, then away."})
-    qs.append({"type": "match", "question": "Match each term to its meaning.", "pairs": PAIRS,
-               "why": "These are the lesson's terms."})
-    qs.append({"type": "short", "question": "Explain in your own words why we have day and night." + extra,
-               "answer": "Because Earth spins on its axis.", "why": "."})
-    qs.append({"type": "apply", "question": "When did you last notice Earth's spin in your own day?" + extra,
-               "answer": "A real moment (a sunrise, a sunset) linked to Earth's spin.", "why": "."})
+            "why": "Their side of Earth is turning toward or away from the Sun.", "diff": 2} for k in range(1)]
+    qs.append({"role": "check", "type": "blank", "question": f"Earth spins on its ____ once a day.{extra}", "answer": "axis",
+               "accept": ["own axis"], "why": "The axis is the line it spins around.", "diff": 1})
+    qs.append({"role": "check", "type": "order", "question": f"Put a day in Taipei in order.{extra}", "steps": STEPS,
+               "why": "The spin carries Taipei toward the Sun, then away.", "diff": 2})
+    qs.append({"role": "check", "type": "match", "question": "Match each term to its meaning.", "pairs": PAIRS,
+               "why": "These are the lesson's terms.", "diff": 1})
+    qs.append({"role": "check", "type": "spot", "question": f"Which line has the mistake?{extra}",
+               "lines": ["Earth spins once a day.", "So the Sun rises in the west.", "Night falls as we turn away."],
+               "answer": 1, "fix": "So the Sun rises in the east.", "why": "Spinning west to east brings the Sun up in the east.",
+               "diff": 3})
+    qs.append({"role": "practice", "type": "steps", "question": f"It is noon in Taipei. Is it day or night in Paris?{extra}",
+               "steps": ["Taipei faces the Sun at noon.", "Paris is about 7 hours of spin behind, so it still faces ____.",
+                         "So in Paris it is early morning, before sunrise."], "answers": ["away"],
+               "accept": [["away from the Sun", "away from it"]], "why": "Paris hasn't turned to face the Sun yet.",
+               "hint": "Which way has Paris not turned yet?", "diff": 2})
+    qs.append({"role": "practice", "type": "problem", "question": f"Why does the Moon look like it rises in the east?{extra}",
+               "options": OPTIONS, "answer": 0, "notes": NOTES, "why": "Earth's spin carries us past the Moon too.",
+               "hint": "What moves once a day?", "diff": 3})
     if recall:
         qs.append({"type": "choice", "recall": True, "question": "From before: what makes a day?",
                    "options": OPTIONS, "answer": 0, "notes": NOTES, "why": "One spin is one day."})
@@ -205,9 +220,11 @@ def _reply(kind: str, messages: list, ctl: dict) -> str:
         mine = last.split("Her explanation:")[-1].lower()
         if "spin" in mine or "rotat" in mine:
             return json.dumps({"right": "You named the cause: Earth's spin." + (f" {INJECT}" if inject else ""),
+                               "rubric": {"idea": True, "why": True, "accurate": True},
                                "missing": "", "verdict": "right", "question": "Why don't we feel the spin?"})
         if "sun" in mine or "day" in mine:
             return json.dumps({"right": "You linked day and night to the Sun.", "verdict": "partly",
+                               "rubric": {"idea": True, "why": False, "accurate": True},
                                "missing": "What makes the Sun appear and disappear: Earth's spin.", "question": ""})
         return json.dumps({"right": "Nothing yet that explains it.", "verdict": "wrong",
                            "missing": "Say what causes day and night: Earth spinning on its axis.", "question": ""})

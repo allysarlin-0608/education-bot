@@ -88,11 +88,14 @@ def test_take_the_quiz_uses_the_one_prepared_while_she_read(on, monkeypatch, tmp
     monkeypatch.setattr(llm, "get_client", lambda: object())
     at = app(monkeypatch, tmp_path, subjects=("philosophy",), entries=today_with_a_lesson_read())
     assert not at.exception
+    skip = [b for b in at.button if b.label == "Skip the rest"]           # the warm-up first, if there is one
+    if skip:
+        skip[0].click().run()
     assert len(quizprep._jobs) == 1, "the quiz is being prepared while she reads"
     next(iter(quizprep._jobs.values())).done.wait(5)
-    next(b for b in at.button if b.label == "Take the quiz").click().run()
+    next(b for b in at.button if b.label == "Next: practise it →").click().run()
     assert not at.exception
     _, log = stored(tmp_path)
     q = log["entries"][0]["lessons"][0]["quiz"]
-    assert q and [x["question"] for x in q["questions"]] == [x["question"] for x in fresh]
+    assert q and [x["question"] for x in q["questions"]] == [x["question"] for x in fresh if x.get("role") != "practice"]
     assert len(made) == 1, "the prepared quiz, not a second one"

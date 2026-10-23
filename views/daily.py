@@ -3,9 +3,9 @@ from html import escape
 
 import streamlit as st
 
-from coach import (auth, catalog, clock, core, curriculum, exercise, goalmaker, habit, lesson_view, llm, mastery,
-                   paths, place, practice, progress_bar, quiz, quizgen, quizprep, quota, report_ui, review, settings,
-                   steps, streaks, tokens, ui, unitcheck, visuals, i18n)
+from coach import (attempts, auth, catalog, clock, core, curriculum, exercise, goalmaker, habit, learner, lesson_view,
+                   lessonprep, llm, mastery, mathcourse, paths, place, practice, progress_bar, quiz, quizgen, quizprep,
+                   quota, report_ui, review, session, session_ui, settings, steps, tokens, ui, unitcheck, visuals, i18n)
 from coach import prefs as prefs_
 from coach.i18n import N_, tr, trn
 
@@ -96,13 +96,19 @@ def run_kickoff(i):
     if chat:        # already generated (e.g. in another tab): never call again
         st.rerun()
     kickoff = core.build_kickoff_message(topic, today, slot=slot)
+    # Written in the background during the warm-up (coach/lessonprep.py): taken
+    # when ready, waited for if nearly there; otherwise written here, streamed.
     # The chat only changes once the lesson is complete: a run interrupted
     # mid-stream (she clicks elsewhere) must not leave a lesson half there.
-    lesson, error = llm.stream_reply(
-        core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level, public=auth.is_public(),
-                                 weak=practice.weak_titles(log, topic, slot["n"], today)),     # earlier shaky ideas
-        [{"role": "user", "content": kickoff}], max_tokens=tokens.LESSON_MAX_TOKENS,
-    )
+    k = lessonprep.key(quizprep.session_id(), topic, slot["n"], today.isoformat())
+    lesson, error = None, None
+    if lessonprep.state(k) != "none":
+        with st.spinner(tr("Finishing today's lesson…")):
+            ready = lessonprep.take(k)
+        if ready and ready[0]:
+            lesson = ready[0]
+    if lesson is None:
+        lesson, error = llm.stream_reply(*lesson_request(slot), max_tokens=tokens.LESSON_MAX_TOKENS)
     if error:
         failed("kickoff", error, slot, i=i)       # (the day it made is dropped on the rerun: ui.refresh_entry)
     lesson = core.truthful_note(core.finalize_reply(lesson, lesson=True, topic=topic),
@@ -116,6 +122,28 @@ def run_kickoff(i):
     # into the day as stored now (the stream took a while: another tab may have saved since)
     ui.save_day(log, entry, [slot["n"]], keep=("title", "level", "followup_question"), recount=True, page_day=today)
     st.rerun()
+
+
+def lesson_request(slot):
+    """(instructions, messages) for writing lesson `slot`: the same on the page
+    and in the background (coach/lessonprep.py)."""
+    kickoff = core.build_kickoff_message(topic, today, slot=slot)
+    return (core.build_system_prompt(log, topic, today, slot=slot, start_level=start_level, public=auth.is_public(),
+                                     weak=practice.weak_titles(log, topic, slot["n"], today)),     # earlier shaky ideas
+            [{"role": "user", "content": kickoff}])
+
+
+def prepare_lesson(i) -> None:
+    """Start writing lesson i in the background (during the warm-up), unless
+    it is written, can't be started yet, or the AI can't be used now."""
+    if i is None or not quizprep.enabled() or llm.get_client() is None or quota.blocked():
+        return
+    slot = curriculum.content(log, topic, plan[i])
+    if slot.get("lesson") or curriculum.blocking(plan, i) or slot.get("from"):
+        return
+    k = lessonprep.key(quizprep.session_id(), topic, slot["n"], today.isoformat())
+    if lessonprep.state(k) == "none":
+        lessonprep.start(k, *lesson_request(slot), where=f"{topic} lesson {slot['n']}")
 
 
 def run_followup(i, text):
@@ -200,9 +228,21 @@ def run_quiz(i):
         questions, error = quizgen.make(slot, where, step=st.spinner, context=context)
     if questions is None:
         failed("quiz", error, slot, i=i)
-    slot["quiz"] = quiz.new(questions, slot.get("quiz"))
+    check = [q for q in questions if q.get("role") != "practice"]
+    slot["quiz"] = quiz.new(check, slot.get("quiz"))
+    place_ = session.keep(slot)
+    if place_.get("guided") is None:                 # the guided practice, written with the first set
+        guided = [q for q in questions if q.get("role") == "practice"]
+        place_["guided"] = session.new_guided(guided, problem_first(slot, owner))
     save(entry, owner)
     st.rerun()
+
+
+def problem_first(slot, owner) -> bool:
+    """Start practice with the problem (the worked steps only after a miss):
+    an idea she probably knows already, or the "problem first" arm."""
+    known = mastery.state(mastery.evidence(slot, owner["date"]), today)["strength"] >= session.KNOWN
+    return known or ui.arm("fading", topic, slot["n"]) == "problem_first"
 
 
 PREPARING = N_("Preparing your quiz…")
@@ -213,6 +253,9 @@ def prepare_quiz(slot) -> None:
     unless the AI can't be used just now (no key, the daily allowance)."""
     if not quizprep.enabled() or slot.get("completed") or not slot.get("lesson") or llm.get_client() is None:
         return
+    q = slot.get("quiz")
+    if q is not None and not quiz.outdated(q) and not (q.get("answers") is not None and not quiz.passed(q.get("score"))):
+        return                  # a set is waiting for her already: nothing to prepare (and no call spent)
     k = quizprep.key(quizprep.session_id(), topic, slot)
     if quizprep.state(k) != "none" or quota.blocked():
         return
@@ -248,6 +291,217 @@ def show_retry(slot, kinds):
         else:
             run_followup(retry["i"], retry["text"])
     return True
+
+
+# ============================================================
+# TODAY'S SESSION (coach/session.py): what she did, measured (coach/attempts.py)
+# ============================================================
+def reached(step: str, n: int = 0) -> None:
+    """She reached a step of the session (once a day each): where sessions stop."""
+    seen = st.session_state.setdefault("ss_reached", set())
+    if (today, topic, n, step) in seen:
+        return
+    seen.add((today, topic, n, step))
+    ui.attempt([attempts.row(today, topic, n, "step", step)])
+
+
+def gap_of(held, owner_date):
+    return attempts.gap(mastery.evidence(held, owner_date), today)
+
+
+def day_set(name: str):
+    """Today's warm-up or mixed set, as stored now (another tab may have moved on)."""
+    s = ui.prefs().get(name)
+    return s if s and s["date"] == today.isoformat() else None
+
+
+def answer_set_item(name: str, k: int, item: dict, owner_topic: str, n: int, mark: float, conf, ctx: str,
+                    variants=()) -> None:
+    """One warm-up or mixed item answered: its idea hears of it (and a card is
+    rescheduled by its memory), the answer is recorded, her place is kept."""
+    ui.load_prefs()
+    s = day_set(name)
+    if s is None or s["marks"][k] is not None:
+        return                                        # (already answered: a second click, or another tab)
+    src = s["items"][k]
+    gap = None
+    if src["src"] == "card":
+        found = review.find(log, src["id"])
+        if found is not None:
+            ui.refresh_entry(log, date.fromisoformat(found[0]["date"]), found[0]["topic"])
+            found = review.find(log, src["id"])
+        if found is not None and "cards" not in found[1]:
+            review.keep(log, found[1])
+            found = review.find(log, src["id"])
+        if found is not None:
+            e, held, card = found
+            gap = gap_of(held, e["date"])
+            review.grade(card, mark == 1, today, confidence=conf, target=ui.target_retention())
+            ui.learned(held, e["date"], "review", mark, source=f"{card['id']}-{card['reviews']}")
+            if not ui.save_entry(log, e):
+                ui.show_pending_error()
+    else:
+        held = mastery.holder(log, owner_topic, n)
+        if held:
+            gap = gap_of(held[1], held[0]["date"])
+        ui.learned_elsewhere(log, owner_topic, n, "practice", mark, source=f"{session.item_id(item)}-{today.isoformat()}")
+    s["marks"][k], s["conf"][k] = mark, conf
+    if not session.set_left(s):
+        s["done"] = True
+    ui.update_prefs(**{name: s})
+    ui.attempt([session_ui.row(today, owner_topic, n, ctx, item, mark, True, conf, session_ui.seconds(f"{name}{k}_0"),
+                               gap, variants)])
+
+
+def set_card(name: str, k: int):
+    """(item, recall, topic, n) for item k of a set; None if its card is gone."""
+    src = day_set(name)["items"][k]
+    if src["src"] == "bank":
+        return src["q"], None, src["topic"], src["n"]
+    found = review.find(log, src["id"])
+    if found is None:
+        return None
+    item, recall = session_ui.card_item(log, found[2])
+    return item, recall, found[0]["topic"], found[2].get("n") or 0
+
+
+def run_set(name: str, ctx: str, title: str, sub: str, variants=()) -> bool:
+    """A warm-up or mixed set, one item at a time. True once it's done."""
+    s = day_set(name)
+    if s is None or s["done"] or s["skipped"]:
+        return True
+    shown_key = f"ss_{name}_shown"
+    with st.container(key=f"ss_{name}"):
+        session_ui.eyebrow(title, sub)
+        left = session.set_left(s)
+        k = st.session_state.get(shown_key)
+        if k is None and not left:
+            return True
+        if k is None:
+            k = left[0]
+        found = set_card(name, k)
+        if found is None:                       # a card deleted since: left out
+            s["items"].pop(k), s["marks"].pop(k), s["conf"].pop(k)
+            s["done"] = not session.set_left(s)
+            ui.update_prefs(**{name: s})
+            st.rerun()
+        item, recall, owner_topic, n = found
+        session_ui.pace(len(s["marks"]) - len(left), len(s["marks"]))
+        st.caption(session_ui.source_line(owner_topic, n, log))
+        if st.session_state.get(shown_key) is not None:            # just answered: how it went
+            mark = s["marks"][k]
+            if item is not None:
+                answer = st.session_state.get(f"ss_{name}_answer")
+                st.markdown(f"**{item['question']}**")
+                session_ui.exercise_done(item, answer, mark, 1)
+            else:
+                st.markdown(f"**{recall[0]}**")
+                st.markdown(recall[1])
+                st.html(f'<p class="ss-verdict">{exercise.sign(mark)} '
+                        + (tr("Good: it comes back further apart now.") if mark == 1 else tr("It comes back tomorrow."))
+                        + "</p>")
+            last = not session.set_left(s)
+            if st.button(tr("Continue") if last else tr("Next"), type="primary", key=f"ss_{name}_next", width="stretch"):
+                st.session_state[shown_key] = None
+                st.rerun()
+            return False
+        if item is not None:
+            got = session_ui.exercise_try(item, f"{name}{k}", 0)
+            if got:
+                answer, conf = got
+                st.session_state[f"ss_{name}_answer"] = answer
+                answer_set_item(name, k, item, owner_topic, n, quiz.mark(item, answer), conf, ctx, variants)
+                st.session_state[shown_key] = k
+                st.rerun()
+        else:
+            session_ui.shown(f"{name}{k}_0")
+            knew = session_ui.recall_buttons(f"ss_{name}_{k}", *recall)
+            if knew is not None:
+                answer_set_item(name, k, {"type": "point"}, owner_topic, n, 1.0 if knew else 0.0, None, ctx, variants)
+                st.session_state[shown_key] = k
+                st.rerun()
+        if st.button(tr("Skip the rest"), type="tertiary", key=f"ss_{name}_skip"):
+            s["skipped"] = True
+            ui.update_prefs(**{name: s})
+            st.rerun()
+    return False
+
+
+def answer_quick(i, k, check, answer, conf) -> None:
+    """Quick check k of lesson i answered (a second try after the hint)."""
+    entry = day_entry()
+    owner, slot = work(entry, i)
+    before = (session.of(slot)["checks"].get(str(k)) or {}).get("tries", 0)
+    right = answer == check["answer"]
+    session.answer_check(slot, k, answer, right, conf)
+    gap = gap_of(slot, owner["date"])
+    if before == 0:                         # her first answer is the evidence (the second came after a hint)
+        ui.learned(slot, owner["date"], "check", 1.0 if right else 0.0, source=f"qc{k}")
+    save(entry, owner)
+    ui.attempt([session_ui.row(today, topic, slot["n"], "check", check, 1.0 if right else 0.0, before == 0,
+                               conf, session_ui.seconds(f"qc_{slot['n']}_{k}_{before}"), gap)])
+    st.rerun()
+
+
+def quick_check(i, slot, k, check) -> None:
+    c = session.of(slot)["checks"].get(str(k)) or {"a": None, "tries": 0, "right": False}
+    with st.container(key=f"qc_{slot['n']}_{k}"):
+        st.html('<p class="hb-eyebrow">' + tr("Quick check") + "</p>")
+        if c["right"] or c["tries"] >= session.TRIES:
+            st.markdown(f"**{check['question']}**")
+            session_ui.exercise_done(check, c["a"], 1.0 if c["right"] else 0.0, c["tries"])
+            return
+        got = session_ui.exercise_try(check, f"qc_{slot['n']}_{k}", c["tries"], c["a"], tag=False)
+        if got:
+            answer_quick(i, k, check, *got)
+
+
+def answer_guided(i, k, answer, conf) -> None:
+    entry = day_entry()
+    owner, slot = work(entry, i)
+    g = session.of(slot).get("guided")
+    if not g:
+        st.rerun()
+    before = g["tries"][k]
+    item = g["items"][k]
+    mark = session.answer_guided(g, k, answer, conf)
+    gap = gap_of(slot, owner["date"])
+    if before == 0:
+        ui.learned(slot, owner["date"], "check", mark, source=f"g{k}")
+    save(entry, owner)
+    ui.attempt([session_ui.row(today, topic, slot["n"], "guided", item, mark, before == 0, conf,
+                               session_ui.seconds(f"g_{slot['n']}_{k}_{before}"), gap,
+                               (f"fading:{g['order']}",))])
+    if mark == 1 or g["tries"][k] >= session.TRIES:
+        st.session_state.ss_g_shown = (slot["n"], k)
+    st.rerun()
+
+
+def set_stage(i, to: str) -> None:
+    entry = day_entry()
+    owner, slot = work(entry, i)
+    session.move(slot, to)
+    save(entry, owner)
+    st.session_state.coach_scroll = ("current-lesson", False)
+    st.session_state.coach_scroll_n = st.session_state.get("coach_scroll_n", 0) + 1
+    st.rerun()
+
+
+def jol(i, value: int, text: str) -> None:
+    """The day's reflection: how sure she is she'll remember (compared later
+    with how she does) and, if she likes, the one thing she takes away."""
+    entry = day_entry()
+    owner, slot = work(entry, i)
+    session.keep(slot)["jol"] = value
+    if text.strip():
+        entry["reflection"] = text.strip()[:1000]
+    ui.save_day(log, entry, [s["n"] for s in entry["lessons"]], keep=("reflection",) if text.strip() else (),
+                recount=True, page_day=today)
+    if owner is not entry:
+        ui.save_day(log, owner, [slot["n"]], page_day=today)
+    ui.update_prefs(reflected=today.isoformat())
+    ui.attempt([attempts.row(today, topic, slot["n"], "jol", "jol", conf=value)])
+    st.rerun()
 
 
 # ============================================================
@@ -297,33 +551,17 @@ with st.container(key="today_links", horizontal=True):
         with st.container(key=f"enter_{topic}", horizontal=True):
             if st.button(tr('Enter {p0}', p0=catalog.name(topic)), type="tertiary", key="today_world"):
                 ui.enter_world(topic)
-    if st.button(tr("Course map"), type="tertiary", key="today_course"):   # the whole path
+    # the whole path, and how well she knows each idea on it (the learning map)
+    if st.button(tr("Learning map"), type="tertiary", key="today_course"):
         ui.open_course(topic)
-    if mastery.topics(log) and st.button(tr("Knowledge map"), type="tertiary", key="today_skills"):   # what she knows
-        st.switch_page("views/skills.py")
-# review and practice: one quiet list under the day's links, noticed when there
-# is something to do, never in the way of the day's lesson
-due_now = ui.review_due(log)
-shaky = mastery.needs_practice(log, today)
-practised = (ui.prefs().get("practice") or {}).get("date") == today.isoformat()
-# a unit just finished, its check never taken: pointed to once, here (the course map keeps it)
+    short_on_time = st.container()         # (filled below, once her day is known)
+# a unit just finished, its check never taken: pointed to once, here (the learning map keeps it)
 fresh_unit = unitcheck.just_finished(log, topic, today)
-if due_now or (shaky and not practised) or fresh_unit:
+if fresh_unit:
     with st.container(key="today_extras", gap=None):
-        if fresh_unit:
-            if st.button(tr('Unit check · {p0} · {p1} questions', p0=fresh_unit['name'], p1=unitcheck.size(log, topic, fresh_unit)),
-                         type="tertiary", key="today_unit"):
-                ui.open_unit(topic, fresh_unit["key"])
-        if due_now:
-            minutes = max(1, round(len(due_now) * 0.4))
-            if st.button(trn('Review · {n} card due · about {minutes} min', 'Review · {n} cards due · about {minutes} min', len(due_now), minutes=minutes),
-                         type="tertiary", key="today_review"):
-                st.switch_page("views/review.py")
-        if shaky and not practised:
-            n_ideas = min(3, len(shaky))
-            if st.button(trn('Practice · {n} idea to strengthen · about {minutes} min', 'Practice · {n} ideas to strengthen · about {minutes} min', n_ideas, minutes=min(practice.SET_SIZE, practice.PER_IDEA * n_ideas)), type="tertiary",
-                         key="today_practice"):
-                st.switch_page("views/practice.py")
+        if st.button(tr('Unit check · {p0} · {p1} questions', p0=fresh_unit['name'], p1=unitcheck.size(log, topic, fresh_unit)),
+                     type="tertiary", key="today_unit"):
+            ui.open_unit(topic, fresh_unit["key"])
 # ============================================================
 # COMING BACK (coach/habit.py): a welcome after a break, a light day, her
 # reminder, a milestone just reached, last week in review. Calm, and never
@@ -342,22 +580,37 @@ def set_light(on: bool) -> None:
         ui.refit_today(habit.LIGHT_LESSONS if on else pace)
 
 
-if habit.returning(log, today) and not studied_today:
+def set_brief(on: bool) -> None:
+    """A five-minute day: recall and mixed practice, no new lesson (it counts)."""
+    ui.update_prefs(brief_day=today.isoformat() if on else "")
+
+
+brief = habits.get("brief_day") == today.isoformat()
+returning = habit.returning(log, today) and not studied_today
+if returning:
     r = habit.recap(log, today)
     where = (tr("Last time you were in {name}: Lesson {n}, “{title}”.", name=r['name'], n=r['n'], title=r['title']) + " "
              if r else "")
     with st.container(key="welcome_back"):
-        st.html(tr('<p class="hb-eyebrow">Welcome back</p><p class="hb-text">{p0}Today can be gentle: one lesson and a few review cards, then see how you feel.</p>', p0=escape(where)))
+        st.html(tr('<p class="hb-eyebrow">Welcome back</p><p class="hb-text">{p0}We\'ll start with a few things to recall, then carry on from there. Take it at your own pace.</p>', p0=escape(where)))
         if not light and pace > habit.LIGHT_LESSONS:
             st.button(tr("Start with one lesson"), key="wb_light", on_click=set_light, args=(True,))
-elif not day_done and pace > habit.LIGHT_LESSONS:
+if not day_done and not (brief and today.isoformat() in habits.get("brief_days", [])):
     with st.container(key="light_day", horizontal=True, vertical_alignment="center"):
-        if light:
+        if brief:
+            st.html(tr('<p class="hb-text">A five-minute day: recall and a little practice. It counts.</p>'))
+            st.button(tr("Do a lesson too"), key="brief_off", type="tertiary", on_click=set_brief, args=(False,))
+        elif light:
             st.html(tr('<p class="hb-text">A light day: one lesson today.</p>'))
             st.button(tr('Back to {pace} lessons', pace=pace), key="light_off", type="tertiary", on_click=set_light, args=(False,))
         else:
-            st.button(tr("Busy today? Make it a light day"), key="light_on", type="tertiary",
-                      on_click=set_light, args=(True,))
+            with short_on_time, st.popover(tr("Short on time?"), key="light_menu", type="tertiary"):
+                st.caption(tr("Any of these counts as a day."))
+                st.button(tr("Five minutes: recall and practice"), key="brief_on", type="tertiary",
+                          on_click=set_brief, args=(True,), width="stretch")
+                if pace > habit.LIGHT_LESSONS:
+                    st.button(tr("One lesson today"), key="light_on", type="tertiary",
+                              on_click=set_light, args=(True,), width="stretch")
 
 # her reminder, shown here once its time has come and nothing is studied yet
 if habit.reminder_due(habits, log, clock.now()) and ui.update_prefs(reminded_on=today.isoformat()):
@@ -424,6 +677,56 @@ if not plan:
     st.stop()
 
 # ============================================================
+# WARM-UP: recall before reading (coach/session.py); the lesson is written meanwhile
+# ============================================================
+def start_mixed() -> None:
+    """Today's mixed practice on earlier ideas (the interleaving experiment
+    decides the order for the day)."""
+    arm = ui.arm("interleave", today.isoformat())
+    items = session.mixed(log, today, tuple((topic, x["n"]) for x in plan), interleaved=arm == "mixed")
+    ui.update_prefs(mixed=session.new_set(today, items, arm=arm))
+
+
+if day_set("warmup") is None and not day_done:
+    size = session.WARMUP_BACK if returning else session.WARMUP
+    ui.update_prefs(warmup=session.new_set(today, session.warmup(log, today, size)))
+warm = day_set("warmup")
+if warm is not None and not warm["done"] and not warm["skipped"]:
+    reached("warmup")
+    prepare_lesson(steps.current(plan))          # written in the background while she recalls
+    n_warm = len(warm["items"])
+    if not run_set("warmup", "warmup", tr("Warm-up"),
+                   trn("One thing to recall before today's lesson. Remembering it is what makes it stick.",
+                       "{n} things to recall before today's lesson. Remembering them is what makes them stick.",
+                       n_warm)):
+        st.stop()
+
+if brief:
+    if day_set("mixed") is None:
+        start_mixed()
+    warm, mix = day_set("warmup"), day_set("mixed")
+    answered_any = any(m is not None for x in (warm, mix) if x for m in x["marks"])
+    if not (warm and warm["items"]) and not (mix and mix["items"]):
+        # nothing to recall yet (her first days): one short lesson instead
+        ui.update_prefs(brief_day="")
+        set_light(True)
+        st.session_state.coach_toast = tr("Nothing to recall yet, so today is one short lesson instead.")
+        st.rerun()
+    arm = mix["arm"] if mix else ""
+    if not run_set("mixed", "mixed", tr("Mixed practice"),
+                   tr("Earlier ideas, mixed: choosing the right method is part of the skill."),
+                   variants=(f"interleave:{arm}",) if arm else ()):
+        st.stop()
+    if answered_any and today.isoformat() not in habits.get("brief_days", []):
+        ui.update_prefs(brief_days=habits.get("brief_days", []) + [today.isoformat()])
+    with st.container(key="brief_done"):
+        st.html('<div class="done"><p class="done-eyebrow">' + tr("Complete") + "</p><h3>" + tr("Five minutes, done")
+                + '</h3><p class="done-sub">' + tr("Recall and practice on a busy day keep what you know from fading. "
+                                                    "It counts for today.") + "</p></div>")
+        st.button(tr("Do a lesson too"), key="brief_more", on_click=set_brief, args=(False,))
+    st.stop()
+
+# ============================================================
 # COURSE CARD: the bar, and the day's lessons as steps under it
 # ============================================================
 unit = curriculum.unit_progress(log, topic)
@@ -474,119 +777,8 @@ st.html(place.html(chat_key(plan[i]) if i is not None else f"{today.isoformat()}
         unsafe_allow_javascript=True)
 
 # ============================================================
-# ALL DONE: the day's summary
+# THE QUIZ AND EXPLAINING IT BACK: what the lesson and the day's close draw
 # ============================================================
-if i is None:
-    # a calm moment: what she did, the streak, and what tomorrow holds
-    streak = core.current_streak(log, ui.today())
-    rows = []
-    for s in plan:
-        score = (curriculum.content(log, topic, s).get("quiz") or {}).get("score")
-        rows.append(f'<li><span class="n">{s["n"]}</span><span class="t">{escape(s["title"])}</span>'
-                    f'<span class="q">{f"{score}%" if score is not None else ""}</span></li>')
-    tomorrow = today + timedelta(days=1)
-    t_next = ui.topic_for(tomorrow)
-    upcoming = curriculum.next_numbers(log, t_next, settings.units(config)) if catalog.known(t_next) else []
-    ahead = (tr("Tomorrow · {subject} · {which}", subject=catalog.name(t_next),
-                which=(tr("Lesson {n}", n=upcoming[0]) if len(upcoming) == 1 else
-                       tr("Lessons {first}–{last}", first=upcoming[0], last=upcoming[-1])))
-             if upcoming else "")
-    with st.container(key="day_done"):
-        passed = (tr("The lesson is passed.") if len(plan) == 1 else tr("All {n} lessons passed.", n=len(plan)))
-        streak_line = (tr("Current streak: 1 day.") if streak == 1 else tr("Current streak: {n} days.", n=streak))
-        st.html('<div class="done"><p class="done-eyebrow">' + tr("Complete") + "</p><h3>" + tr("Today's done")
-                + f'</h3><p class="done-sub">{passed} {streak_line} '
-                f'{escape(streaks.explain(streaks.walk(core.streak_dates(log), today)))}</p>'
-                f'<ol class="done-list">{"".join(rows)}</ol>'
-                + (f'<p class="done-next">{escape(ahead)}</p>' if ahead else "") + '</div>')
-    st.stop()
-
-slot = curriculum.content(log, topic, plan[i])     # a lesson carried over: its original
-# Reviewing an earlier lesson: say so, with the way back to the current one.
-if i != now:
-    with st.container(key="review_bar", horizontal=True, vertical_alignment="center"):
-        st.markdown(tr("You're reviewing Lesson {p0} · Completed", p0=slot['n']))
-        way = steps.arrow(i, now)               # the arrow (drawn by CSS) points to where it goes
-        if now is not None:
-            if st.button(tr('Back to Lesson {p0}', p0=plan[now]['n']), key=f"back_to_current_{way}"):
-                open_lesson(now, anchor="current-quiz" if curriculum.content(log, topic, plan[now]).get("lesson") else "current-lesson",
-                            restore=True)
-        elif st.button(tr("Back to today's summary"), key=f"back_to_current_{way}"):
-            open_lesson(None, anchor="top")
-if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit
-    st.markdown(f"#### {slot['unit']}")
-st.html('<div class="jump-anchor" id="current-lesson"></div>')
-st.markdown(tr('### Lesson {p0}: {p1}', p0=slot['n'], p1=slot['title']))
-aim = catalog.goal_objective(topic, slot["n"]) if goal else ""
-if aim:                 # what she'll be able to do by the end (her goal's outline: coach/paths.py)
-    st.html(tr('<p class="lesson-aim"><span>You\'ll be able to</span>{p0}</p>', p0=escape(aim)))
-
-chat = get_chat(slot)
-if not chat:
-    show_retry(slot, ("kickoff",))
-    if (before := curriculum.blocking(plan, i)):
-        st.caption(tr('Pass the quiz for Lesson {p0} first, then start this one.', p0=before['n']))
-    else:
-        start = st.empty()          # the button goes away while the lesson is written
-        if start.button(tr("Start this lesson"), type="primary", use_container_width=True):
-            start.empty()
-            st.session_state.coach_retry = None
-            run_kickoff(i)
-    st.stop()
-
-# ============================================================
-# LESSON + CHAT
-# ============================================================
-last_question = max((k for k, m in enumerate(chat) if k > 1 and m["role"] == "user"), default=None)
-for k, message in enumerate(chat[1:], start=1):   # the kickoff line is shown as the heading
-    if k == last_question:
-        st.html(place.latest_anchor())
-    with st.chat_message(message["role"]):
-        if k == 1:
-            lesson_view.render(message["content"], topic, key=chat_key(slot), title=slot.get("title", ""))  # cards, tables, diagrams
-        elif message["role"] == "assistant":
-            body, where, _ = practice.split_reply(message["content"], slot.get("lesson", ""))
-            st.markdown(body)
-            if practice.based_label(where):          # where the answer comes from, or that it isn't sure
-                st.html(f'<p class="tutor-based">{escape(practice.based_label(where))}</p>')
-        else:
-            st.markdown(message["content"])
-reply_spot = st.container()     # a new question and its answer appear here, under the others
-# an earlier day's lesson not passed yet may have been written under older rules: hers to rewrite
-if st.session_state.pop("coach_rewritten", None) == slot["n"]:
-    st.html(tr('<p class="ob-note" role="status">Rewritten with our latest guidelines.</p>'))
-elif not slot.get("completed") and slot.get("lesson") and plan[i].get("from"):      # (carried over from an earlier day)
-    if st.button(tr("Rewrite this lesson"), type="tertiary", key=f"rewrite_{slot['n']}",
-                 help=tr("Written again with our latest guidelines (one of today's AI requests). "
-                      "Your questions and progress stay.")):
-        run_rewrite(i)
-
-# Key points she wants back later (review): the Key Idea and each Deep Dive point
-points = review.key_points(slot.get("lesson", ""))
-if points:
-    with st.popover(tr("Save for review"), key=f"save_menu_{slot['n']}"):
-        st.caption(tr("A saved point comes back in Review tomorrow, then further apart each time you know it."))
-        for k, (label, text) in enumerate(points):
-            kept = review.saved(slot, label)
-            if st.button(label, key=f"save_point_{slot['n']}_{k}", disabled=kept, help=text[:240],
-                         icon=":material/check:" if kept else None, type="tertiary"):
-                entry = day_entry()
-                owner, held = work(entry, i)
-                review.keep(log, held)
-                review.save_point(held, label, text, today, topic)
-                if save(entry, owner):
-                    st.toast(tr('Saved for review: {label}', label=label))
-                st.rerun()
-
-# something wrong or unclear in it: said in two taps (audit stage 2; what is sent: coach/report_ui.py)
-report_ui.lesson(f"rep_lesson_{topic}_{slot['n']}", topic, slot["n"], slot.get("title", ""), slot.get("lesson", ""))
-
-st.divider()
-entry = shown_entry()
-owner, slot = work(entry, i)
-passed_here = entry["lessons"][i]["completed"]     # (a carried-over lesson: passed on this day)
-
-
 def drop_reported(i, text):
     """A question she reported: its review card goes, and none is made from it again."""
     entry = day_entry()
@@ -619,11 +811,19 @@ def conclude(i):
     entry = day_entry()
     owner, slot = work(entry, i)
     mastery.seed(slot, owner["date"])                        # (a lesson from before mastery: what it had first)
+    gap = gap_of(slot, owner["date"])
     score = quiz.finish(slot["quiz"])
     q = slot["quiz"]
+    sure = q.get("conf") or [None] * len(q["questions"])
     ui.learned(slot, owner["date"], "quiz", score / 100, source=f"{q['id']}-{q['attempts']}")   # the skill map
     review.keep(log, slot)                                   # (a lesson from before review: its old cards first)
     review.add_missed(slot, slot["quiz"], today, topic)      # what she missed comes back in a few days
+    for k, item in enumerate(q["questions"]):                # wrong and sure: that card comes back first
+        if learner.overconfident((q["marks"][k] or 0) >= 1, sure[k]) and not item.get("from"):
+            card_id = review.question_card_id(topic, slot["n"], item["question"])
+            for c in slot.get("cards") or []:
+                if c["id"] == card_id:
+                    c["hc"] = True
     if quiz.passed(score):
         review.add_key_idea(slot, today, topic)              # and, once it's passed, its key idea and words
         review.add_words(slot, today, topic)
@@ -639,6 +839,11 @@ def conclude(i):
     for k, item in enumerate(q["questions"]):                # the question on an earlier idea: evidence for it
         if item.get("from") and q["marks"][k] is not None:
             ui.learned_elsewhere(log, topic, item["from"], "recall", q["marks"][k], source=f"{q['id']}-{k}")
+    ui.attempt([session_ui.row(today, topic, item.get("from") or slot["n"], "quiz", item, q["marks"][k], True,
+                               sure[k], None, None if item.get("from") else gap)
+                for k, item in enumerate(q["questions"]) if q["marks"][k] is not None])
+    if quiz.passed(score):
+        reached("passed", slot["n"])
     if saved and quiz.passed(score):
         ui.record("lesson_passed")
         p = ui.prefs()                   # a lesson after today's reminder: did the reminder help? (coach/metrics.py)
@@ -682,6 +887,7 @@ def run_explain(i, text):
     ui.learned(slot, owner["date"], "explain", fb["score"], source="explain")
     if save(entry, owner):
         ui.record("explained")
+    ui.attempt([attempts.row(today, topic, slot["n"], "explain", "explain", score=fb["score"])])
     st.rerun()
 
 
@@ -730,11 +936,16 @@ def explain_back(i, slot):
                     spot.button(tr("Reading…"), disabled=True, key="explain_wait")
                     st.session_state.coach_retry = None
                     run_explain(i, text)
-            st.caption(tr("Optional. It feeds your skill map; your lesson is already passed."))
+            st.caption(tr("Optional. A good explanation has the core idea, why it works, and no misconceptions."))
             return
         fb = done["feedback"]
         st.caption(tr('You wrote: {p0}', p0=done['text']))
         st.markdown(f"**{tr(VERDICT.get(fb['score'], ''))}** {fb['right']}")
+        if fb.get("rubric"):            # what a good explanation has, and which of it hers had
+            names = {"idea": tr("The core idea"), "why": tr("Why it works"), "accurate": tr("No misconceptions")}
+            st.html('<ul class="ex-rubric">' + "".join(
+                f'<li class="{"yes" if fb["rubric"][k] else "no"}">{"✓" if fb["rubric"][k] else "○"} {escape(names[k])}</li>'
+                for k in practice.RUBRIC) + "</ul>")
         if fb.get("missing"):
             st.markdown(tr('**What to add:** {p0}', p0=fb['missing']))
         if fb.get("question") and not done.get("reply_feedback"):
@@ -768,12 +979,20 @@ def answer_sheet(i, q):
     if q.get("draft") is None:
         q["draft"] = quiz.blank_draft(q)
     draft = q["draft"]
-    saved = [list(a) if isinstance(a, list) else a for a in draft]
+    if not isinstance(q.get("conf"), list) or len(q["conf"]) != len(q["questions"]):
+        q["conf"] = [None] * len(q["questions"])
+    sure = q["conf"]
+    saved = [list(a) if isinstance(a, list) else a for a in draft], list(sure)
     for k, item in enumerate(q["questions"]):
         if item.get("from"):            # one question on an earlier idea she found hard
             st.html(tr('<p class="ex-earlier">From an earlier lesson ({p0}) · it doesn\'t count toward your score</p>', p0=escape(lesson_title(item["from"]))))
         draft[k] = exercise.field(item, f"quiz_{q['id']}_{k}", draft[k], k=k + 1)
-    if draft != saved:
+        # how sure she is of it (compared with how she did: calibration)
+        ckey = f"quizconf_{q['id']}_{k}"
+        sure[k] = st.segmented_control(tr("How sure are you?"), (1, 2, 3), key=ckey,
+                                       default=sure[k] if ckey not in st.session_state else None,
+                                       format_func=lambda c: tr(session_ui.CONF_LABELS[c]))
+    if (draft, sure) != saved:
         save(day_entry(), work(day_entry(), i)[0])      # every answer is saved as she gives it
     submit = st.empty()
     if not submit.button(tr("Submit answers"), type="primary", use_container_width=True, key=f"submit_{q['id']}"):
@@ -795,108 +1014,317 @@ def answer_sheet(i, q):
 
 
 # ============================================================
-# QUIZ: 8 of 10 points (80%) or better completes the lesson
+# ALL DONE: the day's summary
 # ============================================================
-st.html('<div class="jump-anchor" id="current-quiz"></div>')
-st.markdown(tr("#### Quiz"))
-q = slot.get("quiz")
-# a quiz written under older rules that she hasn't answered: a new one, written and checked under
-# today's rules, takes its place when she starts (attempts and best score carry over; one she
-# answered stays as it was). Started answers on the old one are hers to keep or let go.
-renewed = not passed_here and quiz.outdated(q) and not quiz.has_draft(q)
-if renewed:
-    q = None
-if passed_here:
-    if q and quiz.passed(q.get("score")):
-        st.markdown("**" + progress_bar.rolled(f"quiz_pass_{q['id']}", tr("Passed with {score}%", score=q['score']))
-                    + "** · " + progress_bar.rolled(f"quiz_points_{q['id']}", tr("{n} points.", n=quiz.points(q))),
-                    unsafe_allow_html=True)
-        with st.expander(tr("See the quiz")):     # this attempt's answers and explanations
-            show_results(q)
-            report_question(q)
+if i is None:
+    # a calm moment: what she did, what she knows now, and what tomorrow holds (the
+    # streak is in the Learning Record: progress here is what she learned, not a count)
+    rows = []
+    for s in plan:
+        score = (curriculum.content(log, topic, s).get("quiz") or {}).get("score")
+        rows.append(f'<li><span class="n">{s["n"]}</span><span class="t">{escape(s["title"])}</span>'
+                    f'<span class="q">{f"{score}%" if score is not None else ""}</span></li>')
+    tomorrow = today + timedelta(days=1)
+    t_next = ui.topic_for(tomorrow)
+    upcoming = curriculum.next_numbers(log, t_next, settings.units(config)) if catalog.known(t_next) else []
+    ahead = (tr("Tomorrow · {subject} · {which}", subject=catalog.name(t_next),
+                which=(tr("Lesson {n}", n=upcoming[0]) if len(upcoming) == 1 else
+                       tr("Lessons {first}–{last}", first=upcoming[0], last=upcoming[-1])))
+             if upcoming else "")
+    known = mastery.counts([x for x in mastery.ideas(log, topic, today) if x["reached"]])
+    with st.container(key="day_done"):
+        passed = (tr("The lesson is passed.") if len(plan) == 1 else tr("All {n} lessons passed.", n=len(plan)))
+        knows = tr("In {subject} you now know {solid} ideas well, and {learning} are on their way.",
+                   subject=catalog.name(topic), solid=known["solid"] + known["mastered"], learning=known["learning"])
+        st.html('<div class="done"><p class="done-eyebrow">' + tr("Complete") + "</p><h3>" + tr("Today's done")
+                + f'</h3><p class="done-sub">{passed} {escape(knows)}</p>'
+                f'<ol class="done-list">{"".join(rows)}</ol>'
+                + (f'<p class="done-next">{escape(ahead)}</p>' if ahead else "") + '</div>')
+    # before she goes: mixed practice, her own words, a reflection (each once a day, each optional)
+    last = len(plan) - 1
+    last_slot = curriculum.content(log, topic, plan[last])
+    if day_set("mixed") is None:
+        start_mixed()
+    mix = day_set("mixed")
+    st.markdown(tr("#### Before you go"))
+    if mix and not mix["done"] and not mix["skipped"]:
+        reached("mixed")
+        run_set("mixed", "mixed", tr("Mixed practice"),       # (each part is hers to do or leave)
+                tr("A few earlier ideas, mixed: choosing the right method is part of the skill."),
+                variants=(f"interleave:{mix['arm']}",) if mix["arm"] else ())
+    if practice.invite(log, topic, last_slot, today) or (last_slot.get("explain") or {}).get("at", "")[:10] == today.isoformat():
+        reached("explain", last_slot["n"])
+        explain_back(last, last_slot)
+    if ui.prefs().get("reflected") != today.isoformat():
+        reached("reflect", last_slot["n"])
+        with st.container(key="reflect"):
+            st.html('<p class="hb-eyebrow">' + tr("Reflect") + "</p>")
+            st.caption(tr("Saying how sure you are, then seeing how you do in a week, trains you to judge what you "
+                          "really know."))
+            thought = st.text_input(tr("The one thing you'll take from today (optional)"), key=f"reflect_{today}",
+                                    placeholder=tr("In a sentence…"))
+            value = session_ui.jol_buttons(f"reflect_{today}")
+            if value:
+                jol(last, value, thought or "")
     else:
-        st.caption(tr("This lesson is done."))
-    if goal and slot["n"] == 1:          # her goal's first lesson: a small win, said plainly
-        left = paths.lesson_count(goal) - 1
-        st.html(trn('<p class="goal-win"><b>First step done.</b> {n} lesson to go on “{goal}”.</p>', '<p class="goal-win"><b>First step done.</b> {n} lessons to go on “{goal}”.</p>', left, goal=escape(goal["title"])))
-    # just passed: on to the lesson this one unlocked, or the day's summary after the last
-    if now is not None and now == i + 1:
-        if st.button(tr("Next lesson →"), type="primary", use_container_width=True, key="next_lesson"):
-            open_lesson(now)
-    elif now is None and i == len(plan) - 1:
-        if st.button(tr("See today's summary →"), type="primary", use_container_width=True, key="next_lesson"):
+        st.caption(tr("Reflection saved. See you next time."))
+    st.stop()
+
+slot = curriculum.content(log, topic, plan[i])     # a lesson carried over: its original
+# Reviewing an earlier lesson: say so, with the way back to the current one.
+if i != now:
+    with st.container(key="review_bar", horizontal=True, vertical_alignment="center"):
+        st.markdown(tr("You're reviewing Lesson {p0} · Completed", p0=slot['n']))
+        way = steps.arrow(i, now)               # the arrow (drawn by CSS) points to where it goes
+        if now is not None:
+            if st.button(tr('Back to Lesson {p0}', p0=plan[now]['n']), key=f"back_to_current_{way}"):
+                open_lesson(now, anchor="current-quiz" if curriculum.content(log, topic, plan[now]).get("lesson") else "current-lesson",
+                            restore=True)
+        elif st.button(tr("Back to today's summary"), key=f"back_to_current_{way}"):
             open_lesson(None, anchor="top")
-    # what she knows of it, and (once a day) explaining it back: below the way on, never in front of it
-    idea = mastery.state(mastery.evidence(slot, owner["date"]), today)
-    st.html(tr('<p class="idea-state">This idea: <b>{p0}</b> · {p1}</p>', p0=mastery.LEVEL_NAMES[idea["level"]], p1=escape(mastery.describe(dict(idea, reached=True)))))
-    explain_back(i, slot)
-elif (before := curriculum.blocking(entry["lessons"], i)):
-    # e.g. a lesson started under the old tick box before the one ahead of it was finished
-    st.caption(tr('Pass the quiz for Lesson {p0} first; this quiz opens after that.', p0=before['n']))
-elif q is not None and quiz.needs_grading(q):
-    # submitted, but marking the short answers didn't go through yet
-    st.caption(tr("Your answers are saved. They just need marking."))
-    retrying = show_retry(slot, ("grade",))
-    mark = st.empty()
-    if not retrying and mark.button(
-            tr("Mark my answers"), type="primary", use_container_width=True):
-        mark.empty()
-        run_grading(i)
-elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
-    if q is not None:               # the last attempt fell short
-        st.markdown("**" + progress_bar.rolled(f"quiz_score_{q['id']}", f"{q['score']}%") + "** · "
-                    + progress_bar.rolled(f"quiz_points_{q['id']}", tr("{n} points.", n=quiz.points(q))) + " "
-                    + tr("You need {mark}% to move on; a new set of questions is ready when you are.",
-                         mark=quiz.PASS_MARK),
-                    unsafe_allow_html=True)
-        with st.expander(tr("See what you missed"), expanded=True):
-            show_results(q, missed_only=True)
-            report_question(q)
-    elif renewed:
-        st.caption(tr("This quiz has been rewritten with our latest checks for clear, correct questions. "
-                   "Your earlier attempts still count."))
+if slot["unit"] and slot["unit"] != unit["unit"]:      # the card already names the current unit
+    st.markdown(f"#### {slot['unit']}")
+st.html('<div class="jump-anchor" id="current-lesson"></div>')
+st.markdown(tr('### Lesson {p0}: {p1}', p0=slot['n'], p1=slot['title']))
+aim = catalog.goal_objective(topic, slot["n"]) if goal else ""
+if aim:                 # what she'll be able to do by the end (her goal's outline: coach/paths.py)
+    st.html(tr('<p class="lesson-aim"><span>You\'ll be able to</span>{p0}</p>', p0=escape(aim)))
+
+chat = get_chat(slot)
+if not chat:
+    show_retry(slot, ("kickoff",))
+    if (before := curriculum.blocking(plan, i)):
+        st.caption(tr('Pass the quiz for Lesson {p0} first, then start this one.', p0=before['n']))
     else:
-        st.caption(tr('{p0} questions on this lesson, of several kinds: choices, scenarios, a blank to fill, matching, putting steps in order, and two answers in your own words. Score {p1}% or more to finish it.', p0=quiz.QUESTIONS, p1=quiz.PASS_MARK))
-    retrying = show_retry(slot, ("quiz",))
-    if not retrying:
-        prepare_quiz(slot)          # written and checked while she reads, ready when she asks
-    take = st.empty()               # can't be pressed again while the quiz is being written
-    if not retrying and take.button(tr("Take the quiz") if q is None else tr("Try a new quiz"), type="primary", use_container_width=True):
-        take.button(tr(PREPARING), disabled=True, type="primary", use_container_width=True, key="quiz_preparing")
-        st.session_state.coach_retry = None
-        run_quiz(i)
+        start = st.empty()          # the button goes away while the lesson is written
+        if start.button(tr("Start this lesson"), type="primary", use_container_width=True):
+            start.empty()
+            st.session_state.coach_retry = None
+            run_kickoff(i)
+    st.stop()
+
+# ============================================================
+# LESSON + CHAT: read (with its quick checks), practise, check (coach/session.py)
+# ============================================================
+passed_early = shown_entry()["lessons"][i]["completed"]
+stage = "check" if passed_early else session.stage(slot)
+session_ui.stepper(stage, passed_early)
+reading = stage == "learn" and not passed_early
+lesson_text = slot.get("lesson", "")
+checks = session.quick_checks(lesson_text)
+if not passed_early:
+    reached(stage if stage != "check" else "quiz", slot["n"])
+    prepare_quiz(slot)              # the check and its practice, written and checked while she reads
+
+
+def sources_for(slot) -> list:
+    """Where she can check the lesson herself: the curriculum's sources for
+    its unit (linked only: their text is never given to the AI)."""
+    if topic != "math":
+        return []
+    unit_ = mathcourse.units().get((slot.get("unit") or "").split(" ")[0])
+    return [(x.get("organization") or x["title"], x["url"]) for x in mathcourse.sources_of(unit_)][:3] if unit_ else []
+
+
+def show_lesson(text: str) -> None:
+    """The lesson in its sections, each of the first two followed by its quick check."""
+    for j, (kind, part) in enumerate(session.without_checks(text)):
+        if kind == "text":
+            lesson_view.render(part, topic, key=f"{chat_key(slot)}|{j}", title=slot.get("title", ""), links=False)
+        elif part < len(checks):
+            quick_check(i, slot, part, checks[part])
+    lesson_view.check_links(slot.get("title", ""), sources_for(slot))
+
+
+last_question = max((k for k, m in enumerate(chat) if k > 1 and m["role"] == "user"), default=None)
+for k, message in enumerate(chat[1:], start=1):   # the kickoff line is shown as the heading
+    if k == last_question:
+        st.html(place.latest_anchor())
+    with st.chat_message(message["role"]):
+        if k == 1 and reading:
+            show_lesson(message["content"])       # cards, tables, diagrams, and its quick checks
+        elif k == 1:
+            with st.expander(tr("The lesson"), expanded=False):      # there to look back at, out of the way
+                lesson_view.render_tabs(session.strip_checks(message["content"]), topic, key=chat_key(slot),
+                                        title=slot.get("title", ""))
+        elif message["role"] == "assistant":
+            body, where, _ = practice.split_reply(message["content"], slot.get("lesson", ""))
+            st.markdown(body)
+            if practice.based_label(where):          # where the answer comes from, or that it isn't sure
+                st.html(f'<p class="tutor-based">{escape(practice.based_label(where))}</p>')
+        else:
+            st.markdown(message["content"])
+reply_spot = st.container()     # a new question and its answer appear here, under the others
+# an earlier day's lesson not passed yet may have been written under older rules: hers to rewrite
+if st.session_state.pop("coach_rewritten", None) == slot["n"]:
+    st.html(tr('<p class="ob-note" role="status">Rewritten with our latest guidelines.</p>'))
+elif not slot.get("completed") and slot.get("lesson") and plan[i].get("from"):      # (carried over)
+    if st.button(tr("Rewrite this lesson"), type="tertiary", key=f"rewrite_{slot['n']}",
+                 help=tr("Written again with our latest guidelines (one of today's AI requests). "
+                      "Your questions and progress stay.")):
+        run_rewrite(i)
+
+with st.container(key="lesson_tools", horizontal=True):
+    # Key points she wants back later (review): the Key Idea and each Deep Dive point
+    points = review.key_points(slot.get("lesson", ""))
+    if points:
+        with st.popover(tr("Save for review"), key=f"save_menu_{slot['n']}"):
+            st.caption(tr("A saved point comes back in your warm-up, then further apart each time you know it."))
+            for k, (label, text) in enumerate(points):
+                kept = review.saved(slot, label)
+                if st.button(label, key=f"save_point_{slot['n']}_{k}", disabled=kept, help=text[:240],
+                             icon=":material/check:" if kept else None, type="tertiary"):
+                    entry = day_entry()
+                    owner, held = work(entry, i)
+                    review.keep(log, held)
+                    review.save_point(held, label, text, today, topic)
+                    if save(entry, owner):
+                        st.toast(tr('Saved for review: {label}', label=label))
+                    st.rerun()
+    # something wrong or unclear in it: said in two taps (audit stage 2; what is sent: coach/report_ui.py)
+    report_ui.lesson(f"rep_lesson_{topic}_{slot['n']}", topic, slot["n"], slot.get("title", ""), slot.get("lesson", ""))
+
+entry = shown_entry()
+owner, slot = work(entry, i)
+passed_here = entry["lessons"][i]["completed"]     # (a carried-over lesson: passed on this day)
+place_ = session.of(slot)
+
+# ------------------------------------------------------------- read: then practise
+if reading:
+    st.html('<div class="jump-anchor" id="current-quiz"></div>')
+    with st.container(key="stage_next"):
+        if checks and not session.checks_done(slot, len(checks)):
+            st.caption(tr("The quick checks above are there to help it stick. Do them, or go on when you're ready."))
+        if st.button(tr("Next: practise it →"), type="primary", width="stretch", key="to_practice"):
+            set_stage(i, "practice")
+        if st.button(tr("I know this: straight to the check"), type="tertiary", key="to_check"):
+            set_stage(i, "check")
+
+# ------------------------------------------------------------- practise: guided practice
+elif stage == "practice" and not passed_here:
+    st.html('<div class="jump-anchor" id="current-quiz"></div>')
+    st.markdown(tr("#### Practice"))
+    g = place_.get("guided")
+    if g is None:
+        # the check and its practice: prepared while she read (coach/quizprep.py), or written now
+        if not show_retry(slot, ("quiz",)):
+            spot = st.empty()
+            spot.button(tr("Getting your practice ready…"), disabled=True, type="primary", width="stretch",
+                        key="practice_preparing")
+            run_quiz(i)
+        st.stop()
+    left = session.guided_left(g)
+    just = st.session_state.get("ss_g_shown")
+    k = just[1] if just and just[0] == slot["n"] and just[1] < len(g["items"]) else (left[0] if left else None)
+    if k is None:
+        right = sum(1 for m in g["marks"] if m == 1)
+        st.caption(tr("Practice done: {right} of {n} right. Now the check: six questions on what this lesson teaches.",
+                      right=right, n=len(g["items"])) if g["items"] else
+                   tr("No practice this time. On to the check: six questions on what this lesson teaches."))
+        if st.button(tr("Next: the check →"), type="primary", width="stretch", key="to_check_done"):
+            set_stage(i, "check")
+    else:
+        item = g["items"][k]
+        lead = (tr("A worked example with a step or two left for you. Follow the steps, then fill in the gaps.")
+                if item["type"] == "steps" else tr("Now one on your own."))
+        with st.container(key=f"guided_{slot['n']}_{k}"):
+            st.html(f'<p class="ss-sub">{escape(lead)}</p>')
+            if just:
+                st.markdown(f"**{item['question']}**")
+                session_ui.exercise_done(item, g["answers"][k], g["marks"][k], g["tries"][k])
+                if st.button(tr("Next"), type="primary", width="stretch", key="guided_next"):
+                    st.session_state.ss_g_shown = None
+                    st.rerun()
+            else:
+                got = session_ui.exercise_try(item, f"g_{slot['n']}_{k}", g["tries"][k], g["answers"][k])
+                if got:
+                    answer_guided(i, k, *got)
+        if not just and st.button(tr("Skip to the check"), type="tertiary", key="guided_skip"):
+            set_stage(i, "check")
+
+# ------------------------------------------------------------- check: the mastery check
 else:
-    if quiz.outdated(q):           # older rules, answers started: hers to finish, or the new quiz instead
-        with st.container(key="quiz_renew", horizontal=True, vertical_alignment="center"):
-            st.html(tr('<p class="ob-note">A newer, checked version of this quiz is available.</p>'))
-            if st.button(tr("Use the new quiz"), type="tertiary", key="quiz_renew_go",
-                         help=tr("Your answers so far on this one are cleared; earlier attempts still count.")):
-                run_quiz(i)
-    answer_sheet(i, q)
+    st.html('<div class="jump-anchor" id="current-quiz"></div>')
+    st.markdown(tr("#### Check"))
+    q = slot.get("quiz")
+    # a quiz written under older rules that she hasn't answered: a new one, written and checked under
+    # today's rules, takes its place when she starts (attempts and best score carry over; one she
+    # answered stays as it was). Started answers on the old one are hers to keep or let go.
+    renewed = not passed_here and quiz.outdated(q) and not quiz.has_draft(q)
+    if renewed:
+        q = None
+    if passed_here:
+        if q and quiz.passed(q.get("score")):
+            st.markdown("**" + progress_bar.rolled(f"quiz_pass_{q['id']}", tr("Passed with {score}%", score=q['score']))
+                        + "** · " + progress_bar.rolled(f"quiz_points_{q['id']}", tr("{n} points.", n=quiz.points(q))),
+                        unsafe_allow_html=True)
+            with st.expander(tr("See the check")):     # this attempt's answers and explanations
+                show_results(q)
+                report_question(q)
+        else:
+            st.caption(tr("This lesson is done."))
+        if goal and slot["n"] == 1:          # her goal's first lesson: a small win, said plainly
+            left_n = paths.lesson_count(goal) - 1
+            st.html(trn('<p class="goal-win"><b>First step done.</b> {n} lesson to go on “{goal}”.</p>', '<p class="goal-win"><b>First step done.</b> {n} lessons to go on “{goal}”.</p>', left_n, goal=escape(goal["title"])))
+        # just passed: on to the lesson this one unlocked, or the day's close after the last
+        if now is not None and now == i + 1:
+            if st.button(tr("Next lesson →"), type="primary", use_container_width=True, key="next_lesson"):
+                open_lesson(now)
+        elif now is None and i == len(plan) - 1:
+            if st.button(tr("Finish today →"), type="primary", use_container_width=True, key="next_lesson"):
+                open_lesson(None, anchor="top")
+        # what she knows of it: below the way on, never in front of it
+        idea = mastery.state(mastery.evidence(slot, owner["date"]), today)
+        st.html(tr('<p class="idea-state">This idea: <b>{p0}</b> · {p1}</p>', p0=tr(mastery.LEVEL_NAMES[idea["level"]]), p1=escape(mastery.describe(dict(idea, reached=True)))))
+    elif (before := curriculum.blocking(entry["lessons"], i)):
+        # e.g. a lesson started under the old tick box before the one ahead of it was finished
+        st.caption(tr('Pass the check for Lesson {p0} first; this one opens after that.', p0=before['n']))
+    elif q is not None and quiz.needs_grading(q):
+        # submitted, but marking the short answers (a quiz from before) didn't go through yet
+        st.caption(tr("Your answers are saved. They just need marking."))
+        retrying = show_retry(slot, ("grade",))
+        mark = st.empty()
+        if not retrying and mark.button(
+                tr("Mark my answers"), type="primary", use_container_width=True):
+            mark.empty()
+            run_grading(i)
+    elif q is None or q["answers"] is not None and not quiz.passed(q["score"]):
+        if q is not None:               # the last attempt fell short: what was missed, why, and a way back
+            st.markdown("**" + progress_bar.rolled(f"quiz_score_{q['id']}", f"{q['score']}%") + "** · "
+                        + progress_bar.rolled(f"quiz_points_{q['id']}", tr("{n} points.", n=quiz.points(q))) + " "
+                        + tr("You need {mark}% to move on. Look at what you missed and why, then a new set is "
+                             "ready when you are.", mark=quiz.PASS_MARK),
+                        unsafe_allow_html=True)
+            with st.expander(tr("See what you missed"), expanded=True):
+                show_results(q, missed_only=True)
+                report_question(q)
+            if st.button(tr("Read the lesson again"), type="tertiary", key="reread"):
+                set_stage(i, "learn")
+        elif renewed:
+            st.caption(tr("This check has been rewritten with our latest checks for clear, correct questions. "
+                       "Your earlier attempts still count."))
+        else:
+            st.caption(tr('{p0} questions on what this lesson teaches: choices, a situation, a blank to fill, matching or ordering, and a mistake to spot. Score {p1}% or more to finish it.', p0=quiz.QUESTIONS, p1=quiz.PASS_MARK))
+        retrying = show_retry(slot, ("quiz",))
+        take = st.empty()               # can't be pressed again while the quiz is being written
+        if not retrying and take.button(tr("Start the check") if q is None else tr("Try a new set"), type="primary", use_container_width=True, key="take_check"):
+            take.button(tr(PREPARING), disabled=True, type="primary", use_container_width=True, key="quiz_preparing")
+            st.session_state.coach_retry = None
+            run_quiz(i)
+    else:
+        if quiz.outdated(q):           # older rules, answers started: hers to finish, or the new quiz instead
+            with st.container(key="quiz_renew", horizontal=True, vertical_alignment="center"):
+                st.html(tr('<p class="ob-note">A newer, checked version of this quiz is available.</p>'))
+                if st.button(tr("Use the new quiz"), type="tertiary", key="quiz_renew_go",
+                             help=tr("Your answers so far on this one are cleared; earlier attempts still count.")):
+                    run_quiz(i)
+        answer_sheet(i, q)
 
 if entry["completed"]:
-    streak = core.current_streak(log, ui.today())
-    st.caption(tr('All {lessons} lessons done for today.', lessons=len(entry['lessons'])) + " " + (tr("Current streak: 1 day.") if streak == 1 else tr("Current streak: {n} days.", n=streak)))
+    st.caption(tr('All {lessons} lessons done for today.', lessons=len(entry['lessons'])))
 else:
-    left = sum(1 for s in entry["lessons"] if not s["completed"])
-    st.caption(trn('{n} lesson to go. Pass each quiz to complete the day.', '{n} lessons to go. Pass each quiz to complete the day.', left))
-
-with st.expander(tr("My thoughts on the question to explore (optional, the coach picks it up next time)")):
-    reflection = st.text_area(
-        tr("Question to explore"),
-        value=entry.get("reflection", ""),
-        label_visibility="collapsed",
-        key=f"reflection_{today.isoformat()}_{topic}",
-    )
-    if st.button(tr("Save my thoughts")):
-        if not reflection.strip() and core.find_entry(log, today, topic) is None:
-            st.rerun()          # nothing written and no day yet: nothing to save, no day made (ISS-029)
-        entry = day_entry()
-        entry["reflection"] = reflection.strip()
-        if ui.save_entry(log, entry):
-            st.toast(tr("Saved."))     # a toast isn't hidden behind the chat input
-        else:
-            ui.show_pending_error()
+    left_n = sum(1 for s in entry["lessons"] if not s["completed"])
+    st.caption(trn('{n} lesson to go today.', '{n} lessons to go today.', left_n))
 
 show_retry(slot, ("followup",))
 # The chat box stays at the bottom of the screen wherever she has scrolled

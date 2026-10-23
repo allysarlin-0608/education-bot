@@ -122,6 +122,8 @@ def sections(text: str) -> tuple:
             m = LEVEL.search(body)
             level = (m.group(1) or core.LEGACY_LEVELS.get(m.group(2), "")) if m else ""
             continue
+        if heading.casefold() == "quick check":         # drawn by the page itself (coach/session.py)
+            continue
         if heading and NOTICE_BLOCK.search(heading):
             said = core.has_disclaimer(clean) and any(core.has_disclaimer(f) for f in footer)
             if clean and not said:                     # (one disclaimer, never two)
@@ -167,10 +169,17 @@ def check_query(title: str) -> str:
     return q or str(title or "").strip()
 
 
-def check_links(title: str) -> None:
-    """Where she can check the lesson herself: searches for what it teaches
-    on Wikipedia and Britannica (real pages, built here; nothing the model
-    wrote)."""
+def check_links(title: str, sources: list = ()) -> None:
+    """Where she can check the lesson herself: the curriculum's own sources
+    for it when it has them ([(name, url)], linked only), else searches for
+    what it teaches on Wikipedia and Britannica (real pages, built here;
+    nothing the model wrote)."""
+    found = [(name, url) for name, url in sources if str(url).startswith("https://")]
+    if found:
+        links = " · ".join(f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer">{escape(name)}</a>'
+                           for name, url in found)
+        st.html(tr('<p class="l-check">Check it yourself: {links}</p>', links=links))
+        return
     q = check_query(title)
     if not q:
         return
@@ -179,9 +188,11 @@ def check_links(title: str) -> None:
     st.html(tr('<p class="l-check">Check it yourself: {links}</p>', links=links))
 
 
-def render(text: str, topic: str = None, key: str = "", title: str = "") -> None:
+def render(text: str, topic: str = None, key: str = "", title: str = "", links: bool = True) -> None:
     """key names this showing of the lesson (the same lesson can be on a
-    page twice, e.g. in the history, and card keys must be unique)."""
+    page twice, e.g. in the history, and card keys must be unique). With
+    `links` off, the "check it yourself" line is left to the caller (a lesson
+    drawn in parts, its quick checks between them)."""
     dark = getattr(getattr(st.context, "theme", None), "type", "dark") != "light"
     text = unsourced(text)
     if topic and topic != "investing" and core.has_disclaimer(text):
@@ -197,7 +208,8 @@ def render(text: str, topic: str = None, key: str = "", title: str = "") -> None
         with st.container(key=f"lcard_{tag}_{k}"):
             st.html(f'<div class="lcard-title">{escape(tr(heading))}</div>')       # (headings stay English in the text)
             _body(body, dark)
-    check_links(title)      # (the lesson's title: not a section heading)
+    if links:
+        check_links(title)      # (the lesson's title: not a section heading)
     for line in footer:
         st.caption(tr(line))
 

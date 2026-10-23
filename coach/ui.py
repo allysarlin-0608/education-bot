@@ -229,6 +229,14 @@ def load_prefs() -> None:
         st.session_state.coach_prefs_error = PREFS_MISSING if e.status == 404 else str(e)
         row = (st.session_state.get("coach_prefs") or None)
     st.session_state.coach_prefs = prefs_.normalize(row)
+    _short_days()
+
+
+def _short_days() -> None:
+    """Her short days (a warm-up and mixed practice, no new lesson) count for
+    the streak: the record is told of them (core.streak_dates)."""
+    if isinstance(st.session_state.get("coach_log"), dict):
+        st.session_state.coach_log["brief_days"] = list(st.session_state.coach_prefs.get("brief_days") or [])
 
 
 def prefs() -> dict:
@@ -282,6 +290,7 @@ def update_prefs(**fields) -> bool:
         st.session_state.coach_save_error = tr("That wasn't saved ({e}). Try again in a moment.", e=e)
         return False
     st.session_state.coach_prefs = new
+    _short_days()
     return True
 
 

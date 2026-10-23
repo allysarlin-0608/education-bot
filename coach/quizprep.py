@@ -18,6 +18,7 @@ process for JOB_TTL; the session's own Streamlit context goes with the
 thread, so the allowance is counted to her as before. Off with
 GNOSIS_QUIZ_PREP=0 (the unit tests: no background calls)."""
 import copy
+import dataclasses
 import hashlib
 import logging
 import os
@@ -54,6 +55,22 @@ def key(session: str, topic: str, slot: dict) -> str:
     raw = "|".join([session, str(topic), str(slot.get("n")), str(q.get("id") or ""),
                     hashlib.sha1((slot.get("lesson") or "").encode()).hexdigest()])
     return hashlib.sha1(raw.encode()).hexdigest()
+
+
+def background_ctx():
+    """Her session's context for a background thread: her allowance and her
+    store, as before, but one that a rerun of her page can't stop. (The
+    page's own context raises Streamlit's stop signal in any thread that
+    reads her session while the page is being rerun: a lesson or quiz
+    written in the background was lost when she clicked meanwhile.) It reads
+    and writes the same session state, under the same lock."""
+    ctx = get_script_run_ctx()
+    if ctx is None:
+        return None
+    from streamlit.runtime.state.safe_session_state import SafeSessionState
+    state = SafeSessionState(ctx.session_state._state, lambda: None)
+    object.__setattr__(state, "_lock", ctx.session_state._lock)
+    return dataclasses.replace(ctx, session_state=state)
 
 
 def session_id() -> str:
@@ -93,7 +110,7 @@ def start(k: str, slot: dict, where: str, context=None) -> bool:
             job.done.set()
 
     thread = threading.Thread(target=run, name=f"quizprep-{k[:8]}", daemon=True)
-    add_script_run_ctx(thread, get_script_run_ctx())        # her session: her allowance, her store
+    add_script_run_ctx(thread, background_ctx())            # her session: her allowance, her store
     thread.start()
     return True
 
