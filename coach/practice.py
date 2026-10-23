@@ -63,12 +63,22 @@ def sources(slot: dict, topic: str) -> list:
     return found
 
 
-def build(log: dict, today: date, avoid=(), size: int = SET_SIZE) -> dict:
+def build(log: dict, today: date, avoid=(), size: int = SET_SIZE, focus=()) -> dict:
     """Today's practice set: {"ideas": [(topic, n, title, level)], "items":
     [{"topic", "n", "q"}], "short": [(topic, n, title)] (ideas with no
     exercises left: the model may write some)}. `avoid`: question ids done
-    in an earlier set today."""
-    weak = mastery.weakest(log, today, limit=IDEAS_PER_SET)
+    in an earlier set today. `focus`: [(topic, n)], the ideas to practise
+    instead of the ones she knows least (a unit check's missed ideas: the
+    corrective practice of mastery learning)."""
+    if focus:
+        weak = []
+        for topic, n in list(focus)[:IDEAS_PER_SET]:
+            held = mastery.holder(log, topic, n)
+            if held:
+                weak.append((topic, n, dict(mastery.state(mastery.evidence(held[1], held[0]["date"]), today),
+                                            title=held[1].get("title", ""))))
+    else:
+        weak = mastery.weakest(log, today, limit=IDEAS_PER_SET)
     per = []
     short = []
     for topic, n, idea in weak:

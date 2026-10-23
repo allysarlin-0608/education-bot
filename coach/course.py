@@ -49,6 +49,7 @@ def build(log: dict, topic: str, today_plan: list = ()) -> dict:
     lessons = curriculum._load(topic)
     records = _records(log, topic)
     done = curriculum.completed_numbers(log, topic)
+    known = set(curriculum.skipped(log, topic))
     upcoming = curriculum.next_numbers(log, topic, 1)
     nxt = upcoming[0] if upcoming else None
     on_today = {s["n"] for s in today_plan}
@@ -69,6 +70,7 @@ def build(log: dict, topic: str, today_plan: list = ()) -> dict:
             state = "ahead"
         q = (r.get("slot") or {}).get("quiz") or {}
         units[-1]["lessons"].append({"n": n, "title": title, "state": state, "passed": r.get("passed"),
+                                     "skipped": n in known and not r.get("passed"),
                                      "started": r.get("started"), "best": q.get("best"),
                                      "readable": r.get("slot") is not None})
     current = None

@@ -3,7 +3,8 @@ from html import escape
 
 import streamlit as st
 
-from coach import (attempts, auth, catalog, clock, core, curriculum, exercise, goalmaker, habit, learner, lesson_view,
+from coach import (attempts, auth, capstone, catalog, clock, core, curriculum, diagnostic, exercise, goalmaker, habit,
+                   learner, lesson_view, progression,
                    lessonprep, llm, mastery, mathcourse, paths, place, practice, progress_bar, quiz, quizgen, quizprep,
                    quota, report_ui, review, session, session_ui, settings, steps, tokens, ui, unitcheck, visuals, i18n)
 from coach import prefs as prefs_
@@ -139,8 +140,8 @@ def prepare_lesson(i) -> None:
     if i is None or not quizprep.enabled() or llm.get_client() is None or quota.blocked():
         return
     slot = curriculum.content(log, topic, plan[i])
-    if slot.get("lesson") or curriculum.blocking(plan, i) or slot.get("from"):
-        return
+    if slot.get("lesson") or curriculum.blocking(plan, i) or slot.get("from") or progression.gate(log, topic):
+        return                  # (written, waiting for an earlier one, or behind a unit check: nothing to write)
     k = lessonprep.key(quizprep.session_id(), topic, slot["n"], today.isoformat())
     if lessonprep.state(k) == "none":
         lessonprep.start(k, *lesson_request(slot), where=f"{topic} lesson {slot['n']}")
@@ -340,6 +341,14 @@ def answer_set_item(name: str, k: int, item: dict, owner_topic: str, n: int, mar
             ui.learned(held, e["date"], "review", mark, source=f"{card['id']}-{card['reviews']}")
             if not ui.save_entry(log, e):
                 ui.show_pending_error()
+    elif src.get("spot"):                 # a unit she skipped as known, asked about again
+        every = dict(ui.prefs().get("diag") or {})
+        placed = every.get(owner_topic)
+        if placed:
+            every[owner_topic] = diagnostic.spot_answered(placed, diagnostic.units(owner_topic), src["spot"], mark == 1)
+            ui.update_prefs(diag=every)
+            ui.load_prefs()
+            s = day_set(name)
     else:
         held = mastery.holder(log, owner_topic, n)
         if held:
@@ -349,8 +358,8 @@ def answer_set_item(name: str, k: int, item: dict, owner_topic: str, n: int, mar
     if not session.set_left(s):
         s["done"] = True
     ui.update_prefs(**{name: s})
-    ui.attempt([session_ui.row(today, owner_topic, n, ctx, item, mark, True, conf, session_ui.seconds(f"{name}{k}_0"),
-                               gap, variants)])
+    ui.attempt([session_ui.row(today, owner_topic, n, "diag" if src.get("spot") else ctx, item, mark, True, conf,
+                               session_ui.seconds(f"{name}{k}_0"), gap, variants)])
 
 
 def set_card(name: str, k: int):
@@ -652,6 +661,15 @@ if goal and not paths.started(log, topic):
     with st.container(key="goal_intro"):
         st.html(goalmaker.summary_html(goal, settings.units(config), eyebrow=N_("Made for you · day one"),
                                        title=False))       # (the card below names it)
+# before the first lesson of a path that can be placed: skip what she already knows (coach/diagnostic.py)
+placed = (ui.prefs().get("diag") or {}).get(topic)
+if diagnostic.offered(topic) and not curriculum.completed_numbers(log, topic) and not (placed and placed["applied"]):
+    with st.container(key="diag_offer", horizontal=True, vertical_alignment="center"):
+        st.html('<p class="hb-text">' + tr("Know some of this already? A five-minute check finds where you start, "
+                                           "so you skip what you know.") + "</p>")
+        if st.button(tr("Find my starting point"), type="tertiary", key="diag_open"):
+            st.session_state.course_topic = topic
+            st.switch_page("views/diagnostic.py", query_params={"subject": topic})
 if "date" in st.query_params or "topic" in st.query_params:     # links from the old date picker
     st.query_params.clear()
 
@@ -673,7 +691,16 @@ if "lessons" in getattr(store, "missing_columns", ()):
     )
     st.stop()
 if not plan:
-    st.info(tr("You've finished all {p0} lessons written so far for {p1}. The next ones will appear once they're added.", p0=curriculum.written(topic), p1=catalog.name(topic)))
+    ready = capstone.offered(log, topic)
+    if ready and goal:              # her goal, every lesson done: the last step is to use it (coach/capstone.py)
+        with st.container(key="capstone_offer"):
+            st.html('<div class="done"><p class="done-eyebrow">' + tr("Goal complete") + "</p><h3>"
+                    + escape(goal.get("title") or catalog.name(topic)) + '</h3><p class="done-sub">'
+                    + tr("Every lesson is done. One last step makes it yours: a real task that uses all of it.") + "</p></div>")
+            if st.button(tr("Open your capstone"), type="primary", key="capstone_open"):
+                st.switch_page("views/capstone.py", query_params={"subject": topic, "key": ready[0]["key"]})
+    else:
+        st.info(tr("You've finished all {p0} lessons written so far for {p1}. The next ones will appear once they're added.", p0=curriculum.written(topic), p1=catalog.name(topic)))
     st.stop()
 
 # ============================================================
@@ -687,9 +714,21 @@ def start_mixed() -> None:
     ui.update_prefs(mixed=session.new_set(today, items, arm=arm))
 
 
+def spot_items() -> list:
+    """A week after she skipped units as known: one question on each, in the
+    warm-up (coach/diagnostic.py); missed, that unit comes back."""
+    placed = (ui.prefs().get("diag") or {}).get(topic)
+    if not placed or not placed["applied"]:
+        return []
+    by = {u["id"]: u for u in diagnostic.units(topic)}
+    return [{"src": "bank", "topic": topic, "n": by[x["unit"]]["first"], "q": placed["items"][x["unit"]],
+             "spot": x["unit"]} for x in diagnostic.due_spots(placed, today) if x["unit"] in by]
+
+
 if day_set("warmup") is None and not day_done:
     size = session.WARMUP_BACK if returning else session.WARMUP
-    ui.update_prefs(warmup=session.new_set(today, session.warmup(log, today, size)))
+    spots = spot_items()
+    ui.update_prefs(warmup=session.new_set(today, spots + session.warmup(log, today, max(1, size - len(spots)))))
 warm = day_set("warmup")
 if warm is not None and not warm["done"] and not warm["skipped"]:
     reached("warmup")
@@ -1093,8 +1132,20 @@ if aim:                 # what she'll be able to do by the end (her goal's outli
 chat = get_chat(slot)
 if not chat:
     show_retry(slot, ("kickoff",))
+    gate = progression.gate(log, topic) if i == now else None
     if (before := curriculum.blocking(plan, i)):
         st.caption(tr('Pass the quiz for Lesson {p0} first, then start this one.', p0=before['n']))
+    elif gate is not None:
+        # mastery before moving on (coach/progression.py): the unit this one builds on, shown learned as a whole
+        with st.container(key="unit_gate"):
+            st.html('<p class="hb-eyebrow">' + tr("Before the next unit") + "</p>"
+                    + '<p class="hb-text">' + tr("“{opens}” builds on “{unit}”. Show you've learned it as a whole: "
+                                                 "{n} questions from its lessons, {mark}% to pass. Missed ideas get "
+                                                 "practice, then a fresh set.", opens=escape(gate["opens"]),
+                                                 unit=escape(gate["name"]), n=unitcheck.size(log, topic, gate),
+                                                 mark=unitcheck.PASS_MARK) + "</p>")
+            if st.button(tr("Take the unit check"), type="primary", key="gate_check", width="stretch"):
+                ui.open_unit(topic, gate["key"])
     else:
         start = st.empty()          # the button goes away while the lesson is written
         if start.button(tr("Start this lesson"), type="primary", use_container_width=True):

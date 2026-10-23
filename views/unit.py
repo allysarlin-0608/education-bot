@@ -5,7 +5,7 @@ from Home when a unit has just been finished. No AI call."""
 from datetime import date
 import streamlit as st
 
-from coach import catalog, course, curriculum, exercise, quiz, review, ui, unitcheck
+from coach import attempts, catalog, course, curriculum, exercise, quiz, review, ui, unitcheck
 from coach.i18n import tr, trn
 
 log = st.session_state.coach_log
@@ -37,7 +37,7 @@ st.html(tr('<p class="ob-note">{n_items} questions from this unit\'s lessons, to
 
 
 def back() -> None:
-    if st.button(tr("Back to the course map"), type="tertiary", key="uc_back"):
+    if st.button(tr("Back to the learning map"), type="tertiary", key="uc_back"):
         st.session_state.pop("uc_marked", None)
         ui.open_course(topic)
 
@@ -48,6 +48,8 @@ def submit(items: list, answers: list) -> None:
     the unit's last lesson; then show how it went."""
     marks, percent = unitcheck.score(items, answers)
     attempt = unitcheck.result(log, topic, unit).get("attempts", 0)
+    ui.attempt([attempts.row(today, topic, it["n"], "unit", it["q"]["type"] if it["q"]["type"] in attempts.KINDS else "choice",
+                             score=m, first=attempt == 0, diff=it["q"].get("diff")) for it, m in zip(items, marks)])
     shown = unitcheck.by_lesson(items, marks)
     days, carded = {}, 0                             # each day touched, re-read once, saved once
     for n in sorted(set(shown) | {unit["last"]}):
@@ -94,8 +96,22 @@ if marked and marked["unit"] == f"{topic}|{key}":
             with st.container(key=f"uc_a_{k}", gap=None):
                 exercise.result(it["q"], a, m, k=k)
                 st.caption(tr('From lesson {p0}', p0=it['n']))
+    missed = sorted({it["n"] for it, m in zip(marked["items"], marked["marks"]) if m < 1})
+    if not ok and missed:
+        # the corrective path: the ideas missed, practised, then a fresh set (best on another day)
+        names = []
+        for n in missed[:3]:
+            held = course.lesson_record(log, topic, n)
+            names.append(f"“{held[1]['title']}”" if held else tr("Lesson {n}", n=n))
+        st.html('<p class="ob-note">' + tr("To work on first: {ideas}. A short practice on them, then a fresh set "
+                                           "(tomorrow is even better: a night's sleep helps it settle).",
+                                           ideas=", ".join(names)) + "</p>")
     with st.container(key="uc_after", horizontal=True):
-        if st.button(tr("Try a new set"), type="primary" if not ok else "secondary", key="uc_again"):
+        if not ok and missed and st.button(tr("Practise these ideas"), type="primary", key="uc_practise"):
+            st.session_state.pr_focus = [(topic, n) for n in missed]
+            st.session_state.pr_again = True
+            st.switch_page("views/practice.py")
+        if st.button(tr("Try a new set"), type="secondary", key="uc_again"):
             st.session_state.pop("uc_marked", None)
             st.rerun()
         back()

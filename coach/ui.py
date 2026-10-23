@@ -237,11 +237,17 @@ def _short_days() -> None:
     the streak: the record is told of them (core.streak_dates)."""
     if isinstance(st.session_state.get("coach_log"), dict):
         st.session_state.coach_log["brief_days"] = list(st.session_state.coach_prefs.get("brief_days") or [])
+        # lessons skipped as already known (coach/diagnostic.py): done, for the course
+        from coach import diagnostic
+        st.session_state.coach_log["skipped"] = {t: diagnostic.skipping(d)
+                                                 for t, d in (st.session_state.coach_prefs.get("diag") or {}).items()}
 
 
 def prefs() -> dict:
     if "coach_prefs" not in st.session_state:
         load_prefs()
+    elif "skipped" not in (st.session_state.get("coach_log") or {"skipped": 1}):
+        _short_days()            # (the record was loaded again since: told again)
     return st.session_state.coach_prefs
 
 

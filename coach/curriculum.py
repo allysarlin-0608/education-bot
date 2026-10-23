@@ -90,13 +90,21 @@ def level_for(n: int, topic: str = None) -> str:
     return LEVELS[min((n - 1) // LEVEL_SIZE, 2)]
 
 
+def skipped(log: dict, topic: str) -> list:
+    """Lessons she skipped as already known (the goal's diagnostic,
+    coach/diagnostic.py; kept in her preferences and told to the record:
+    log["skipped"])."""
+    return list(((log.get("skipped") or {}).get(topic)) or ())
+
+
 def completed_numbers(log: dict, topic: str) -> set:
+    """Lessons done: passed, or skipped as already known."""
     return {
         slot["n"]
         for e in log["entries"] if e["topic"] == topic
         for slot in e.get("lessons") or []
         if slot.get("completed")
-    }
+    } | set(skipped(log, topic))
 
 
 def next_numbers(log: dict, topic: str, count: int = PER_DAY) -> list:

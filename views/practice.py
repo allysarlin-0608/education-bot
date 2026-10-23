@@ -79,8 +79,10 @@ def write_more(short: list) -> None:
 
 
 def start(avoid=()) -> None:
-    """A new set for today (the ideas she needs most), saved before it's shown."""
-    s = practice.build(log, today, avoid=avoid)
+    """A new set for today (the ideas she needs most, or the ones a unit check
+    just found missing), saved before it's shown."""
+    focus = st.session_state.pop("pr_focus", ())
+    s = practice.build(log, today, avoid=avoid, focus=focus)
     if s["short"] and ui.prefs().get("practice_made") != today.isoformat():
         write_more(s["short"])
         s = practice.build(log, today, avoid=avoid)

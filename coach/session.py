@@ -333,6 +333,8 @@ def parse_set(data):
         if q is None or not isinstance(x.get("topic"), str) or not isinstance(x.get("n"), int):
             return None
         items.append({"src": "bank", "topic": x["topic"], "n": x["n"], "q": q})
+        if isinstance(x.get("spot"), str):
+            items[-1]["spot"] = x["spot"][:40]      # (a skipped unit asked about again: coach/diagnostic.py)
     n = len(items)
     marks = data.get("marks") if isinstance(data.get("marks"), list) and len(data["marks"]) == n else [None] * n
     conf = data.get("conf") if isinstance(data.get("conf"), list) and len(data["conf"]) == n else [None] * n

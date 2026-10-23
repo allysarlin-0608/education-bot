@@ -69,8 +69,11 @@ practice_page = st.Page("views/practice.py", title="Practice", url_path="practic
 unit_page = st.Page("views/unit.py", title="Unit check", url_path="unit")
 # the math curriculum, from zero to research, to browse (the Menu, and Courses)
 math_page = st.Page("views/math.py", title="Math Curriculum", url_path="math")
+# where to start a goal (its diagnostic), and its capstone at the end (docs/LEARNING_DESIGN.md §4)
+start_page = st.Page("views/diagnostic.py", title="Where to start", url_path="start")
+capstone_page = st.Page("views/capstone.py", title="Capstone", url_path="capstone")
 others = [subjects_page, path_page, account_page, world, course_map, new_goal, week_page, skills_page, practice_page,
-          unit_page, math_page]
+          unit_page, math_page, start_page, capstone_page]
 # Streamlit does the routing; the pages are shown by the connected control
 # at the top of every page (coach/topnav.py), not as a list in the sidebar
 page = st.navigation(pages + others, position="hidden")

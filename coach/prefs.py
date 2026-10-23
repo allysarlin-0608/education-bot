@@ -17,7 +17,8 @@ def blank() -> dict:
     return {"reminder_on": False, "reminder_time": DEFAULT_TIME, "reminder_email": False,
             "light_day": "", "seen": [], "seen_init": False, "week_seen": "", "reminded_on": "", "reminder_hit": "",
             "practice": None, "practice_made": "", "plan_choice": "", "identity": "", "language": "",
-            "warmup": None, "mixed": None, "brief_day": "", "brief_days": [], "reflected": ""}
+            "warmup": None, "mixed": None, "brief_day": "", "brief_days": [], "reflected": "",
+            "diag": {}, "capstones": {}}
 
 
 def normalize(row) -> dict:
@@ -45,6 +46,9 @@ def normalize(row) -> dict:
     from coach import session
     p["warmup"] = session.parse_set(row.get("warmup"))
     p["mixed"] = session.parse_set(row.get("mixed"))
+    from coach import diagnostic, capstone
+    p["diag"] = diagnostic.parse_all(row.get("diag"))
+    p["capstones"] = capstone.parse_all(row.get("capstones"))
     if isinstance(row.get("brief_days"), list):
         p["brief_days"] = sorted({d for d in row["brief_days"] if isinstance(d, str) and len(d) == 10})[-BRIEF_KEPT:]
     # the language she chose to read in (coach/i18n.py; "" = her browser's)
