@@ -11,10 +11,10 @@ the model.
 |---|---|---|---|
 | Entry | `streamlit_app.py`, `gnosis.py` | `st.App` with the sign-in routes; every run: `coach.freshen()`, style, the gate (password or account), the page list | hold logic of its own |
 | Pages (UI) | `views/*.py` | draw one page from the session's data; call domain functions; save through `coach.ui` | talk to Supabase or Groq directly; compute progress |
-| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py`, `weekview.py`, `report_ui.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
+| UI helpers | `coach/ui.py`, `topnav.py`, `sidebar.py`, `place.py`, `style.py`, `motion.py`, `glass.py`, `lesson_view.py`, `goalmaker.py`, `exercise.py`, `weekview.py`, `report_ui.py`, `session_ui.py`, `practice_nav.py` | session state, navigation, the dock, CSS, shared widgets | decide what counts as studied, passed or due |
 | Config | `clock.py`, `appconfig.py` | the one clock (the learner's timezone, today, now) and the one way to read a setting | depend on Streamlit's UI or on any other module |
-| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `directions.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py`, `unitcheck.py`, `mathcourse.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
-| AI | `llm.py`, `quizgen.py`, `quizprep.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
+| Domain | `core.py`, `catalog.py`, `curriculum.py`, `course.py`, `review.py`, `quiz.py`, `steps.py`, `history.py`, `search.py`, `reading.py`, `books.py`, `settings.py`, `placement.py`, `paths.py`, `directions.py`, `plans.py`, `metrics.py`, `mastery.py`, `practice.py`, `unitcheck.py`, `mathcourse.py`, `learner.py`, `session.py`, `progression.py`, `diagnostic.py`, `capstone.py`, `attempts.py`, `experiments.py`, `learnmetrics.py` | pure functions over the log, the syllabus and the settings: what today is, what's next, streaks, review cards, the course map | do I/O (they are unit-tested without a store) |
+| AI | `llm.py`, `quizgen.py`, `quizprep.py`, `lessonprep.py`, `itembank.py`, `quota.py`, `prompts/`, `system_prompt.md` | every model call: lessons, quizzes (with checking and repair), chat; per-minute pacing; the daily allowance | run without counting toward the allowance |
 | Data | `storage.py` (file store and Supabase store), `supa_auth.py`, `auth.py`, `session_cookie.py`, `routes.py` | read/write entries, books, settings, usage; sign-in, sessions, invites | trust anything the browser sends without the signed-in user's token |
 | Schema | `supabase/*.sql` | tables, row-level security, the usage function | be changed without the owner's approval |
 
@@ -462,6 +462,71 @@ wrong (`practice.quiz_context` → `quiz._context`).
   on a later day), held / slipped (a solid idea asked again two weeks on),
   mastered, practice sets, explanations, questions to the coach and those
   showing confusion. Settings → Insights explains each.
+
+## The learning system (ISS-110; docs/LEARNING_DESIGN.md)
+
+Built from the evidence on how people learn, and measured on whether they do.
+
+- **The learner model** (`learner.py`, `mastery.py`): each idea (a lesson;
+  in mathematics one learning outcome) has P(L), the chance it is learned,
+  by Bayesian knowledge tracing over its evidence (guess and slip by kind,
+  soft evidence for part marks), and a memory by the FSRS forgetting curve.
+  Levels: solid = learned (P(L) >= 0.8) and still remembered (>= 82%) on two
+  days; mastered = P(L) >= 0.95, >= 90% remembered, three successes over a
+  week; a miss means it has to hold again on another day. The model changed
+  on `mastery.SWITCH`: an idea with evidence from before never shows less
+  than the old model gives it until she gets it wrong after the change.
+- **Review** (`review.py`): FSRS-4.5 per card (stability, difficulty), rated
+  by right/wrong and how sure she was; the next review when recall would
+  fall to 90% (85% in one experiment arm); a miss is relearned the next day;
+  an error she was sure of comes back first. Box-only cards get their box's
+  stability the next time they're answered (nothing rewritten before).
+- **Today's session** (`session.py`, `session_ui.py`, `views/daily.py`):
+  warm-up (due cards, the closest to forgotten first; weakest ideas' items;
+  a week-old diagnostic spot check) while the lesson is written in the
+  background (`lessonprep.py`); the lesson with two 【Quick Check】 blocks it
+  writes itself (hint, a second try, the note behind each wrong option);
+  guided practice (a worked problem with gaps, then a problem of her own;
+  problem first for a known idea or in the fading arm); the six-question
+  check (all marked locally, confidence on each); the day's close: mixed
+  practice on earlier ideas (interleaved or blocked by the day's arm),
+  explaining it back against a rubric, and a reflection with a judgment of
+  learning. Slot state: `slot["session"]` (stage, quick checks, guided);
+  the day's sets: `prefs["warmup"]`, `prefs["mixed"]`. A five-minute day
+  (warm-up + mixed, no lesson) counts for the streak (`prefs["brief_days"]`
+  → `log["brief_days"]` → `core.streak_dates`).
+- **The check and its practice** (`quiz.py`, `quizgen.py`): one call writes
+  six check items (choice, scenario, blank, order or another scenario,
+  match, spot the mistake) and two practice items (steps, problem), each
+  with a difficulty and a hint; one checking call vets all, including
+  alignment with the lesson's objective; a flagged practice item is dropped,
+  never rewritten. Quiz `VERSION` 3; older quizzes are read and marked as
+  before (their two written answers by the model).
+- **Through a path** (`progression.py`, `diagnostic.py`, `capstone.py`,
+  `itembank.py`): a unit others build on (math: its prerequisites; else the
+  unit before) must be cleared (its unit check passed, skipped as known,
+  too few questions to check, or finished before the change) before the
+  next unit opens; a missed check offers practice on the ideas missed, then
+  a fresh set. Where to start: an adaptive check over the prerequisite graph
+  (at most eight questions, written three answers ahead, shared for the math
+  curriculum in `shared_items`), skipping the known units' lessons once she
+  chooses (`prefs["diag"]`, told to the record as `log["skipped"]`, done in
+  `curriculum.completed_numbers`). A finished goal (or math phase) opens its
+  capstone: a brief with a rubric, her work, feedback per criterion.
+- **Measuring it** (`attempts.py`, `experiments.py`, `learnmetrics.py`,
+  `views/learning.py`, `tools/learning_report.py`, `tools/fit_models.py`):
+  one row per answer in `learning_attempts` (never the text), experiment arms
+  by hash (within-learner where possible), the dashboard for admins (first
+  tries, delayed retention, known a week later, calibration, where sessions
+  stop, experiments with confidence intervals) and its CSV.
+- **Pages**: Practice (practice set, review cards, collection: three tabs,
+  `practice_nav.py`) is in the bar where Review was; the learning map
+  (`views/course.py`) holds what the Knowledge Map showed (`/skills`
+  redirects); `/start` (where to start), `/capstone`, `/learning` (admins).
+- **Schema**: `supabase/learning_v2.sql` (test database, adds only):
+  `learning_attempts`, `shared_items`, `shared_item_reports` and their
+  functions. Until it is run, answers aren't recorded and questions aren't
+  shared; nothing else changes.
 
 ## The platform we are moving to
 

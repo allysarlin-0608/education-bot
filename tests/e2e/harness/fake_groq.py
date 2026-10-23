@@ -69,6 +69,12 @@ def _kind(messages: list, stream: bool) -> str:
     system = messages[0]["content"] if messages else ""
     if system.startswith("You design short, structured learning paths"):
         return "design"
+    if system.startswith("You write a short placement check"):
+        return "placement"
+    if system.startswith("You design the capstone"):
+        return "capstone_brief"
+    if system.startswith("You give feedback on a learner's capstone"):
+        return "capstone_feedback"
     if "replacement questions" in system:
         return "quiz_rewrite"
     if system.startswith(("You write a short quiz", "You write the practice and the mastery check")):
@@ -187,6 +193,23 @@ def _reply(kind: str, messages: list, ctl: dict) -> str:
     last = messages[-1]["content"] if messages else ""
     if kind == "design":
         return json.dumps(_design(last, inject))
+    if kind == "placement":              # one question per unit asked for: the spin is right
+        units = re.findall(r"^Unit (\S+):", last, re.M)
+        return json.dumps({"questions": [{"unit": u, "type": "choice", "question": f"Placement {u}: what makes a day?",
+                                          "options": OPTIONS, "answer": 0, "notes": NOTES, "diff": 2, "why": "."}
+                                         for u in units]})
+    if kind == "capstone_brief":
+        return json.dumps({"title": "Read a real report" + (f" {INJECT}" if inject else ""),
+                           "situation": "Pick a company you know and find its latest annual report.",
+                           "task": "Write a one-page summary of what its three statements say.",
+                           "steps": ["Find the report", "Read the three statements", "Write what each says"],
+                           "rubric": [{"criterion": "The three statements", "good": "Each is named and summed up"},
+                                      {"criterion": "What it means", "good": "A clear judgment backed by numbers"}]})
+    if kind == "capstone_feedback":
+        return json.dumps({"criteria": [{"criterion": "The three statements", "level": "met", "why": "All three are there."},
+                                        {"criterion": "What it means", "level": "partly", "why": "Add the numbers."}],
+                           "overall": "A solid first read." + (f" {INJECT}" if inject else ""),
+                           "next": "Compare two years."})
     if kind == "quiz":
         return json.dumps(_quiz(inject, ctl.get("old_quiz"), '"recall": true' in last))
     if kind == "quiz_rewrite":           # as many of each kind as asked for

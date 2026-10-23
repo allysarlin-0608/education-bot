@@ -8,7 +8,7 @@ from html import escape
 import streamlit as st
 
 from coach import auth, learnmetrics, storage, ui
-from coach.i18n import tr
+from coach.i18n import N_, tr
 
 st.html('<div id="learning-page" hidden></div>')
 st.html('<p class="cm-eyebrow">' + tr("Admins") + "</p>")
@@ -51,9 +51,11 @@ def table(rows_, note: str = "") -> None:
         for a, b, c, d in rows_) + "</dl>" + (f'<p class="ob-note">{escape(note)}</p>' if note else ""))
 
 
-CTX = {"warmup": "Warm-up", "check": "Quick checks in lessons", "guided": "Guided practice", "quiz": "The check",
-       "mixed": "Mixed practice", "practice": "Practice page", "review": "Review cards", "unit": "Unit checks",
-       "diag": "Where to start"}
+CTX = {"warmup": N_("Warm-up"), "check": N_("Quick checks in lessons"), "guided": N_("Guided practice"),
+       "quiz": N_("The check"), "mixed": N_("Mixed practice"), "practice": N_("Practice page"),
+       "review": N_("Review cards"), "unit": N_("Unit checks"), "diag": N_("Where to start")}
+STEPS = {"warmup": N_("Warm-up"), "learn": N_("Read the lesson"), "practice": N_("Practise"), "quiz": N_("The check"),
+         "passed": N_("Passed"), "mixed": N_("Mixed practice"), "explain": N_("Explain it back"), "reflect": N_("Reflect")}
 
 st.markdown(tr("#### First try"))
 f = m["first"]
@@ -81,7 +83,7 @@ table([(names[k], pct(v["share"]), f'n={v["n"]}', "") for k, v in c["by_conf"].i
          for k, x in ((1, "Not yet"), (2, "Mostly"), (3, "Yes, clearly"))])
 
 st.markdown(tr("#### Where sessions stop"))
-table([(tr(step.capitalize()), str(n), pct(share) + tr(" of the step before") if share is not None else "", "")
+table([(tr(STEPS.get(step, step)), str(n), pct(share) + tr(" of the step before") if share is not None else "", "")
        for step, n, share in m["funnel"]], tr("Sessions (a learner on a day) that reached each step."))
 
 st.markdown(tr("#### Experiments"))
