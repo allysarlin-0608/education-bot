@@ -173,11 +173,11 @@ def test_dimmed_states_contrast(public_app, pages):
     assert not low, low
 
 
-@pytest.mark.parametrize("path,must", [("/review", ("Review", "Today")),
+@pytest.mark.parametrize("path,must", [("/review", ("Practice", "Back to Home")),
                                        ("/course?subject=philosophy", ("Continue", "Enter Philosophy"))])
 def test_keyboard_on_review_and_the_course_map(public_app, pages, path, must):
     """Tab reaches each page's own controls, each with a visible ring."""
-    covers("W-review-rv_view", "W-course-cm_continue")
+    covers("W-practice_nav-key", "W-course-cm_continue")
     app = public_app
     p = person(app, pages)
     flows.open_app(p, app, path)
@@ -201,10 +201,10 @@ def test_keyboard_on_review_and_the_course_map(public_app, pages, path, must):
     for m in must:
         assert any(m in r for r in reached), f"Tab never reaches {m!r}: {reached}"
     assert not invisible, f"focused without a visible ring: {sorted(set(invisible))}"
-    if path == "/review":          # a choice of two is one stop for Tab; the arrow keys move within it
+    if path == "/review":          # Practice's three tabs are one stop for Tab; the arrow keys move within them
         page.locator('[data-testid="stButtonGroup"] button').first.focus()
         page.keyboard.press("ArrowRight")
-        assert page.evaluate("() => document.activeElement.innerText.trim()") == "Collection"
+        assert page.evaluate("() => document.activeElement.innerText.trim()") == "Review cards"
 
 
 UNNAMED = """() => [...document.querySelectorAll('button, a[href], [role="button"], input, textarea')]

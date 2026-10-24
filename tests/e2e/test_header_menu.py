@@ -78,3 +78,20 @@ def test_reading_plan_off_opens_its_switch(public_app, pages):
     box = switch.bounding_box()
     assert box and 0 <= box["y"] <= 844, f"the switch is on screen: {box}"
     assert flows.wait_text(p.page, "split over 14 days")
+
+
+@pytest.mark.parametrize("width", [820, 1024, 1180, 1440])
+def test_the_bar_keeps_clear_of_the_sidebar_and_the_app_menu(public_app, pages, width):
+    """Beside the open sidebar (a tablet held upright has little room), the bar
+    sits over the content, its end clear of the app's ⋮ menu."""
+    p = person(public_app, pages, width, 900, "light")
+    flows.open_app(p, public_app, "/settings")
+    p.page.wait_for_timeout(1200)
+    r = p.page.evaluate("""() => {
+      const a = document.querySelector('.st-key-account_menu button').getBoundingClientRect();
+      const m = document.querySelector('[data-testid="stMainMenu"]').getBoundingClientRect();
+      const bar = document.querySelector('.st-key-topnav').getBoundingClientRect();
+      const side = document.querySelector('[data-testid="stSidebar"]');
+      return {menu: m.left - a.right, side: bar.left - (side ? side.getBoundingClientRect().right : 0)};
+    }""")
+    assert r["menu"] >= 12 and r["side"] >= 12, r

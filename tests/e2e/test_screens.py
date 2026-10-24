@@ -45,7 +45,11 @@ CHECK = """(touch) => {
     if (!(e.innerText || '').trim()) return false;
     const s = getComputedStyle(e), b = e.getBoundingClientRect();
     if (s.visibility === 'hidden' || +s.opacity === 0 || b.width < 2 || b.height < 2) return false;
-    return b.top >= head && b.bottom <= window.innerHeight;
+    if (b.top < head || b.bottom > window.innerHeight) return false;
+    // drawn where it is, or under other words (the overlap this looks for); not hidden behind another
+    // layer, like a list passing under the subject stage that stays put
+    const hit = document.elementFromPoint(b.left + Math.min(b.width, 12) / 2, b.top + b.height / 2);
+    return !!hit && (e.contains(hit) || hit.contains(e) || !!hit.closest('p, h1, h2, h3, h4, li, button, label'));
   });
   const overlap = [];
   for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) {
@@ -314,6 +318,13 @@ def test_mastery_screens(public_app, pages, width, scheme):
     into_view(p, "[data-testid=stExpander]")
     shot(p, f"51_quiz_feedback_{tag}", problems)
     flows.take_quiz(p, correct=True, start="Try a new set")
+    chat = p.page.locator('[data-testid="stChatInputTextArea"]')
+    chat.fill("So a day comes from the orbit, right?")
+    chat.press("Enter")
+    assert flows.wait_text(p.page, "Based on this lesson", 30)
+    into_view(p, ".tutor-based")
+    shot(p, f"53_tutor_{tag}", problems)
+    flows.button(p, "Finish today →")                # explaining it back: at the day's close
     box = p.page.locator(".st-key-explain_back textarea")
     box.fill("Philosophy asks what is real, what we can know and how to live, because Earth spins on its axis.")
     p.page.keyboard.press("Tab")
@@ -321,16 +332,8 @@ def test_mastery_screens(public_app, pages, width, scheme):
     assert flows.wait_text(p.page, "Clear and correct.", 30)
     into_view(p, ".st-key-explain_back")
     shot(p, f"52_explain_{tag}", problems)
-    chat = p.page.locator('[data-testid="stChatInputTextArea"]')
-    chat.fill("So a day comes from the orbit, right?")
-    chat.press("Enter")
-    assert flows.wait_text(p.page, "Based on this lesson", 30)
-    into_view(p, ".tutor-based")
-    shot(p, f"53_tutor_{tag}", problems)
-    flows.open_app(p, app, "/skills")
+    flows.open_app(p, app, "/skills")               # (now the learning map)
     shot(p, f"54_skills_{tag}", problems)
-    into_view(p, ".sk-ideas")
-    shot(p, f"55_skills_unit_{tag}", problems)
     flows.open_app(p, app, "/practice")
     shot(p, f"56_practice_start_{tag}", problems)
     flows.button(p, "Start practice", wait=False)
@@ -493,4 +496,4 @@ def test_a_new_learner_adds_mathematics_from_the_curriculum(public_app, pages):
     assert flows.wait_text(p.page, "Learn it day by day", 20)
     flows.tap(p, p.page.locator(".st-key-mc_add button:visible").first)
     assert flows.wait_text(p.page, "Added. Mathematics takes its turn", 15)
-    assert flows.wait_text(p.page, "Your course map", 10)
+    assert flows.wait_text(p.page, "Your learning map", 10)

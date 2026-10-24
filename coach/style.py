@@ -1467,8 +1467,12 @@ NAV = """
   .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 14px; }
   [data-testid="stToolbarActions"] button p, [data-testid="stToolbarActionButton"] p { display: none; }
 }
+/* a tablet held upright: beside the open sidebar the bar has little room, so its links close up */
+@media (min-width: 641px) and (max-width: 900px) {
+  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 8px; }
+}
 @media (max-width: 640px) {
-  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 11px; }
+  .st-key-topnav [data-testid="stPageLink-NavLink"] { padding: 0 10px; }
   .st-key-nav_search { margin-left: 4px; }
   .st-key-nav_search button { width: 40px; min-width: 40px; }
   [data-testid="stToolbarActions"] { display: none; }
@@ -2697,6 +2701,7 @@ SESSION = """<style>
 .st-key-lesson_tools { gap: var(--space-2); }
 .st-key-light_menu button { border-color: transparent !important; background: transparent !important; padding-left: var(--space-2) !important; padding-right: var(--space-2) !important; color: var(--label-2) !important; }
 .st-key-light_menu button:hover { color: var(--label) !important; }
+.st-key-light_menu button:focus-visible { outline: 1px solid var(--outline) !important; outline-offset: 2px; color: var(--label) !important; }
 .st-key-brief_done { margin-top: var(--space-4); }
 .ex-rubric { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: var(--space-1) 0 var(--space-3); padding: 0 !important; }
 .ex-rubric li { margin: 0; font-size: 0.875rem; color: var(--label-3); }

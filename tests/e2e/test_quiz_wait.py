@@ -1,4 +1,4 @@
-"""How long "Take the quiz" makes her wait (ISS-101), with a slow model:
+"""How long the check makes her wait (ISS-101), with a slow model:
 every call takes DELAY seconds and the checker sends one question back to
 be rewritten, so a quiz is four calls in a row (write, check, rewrite,
 check), as in the 75-second report. Pressed the moment the lesson appears
@@ -7,6 +7,7 @@ check), as in the 75-second report. Pressed the moment the lesson appears
 import time
 
 import flows
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from conftest import record_timing
 
 DELAY = 8.0           # seconds per model call
@@ -27,8 +28,17 @@ def one_learner(app, pages, read_for):
     flows.idle(p.page)
     p.page.wait_for_timeout(read_for * 1000)
     t0 = time.monotonic()
-    flows.to_check(p)
-    assert flows.wait_text(p.page, "Submit answers", 120), "the quiz didn't appear"
+    flows.button(p, "I know this: straight to the check", wait=False)
+    end = time.monotonic() + 120
+    while time.monotonic() < end and "Submit answers" not in text(p):
+        start = p.page.get_by_role("button", name="Start the check", exact=True)
+        if start.count() and start.first.is_enabled():      # not prepared yet: she presses for it
+            try:
+                start.first.click(timeout=2000)
+            except PlaywrightTimeout:                    # (redrawn as she pressed: look again)
+                pass
+        p.page.wait_for_timeout(100)
+    assert flows.wait_text(p.page, "Submit answers", 1), "the quiz didn't appear"
     waited = time.monotonic() - t0
     assert "Traceback" not in text(p)
     return waited

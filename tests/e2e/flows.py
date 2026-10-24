@@ -243,6 +243,8 @@ def start_lesson(p):
     """Start the lesson (unless it was written in the background during the
     warm-up: then it is there already, or arrives while she looks)."""
     page = p.page
+    if page.get_by_role("button", name="Take the unit check", exact=True).count():
+        pass_gate(p, p.app)             # (the next unit waits for the one before it to be shown learned)
     start = page.get_by_role("button", name="Start this lesson", exact=True)
     end = time.time() + 40
     while time.time() < end and "Next: practise it" not in _visible_text(page):
@@ -398,6 +400,17 @@ def choose(p, box, text):
     idle(page)
     shown = box.locator("input").first.input_value()
     assert shown == text, f"picked {text!r} but the box shows {shown!r}"
+
+
+def pass_gate(p, app):
+    """The unit check that stands before the next unit (coach/progression.py),
+    passed, then back on Home."""
+    button(p, "Take the unit check")
+    assert wait_text(p.page, "80% passes it", 20)
+    answer_all(p, correct=True)
+    button(p, "Check my answers")
+    assert wait_text(p.page, "Passed", 20), "the unit check wasn't passed"
+    open_app(p, app)
 
 
 def pass_lesson(p):

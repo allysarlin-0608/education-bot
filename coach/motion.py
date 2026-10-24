@@ -220,7 +220,7 @@ SCRIPT = r"""
     });
   }
   let queued = false, leftFrom = null, leftAt = 0, sawStale = false;
-  const soon = () => { if (!queued) { queued = true; w.requestAnimationFrame(() => { queued = false; sync(); }); } };
+  const soon = () => { if (!queued) { queued = true; w.requestAnimationFrame(() => { queued = false; sync(); if (w.__cxCentre) w.__cxCentre(); }); } };
   new w.MutationObserver(soon).observe(doc.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-checked', 'href', 'data-stale'] });
   w.addEventListener('resize', () => { for (const c of CONTROLS) doc.querySelectorAll(c.root).forEach((r) => { const s = state.get(r); if (s && s.on) { s.b = null; state.set(r, s); } }); soon(); });
   w.setInterval(soon, 500);
@@ -398,23 +398,20 @@ SCRIPT = r"""
   }, { passive: true });
   // the navigation sits over the middle of the page's content (not of the
   // window): with the sidebar open, that is to the right of the middle; never
-  // so far right that its end runs under the app's own ⋮ menu (56px at the edge)
+  // so far right that its end runs under the app's own ⋮ menu
   const main = doc.querySelector('[data-testid="stMain"]');
   const centre = () => {
     if (!main) return;
     const m = main.getBoundingClientRect();
     const bar = doc.querySelector('.st-key-topnav');
-    const half = bar ? bar.getBoundingClientRect().width / 2 : 0;
     const mid = m.left + m.width / 2;    // (on a phone the style sheet moves it instead)
-    const x = w.innerWidth > 640 ? Math.max(half + 8, Math.min(mid, w.innerWidth - 56 - half)) : mid;
+    const h = bar ? bar.getBoundingClientRect().width / 2 : 0;
+    // (its end 12px clear of the ⋮ menu, 60px wide at the edge)
+    const x = w.innerWidth > 640 ? Math.min(mid, w.innerWidth - 72 - h) : mid;
     doc.documentElement.style.setProperty('--cx-main', x + 'px');
   };
-  if (main && w.ResizeObserver) {
-    const ro = new w.ResizeObserver(centre);
-    ro.observe(main);
-    const bar = doc.querySelector('.st-key-topnav');
-    if (bar) ro.observe(bar);
-  }
+  if (main && w.ResizeObserver) new w.ResizeObserver(centre).observe(main);
+  w.__cxCentre = centre;           // (and after each redraw: the bar comes and changes with the page)
   centre();
   soon();
 })();

@@ -54,7 +54,7 @@ def test_coming_back(public_app, pages, clock, away):
     t = text(p)
     assert f"Lesson {open_n}:" in t and "Start this lesson" not in t.split(f"Lesson {open_n}:")[1][:400], \
         "the unfinished lesson continues as it was (not written again)"
-    flows.go(p, app, "Review")
+    flows.open_app(p, app, "/review")             # (Practice's Review cards tab)
     t = text(p)
     assert "to go today" in t or "Nothing due today" in t
     if "to go today" in t:
